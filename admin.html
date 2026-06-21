@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airpiv — لوحة التحكم</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #151d2e;
+    --border: #1e2d45;
+    --teal: #00c9a7;
+    --teal2: #00a082;
+    --teal-glow: rgba(0,201,167,0.15);
+    --red: #ff4d6d;
+    --red-bg: rgba(255,77,109,0.1);
+    --yellow: #fbbf24;
+    --yellow-bg: rgba(251,191,36,0.1);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.1);
+    --tx: #e2e8f0;
+    --tx2: #94a3b8;
+    --tx3: #475569;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans Arabic', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--tx);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    top: 0; right: 0;
+    width: 220px;
+    height: 100vh;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    padding: 0 0 20px;
+  }
+
+  .sidebar-logo {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--teal), var(--teal2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tx);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-badge {
+    font-size: 9px;
+    background: var(--teal-glow);
+    color: var(--teal);
+    border: 1px solid rgba(0,201,167,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .nav {
+    padding: 16px 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--tx2);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: right;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--tx); }
+  .nav-item.active { background: var(--teal-glow); color: var(--teal); }
+  .nav-item .icon { font-size: 16px; flex-shrink: 0; }
+
+  .nav-section {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tx3);
+    padding: 10px 12px 4px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  /* Main */
+  .main {
+    margin-right: 220px;
+    padding: 28px;
+    min-height: 100vh;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Header */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-sub { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* Stats cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.teal::before { background: linear-gradient(90deg, var(--teal), transparent); }
+  .stat-card.red::before { background: linear-gradient(90deg, var(--red), transparent); }
+  .stat-card.yellow::before { background: linear-gradient(90deg, var(--yellow), transparent); }
+  .stat-card.blue::before { background: linear-gradient(90deg, var(--blue), transparent); }
+
+  .stat-label { font-size: 11px; color: var(--tx2); font-weight: 600; margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+  .stat-value.teal { color: var(--teal); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.blue { color: var(--blue); }
+  .stat-change { font-size: 11px; color: var(--tx3); margin-top: 4px; }
+  .stat-icon { position: absolute; top: 16px; left: 16px; font-size: 22px; opacity: 0.3; }
+
+  /* Table */
+  .table-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .table-title { font-size: 14px; font-weight: 600; }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: var(--tx2);
+  }
+
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--tx);
+    font-family: var(--sans);
+    font-size: 12px;
+    width: 160px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: right;
+    padding: 11px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tx3);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .mono { font-family: var(--mono); font-size: 12px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge.confirmed { background: rgba(0,201,167,0.15); color: var(--teal); }
+  .badge.pending { background: var(--yellow-bg); color: var(--yellow); }
+  .badge.failed { background: var(--red-bg); color: var(--red); }
+  .badge.cancelled { background: rgba(100,100,100,0.15); color: var(--tx2); }
+
+  /* Profit breakdown */
+  .profit-row {
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .profit-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    color: var(--tx2);
+  }
+
+  .profit-line.total {
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 6px;
+    color: var(--teal);
+    font-weight: 700;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--teal);
+    color: #000;
+  }
+
+  .btn-primary:hover { background: var(--teal2); }
+
+  .btn-ghost {
+    background: var(--bg3);
+    color: var(--tx2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { color: var(--tx); border-color: var(--tx3); }
+  .btn-ghost.active { background: var(--teal-glow); color: var(--teal); border-color: rgba(0,201,167,0.3); }
+
+  .rank-row { display: flex; align-items: center; gap: 10px; }
+  .rank-num {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--bg3); color: var(--tx2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; font-family: var(--mono); flex-shrink: 0;
+  }
+  .rank-row:nth-child(1) .rank-num { background: var(--teal-glow); color: var(--teal); }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 13px; font-weight: 600; color: var(--tx); }
+  .rank-sub { font-size: 11px; color: var(--tx3); margin-top: 1px; }
+  .rank-bar-track { height: 5px; border-radius: 3px; background: var(--bg3); margin-top: 6px; overflow: hidden; }
+  .rank-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--teal2)); }
+  .rank-value { font-family: var(--mono); font-size: 12px; color: var(--tx); font-weight: 600; flex-shrink: 0; }
+
+  .btn-danger {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid rgba(255,77,109,0.2);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 560px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+  }
+
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--tx2); cursor: pointer; font-size: 20px; }
+  .modal-body { padding: 20px 24px; }
+
+  /* Form */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--tx2); margin-bottom: 6px; display: block; }
+
+  .form-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--tx);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .form-input:focus { border-color: var(--teal); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Profit settings */
+  .profit-settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .setting-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .setting-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .setting-desc { font-size: 11px; color: var(--tx2); margin-bottom: 14px; }
+
+  .range-input { width: 100%; accent-color: var(--teal); margin-bottom: 8px; }
+
+  .range-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  .range-label { font-size: 11px; color: var(--tx2); }
+
+  /* Promo codes */
+  .promo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .promo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .promo-code {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .promo-details { font-size: 11px; color: var(--tx2); line-height: 1.8; }
+  .promo-usage { font-size: 11px; color: var(--tx3); margin-top: 8px; }
+
+  .promo-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .promo-bar-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 2px;
+  }
+
+  .promo-actions {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .icon-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--tx2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .icon-btn:hover { color: var(--tx); border-color: var(--tx3); }
+  .icon-btn.danger:hover { color: var(--red); border-color: var(--red); }
+
+  /* Detail panel */
+  .detail-section { margin-bottom: 20px; }
+  .detail-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tx3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .detail-item {
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .detail-key { font-size: 11px; color: var(--tx2); margin-bottom: 3px; }
+  .detail-val { font-size: 13px; font-weight: 600; }
+
+  .finance-table { width: 100%; }
+
+  .finance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .finance-row:last-child { border: none; }
+  .finance-row .label { color: var(--tx2); }
+  .finance-row .amount { font-family: var(--mono); font-weight: 600; }
+  .finance-row.profit .amount { color: var(--teal); }
+  .finance-row.discount .amount { color: var(--yellow); }
+  .finance-row.total .label { font-weight: 700; color: var(--tx); }
+  .finance-row.total .amount { color: var(--blue); font-size: 15px; }
+
+  /* Tier table for profit */
+  .tier-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tier-row:last-child { border: none; }
+  .tier-row.header { font-size: 11px; color: var(--tx3); font-weight: 700; text-transform: uppercase; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 300;
+    transition: transform 0.3s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(0,201,167,0.4); color: var(--teal); }
+  .toast.error { border-color: rgba(255,77,109,0.4); color: var(--red); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-right: 0; padding: 16px; padding-bottom: 90px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .promo-grid { grid-template-columns: 1fr 1fr; }
+    .profit-settings { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .modal { width: 95vw; }
+  }
+
+  /* Bottom Nav (mobile only) */
+  .bottom-nav {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      z-index: 200;
+      padding: 0 4px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .bn-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--tx3);
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 6px 2px;
+      border-radius: 10px;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bn-item svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .bn-item.active {
+      color: var(--teal);
+    }
+
+    .bn-item:active {
+      background: var(--bg3);
+    }
+
+    /* More menu overlay */
+    .more-menu {
+      display: none;
+      position: fixed;
+      bottom: 64px;
+      left: 0; right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      z-index: 199;
+      padding: 8px;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .more-menu.open { display: flex; }
+
+    .more-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--tx2);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: right;
+      font-family: var(--sans);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .more-menu-item:active { background: var(--bg3); }
+    .more-menu-item.active { color: var(--teal); background: var(--teal-glow); }
+
+    .more-menu-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 198;
+    }
+    .more-menu-backdrop.open { display: block; }
+  }
+
+  /* Supabase connect banner */
+  .connect-banner {
+    background: linear-gradient(135deg, rgba(0,201,167,0.1), rgba(0,160,130,0.05));
+    border: 1px dashed rgba(0,201,167,0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+
+  .connect-text { font-size: 13px; }
+  .connect-text strong { color: var(--teal); }
+
+  /* Config inputs */
+  .config-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .config-row .form-input { flex: 1; }
+
+  /* Login screen */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 32px;
+    width: 100%; max-width: 360px;
+  }
+  .login-logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+  }
+  .login-title { font-size: 18px; font-weight: 700; color: var(--tx); margin-bottom: 6px; }
+  .login-sub { font-size: 12px; color: var(--tx2); margin-bottom: 22px; }
+  .login-err {
+    display: none;
+    background: var(--red-bg); color: var(--red);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 8px; padding: 9px 12px;
+    font-size: 12px; margin-bottom: 14px;
+  }
+  .login-err.show { display: block; }
+  .app-shell { display: none; }
+  .app-shell.ready { display: block; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+</head>
+<body>
+
+<!-- ════════ LOGIN SCREEN ════════ -->
+<!-- [ADMIN-AUTH] Replaces the old Supabase URL/key fields — the dashboard
+     now talks only to api.airpiv.com/admin/*, never directly to Supabase
+     from the browser. The password becomes a bearer token (ADMIN_TOKEN)
+     stored in sessionStorage (cleared when the tab closes) and sent on
+     every subsequent /admin/* request. -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0011.5 2A1.5 1.5 0 0010 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+      <div>
+        <div class="logo-text">Airpiv</div>
+        <div class="logo-badge">ADMIN</div>
+      </div>
+    </div>
+    <div class="login-title">تسجيل الدخول</div>
+    <div class="login-sub">أدخل كلمة مرور لوحة التحكم</div>
+    <div class="login-err" id="login-err">كلمة مرور خاطئة</div>
+    <div class="form-group">
+      <label class="form-label">كلمة المرور</label>
+      <input type="password" class="form-input" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doAdminLogin()">دخول</button>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0011.5 2A1.5 1.5 0 0010 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+    <div>
+      <div class="logo-text">Airpiv</div>
+      <div class="logo-badge">ADMIN</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">الرئيسية</div>
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> لوحة التحكم
+    </button>
+    <button class="nav-item" onclick="showPage('bookings')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></span> الحجوزات
+    </button>
+    <button class="nav-item" onclick="showPage('reports')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> التقارير
+    </button>
+    <button class="nav-item" onclick="showPage('customers')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> العملاء
+    </button>
+    <button class="nav-item" onclick="showPage('invoices')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> الفواتير
+    </button>
+    <div class="nav-section">الإعدادات</div>
+    <button class="nav-item" onclick="showPage('profit')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span> هامش الربح
+    </button>
+    <button class="nav-item" onclick="showPage('ancillary')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></span> هامش المقاعد والحقائب
+    </button>
+    <button class="nav-item" onclick="showPage('loyalty')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> إعدادات الولاء
+    </button>
+    <button class="nav-item" onclick="showPage('promos')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> كودات الخصم
+    </button>
+    <button class="nav-item" onclick="showPage('settings')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> الإعدادات
+    </button>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">لوحة التحكم</div>
+        <div class="page-sub" id="today-date"></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="loadStats()">🔄 تحديث</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card teal">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div class="stat-label">إجمالي الإيرادات</div>
+        <div class="stat-value teal" id="stat-revenue">€0</div>
+        <div class="stat-change" id="stat-revenue-sub">جارٍ التحميل...</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div class="stat-label">صافي الربح</div>
+        <div class="stat-value teal" id="stat-profit">€0</div>
+        <div class="stat-change" id="stat-profit-sub">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+        <div class="stat-label">عدد الحجوزات</div>
+        <div class="stat-value blue" id="stat-bookings">0</div>
+        <div class="stat-change" id="stat-bookings-sub">—</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+        <div class="stat-label">خصومات مُطبَّقة</div>
+        <div class="stat-value yellow" id="stat-discounts">€0</div>
+        <div class="stat-change" id="stat-discounts-sub">—</div>
+      </div>
+    </div>
+
+    <!-- Recent bookings -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">آخر الحجوزات</div>
+        <button class="btn btn-ghost" onclick="showPage('bookings')">عرض الكل ←</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الحجز</th>
+            <th>المسافر</th>
+            <th>الرحلة</th>
+            <th>دفع العميل</th>
+            <th>الربح</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="recent-bookings">
+          <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد بيانات — اربط Supabase أولاً</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== BOOKINGS ==================== -->
+  <div class="page" id="page-bookings">
+    <div class="page-header">
+      <div>
+        <div class="page-title">الحجوزات</div>
+        <div class="page-sub">كل تفاصيل الحجوزات والأرباح</div>
+      </div>
+      <div class="header-actions">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="ابحث برقم الحجز أو المسافر..." oninput="filterBookings(this.value)" id="booking-search">
+        </div>
+        <button class="btn btn-ghost" onclick="exportCSV()">📥 تصدير CSV</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الحجز</th>
+            <th>التاريخ</th>
+            <th>الرحلة</th>
+            <th>سعر Duffel</th>
+            <th>خصم</th>
+            <th>دفع العميل</th>
+            <th>الربح</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="all-bookings">
+          <tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:30px">لا توجد بيانات — اربط Supabase أولاً</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== REPORTS ==================== -->
+  <div class="page" id="page-reports">
+    <div class="page-header">
+      <div>
+        <div class="page-title">التقارير</div>
+        <div class="page-sub">نظرة تحليلية على الإيرادات والوجهات وشركات الطيران</div>
+      </div>
+      <div class="header-actions">
+        <div class="search-box" style="padding:4px;gap:0;background:var(--bg3)">
+          <button class="btn btn-ghost" id="rep-range-30" onclick="setReportRange(30)" style="padding:6px 12px;font-size:12px">30 يوم</button>
+          <button class="btn btn-ghost" id="rep-range-90" onclick="setReportRange(90)" style="padding:6px 12px;font-size:12px">90 يوم</button>
+          <button class="btn btn-ghost" id="rep-range-365" onclick="setReportRange(365)" style="padding:6px 12px;font-size:12px">سنة</button>
+        </div>
+        <button class="btn btn-ghost" id="rep-mode-toggle" onclick="toggleReportMode()">عرض شهري</button>
+      </div>
+    </div>
+
+    <!-- Revenue chart -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">📈 الإيرادات والربح</div>
+        <div style="display:flex;gap:14px;font-size:11px;color:var(--tx2)">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-left:4px"></span>الإيرادات</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-left:4px"></span>الربح</span>
+        </div>
+      </div>
+      <div style="padding:16px 20px">
+        <canvas id="revenue-chart" style="width:100%;height:260px;display:block"></canvas>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:1fr 1fr">
+      <!-- Top routes -->
+      <div class="table-card" style="margin-bottom:0">
+        <div class="table-header">
+          <div class="table-title">🌍 أكثر المسارات مبيعاً</div>
+        </div>
+        <div id="top-destinations" style="padding:14px 20px;display:flex;flex-direction:column;gap:12px">
+        </div>
+      </div>
+
+      <!-- Top promo codes -->
+      <div class="table-card" style="margin-bottom:0">
+        <div class="table-header">
+          <div class="table-title">🏷 أكثر كودات الخصم استخداماً</div>
+        </div>
+        <div id="top-airlines" style="padding:14px 20px;display:flex;flex-direction:column;gap:12px">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CUSTOMERS ==================== -->
+  <div class="page" id="page-customers">
+    <div class="page-header">
+      <div>
+        <div class="page-title">العملاء</div>
+        <div class="page-sub" id="customers-sub">قائمة العملاء وسجل حجوزاتهم</div>
+      </div>
+      <div class="header-actions">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="ابحث بالإيميل أو الاسم..." oninput="filterCustomers(this.value)" id="customer-search">
+        </div>
+        <button class="btn btn-ghost" id="vip-filter-btn" onclick="toggleVipFilter()">⭐ VIP فقط</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="stat-label">إجمالي العملاء</div>
+        <div class="stat-value blue" id="cust-total">0</div>
+        <div class="stat-change" id="cust-total-sub">—</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="stat-label">عملاء VIP</div>
+        <div class="stat-value teal" id="cust-vip">0</div>
+        <div class="stat-change">3 حجوزات فأكثر</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+        <div class="stat-label">عملاء متكررون</div>
+        <div class="stat-value yellow" id="cust-repeat">0</div>
+        <div class="stat-change">حجزوا أكثر من مرة</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div class="stat-label">متوسط إنفاق العميل</div>
+        <div class="stat-value blue" id="cust-avg">€0</div>
+        <div class="stat-change">—</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>العميل</th>
+            <th>عدد الحجوزات</th>
+            <th>إجمالي الإنفاق</th>
+            <th>صافي ربحنا منه</th>
+            <th>آخر حجز</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="customers-table">
+          <tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">لا توجد بيانات — اربط Supabase أولاً</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Customer detail modal -->
+  <div class="modal-overlay" id="customer-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="cmodal-name">العميل</div>
+        <button class="modal-close" onclick="closeModal('customer-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="cmodal-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== INVOICES ==================== -->
+  <div class="page" id="page-invoices">
+    <div class="page-header">
+      <div>
+        <div class="page-title">الفواتير الضريبية</div>
+        <div class="page-sub">Rechnungen — إصدار وتصدير فواتير §19 UStG (Kleinunternehmer)</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="showPage('settings')">⚙️ بيانات الفاتورة</button>
+      </div>
+    </div>
+
+    <div class="connect-banner" id="invoice-config-banner" style="display:none">
+      <div class="connect-text">
+        ⚠️ لازم تعبّي بياناتك (الاسم، العنوان، Steuernummer) قبل إصدار أي فاتورة
+      </div>
+      <button class="btn btn-primary" onclick="showPage('settings')">تعبئة البيانات</button>
+    </div>
+
+    <!-- Legal warning -->
+    <div class="table-card" style="margin-bottom:16px;border-color:rgba(251,191,36,0.3)">
+      <div style="padding:14px 20px;display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px">⚠️</span>
+        <div style="font-size:12px;color:var(--tx2);line-height:1.7">
+          <strong style="color:var(--yellow)">تنبيه قانوني:</strong>
+          هذا القالب تقني فقط وغير معتمد قانونياً تلقائياً. لازم يراجعه Steuerberater (محاسب ضرائب ألماني مرخص) قبل الاستخدام الفعلي مع العملاء، خصوصاً تصنيف الخدمة (وسيط حجوزات) ومعاملتها الضريبية.
+          <br><br>
+          <strong style="color:var(--teal)">✓ ترقيم الفواتير:</strong> الرقم المتسلسل الآن مُولَّد بشكل ذرّي من قاعدة البيانات (Postgres SEQUENCE)، لا يتكرر ولا تفوته فجوة حتى مع عدة طلبات متزامنة من أكثر من جهاز — تم اختباره فعلياً تحت تزامن حقيقي.
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">📦 تصدير دفعة فواتير</div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">من تاريخ</label>
+          <input type="date" class="form-input" id="batch-from">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">إلى تاريخ</label>
+          <input type="date" class="form-input" id="batch-to">
+        </div>
+        <button class="btn btn-ghost" onclick="setBatchRange('today')">اليوم</button>
+        <button class="btn btn-ghost" onclick="setBatchRange('month')">هذا الشهر</button>
+        <button class="btn btn-primary" onclick="downloadBatchMerged()">📥 ملف PDF واحد مدمج</button>
+        <button class="btn btn-ghost" onclick="downloadBatchSeparate()">📥 كل فاتورة ملف منفصل</button>
+      </div>
+      <div style="padding:0 20px 16px;font-size:11px;color:var(--tx3)" id="batch-preview-count"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">سجل الفواتير الصادرة</div>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="ابحث برقم الفاتورة أو الحجز..." oninput="filterInvoices(this.value)" id="invoice-search">
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الفاتورة</th>
+            <th>التاريخ</th>
+            <th>العميل</th>
+            <th>رقم الحجز</th>
+            <th>المبلغ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="invoices-table">
+          <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد فواتير صادرة بعد — أصدر فاتورة من تفاصيل أي حجز مؤكد</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Invoice issue / edit modal -->
+  <div class="modal-overlay" id="invoice-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">إصدار فاتورة</div>
+        <button class="modal-close" onclick="closeModal('invoice-modal')">✕</button>
+      </div>
+      <div class="modal-body" id="invoice-modal-body"></div>
+    </div>
+  </div>
+
+
+  <!-- ==================== PROFIT ==================== -->
+  <div class="page" id="page-profit">
+    <div class="page-header">
+      <div>
+        <div class="page-title">هامش الربح</div>
+        <div class="page-sub">حدّد هامش ربح مختلف لكل نطاق سعري — الشرائح تُطبَّق تلقائياً</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveProfit()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-left:6px;vertical-align:middle"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        حفظ التغييرات
+      </button>
+    </div>
+
+    <!-- Tiers Card -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header">
+        <div>
+          <div class="table-title">شرائح هامش الربح</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:3px">كل شريحة تنطبق على الحجوزات بين مبلغين — أضف أو احذف حسب رغبتك</div>
+        </div>
+        <button class="btn btn-ghost" onclick="addTier()" style="display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة شريحة
+        </button>
+      </div>
+      <div style="padding:16px 20px">
+
+        <!-- Table header -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:center;padding:8px 12px;margin-bottom:4px">
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">من (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">إلى (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">نسبة %</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">مبلغ ثابت €</div>
+          <div></div>
+        </div>
+
+        <div id="tiers-list" style="display:flex;flex-direction:column;gap:8px">
+          <!-- Tiers rendered by JS -->
+        </div>
+
+        <div style="margin-top:16px;padding:12px 14px;background:var(--bg);border-radius:8px;border:1px dashed var(--border);font-size:12px;color:var(--tx3);line-height:1.8">
+          <strong style="color:var(--tx2)">كيف تشتغل الشرائح؟</strong><br>
+          مثال: إذا عندك شريحة من €0 إلى €200 بنسبة 8%+€5، وشريحة من €200 إلى €500 بنسبة 5%+€10 —<br>
+          حجز بـ €350 سيطبق عليه الشريحة الثانية: (350 × 5%) + €10 = <strong style="color:var(--teal)">€27.50</strong> هامش ربح
+        </div>
+      </div>
+    </div>
+
+    <!-- Example calculator -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title" style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          حاسبة الربح التجريبية
+        </div>
+      </div>
+      <div style="padding:20px">
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">سعر التذكرة (€)</label>
+            <input type="number" class="form-input" id="example-price" value="200" oninput="calcExample()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">خصم كود (€)</label>
+            <input type="number" class="form-input" id="example-discount" value="0" oninput="calcExample()">
+          </div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:16px">
+          <div class="finance-row">
+            <span class="label">سعر Duffel</span>
+            <span class="amount" id="ex-duffel">€200.00</span>
+          </div>
+          <div class="finance-row" style="color:var(--tx2)">
+            <span class="label" style="display:flex;align-items:center;gap:6px">
+              رسوم Duffel الثابتة
+              <span style="font-size:10px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--tx3)">€2.75</span>
+            </span>
+            <span class="amount" id="ex-duffel-fee" style="color:var(--red)">-€2.75</span>
+          </div>
+          <div class="finance-row" style="color:var(--tx2)">
+            <span class="label" style="display:flex;align-items:center;gap:6px">
+              تكلفة إصدار التذكرة
+              <span style="font-size:10px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--tx3)">1% من سعر Duffel</span>
+            </span>
+            <span class="amount" id="ex-issuance-fee" style="color:var(--red)">-€2.00</span>
+          </div>
+          <div class="finance-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;color:var(--tx2)">
+            <span class="label">التكلفة الفعلية علينا</span>
+            <span class="amount" id="ex-true-cost" style="color:var(--tx2)">€204.75</span>
+          </div>
+          <div class="finance-row" style="color:var(--tx2)">
+            <span class="label">الشريحة المطبّقة</span>
+            <span class="amount" id="ex-tier-label" style="font-size:11px;color:var(--tx3)">—</span>
+          </div>
+          <div class="finance-row profit">
+            <span class="label">هامش الربح (إجمالي)</span>
+            <span class="amount" id="ex-margin">€0.00</span>
+          </div>
+          <div class="finance-row discount">
+            <span class="label">خصم الكود</span>
+            <span class="amount" id="ex-disc">-€0.00</span>
+          </div>
+          <div class="finance-row total">
+            <span class="label">يدفع العميل</span>
+            <span class="amount" id="ex-total">€200.00</span>
+          </div>
+          <div style="margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:var(--tx2)">صافي ربحك الحقيقي</span>
+            <span style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--teal)" id="ex-net-profit">€0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ANCILLARY MARGIN (Seats & Baggage) ==================== -->
+  <div class="page" id="page-ancillary">
+    <div class="page-header">
+      <div>
+        <div class="page-title">هامش ربح المقاعد والحقائب</div>
+        <div class="page-sub">حدّد هامش ربح مختلف لكل نطاق سعري لخدمات المقاعد والحقائب الإضافية — يُطبَّق على سعر كل خدمة منفردة</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveAncillaryMargin()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-left:6px;vertical-align:middle"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        حفظ التغييرات
+      </button>
+    </div>
+
+    <!-- Tiers Card -->
+    <div class="table-card" style="margin-bottom:20px">
+      <div class="table-header">
+        <div>
+          <div class="table-title">شرائح هامش المقاعد والحقائب</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:3px">كل شريحة تنطبق على سعر المقعد أو الحقيبة الواحدة (وليس إجمالي الحجز) — أضف أو احذف حسب رغبتك</div>
+        </div>
+        <button class="btn btn-ghost" onclick="addAncillaryTier()" style="display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة شريحة
+        </button>
+      </div>
+      <div style="padding:16px 20px">
+
+        <!-- Table header -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:center;padding:8px 12px;margin-bottom:4px">
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">من (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">إلى (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">نسبة %</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">مبلغ ثابت €</div>
+          <div></div>
+        </div>
+
+        <div id="ancillary-tiers-list" style="display:flex;flex-direction:column;gap:8px">
+          <!-- Tiers rendered by JS -->
+        </div>
+
+        <div style="margin-top:16px;padding:12px 14px;background:var(--bg);border-radius:8px;border:1px dashed var(--border);font-size:12px;color:var(--tx3);line-height:1.8">
+          <strong style="color:var(--tx2)">كيف تشتغل الشرائح هنا؟</strong><br>
+          مثال: شريحة من €0 إلى €100 بنسبة 10%+€1 —<br>
+          حقيبة سعرها €40 من Duffel: (40 × 10%) + €1 = <strong style="color:var(--teal)">€5</strong> هامش ربح → العميل يدفع €45<br>
+          مقعد سعره €150 (يقع بشريحة أعلى لو أضفتها) — كل خدمة تُحسب لحالها بسعرها الخاص، لا بإجمالي الحجز.
+        </div>
+      </div>
+    </div>
+
+    <!-- Example calculator -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title" style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          حاسبة تجريبية — مقعد أو حقيبة واحدة
+        </div>
+      </div>
+      <div style="padding:20px">
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">سعر المقعد/الحقيبة من Duffel (€)</label>
+          <input type="number" class="form-input" id="ancillary-example-price" value="40" oninput="calcAncillaryExample()">
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:16px">
+          <div class="finance-row">
+            <span class="label">سعر Duffel الصافي</span>
+            <span class="amount" id="aex-net">€40.00</span>
+          </div>
+          <div class="finance-row" style="color:var(--tx2)">
+            <span class="label">الشريحة المطبّقة</span>
+            <span class="amount" id="aex-tier-label" style="font-size:11px;color:var(--tx3)">—</span>
+          </div>
+          <div class="finance-row profit">
+            <span class="label">هامش الربح</span>
+            <span class="amount" id="aex-margin">€0.00</span>
+          </div>
+          <div class="finance-row total">
+            <span class="label">يدفع العميل</span>
+            <span class="amount" id="aex-total">€40.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOYALTY CONFIG ==================== -->
+  <div class="page" id="page-loyalty">
+    <div class="page-header">
+      <div>
+        <div class="page-title">إعدادات الولاء</div>
+        <div class="page-sub">كل قواعد برنامج الولاء — الرصيد الفعلي لكل عميل محفوظ بالسيرفر، هذه الإعدادات تتحكم بالقواعد فقط</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveLoyaltyConfig()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-left:6px;vertical-align:middle"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        حفظ التغييرات
+      </button>
+    </div>
+
+    <!-- Basic settings -->
+    <div class="profit-settings">
+      <div class="setting-card">
+        <div class="setting-title">مكافأة الترحيب</div>
+        <div class="setting-desc">تُمنح تلقائياً لأول مرة يُكتشف فيها متصفح/جهاز جديد</div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">رصيد ترحيبي (€)</label>
+            <input type="number" class="form-input" id="ly-welcome-credit" value="10" step="0.5" min="0">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">نقاط ترحيبية</label>
+            <input type="number" class="form-input" id="ly-welcome-points" value="100" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-title">كسب النقاط والسقف</div>
+        <div class="setting-desc">نقاط لكل يورو مدفوع، وأقصى رصيد يمكن استخدامه بحجز واحد</div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">نقاط لكل €1</label>
+            <input type="number" class="form-input" id="ly-points-per-euro" value="2" step="0.5" min="0">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">أقصى خصم لكل حجز (€)</label>
+            <input type="number" class="form-input" id="ly-max-credit" value="5" step="0.5" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tiers Card -->
+    <div class="table-card">
+      <div class="table-header">
+        <div>
+          <div class="table-title">شرائح الخصم القابل للاستخدام</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:3px">كم خصم يمكن للعميل استخدامه حسب إجمالي سعر حجزه — مهما كان رصيده الفعلي أكبر، السيرفر يفرض الأصغر بين هذا والرصيد الحقيقي والسقف أعلاه</div>
+        </div>
+        <button class="btn btn-ghost" onclick="addLoyaltyTier()" style="display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة شريحة
+        </button>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:center;padding:8px 12px;margin-bottom:4px">
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">من (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">إلى (€)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px">خصم قابل للاستخدام (€)</div>
+          <div></div>
+        </div>
+        <div id="loyalty-tiers-list" style="display:flex;flex-direction:column;gap:8px">
+          <!-- Tiers rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PROMOS ==================== -->
+  <div class="page" id="page-promos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">كودات الخصم</div>
+        <div class="page-sub">أنشئ وأدر كودات الترويج</div>
+      </div>
+      <button class="btn btn-primary" onclick="openPromoModal()">+ كود جديد</button>
+    </div>
+
+    <div class="promo-grid" id="promo-grid">
+      <!-- Demo promos -->
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">سجل الاستخدام</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>المستخدم</th>
+            <th>رقم الحجز</th>
+            <th>الخصم</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody id="promo-usage-log">
+          <tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:24px">لا يوجد سجل بعد</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS ==================== -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <div>
+        <div class="page-title">الإعدادات</div>
+        <div class="page-sub">بيانات الفاتورة وإدارة الجلسة</div>
+      </div>
+    </div>
+
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="table-header">
+        <div class="table-title">🔐 الجلسة</div>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:12px;color:var(--tx2)">
+          لوحة التحكم متصلة بـ <span class="mono" style="color:var(--teal)">api.airpiv.com</span> مباشرة — لا يوجد اتصال مباشر بقاعدة البيانات من المتصفح.
+        </div>
+        <button class="btn btn-ghost" style="align-self:flex-start" onclick="doAdminLogout()">🚪 تسجيل الخروج</button>
+      </div>
+    </div>
+
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="table-header">
+        <div class="table-title">🧾 بيانات الفاتورة (Rechnungsdaten)</div>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">الاسم الكامل / اسم النشاط</label>
+            <input type="text" class="form-input" id="inv-name" placeholder="مثال: Mohammed Example">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Steuernummer</label>
+            <input type="text" class="form-input" id="inv-steuernummer" placeholder="xx/xxx/xxxxx">
+          </div>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">العنوان الكامل في ألمانيا</label>
+          <textarea class="form-input" id="inv-address" rows="2" placeholder="Straße, PLZ, Stadt"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">نظام الضريبة</label>
+            <select class="form-input" id="inv-tax-mode">
+              <option value="kleinunternehmer">Kleinunternehmer — §19 UStG (بدون VAT)</option>
+              <option value="regular">شركة عادية — تضيف VAT 19%</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">بادئة رقم الفاتورة</label>
+            <input type="text" class="form-input" id="inv-prefix" placeholder="AIRPIV" value="AIRPIV">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveInvoiceConfig()" style="align-self:flex-start">💾 حفظ بيانات الفاتورة</button>
+        <div style="font-size:11px;color:var(--tx3)">
+          💡 محفوظة بالسيرفر (admin_config) — متاحة من أي جهاز تسجّل دخول منه.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Booking Detail Modal -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-ref">تفاصيل الحجز</div>
+      <button class="modal-close" onclick="closeModal('booking-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Promo Modal -->
+<div class="modal-overlay" id="promo-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">كود خصم جديد</div>
+      <button class="modal-close" onclick="closeModal('promo-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">الكود</label>
+        <input type="text" class="form-input" id="pm-code" placeholder="SUMMER25" style="text-transform:uppercase">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">نوع الخصم</label>
+          <select class="form-input" id="pm-type">
+            <option value="percent">نسبة مئوية %</option>
+            <option value="fixed">مبلغ ثابت €</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">القيمة</label>
+          <input type="number" class="form-input" id="pm-value" placeholder="10">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">تاريخ الانتهاء</label>
+          <input type="date" class="form-input" id="pm-expiry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">عدد الاستخدامات (0 = غير محدود)</label>
+          <input type="number" class="form-input" id="pm-max" placeholder="0" value="0">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="savePromo()">✅ إنشاء الكود</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ [ADMIN-AUTH] API CONFIG ============
+// The dashboard talks ONLY to these endpoints — never directly to
+// Supabase from the browser. Change API_BASE if the backend ever moves.
+const API_BASE = 'https://api.airpiv.com';
+let ADMIN_TOKEN = sessionStorage.getItem('airpiv_admin_token') || null;
+
+// Wrapper around fetch() that always sends the bearer token and handles
+// 401s uniformly (kick back to the login screen if the token is rejected).
+async function adminFetch(path, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({ 'Authorization': 'Bearer ' + ADMIN_TOKEN, 'Content-Type': 'application/json' }, opts.headers || {});
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) {
+    ADMIN_TOKEN = null;
+    sessionStorage.removeItem('airpiv_admin_token');
+    showLoginScreen('انتهت الجلسة، الرجاء تسجيل الدخول مرة أخرى');
+    throw new Error('unauthorized');
+  }
+  return res;
+}
+
+function showLoginScreen(errMsg) {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').classList.remove('ready');
+  if (errMsg) {
+    const err = document.getElementById('login-err');
+    err.textContent = errMsg;
+    err.classList.add('show');
+  }
+}
+
+async function doAdminLogin() {
+  const pwInput = document.getElementById('login-password');
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  const password = pwInput.value || '';
+  if (!password) return;
+  err.classList.remove('show');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(API_BASE + '/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const j = await res.json();
+    if (res.ok && j.ok && j.token) {
+      ADMIN_TOKEN = j.token;
+      sessionStorage.setItem('airpiv_admin_token', ADMIN_TOKEN);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-shell').classList.add('ready');
+      pwInput.value = '';
+      initDashboard();
+    } else {
+      err.textContent = j.error || 'كلمة مرور خاطئة';
+      err.classList.add('show');
+    }
+  } catch (e) {
+    err.textContent = 'خطأ في الاتصال بالسيرفر';
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'دخول';
+  }
+}
+
+function doAdminLogout() {
+  ADMIN_TOKEN = null;
+  sessionStorage.removeItem('airpiv_admin_token');
+  showLoginScreen();
+}
+
+// ============ STATE ============
+let allBookings = [];
+let promos = [];               // loaded from GET /admin/promos
+let ticketTiers = [];           // loaded from GET /admin/profit-tiers
+let ancillaryTiers = [];        // loaded from GET /admin/ancillary-margin
+let loyaltyConfig = null;       // loaded from GET /admin/loyalty-config
+let invoiceConfig = null;       // loaded from GET /admin/invoice-config
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ar-SA', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if (ADMIN_TOKEN) {
+    // We have a token from a previous session in this tab — try using it.
+    // If it's stale/invalid, adminFetch() will bounce us back to login.
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').classList.add('ready');
+    initDashboard();
+  } else {
+    showLoginScreen();
+  }
+});
+
+// Loads everything the dashboard needs right after a successful login —
+// replaces the old tryAutoConnect()/connectSupabase() flow.
+async function initDashboard() {
+  await Promise.all([
+    loadStats(),
+    loadPromosFromServer(),
+    loadTicketTiers(),
+    loadAncillaryTiers(),
+    loadLoyaltyConfigFromServer(),
+  ]);
+  calcExample();
+  calcAncillaryExample();
+}
+
+// ============ NAVIGATION ============
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','settings'];
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + name + "'")) {
+      n.classList.add('active');
+    }
+  });
+
+  // Update bottom nav
+  ['dashboard','bookings','customers'].forEach(p => {
+    var el = document.getElementById('bn-' + p);
+    if (el) el.classList.toggle('active', p === name);
+  });
+  var moreBtn = document.getElementById('bn-more');
+  if (moreBtn) moreBtn.classList.toggle('active', morePages.includes(name));
+
+  // Update more menu items
+  morePages.forEach(p => {
+    var el = document.getElementById('mm-' + p);
+    if (el) el.classList.toggle('active', p === name);
+  });
+
+  if (name === 'bookings') loadBookingsFromServer();
+  if (name === 'reports') renderReports();
+  if (name === 'customers') renderCustomers();
+  if (name === 'invoices') renderInvoices();
+  if (name === 'profit') renderTiers();
+  if (name === 'ancillary') renderAncillaryTiers();
+  if (name === 'loyalty') renderLoyaltyConfig();
+  if (name === 'settings') loadInvoiceConfigIntoForm();
+}
+
+function toggleMoreMenu() {
+  var menu = document.getElementById('more-menu');
+  var backdrop = document.getElementById('more-backdrop');
+  var isOpen = menu.classList.contains('open');
+  if (isOpen) {
+    menu.classList.remove('open');
+    backdrop.classList.remove('open');
+  } else {
+    menu.classList.add('open');
+    backdrop.classList.add('open');
+  }
+}
+
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.remove('open');
+  document.getElementById('more-backdrop').classList.remove('open');
+}
+
+// ============ [ADMIN-AUTH] DATA LOADING — server only, never Supabase directly ============
+// loadStats() drives the dashboard's KPI cards. loadBookingsFromServer()
+// (called when the bookings page is opened) fetches the full list.
+async function loadStats() {
+  try {
+    const res = await adminFetch('/admin/stats');
+    const j = await res.json();
+    if (j.ok) {
+      document.getElementById('stat-revenue').textContent = '€' + j.revenue.toFixed(2);
+      document.getElementById('stat-profit').textContent = '€' + j.profit.toFixed(2);
+      document.getElementById('stat-bookings').textContent = j.bookingsCount;
+      document.getElementById('stat-discounts').textContent = '€' + j.discounts.toFixed(2);
+      const margin = j.revenue > 0 ? ((j.profit / j.revenue) * 100).toFixed(1) : 0;
+      document.getElementById('stat-profit-sub').textContent = 'هامش ' + margin + '%';
+      document.getElementById('stat-revenue-sub').textContent = j.bookingsCount + ' حجز مؤكد';
+    }
+  } catch (e) { /* adminFetch already handled 401s; ignore other errors silently */ }
+  // Recent bookings on the dashboard home page share the same data as the
+  // full bookings list — just the first 8.
+  try {
+    const res = await adminFetch('/admin/bookings?limit=8');
+    const j = await res.json();
+    if (j.ok) { allBookings = j.bookings; renderRecentBookings(); }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+async function loadBookingsFromServer() {
+  try {
+    const res = await adminFetch('/admin/bookings?limit=200');
+    const j = await res.json();
+    if (j.ok) { allBookings = j.bookings; renderAllBookings(); }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+// ============ STATS ============
+// [ADMIN-AUTH] Computed server-side now (GET /admin/stats) — see
+// loadStats() above. No client-side aggregation of raw booking rows.
+
+// ============ RECENT BOOKINGS ============
+function renderRecentBookings() {
+  var tbody = document.getElementById('recent-bookings');
+  var recent = allBookings.slice(0, 8);
+  if (!recent.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد حجوزات بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = recent.map(b => bookingRow(b, true)).join('');
+}
+
+let currentBookingsFilter = '';
+function renderAllBookings(filter) {
+  if (filter !== undefined) currentBookingsFilter = (filter || '').toLowerCase();
+  var tbody = document.getElementById('all-bookings');
+  var f = currentBookingsFilter;
+  var list = f ? allBookings.filter(b =>
+    (b.booking_reference || '').toLowerCase().includes(f) ||
+    (b.route_label || '').toLowerCase().includes(f) ||
+    (b.customer_email || '').toLowerCase().includes(f)
+  ) : allBookings;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:30px">لا توجد نتائج</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(b => bookingRow(b, false)).join('');
+}
+
+function bookingRow(b, short) {
+  var status = b.status === 'confirmed' ? '<span class="badge confirmed">✓ مؤكد</span>'
+    : b.status === 'pending' ? '<span class="badge pending">◔ معلق</span>'
+    : b.status === 'cancelled' ? '<span class="badge cancelled">✕ ملغى</span>'
+    : '<span class="badge">' + (b.status||'—') + '</span>';
+
+  var paid = Number(b.customer_paid) || 0;
+  var profit = Number(b.profit_margin) || 0;
+  var duffel = Number(b.duffel_amount) || 0;
+  var discount = Number(b.discount_amount) || 0;
+  var date = b.created_at ? new Date(b.created_at).toLocaleDateString('ar') : '—';
+  var route = escHtml(b.route_label || '—');
+  var ref = escHtml(b.booking_reference || '—');
+  var email = escHtml(b.customer_email || '—');
+
+  if (short) {
+    return `<tr>
+      <td class="mono">${ref}</td>
+      <td>${email}</td>
+      <td>${route}</td>
+      <td class="mono" style="color:var(--blue)">€${paid.toFixed(2)}</td>
+      <td class="mono" style="color:var(--teal)">€${profit.toFixed(2)}</td>
+      <td>${status}</td>
+    </tr>`;
+  }
+
+  return `<tr>
+    <td class="mono">${ref}</td>
+    <td>${date}</td>
+    <td>${route}</td>
+    <td class="mono">€${duffel.toFixed(2)}</td>
+    <td class="mono" style="color:var(--yellow)">${discount > 0 ? '-€'+discount.toFixed(2) : '—'}</td>
+    <td class="mono" style="color:var(--blue)">€${paid.toFixed(2)}</td>
+    <td class="mono" style="color:var(--teal)">€${profit.toFixed(2)}</td>
+    <td>${status}</td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick='showBookingDetail(${escJsonAttr(b)})'>تفاصيل</button>
+      ${b.status === 'confirmed' ? `<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="cancelBookingRow('${escHtml(b.id)}')">إلغاء</button>` : ''}
+    </td>
+  </tr>`;
+}
+
+function filterBookings(val) {
+  renderAllBookings(val.toLowerCase());
+}
+
+// [ADMIN-AUTH] Marks a booking cancelled in our own records only — does
+// NOT call Duffel's cancellation API (a refund decision shouldn't happen
+// from a stray click). For an actual Duffel cancellation + refund, use
+// the existing POST /cancel flow with the order id.
+async function cancelBookingRow(id) {
+  if (!confirm('تأكيد إلغاء هذا الحجز من السجلات؟ (هذا لا يلغي التذكرة فعلياً مع شركة الطيران)')) return;
+  try {
+    const res = await adminFetch('/admin/bookings/' + encodeURIComponent(id) + '/cancel', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) { showToast('تم إلغاء الحجز في السجلات ✅', 'success'); loadBookingsFromServer(); loadStats(); }
+    else showToast(j.error || 'فشل الإلغاء', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ============ BOOKING DETAIL ============
+function showBookingDetail(b) {
+  document.getElementById('modal-ref').textContent = 'حجز #' + (b.booking_reference || '—');
+  var paid = Number(b.customer_paid) || 0;
+  var duffel = Number(b.duffel_amount) || 0;
+  var profit = Number(b.profit_margin) || (paid - duffel);
+  var discount = Number(b.discount_amount) || 0;
+  var route = escHtml(b.route_label || '—');
+  var email = escHtml(b.customer_email || '—');
+  var promoCode = escHtml(b.promo_code || '');
+  var orderId = escHtml(b.duffel_order_id || '');
+  var sessionId = escHtml(b.stripe_session_id || '');
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">معلومات الرحلة</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-key">المسار</div><div class="detail-val">${route}</div></div>
+        <div class="detail-item"><div class="detail-key">عدد الركاب</div><div class="detail-val">${Number(b.passenger_count)||1}</div></div>
+        <div class="detail-item"><div class="detail-key">البريد الإلكتروني</div><div class="detail-val">${email}</div></div>
+        <div class="detail-item"><div class="detail-key">تاريخ الحجز</div><div class="detail-val">${b.created_at ? new Date(b.created_at).toLocaleDateString('ar') : '—'}</div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">التفاصيل المالية</div>
+      <div style="background:var(--bg3);border-radius:10px;padding:16px">
+        <div class="finance-row">
+          <span class="label">سعر التذكرة (Duffel)</span>
+          <span class="amount">€${duffel.toFixed(2)}</span>
+        </div>
+        <div class="finance-row profit">
+          <span class="label">هامش الربح</span>
+          <span class="amount">+€${profit.toFixed(2)}</span>
+        </div>
+        ${discount > 0 ? `<div class="finance-row discount">
+          <span class="label">خصم كود ${promoCode ? '('+promoCode+')' : ''}</span>
+          <span class="amount">-€${discount.toFixed(2)}</span>
+        </div>` : ''}
+        <div class="finance-row total">
+          <span class="label">دفع العميل</span>
+          <span class="amount">€${paid.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+
+    ${orderId ? `<div class="detail-section">
+      <div class="detail-section-title">Duffel</div>
+      <div class="detail-item">
+        <div class="detail-key">Order ID</div>
+        <div class="detail-val mono" style="font-size:11px;word-break:break-all">${orderId}</div>
+      </div>
+    </div>` : ''}
+
+    ${sessionId ? `<div class="detail-section">
+      <div class="detail-section-title">Stripe</div>
+      <div class="detail-item">
+        <div class="detail-key">Session ID</div>
+        <div class="detail-val mono" style="font-size:11px;word-break:break-all">${sessionId}</div>
+      </div>
+    </div>` : ''}
+
+    ${b.status === 'confirmed' ? `<div class="detail-section">
+      <button class="btn btn-primary" style="width:100%" onclick='closeModal("booking-modal"); openInvoiceIssueModal(${escJsonAttr(b)})'>🧾 إصدار فاتورة ضريبية</button>
+    </div>` : ''}
+  `;
+  document.getElementById('booking-modal').classList.add('open');
+}
+
+// ============ PROFIT CALCULATOR ============
+var DUFFEL_FIXED_FEE = 2.75;   // رسوم Duffel الثابتة لكل حجز
+var ISSUANCE_PCT = 0.01;        // 1% تكلفة إصدار التذكرة
+
+function calcExample() {
+  var price = parseFloat(document.getElementById('example-price') ? document.getElementById('example-price').value : 0) || 0;
+  var disc = parseFloat(document.getElementById('example-discount') ? document.getElementById('example-discount').value : 0) || 0;
+
+  var currentTiers = getTiersFromDOM('tiers-list');
+  var result = getMarginForPrice(price, currentTiers);
+  var margin = result.margin;
+  var tier = result.tier;
+
+  // التكاليف الفعلية
+  var duffelFee = DUFFEL_FIXED_FEE;
+  var issuanceFee = price * ISSUANCE_PCT;
+  var trueCost = price + duffelFee + issuanceFee;
+
+  // العميل يدفع سعر Duffel + هامش الربح - خصم
+  var customerPays = price + margin - disc;
+
+  // صافي الربح الحقيقي = ما دفعه العميل - التكلفة الفعلية - خصم
+  var netProfit = customerPays - trueCost;
+
+  if (document.getElementById('ex-duffel')) {
+    document.getElementById('ex-duffel').textContent = '€' + price.toFixed(2);
+    document.getElementById('ex-duffel-fee').textContent = '-€' + duffelFee.toFixed(2);
+    document.getElementById('ex-issuance-fee').textContent = '-€' + issuanceFee.toFixed(2);
+    document.getElementById('ex-true-cost').textContent = '€' + trueCost.toFixed(2);
+    document.getElementById('ex-margin').textContent = '€' + margin.toFixed(2);
+    document.getElementById('ex-disc').textContent = '-€' + disc.toFixed(2);
+    document.getElementById('ex-total').textContent = '€' + customerPays.toFixed(2);
+    document.getElementById('ex-net-profit').textContent = '€' + netProfit.toFixed(2);
+    document.getElementById('ex-net-profit').style.color = netProfit >= 0 ? 'var(--teal)' : 'var(--red)';
+    if (document.getElementById('ex-tier-label')) {
+      if (tier) {
+        var toLabel = tier.to !== null ? '€' + tier.to : '∞';
+        document.getElementById('ex-tier-label').textContent = '€' + tier.from + ' → ' + toLabel + ' | ' + tier.pct + '% + €' + tier.fixed;
+      } else {
+        document.getElementById('ex-tier-label').textContent = 'لا توجد شريحة مطابقة';
+      }
+    }
+  }
+}
+
+// ============ [ADMIN-MARGIN] PROFIT TIERS — generic engine ============
+// The exact same UI/logic powers BOTH the ticket-margin page (#tiers-list)
+// and the ancillary seat/baggage-margin page (#ancillary-tiers-list).
+// Tiers are loaded from / saved to the server (GET/POST /admin/profit-tiers
+// and /admin/ancillary-margin) — never localStorage, and the math here is
+// kept in lockstep with computeTieredMargin() in server.js so the preview
+// always matches what the server actually charges.
+
+function renderTiersInto(listId, tiers) {
+  var list = document.getElementById(listId);
+  if (!list) return;
+  list.innerHTML = '';
+  tiers.forEach(function(tier, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:center;background:var(--bg3);border-radius:10px;padding:12px;border:1px solid var(--border)';
+    row.dataset.index = i;
+    row.innerHTML = `
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">من €</label>
+        <input type="number" class="form-input tier-from" value="${tier.from}" min="0" placeholder="0" oninput="updateTierPreview('${listId}')" style="font-family:var(--mono)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">إلى € <span style="color:var(--tx3)">(فارغ = ∞)</span></label>
+        <input type="number" class="form-input tier-to" value="${tier.to !== null && tier.to !== undefined ? tier.to : ''}" min="0" placeholder="∞" oninput="updateTierPreview('${listId}')" style="font-family:var(--mono)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">نسبة %</label>
+        <input type="number" class="form-input tier-pct" value="${tier.pct}" min="0" max="100" step="0.5" placeholder="0" oninput="updateTierPreview('${listId}')" style="font-family:var(--mono);color:var(--teal)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">مبلغ ثابت €</label>
+        <input type="number" class="form-input tier-fixed" value="${tier.fixed}" min="0" step="0.5" placeholder="0" oninput="updateTierPreview('${listId}')" style="font-family:var(--mono);color:var(--blue)">
+      </div>
+      <div style="padding-top:20px">
+        <button class="icon-btn danger" onclick="removeTierFrom('${listId}', ${i})" title="حذف الشريحة">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderTiers() {
+  renderTiersInto('tiers-list', ticketTiers);
+  calcExample();
+}
+
+function renderAncillaryTiers() {
+  renderTiersInto('ancillary-tiers-list', ancillaryTiers);
+  calcAncillaryExample();
+}
+
+function addTierTo(listId, tiersArr) {
+  var lastTo = tiersArr.length > 0
+    ? (tiersArr[tiersArr.length - 1].to || (tiersArr[tiersArr.length - 1].from + 100))
+    : 0;
+  tiersArr.push({ from: lastTo, to: null, pct: 5, fixed: 1 });
+  renderTiersInto(listId, tiersArr);
+  var list = document.getElementById(listId);
+  if (list && list.lastElementChild) list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (listId === 'tiers-list') calcExample(); else calcAncillaryExample();
+}
+function addTier() { addTierTo('tiers-list', ticketTiers); }
+function addAncillaryTier() { addTierTo('ancillary-tiers-list', ancillaryTiers); }
+
+function removeTierFrom(listId, i) {
+  var arr = listId === 'tiers-list' ? ticketTiers : ancillaryTiers;
+  arr.splice(i, 1);
+  renderTiersInto(listId, arr);
+  if (listId === 'tiers-list') calcExample(); else calcAncillaryExample();
+}
+
+function getTiersFromDOM(listId) {
+  var rows = document.querySelectorAll('#' + listId + ' > div');
+  var tiers = [];
+  rows.forEach(function(row) {
+    var from = parseFloat(row.querySelector('.tier-from').value) || 0;
+    var toVal = row.querySelector('.tier-to').value;
+    var to = toVal === '' ? null : parseFloat(toVal);
+    var pct = parseFloat(row.querySelector('.tier-pct').value) || 0;
+    var fixed = parseFloat(row.querySelector('.tier-fixed').value) || 0;
+    tiers.push({ from, to, pct, fixed });
+  });
+  return tiers;
+}
+
+function updateTierPreview(listId) {
+  if (listId === 'tiers-list') { ticketTiers = getTiersFromDOM(listId); calcExample(); }
+  else { ancillaryTiers = getTiersFromDOM(listId); calcAncillaryExample(); }
+}
+
+// Same fixed-window tier math as computeTieredMargin() in server.js —
+// kept manually in sync; if you change one, change the other.
+function getMarginForPrice(price, tiers) {
+  for (var i = 0; i < tiers.length; i++) {
+    var t = tiers[i];
+    var inFrom = price >= t.from;
+    var inTo = t.to === null || t.to === undefined || price < t.to;
+    if (inFrom && inTo) {
+      return { margin: (price * t.pct / 100) + t.fixed, tier: t, index: i };
+    }
+  }
+  if (tiers.length > 0) {
+    var last = tiers[tiers.length - 1];
+    return { margin: (price * last.pct / 100) + last.fixed, tier: last, index: tiers.length - 1 };
+  }
+  return { margin: 0, tier: null, index: -1 };
+}
+
+// ============ [ADMIN-MARGIN] Load/save tiers — server only ============
+async function loadTicketTiers() {
+  try {
+    const res = await adminFetch('/admin/profit-tiers');
+    const j = await res.json();
+    if (j.ok) ticketTiers = j.tiers;
+  } catch (e) { console.error('Admin API error:', e); }
+}
+async function loadAncillaryTiers() {
+  try {
+    const res = await adminFetch('/admin/ancillary-margin');
+    const j = await res.json();
+    if (j.ok) ancillaryTiers = j.tiers;
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+async function saveProfit() {
+  ticketTiers = getTiersFromDOM('tiers-list');
+  try {
+    const res = await adminFetch('/admin/profit-tiers', { method: 'POST', body: JSON.stringify({ tiers: ticketTiers }) });
+    const j = await res.json();
+    if (j.ok) { showToast('تم حفظ شرائح هامش التذاكر ✅', 'success'); ticketTiers = j.tiers; }
+    else showToast(j.error || 'فشل الحفظ', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function saveAncillaryMargin() {
+  ancillaryTiers = getTiersFromDOM('ancillary-tiers-list');
+  try {
+    const res = await adminFetch('/admin/ancillary-margin', { method: 'POST', body: JSON.stringify({ tiers: ancillaryTiers }) });
+    const j = await res.json();
+    if (j.ok) { showToast('تم حفظ شرائح هامش المقاعد والحقائب ✅', 'success'); ancillaryTiers = j.tiers; }
+    else showToast(j.error || 'فشل الحفظ', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// Ancillary calculator mirrors calcExample() but without the Duffel
+// issuance-fee line (that only applies to the base ticket, not a single
+// seat/bag service) and without promo/loyalty (those only ever apply to
+// the whole booking, not one ancillary item).
+function calcAncillaryExample() {
+  var price = parseFloat(document.getElementById('ancillary-example-price') ? document.getElementById('ancillary-example-price').value : 0) || 0;
+  var currentTiers = getTiersFromDOM('ancillary-tiers-list');
+  var result = getMarginForPrice(price, currentTiers);
+  var margin = result.margin;
+  var tier = result.tier;
+  var customerPays = price + margin;
+
+  if (document.getElementById('aex-net')) {
+    document.getElementById('aex-net').textContent = '€' + price.toFixed(2);
+    document.getElementById('aex-margin').textContent = '€' + margin.toFixed(2);
+    document.getElementById('aex-total').textContent = '€' + customerPays.toFixed(2);
+    if (document.getElementById('aex-tier-label')) {
+      if (tier) {
+        var toLabel = tier.to !== null ? '€' + tier.to : '∞';
+        document.getElementById('aex-tier-label').textContent = '€' + tier.from + ' → ' + toLabel + ' | ' + tier.pct + '% + €' + tier.fixed;
+      } else {
+        document.getElementById('aex-tier-label').textContent = 'لا توجد شريحة مطابقة';
+      }
+    }
+  }
+}
+
+// ============ [ADMIN-LOYALTY] LOYALTY CONFIG ============
+// Mirrors server.js's getLoyaltyConfig()/DEFAULT_LOYALTY_CONFIG exactly —
+// same field names, same tier shape ({from, to, creditEur}). Everything
+// here only changes the RULES; the actual per-device balance lives in
+// loyalty_accounts on the server and is never touched from this page.
+async function loadLoyaltyConfigFromServer() {
+  try {
+    const res = await adminFetch('/admin/loyalty-config');
+    const j = await res.json();
+    if (j.ok) loyaltyConfig = j.config;
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderLoyaltyConfig() {
+  if (!loyaltyConfig) return;
+  document.getElementById('ly-welcome-credit').value = loyaltyConfig.welcomeCreditEur;
+  document.getElementById('ly-welcome-points').value = loyaltyConfig.welcomePoints;
+  document.getElementById('ly-points-per-euro').value = loyaltyConfig.pointsPerEuro;
+  document.getElementById('ly-max-credit').value = loyaltyConfig.maxCreditPerBooking;
+  renderLoyaltyTiers(loyaltyConfig.tiers || []);
+}
+
+function renderLoyaltyTiers(tiers) {
+  var list = document.getElementById('loyalty-tiers-list');
+  if (!list) return;
+  list.innerHTML = '';
+  tiers.forEach(function(tier, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:center;background:var(--bg3);border-radius:10px;padding:12px;border:1px solid var(--border)';
+    row.dataset.index = i;
+    row.innerHTML = `
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">من €</label>
+        <input type="number" class="form-input ly-tier-from" value="${tier.from}" min="0" placeholder="0" style="font-family:var(--mono)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">إلى € <span style="color:var(--tx3)">(فارغ = ∞)</span></label>
+        <input type="number" class="form-input ly-tier-to" value="${tier.to !== null && tier.to !== undefined ? tier.to : ''}" min="0" placeholder="∞" style="font-family:var(--mono)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--tx3);display:block;margin-bottom:4px">خصم قابل للاستخدام €</label>
+        <input type="number" class="form-input ly-tier-credit" value="${tier.creditEur}" min="0" step="0.5" placeholder="0" style="font-family:var(--mono);color:var(--teal)">
+      </div>
+      <div style="padding-top:20px">
+        <button class="icon-btn danger" onclick="removeLoyaltyTier(${i})" title="حذف الشريحة">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function getLoyaltyTiersFromDOM() {
+  var rows = document.querySelectorAll('#loyalty-tiers-list > div');
+  var tiers = [];
+  rows.forEach(function(row) {
+    var from = parseFloat(row.querySelector('.ly-tier-from').value) || 0;
+    var toVal = row.querySelector('.ly-tier-to').value;
+    var to = toVal === '' ? null : parseFloat(toVal);
+    var creditEur = parseFloat(row.querySelector('.ly-tier-credit').value) || 0;
+    tiers.push({ from, to, creditEur });
+  });
+  return tiers;
+}
+
+function addLoyaltyTier() {
+  var tiers = getLoyaltyTiersFromDOM();
+  var lastTo = tiers.length > 0 ? (tiers[tiers.length - 1].to || (tiers[tiers.length - 1].from + 75)) : 0;
+  tiers.push({ from: lastTo, to: null, creditEur: 1 });
+  renderLoyaltyTiers(tiers);
+}
+
+function removeLoyaltyTier(i) {
+  var tiers = getLoyaltyTiersFromDOM();
+  tiers.splice(i, 1);
+  renderLoyaltyTiers(tiers);
+}
+
+async function saveLoyaltyConfig() {
+  var cfg = {
+    welcomeCreditEur: parseFloat(document.getElementById('ly-welcome-credit').value) || 0,
+    welcomePoints: parseInt(document.getElementById('ly-welcome-points').value, 10) || 0,
+    pointsPerEuro: parseFloat(document.getElementById('ly-points-per-euro').value) || 0,
+    maxCreditPerBooking: parseFloat(document.getElementById('ly-max-credit').value) || 0,
+    tiers: getLoyaltyTiersFromDOM(),
+  };
+  try {
+    const res = await adminFetch('/admin/loyalty-config', { method: 'POST', body: JSON.stringify(cfg) });
+    const j = await res.json();
+    if (j.ok) { showToast('تم حفظ إعدادات الولاء ✅', 'success'); loyaltyConfig = j.config; }
+    else showToast(j.error || 'فشل الحفظ', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ============ PROMOS ============
+// ============ [ADMIN-MARGIN] PROMOS — server only ============
+// Promo codes used to live as a plain hardcoded object inside the
+// customer-facing site's JS (visible to anyone via devtools, with no real
+// usage cap). They now live in a real `promo_codes` table, validated only
+// by the server.
+async function loadPromosFromServer() {
+  try {
+    const res = await adminFetch('/admin/promos');
+    const j = await res.json();
+    if (j.ok) { promos = j.promos; renderPromos(); }
+  } catch (e) { console.error('Admin API error:', e); }
+  loadPromoUsageLog();
+}
+
+// [ADMIN-DASHBOARD-FIX] Populates the previously-decorative "سجل الاستخدام"
+// table from /admin/promos/usage-log, which derives real per-use rows
+// (booking reference, who used it, how much was discounted, when) from the
+// bookings table — promo_codes itself only ever tracked a used_count
+// total, with no such detail available before this endpoint existed.
+async function loadPromoUsageLog() {
+  var tbody = document.getElementById('promo-usage-log');
+  if (!tbody) return;
+  try {
+    const res = await adminFetch('/admin/promos/usage-log?limit=50');
+    const j = await res.json();
+    if (!j.ok) { console.error('Admin API error:', j.error); return; }
+    if (!j.usage.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:24px">لا يوجد سجل بعد</td></tr>';
+      return;
+    }
+    tbody.innerHTML = j.usage.map((u) => {
+      var d = u.created_at ? new Date(u.created_at).toLocaleDateString('ar') : '—';
+      return `<tr>
+        <td class="mono">${escHtml(u.promo_code)}</td>
+        <td>${escHtml(u.customer_email) || '—'}</td>
+        <td class="mono">${escHtml(u.booking_reference) || '—'}</td>
+        <td class="mono" style="color:var(--yellow)">-€${(Number(u.discount_amount) || 0).toFixed(2)}</td>
+        <td>${d}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderPromos() {
+  var grid = document.getElementById('promo-grid');
+  if (!promos.length) {
+    grid.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:10px">لا توجد كودات بعد</div>';
+    return;
+  }
+  grid.innerHTML = promos.map((p) => {
+    var used = p.used_count || 0;
+    var max = p.max_uses || 0;
+    var pct = max > 0 ? Math.min(100, (used / max) * 100) : (used > 0 ? 50 : 0);
+    var expired = p.expires_at && new Date(p.expires_at) < new Date();
+    var inactive = !p.active;
+    var code = escHtml(p.code);
+    return `<div class="promo-card" style="${(expired || inactive) ? 'opacity:0.5' : ''}">
+      <div class="promo-actions">
+        <button class="icon-btn" onclick="togglePromoActive('${escHtml(p.id)}')" title="${p.active ? 'تعطيل' : 'تفعيل'}">${p.active ? '⏸' : '▶'}</button>
+        <button class="icon-btn danger" onclick="deletePromo('${escHtml(p.id)}')" title="حذف">🗑</button>
+      </div>
+      <div class="promo-code">${code}</div>
+      <div class="promo-details">
+        💰 خصم: ${p.type === 'percent' ? p.value + '%' : '€' + Number(p.value).toFixed(2)}<br>
+        📅 ينتهي: ${p.expires_at ? new Date(p.expires_at).toLocaleDateString('ar') : 'غير محدد'}<br>
+        🔢 الحد: ${max > 0 ? max + ' مرة' : 'غير محدود'}
+      </div>
+      <div class="promo-usage">${used} استخدام ${max > 0 ? 'من ' + max : ''}</div>
+      ${max > 0 ? `<div class="promo-bar"><div class="promo-bar-fill" style="width:${pct}%"></div></div>` : ''}
+      ${expired ? '<div style="color:var(--red);font-size:11px;margin-top:6px">⚠️ منتهي الصلاحية</div>' : ''}
+      ${inactive ? '<div style="color:var(--tx3);font-size:11px;margin-top:6px">⏸ معطّل</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function openPromoModal() {
+  document.getElementById('pm-code').value = '';
+  document.getElementById('pm-value').value = '';
+  document.getElementById('pm-max').value = '0';
+  document.getElementById('promo-modal').classList.add('open');
+}
+
+async function savePromo() {
+  var code = document.getElementById('pm-code').value.trim().toUpperCase();
+  var type = document.getElementById('pm-type').value; // 'percent' | 'fixed' — matches the server's promo_codes.type
+  var value = parseFloat(document.getElementById('pm-value').value);
+  var expiry = document.getElementById('pm-expiry').value;
+  var max = parseInt(document.getElementById('pm-max').value, 10) || 0;
+
+  if (!code || !value) { showToast('أدخل الكود والقيمة', 'error'); return; }
+
+  try {
+    const res = await adminFetch('/admin/promos', {
+      method: 'POST',
+      body: JSON.stringify({
+        code, type, value,
+        max_uses: max > 0 ? max : null,
+        expires_at: expiry || null,
+      }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('تم إنشاء الكود ✅', 'success');
+      closeModal('promo-modal');
+      loadPromosFromServer();
+    } else {
+      showToast(j.error || 'فشل إنشاء الكود', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function togglePromoActive(id) {
+  try {
+    const res = await adminFetch('/admin/promos/' + encodeURIComponent(id) + '/toggle', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) { loadPromosFromServer(); }
+    else showToast(j.error || 'فشل التحديث', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deletePromo(id) {
+  if (!confirm('تأكيد حذف هذا الكود نهائياً؟')) return;
+  try {
+    const res = await adminFetch('/admin/promos/' + encodeURIComponent(id), { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('تم حذف الكود', 'success'); loadPromosFromServer(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ============ REPORTS ============
+var reportRange = 30;
+var reportMode = 'daily'; // 'daily' or 'monthly'
+
+function setReportRange(days) {
+  reportRange = days;
+  ['30','90','365'].forEach(d => {
+    document.getElementById('rep-range-' + d).classList.toggle('active', parseInt(d) === days);
+  });
+  _renderReportsInner();
+}
+
+function toggleReportMode() {
+  reportMode = reportMode === 'daily' ? 'monthly' : 'daily';
+  document.getElementById('rep-mode-toggle').textContent = reportMode === 'daily' ? 'عرض شهري' : 'عرض يومي';
+  _renderReportsInner();
+}
+
+async function renderReports() {
+  await loadBookingsFromServer();
+  ['30','90','365'].forEach(d => {
+    document.getElementById('rep-range-' + d).classList.toggle('active', parseInt(d) === reportRange);
+  });
+  _renderReportsInner();
+}
+
+// Actual render logic
+function _renderReportsInner() {
+  var confirmed = allBookings.filter(b => b.status === 'confirmed');
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - reportRange);
+  var inRange = confirmed.filter(b => b.created_at && new Date(b.created_at) >= cutoff);
+
+  renderRevenueChart(inRange);
+  renderTopList('top-destinations', inRange, b => b.route_label, '✈️');
+  renderTopList('top-airlines', inRange.filter(b => b.promo_code), b => b.promo_code, '🏷');
+}
+
+function renderRevenueChart(bookings) {
+  var canvas = document.getElementById('revenue-chart');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  var w = rect.width || canvas.parentElement.clientWidth - 40;
+  var h = 260;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  // Bucket data
+  var buckets = {}; // key -> {revenue, profit}
+  var keyFn;
+  if (reportMode === 'daily') {
+    keyFn = d => d.toISOString().slice(0, 10);
+  } else {
+    keyFn = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  bookings.forEach(b => {
+    var d = new Date(b.created_at);
+    var key = keyFn(d);
+    if (!buckets[key]) buckets[key] = { revenue: 0, profit: 0 };
+    buckets[key].revenue += (b.customer_paid || b.total_amount || 0);
+    buckets[key].profit += (b.profit_margin || 0);
+  });
+
+  var keys = Object.keys(buckets).sort();
+  var padding = { top: 16, right: 8, bottom: 28, left: 50 };
+  var plotW = w - padding.left - padding.right;
+  var plotH = h - padding.top - padding.bottom;
+
+  if (!keys.length) {
+    ctx.fillStyle = '#475569';
+    ctx.font = '13px IBM Plex Sans Arabic, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('لا توجد بيانات لهذه الفترة', w / 2, h / 2);
+    return;
+  }
+
+  var maxVal = Math.max(1, ...keys.map(k => buckets[k].revenue));
+  var niceMax = maxVal * 1.15;
+
+  // Grid lines + y labels
+  ctx.strokeStyle = '#1e2d45';
+  ctx.fillStyle = '#475569';
+  ctx.font = '10px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  var steps = 4;
+  for (var i = 0; i <= steps; i++) {
+    var y = padding.top + plotH - (plotH * i / steps);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    var val = (niceMax * i / steps);
+    ctx.fillText('€' + Math.round(val), padding.left - 8, y + 3);
+  }
+
+  function xFor(idx) {
+    if (keys.length === 1) return padding.left + plotW / 2;
+    return padding.left + (plotW * idx / (keys.length - 1));
+  }
+  function yFor(val) {
+    return padding.top + plotH - (plotH * val / niceMax);
+  }
+
+  function drawLine(field, color) {
+    ctx.beginPath();
+    keys.forEach((k, idx) => {
+      var x = xFor(idx);
+      var y = yFor(buckets[k][field]);
+      if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // dots
+    keys.forEach((k, idx) => {
+      var x = xFor(idx);
+      var y = yFor(buckets[k][field]);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  drawLine('revenue', '#60a5fa');
+  drawLine('profit', '#00c9a7');
+
+  // x labels (skip some if too many)
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'center';
+  ctx.font = '10px IBM Plex Mono, monospace';
+  var labelEvery = Math.max(1, Math.ceil(keys.length / 8));
+  keys.forEach((k, idx) => {
+    if (idx % labelEvery !== 0 && idx !== keys.length - 1) return;
+    var x = xFor(idx);
+    var label = reportMode === 'daily' ? k.slice(5) : k;
+    ctx.fillText(label, x, h - 8);
+  });
+}
+
+function renderTopList(containerId, bookings, fieldFn, icon) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var counts = {}; // name -> {count, revenue}
+  bookings.forEach(b => {
+    var name = fieldFn(b) || 'غير محدد';
+    if (!counts[name]) counts[name] = { count: 0, revenue: 0 };
+    counts[name].count += 1;
+    counts[name].revenue += (b.customer_paid || b.total_amount || 0);
+  });
+
+  var entries = Object.entries(counts).sort((a, b) => b[1].count - a[1].count).slice(0, 6);
+
+  if (!entries.length) {
+    el.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:8px 0">لا توجد بيانات لهذه الفترة</div>';
+    return;
+  }
+
+  var maxCount = entries[0][1].count;
+  el.innerHTML = entries.map((entry, idx) => {
+    var name = entry[0], data = entry[1];
+    var pct = maxCount > 0 ? (data.count / maxCount * 100) : 0;
+    return `<div class="rank-row">
+      <div class="rank-num">${idx + 1}</div>
+      <div class="rank-info">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span class="rank-name">${icon} ${name}</span>
+          <span class="rank-value">${data.count} حجز</span>
+        </div>
+        <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+        <div class="rank-sub">إيرادات €${data.revenue.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ CUSTOMERS ============
+var VIP_THRESHOLD = 3;
+var customersData = []; // cached grouped list
+var customerFilter = '';
+var customerVipOnly = false;
+
+function buildCustomers() {
+  var map = {}; // email -> {email, name, bookings: []}
+  allBookings.forEach(b => {
+    var email = (b.customer_email || '').trim().toLowerCase();
+    if (!email) return; // skip bookings with no identifiable customer
+    if (!map[email]) {
+      map[email] = { email: b.customer_email, name: b.customer_name || '', bookings: [] };
+    }
+    if (!map[email].name && b.customer_name) map[email].name = b.customer_name;
+    map[email].bookings.push(b);
+  });
+
+  return Object.values(map).map(c => {
+    var confirmed = c.bookings.filter(b => b.status === 'confirmed');
+    var totalSpent = confirmed.reduce((s, b) => s + (b.customer_paid || b.total_amount || 0), 0);
+    var totalProfit = confirmed.reduce((s, b) => s + (b.profit_margin || 0), 0);
+    var sorted = c.bookings.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return {
+      email: c.email,
+      name: c.name,
+      bookingCount: c.bookings.length,
+      confirmedCount: confirmed.length,
+      totalSpent: totalSpent,
+      totalProfit: totalProfit,
+      lastBooking: sorted[0] ? sorted[0].created_at : null,
+      bookings: sorted,
+      isVip: confirmed.length >= VIP_THRESHOLD
+    };
+  }).sort((a, b) => b.totalSpent - a.totalSpent);
+}
+
+async function renderCustomers() {
+  // Ensure we have the FULL booking list, not just loadStats()'s 8-row
+  // preview — customer grouping needs every booking to be accurate.
+  await loadBookingsFromServer();
+  customersData = buildCustomers();
+  var noEmailCount = allBookings.filter(b => !(b.customer_email || '').trim()).length;
+
+  document.getElementById('cust-total').textContent = customersData.length;
+  var vipCount = customersData.filter(c => c.isVip).length;
+  var repeatCount = customersData.filter(c => c.confirmedCount > 1).length;
+  var avgSpent = customersData.length ? (customersData.reduce((s, c) => s + c.totalSpent, 0) / customersData.length) : 0;
+
+  document.getElementById('cust-vip').textContent = vipCount;
+  document.getElementById('cust-repeat').textContent = repeatCount;
+  document.getElementById('cust-avg').textContent = '€' + avgSpent.toFixed(2);
+  document.getElementById('cust-total-sub').textContent = noEmailCount > 0
+    ? noEmailCount + ' حجز بدون إيميل عميل'
+    : 'كل الحجوزات مرتبطة بعملاء';
+
+  renderCustomersTable();
+}
+
+function renderCustomersTable() {
+  var tbody = document.getElementById('customers-table');
+  var list = customersData.filter(c => {
+    if (customerVipOnly && !c.isVip) return false;
+    if (customerFilter) {
+      var hay = (c.email + ' ' + c.name).toLowerCase();
+      if (!hay.includes(customerFilter)) return false;
+    }
+    return true;
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">لا توجد نتائج</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map((c, i) => {
+    var idx = customersData.indexOf(c);
+    var lastDate = c.lastBooking ? new Date(c.lastBooking).toLocaleDateString('ar') : '—';
+    var vipBadge = c.isVip ? '<span class="badge confirmed">⭐ VIP</span>' : '<span class="badge">عادي</span>';
+    return `<tr>
+      <td>
+        <div style="font-weight:600">${c.name || 'بدون اسم'}</div>
+        <div style="font-size:11px;color:var(--tx3)" class="mono">${c.email}</div>
+      </td>
+      <td class="mono">${c.bookingCount}</td>
+      <td class="mono" style="color:var(--blue)">€${c.totalSpent.toFixed(2)}</td>
+      <td class="mono" style="color:var(--teal)">€${c.totalProfit.toFixed(2)}</td>
+      <td>${lastDate}</td>
+      <td>${vipBadge}</td>
+      <td>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showCustomerDetail(${idx})">تفاصيل</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterCustomers(val) {
+  customerFilter = val.toLowerCase();
+  renderCustomersTable();
+}
+
+function toggleVipFilter() {
+  customerVipOnly = !customerVipOnly;
+  document.getElementById('vip-filter-btn').classList.toggle('active', customerVipOnly);
+  renderCustomersTable();
+}
+
+function showCustomerDetail(idx) {
+  var c = customersData[idx];
+  if (!c) return;
+
+  document.getElementById('cmodal-name').textContent = c.name || c.email;
+
+  var rows = c.bookings.map(b => {
+    var status = b.status === 'confirmed' ? '<span class="badge confirmed">✓ مؤكد</span>'
+      : b.status === 'pending' ? '<span class="badge pending">◔ معلق</span>'
+      : b.status === 'cancelled' ? '<span class="badge cancelled">✕ ملغى</span>'
+      : '<span class="badge">' + (b.status||'—') + '</span>';
+    var paid = b.customer_paid || b.total_amount || 0;
+    var date = b.created_at ? new Date(b.created_at).toLocaleDateString('ar') : '—';
+    return `<tr>
+      <td class="mono">${b.booking_ref||'—'}</td>
+      <td>${date}</td>
+      <td>${(b.origin||'?') + ' → ' + (b.destination||'?')}</td>
+      <td class="mono" style="color:var(--blue)">€${paid.toFixed(2)}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('cmodal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">معلومات العميل</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-key">الإيميل</div><div class="detail-val mono">${c.email}</div></div>
+        <div class="detail-item"><div class="detail-key">عدد الحجوزات</div><div class="detail-val">${c.bookingCount}</div></div>
+        <div class="detail-item"><div class="detail-key">إجمالي الإنفاق</div><div class="detail-val">€${c.totalSpent.toFixed(2)}</div></div>
+        <div class="detail-item"><div class="detail-key">صافي ربحنا منه</div><div class="detail-val">€${c.totalProfit.toFixed(2)}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">سجل الحجوزات</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:right;padding:8px;font-size:11px;color:var(--tx3)">المرجع</th>
+          <th style="text-align:right;padding:8px;font-size:11px;color:var(--tx3)">التاريخ</th>
+          <th style="text-align:right;padding:8px;font-size:11px;color:var(--tx3)">الرحلة</th>
+          <th style="text-align:right;padding:8px;font-size:11px;color:var(--tx3)">المبلغ</th>
+          <th style="text-align:right;padding:8px;font-size:11px;color:var(--tx3)">الحالة</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="detail-section">
+      <button class="btn btn-primary" style="width:100%" onclick="emailCustomer('${c.email}', '${(c.name||'').replace(/'/g,"")}')">✉️ إرسال إيميل للعميل</button>
+    </div>
+  `;
+  document.getElementById('customer-modal').classList.add('open');
+}
+
+function emailCustomer(email, name) {
+  var subject = encodeURIComponent('Airpiv — بخصوص حجوزاتك');
+  var body = encodeURIComponent('مرحباً ' + (name || '') + ',\n\n');
+  window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+}
+
+// ============ [ADMIN-MARGIN] INVOICE CONFIG — server only ============
+// Company name/address/tax settings now live in admin_config on the
+// server (GET/POST /admin/invoice-config), available from any device you
+// log in from. NOTE: this is configuration only — there is no automatic
+// invoice-PDF generation or sequential numbering wired up server-side yet;
+// nextNumber here is a manually-maintained value, not legally guaranteed
+// to be gap-free (§14 UStG requires that for real invoice issuance — if
+// you start generating actual invoice PDFs, that increment needs to be
+// atomic server-side, not just a stored number).
+async function saveInvoiceConfig() {
+  var cfg = {
+    companyName: document.getElementById('inv-name').value.trim(),
+    companyAddress: document.getElementById('inv-address').value.trim(),
+    steuernummer: document.getElementById('inv-steuernummer').value.trim(),
+    taxMode: document.getElementById('inv-tax-mode').value,
+    prefix: (document.getElementById('inv-prefix').value.trim() || 'AIRPIV').toUpperCase(),
+  };
+  try {
+    const res = await adminFetch('/admin/invoice-config', { method: 'POST', body: JSON.stringify(cfg) });
+    const j = await res.json();
+    if (j.ok) showToast('تم حفظ بيانات الفاتورة ✅', 'success');
+    else showToast(j.error || 'فشل الحفظ', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function loadInvoiceConfigIntoForm() {
+  try {
+    const res = await adminFetch('/admin/invoice-config');
+    const j = await res.json();
+    if (j.ok) {
+      invoiceConfig = j.config;
+      if (document.getElementById('inv-name')) {
+        document.getElementById('inv-name').value = invoiceConfig.companyName || '';
+        document.getElementById('inv-address').value = invoiceConfig.companyAddress || '';
+        document.getElementById('inv-steuernummer').value = invoiceConfig.steuernummer || '';
+        document.getElementById('inv-tax-mode').value = invoiceConfig.taxMode || 'kleinunternehmer';
+        document.getElementById('inv-prefix').value = invoiceConfig.prefix || 'AIRPIV';
+      }
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function isInvoiceConfigComplete() {
+  return !!(invoiceConfig && invoiceConfig.companyName && invoiceConfig.companyAddress && invoiceConfig.steuernummer);
+}
+
+// ============ [ADMIN-INVOICE] INVOICE NUMBERING — server only ============
+// The actual number is now reserved atomically by the server's
+// issue_invoice() Postgres function (a real SEQUENCE, race-safe under
+// concurrent admins) at the moment of issuing — never before. There is no
+// more "peek" that's guaranteed accurate: showing a predicted number before
+// commit risks showing one that's already been taken by another admin in
+// the meantime. The modal instead shows "wird automatisch vergeben" and the
+// real number appears only after the server confirms it.
+async function loadInvoicesFromServer() {
+  try {
+    const res = await adminFetch('/admin/invoices?limit=300');
+    const j = await res.json();
+    if (j.ok) { issuedInvoicesCache = j.invoices; }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+let issuedInvoicesCache = [];
+// ============ FLEXIBLE FIELD EXTRACTION ============
+// تحاول عدة أسماء حقول شائعة عشان تشتغل بغض النظر عن تسمية أعمدتك بالضبط.
+function pickField(b, candidates) {
+  for (var i = 0; i < candidates.length; i++) {
+    var v = b[candidates[i]];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+  }
+  return '';
+}
+
+function extractInvoiceFields(b) {
+  var route = pickField(b, ['route_label']);
+  return {
+    customerName: pickField(b, ['customer_email', 'customer_name', 'passenger_name', 'full_name', 'name']),
+    customerAddress: pickField(b, ['customer_address', 'billing_address', 'address']),
+    pnr: pickField(b, ['booking_reference', 'booking_ref', 'pnr', 'reference']),
+    airline: pickField(b, ['airline']),
+    route: route,
+    serviceDate: pickField(b, ['departure_date', 'created_at']),
+    amount: Number(b.customer_paid) || 0
+  };
+}
+
+// ============ ISSUE INVOICE MODAL ============
+var pendingInvoiceBooking = null;
+
+async function openInvoiceIssueModal(b) {
+  // [ADMIN-INVOICE] invoiceConfig may not be loaded yet if the admin never
+  // visited the Settings page this session — load it fresh here so the
+  // completeness check is never a false negative against stale/empty state.
+  await loadInvoiceConfigIntoForm();
+  if (!isInvoiceConfigComplete()) {
+    showToast('عبّي بيانات الفاتورة (الاسم/العنوان/Steuernummer) في الإعدادات أولاً', 'error');
+    showPage('settings');
+    return;
+  }
+  pendingInvoiceBooking = b;
+  var f = extractInvoiceFields(b);
+
+  document.getElementById('invoice-modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">رقم الفاتورة</div>
+      <div class="mono" style="font-size:13px;color:var(--tx3)">سيُحدَّد تلقائياً وبشكل متسلسل عند الإصدار — لا تكرار ولا فجوات (مُولَّد من السيرفر)</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">تأكد/عدّل بيانات العميل قبل الإصدار</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">اسم العميل</label>
+        <input type="text" class="form-input" id="iv-customer-name" value="${escHtml(f.customerName)}" placeholder="اسم العميل الكامل">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">عنوان العميل</label>
+        <textarea class="form-input" id="iv-customer-address" rows="2" placeholder="Straße, PLZ, Stadt">${escHtml(f.customerAddress)}</textarea>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">تفاصيل الخدمة</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-key">المسار</div><div class="detail-val">${escHtml(f.route)||'—'}</div></div>
+        <div class="detail-item"><div class="detail-key">شركة الطيران</div><div class="detail-val">${escHtml(f.airline)||'—'}</div></div>
+        <div class="detail-item"><div class="detail-key">PNR</div><div class="detail-val mono">${escHtml(f.pnr)||'—'}</div></div>
+        <div class="detail-item"><div class="detail-key">المبلغ</div><div class="detail-val">€${f.amount.toFixed(2)}</div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <button class="btn btn-primary" style="width:100%" id="iv-confirm-btn" onclick="confirmIssueInvoice()">🧾 إصدار الفاتورة</button>
+    </div>
+  `;
+  document.getElementById('invoice-modal').classList.add('open');
+}
+
+async function confirmIssueInvoice() {
+  var b = pendingInvoiceBooking;
+  if (!b) return;
+  var f = extractInvoiceFields(b);
+  f.customerName = document.getElementById('iv-customer-name').value.trim();
+  f.customerAddress = document.getElementById('iv-customer-address').value.trim();
+
+  if (!f.customerName) { showToast('أدخل اسم العميل', 'error'); return; }
+
+  var btn = document.getElementById('iv-confirm-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  try {
+    // [ADMIN-INVOICE] The server reserves the real, atomic invoice number
+    // here — this is the ONLY place a number is ever assigned. If this
+    // call fails, no number was consumed (the Postgres function only
+    // advances the sequence as part of successfully inserting the row).
+    const res = await adminFetch('/admin/invoices/issue', {
+      method: 'POST',
+      body: JSON.stringify({
+        booking_id: b.id || null,
+        booking_reference: f.pnr,
+        customer_name: f.customerName,
+        customer_address: f.customerAddress,
+        amount: f.amount,
+        currency: b.currency || 'EUR',
+        fields: f,
+      }),
+    });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل إصدار الفاتورة', 'error'); if (btn) { btn.disabled = false; btn.textContent = '🧾 إصدار الفاتورة'; } return; }
+
+    const invoiceNumber = j.invoice.invoice_number;
+    var cfg = invoiceConfig || { prefix: 'AIRPIV', companyName: '', companyAddress: '' };
+    var record = {
+      invoiceNumber: invoiceNumber,
+      issuedAt: j.invoice.created_at,
+      bookingRef: f.pnr,
+      customerName: f.customerName,
+      customerAddress: f.customerAddress,
+      amount: f.amount,
+      fields: f,
+    };
+
+    var pdfBytes = await buildInvoicePdf(record, cfg);
+    downloadPdfBytes(pdfBytes, invoiceNumber + '.pdf');
+    closeModal('invoice-modal');
+    showToast('تم إصدار الفاتورة ' + invoiceNumber + ' ✅', 'success');
+    await loadInvoicesFromServer();
+    renderInvoicesTable();
+  } catch (e) {
+    console.error(e);
+    showToast('خطأ أثناء إصدار الفاتورة أو توليد PDF', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🧾 إصدار الفاتورة'; }
+  }
+}
+
+function exportCSV() {
+  if (!allBookings.length) { showToast('لا توجد بيانات', 'error'); return; }
+  // [ADMIN-DASHBOARD-FIX] These header names previously didn't match any
+  // actual field on a booking row (booking_ref/origin/destination/airline
+  // don't exist — the real schema has booking_reference and a single
+  // combined route_label, with no separate airline column at all). Every
+  // export was silently producing blank columns for reference and route,
+  // the two things you'd actually need to look a booking up afterward.
+  var headers = ['booking_reference','created_at','route_label','duffel_amount','discount_amount','profit_margin','customer_paid','status','promo_code','customer_email'];
+  var rows = allBookings.map(b => headers.map(h => {
+    var v = b[h] == null ? '' : String(b[h]);
+    // Quote any field containing a comma so the CSV doesn't misalign
+    // (route_label and customer_email are the only realistic risks here).
+    return v.indexOf(',') >= 0 ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }).join(','));
+  var csv = [headers.join(','), ...rows].join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'airpiv-bookings-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('تم تصدير البيانات 📥', 'success');
+}
+
+// ============ UTILS ============
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ============ [ADMIN-SECURITY] HTML escaping ============
+// Booking data (customer_email, route_label, promo_code, etc.) comes from
+// real customer input at checkout time — never trust it when injecting
+// into innerHTML or an inline onclick handler. escHtml() neutralizes the
+// characters that matter for both contexts (quotes break out of
+// onclick='...', angle brackets inject new tags).
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+// Safe replacement for inline onclick='fn(${JSON.stringify(obj)})' — HTML-
+// escapes the JSON string itself so embedded quotes can't break out of the
+// surrounding onclick='...' attribute.
+function escJsonAttr(obj) {
+  return escHtml(JSON.stringify(obj));
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', function(e) {
+    if (e.target === m) m.classList.remove('open');
+  });
+});
+
+window.addEventListener('resize', function() {
+  var page = document.getElementById('page-reports');
+  if (page && page.classList.contains('active')) renderReports();
+});
+
+// ============ PDF GENERATION (pdf-lib, client-side) ============
+function arabicNote() {
+  // ملاحظة: الخطوط الافتراضية في pdf-lib لا تدعم الحروف العربية، لذلك يتم
+  // إنشاء الفاتورة بالألمانية/الإنجليزية فقط (هذا متوافق مع المتطلبات
+  // القانونية الألمانية أصلاً، الفاتورة لازم تكون مفهومة لمكتب الضرائب).
+  return true;
+}
+
+async function buildInvoicePdf(record, cfg) {
+  var PDFLib = window.PDFLib;
+  var doc = await PDFLib.PDFDocument.create();
+  var page = doc.addPage([595.28, 841.89]); // A4
+  var font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  var fontBold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  var { width, height } = page.getSize();
+  var teal = PDFLib.rgb(0, 0.49, 0.42);
+  var dark = PDFLib.rgb(0.1, 0.12, 0.16);
+  var gray = PDFLib.rgb(0.4, 0.45, 0.52);
+  var lightLine = PDFLib.rgb(0.85, 0.87, 0.9);
+
+  var y = height - 50;
+  var marginX = 50;
+
+  // [ADMIN-INVOICE] pdf-lib's standard fonts only encode WinAnsi
+  // (Latin-1-ish) — any character outside that (→, em-dashes, emoji,
+  // Arabic, etc.) throws and aborts PDF generation entirely. route_label
+  // values like "BER → IST" come straight from the server and contain a
+  // real arrow character, so this is not a hypothetical edge case — it
+  // broke every single invoice with a route on it. Replace anything
+  // non-WinAnsi-safe with a plain-ASCII equivalent before it ever reaches
+  // drawText, rather than trying to remember to sanitize every call site.
+  function sanitizeForPdf(str) {
+    return String(str || '')
+      .replace(/[\u2192\u27A1\u279C]/g, '->')   // → ➡ ➜
+      .replace(/[\u2190]/g, '<-')                  // ←
+      .replace(/[\u2013\u2014]/g, '-')             // – —
+      .replace(/[\u2018\u2019]/g, "'")             // ‘ ’
+      .replace(/[\u201C\u201D]/g, '"')             // “ ”
+      .replace(/\u2026/g, '...')                   // …
+      .replace(/[^\x00-\xFF]/g, '?');               // anything else outside WinAnsi's range
+  }
+
+  function text(str, x, yy, opts) {
+    opts = opts || {};
+    page.drawText(sanitizeForPdf(str), {
+      x: x, y: yy,
+      size: opts.size || 10,
+      font: opts.bold ? fontBold : font,
+      color: opts.color || dark
+    });
+  }
+  function line(yy) {
+    page.drawLine({ start: { x: marginX, y: yy }, end: { x: width - marginX, y: yy }, thickness: 0.75, color: lightLine });
+  }
+
+  // Header: brand
+  text('AirPiv', marginX, y, { size: 20, bold: true, color: teal });
+  y -= 16;
+  text(cfg.name, marginX, y, { size: 9, color: gray });
+  y -= 12;
+  var addrLines = (cfg.address || '').split('\n');
+  addrLines.forEach(l => { text(l, marginX, y, { size: 9, color: gray }); y -= 12; });
+  text('Steuernummer: ' + cfg.steuernummer, marginX, y, { size: 9, color: gray });
+
+  // Header: invoice meta (right side)
+  var ry = height - 50;
+  text('Rechnung', width - marginX - 140, ry, { size: 16, bold: true });
+  ry -= 20;
+  text('Rechnungsnummer: ' + record.invoiceNumber, width - marginX - 200, ry, { size: 9 }); ry -= 13;
+  var issued = new Date(record.issuedAt);
+  var dateStr = String(issued.getDate()).padStart(2,'0') + '.' + String(issued.getMonth()+1).padStart(2,'0') + '.' + issued.getFullYear();
+  text('Rechnungsdatum: ' + dateStr, width - marginX - 200, ry, { size: 9 }); ry -= 13;
+  var svcDate = record.fields.serviceDate ? new Date(record.fields.serviceDate) : issued;
+  var svcDateStr = String(svcDate.getDate()).padStart(2,'0') + '.' + String(svcDate.getMonth()+1).padStart(2,'0') + '.' + svcDate.getFullYear();
+  text('Leistungsdatum: ' + svcDateStr, width - marginX - 200, ry, { size: 9 });
+
+  y -= 40;
+  line(y);
+  y -= 24;
+
+  // Customer block
+  text('Kunde:', marginX, y, { size: 9, color: gray }); y -= 14;
+  text(record.customerName || '—', marginX, y, { size: 11, bold: true }); y -= 14;
+  (record.customerAddress || '').split('\n').forEach(l => {
+    if (l.trim()) { text(l, marginX, y, { size: 9.5 }); y -= 13; }
+  });
+
+  y -= 18;
+  line(y);
+  y -= 10;
+
+  // Table header
+  text('Beschreibung', marginX, y - 14, { size: 9, bold: true, color: gray });
+  text('Betrag', width - marginX - 70, y - 14, { size: 9, bold: true, color: gray });
+  y -= 22;
+  line(y);
+  y -= 20;
+
+  // Service line
+  var f = record.fields;
+  var desc = 'Flugbuchung: ' + (f.route || '?');
+  if (f.airline) desc += ' (' + f.airline + ')';
+  text(desc, marginX, y, { size: 10 });
+  text('\u20AC' + (record.amount || 0).toFixed(2), width - marginX - 70, y, { size: 10 });
+  y -= 16;
+  if (f.pnr) {
+    text('Buchungsreferenz (PNR): ' + f.pnr, marginX, y, { size: 8.5, color: gray });
+    y -= 24;
+  } else {
+    y -= 10;
+  }
+
+  line(y);
+  y -= 22;
+
+  // Totals
+  var isKlein = cfg.taxMode === 'kleinunternehmer';
+  var net = record.amount || 0;
+  var vat = isKlein ? 0 : net - (net / 1.19);
+  var netBase = isKlein ? net : (net - vat);
+
+  text('Nettobetrag:', width - marginX - 200, y, { size: 9.5, color: gray });
+  text('\u20AC' + netBase.toFixed(2), width - marginX - 70, y, { size: 9.5 });
+  y -= 14;
+  if (!isKlein) {
+    text('USt. (19%):', width - marginX - 200, y, { size: 9.5, color: gray });
+    text('\u20AC' + vat.toFixed(2), width - marginX - 70, y, { size: 9.5 });
+    y -= 14;
+  }
+  text('Gesamtbetrag:', width - marginX - 200, y, { size: 11, bold: true });
+  text('\u20AC' + net.toFixed(2), width - marginX - 70, y, { size: 11, bold: true });
+  y -= 30;
+
+  line(y);
+  y -= 20;
+
+  // Tax note
+  text('Hinweis:', marginX, y, { size: 9, bold: true }); y -= 14;
+  var taxNote = isKlein
+    ? 'Gem\u00e4\u00df \u00a719 UStG wird keine Umsatzsteuer berechnet.'
+    : 'Es gilt der Regelsteuersatz von 19% gem\u00e4\u00df \u00a712 UStG.';
+  text(taxNote, marginX, y, { size: 9, color: gray }); y -= 24;
+
+  text('Zahlungsbedingungen: Sofort f\u00e4llig / Paid online', marginX, y, { size: 9, color: gray });
+
+  // Footer
+  page.drawText('AirPiv \u2014 generiert am ' + dateStr, {
+    x: marginX, y: 30, size: 7.5, font: font, color: lightLine
+  });
+
+  return await doc.save();
+}
+
+function downloadPdfBytes(bytes, filename) {
+  var blob = new Blob([bytes], { type: 'application/pdf' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function mergePdfBuffers(buffers) {
+  var PDFLib = window.PDFLib;
+  var merged = await PDFLib.PDFDocument.create();
+  for (var i = 0; i < buffers.length; i++) {
+    var src = await PDFLib.PDFDocument.load(buffers[i]);
+    var pages = await merged.copyPages(src, src.getPageIndices());
+    pages.forEach(p => merged.addPage(p));
+  }
+  return await merged.save();
+}
+
+// ============ INVOICES LOG / TABLE ============
+var invoiceFilterText = '';
+
+async function renderInvoices() {
+  await loadInvoiceConfigIntoForm();
+  await loadInvoicesFromServer();
+  document.getElementById('invoice-config-banner').style.display = isInvoiceConfigComplete() ? 'none' : 'flex';
+  renderInvoicesTable();
+}
+
+function renderInvoicesTable() {
+  var tbody = document.getElementById('invoices-table');
+  var list = issuedInvoicesCache.filter(r => {
+    if (!invoiceFilterText) return true;
+    var hay = (r.invoice_number + ' ' + (r.booking_reference||'') + ' ' + r.customer_name).toLowerCase();
+    return hay.includes(invoiceFilterText);
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد فواتير صادرة بعد — أصدر فاتورة من تفاصيل أي حجز مؤكد</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => {
+    var d = new Date(r.created_at).toLocaleDateString('ar');
+    return `<tr>
+      <td class="mono">${escHtml(r.invoice_number)}</td>
+      <td>${d}</td>
+      <td>${escHtml(r.customer_name)||'—'}</td>
+      <td class="mono">${escHtml(r.booking_reference)||'—'}</td>
+      <td class="mono" style="color:var(--blue)">€${(Number(r.amount)||0).toFixed(2)}</td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="redownloadInvoice('${escHtml(r.invoice_number)}')">📥 إعادة تنزيل</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterInvoices(val) {
+  invoiceFilterText = val.toLowerCase();
+  renderInvoicesTable();
+}
+
+async function redownloadInvoice(invoiceNumber) {
+  var row = issuedInvoicesCache.find(r => r.invoice_number === invoiceNumber);
+  if (!row) { showToast('سجل الفاتورة غير موجود', 'error'); return; }
+  var record = {
+    invoiceNumber: row.invoice_number,
+    issuedAt: row.created_at,
+    bookingRef: row.booking_reference,
+    customerName: row.customer_name,
+    customerAddress: row.customer_address,
+    amount: Number(row.amount) || 0,
+    fields: row.fields || {},
+  };
+  var cfg = invoiceConfig || { prefix: 'AIRPIV', companyName: '', companyAddress: '' };
+  try {
+    var bytes = await buildInvoicePdf(record, cfg);
+    downloadPdfBytes(bytes, invoiceNumber + '.pdf');
+  } catch (e) {
+    console.error(e);
+    showToast('خطأ أثناء إعادة التوليد', 'error');
+  }
+}
+
+// ============ BATCH EXPORT (by date range) ============
+function setBatchRange(kind) {
+  var now = new Date();
+  var from, to;
+  if (kind === 'today') {
+    from = to = now.toISOString().slice(0, 10);
+  } else { // month
+    from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  }
+  document.getElementById('batch-from').value = from;
+  document.getElementById('batch-to').value = to;
+  updateBatchPreviewCount();
+}
+
+function getBatchInvoicesInRange() {
+  var fromVal = document.getElementById('batch-from').value;
+  var toVal = document.getElementById('batch-to').value;
+  if (!fromVal || !toVal) return [];
+  var from = new Date(fromVal + 'T00:00:00');
+  var to = new Date(toVal + 'T23:59:59');
+  return issuedInvoicesCache.filter(r => {
+    var d = new Date(r.created_at);
+    return d >= from && d <= to;
+  }).map(r => ({
+    invoiceNumber: r.invoice_number,
+    issuedAt: r.created_at,
+    bookingRef: r.booking_reference,
+    customerName: r.customer_name,
+    customerAddress: r.customer_address,
+    amount: Number(r.amount) || 0,
+    fields: r.fields || {},
+  }));
+}
+
+function updateBatchPreviewCount() {
+  var list = getBatchInvoicesInRange();
+  document.getElementById('batch-preview-count').textContent =
+    list.length ? (list.length + ' فاتورة في هذا المدى') : 'لا توجد فواتير صادرة في هذا المدى';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var fromEl = document.getElementById('batch-from');
+  var toEl = document.getElementById('batch-to');
+  if (fromEl && toEl) {
+    fromEl.addEventListener('change', updateBatchPreviewCount);
+    toEl.addEventListener('change', updateBatchPreviewCount);
+  }
+});
+
+async function downloadBatchMerged() {
+  var list = getBatchInvoicesInRange();
+  if (!list.length) { showToast('لا توجد فواتير في هذا المدى', 'error'); return; }
+  var cfg = invoiceConfig || { prefix: 'AIRPIV', companyName: '', companyAddress: '' };
+  showToast('جارٍ تجهيز الملف...', 'success');
+  try {
+    var buffers = [];
+    for (var i = 0; i < list.length; i++) {
+      buffers.push(await buildInvoicePdf(list[i], cfg));
+    }
+    var merged = await mergePdfBuffers(buffers);
+    var from = document.getElementById('batch-from').value;
+    var to = document.getElementById('batch-to').value;
+    downloadPdfBytes(merged, 'airpiv-rechnungen-' + from + '_' + to + '.pdf');
+    showToast('تم تنزيل ' + list.length + ' فاتورة في ملف واحد ✅', 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('خطأ أثناء الدمج', 'error');
+  }
+}
+
+async function downloadBatchSeparate() {
+  var list = getBatchInvoicesInRange();
+  if (!list.length) { showToast('لا توجد فواتير في هذا المدى', 'error'); return; }
+  var cfg = invoiceConfig || { prefix: 'AIRPIV', companyName: '', companyAddress: '' };
+  showToast('جارٍ تجهيز الملفات...', 'success');
+  try {
+    for (var i = 0; i < list.length; i++) {
+      var bytes = await buildInvoicePdf(list[i], cfg);
+      downloadPdfBytes(bytes, list[i].invoiceNumber + '.pdf');
+      // فاصل صغير حتى لا يحظر المتصفح التنزيلات المتعددة المتزامنة
+      await new Promise(r => setTimeout(r, 250));
+    }
+    showToast('تم تنزيل ' + list.length + ' فاتورة منفصلة ✅', 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('خطأ أثناء التنزيل', 'error');
+  }
+}
+</script>
+<!-- More menu backdrop -->
+<div class="more-menu-backdrop" id="more-backdrop" onclick="closeMoreMenu()"></div>
+
+<!-- More menu (slides up) -->
+<div class="more-menu" id="more-menu">
+  <button class="more-menu-item" id="mm-reports" onclick="showPage('reports');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    التقارير
+  </button>
+  <button class="more-menu-item" id="mm-invoices" onclick="showPage('invoices');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    الفواتير
+  </button>
+  <button class="more-menu-item" id="mm-profit" onclick="showPage('profit');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    هامش الربح
+  </button>
+  <button class="more-menu-item" id="mm-ancillary" onclick="showPage('ancillary');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+    هامش المقاعد والحقائب
+  </button>
+  <button class="more-menu-item" id="mm-loyalty" onclick="showPage('loyalty');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    إعدادات الولاء
+  </button>
+  <button class="more-menu-item" id="mm-promos" onclick="showPage('promos');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    كودات الخصم
+  </button>
+  <button class="more-menu-item" id="mm-settings" onclick="showPage('settings');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    الإعدادات
+  </button>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav">
+  <button class="bn-item active" id="bn-dashboard" onclick="showPage('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    الرئيسية
+  </button>
+  <button class="bn-item" id="bn-bookings" onclick="showPage('bookings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+    الحجوزات
+  </button>
+  <button class="bn-item" id="bn-customers" onclick="showPage('customers')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    العملاء
+  </button>
+  <button class="bn-item" id="bn-more" onclick="toggleMoreMenu()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    المزيد
+  </button>
+</nav>
+
+</div><!-- /app-shell -->
+
+</body>
+</html>
