@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Airpiv — لوحة التحكم</title>
+<meta name="robots" content="noindex, nofollow">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
@@ -781,8 +782,9 @@
     <button class="nav-item active" onclick="showPage('dashboard')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> لوحة التحكم
     </button>
-    <button class="nav-item" onclick="showPage('bookings')">
+    <button class="nav-item" onclick="showPage('bookings')" style="position:relative">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></span> الحجوزات
+      <span id="cancel-badge" style="display:none;position:absolute;left:10px;top:8px;background:var(--red,#e54848);color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 6px;min-width:16px;text-align:center"></span>
     </button>
     <button class="nav-item" onclick="showPage('reports')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> التقارير
@@ -854,7 +856,44 @@
       </div>
     </div>
 
-    <!-- Recent bookings -->
+    <!-- [PROFIT-PERIOD-FIX] Profit by period — quick ranges + custom dates -->
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="table-header">
+        <div class="table-title">📅 الأرباح حسب الفترة</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="period-btn-today" style="padding:6px 12px;font-size:12px" onclick="setProfitPeriod('today')">اليوم</button>
+          <button class="btn btn-ghost" id="period-btn-week" style="padding:6px 12px;font-size:12px" onclick="setProfitPeriod('week')">هذا الأسبوع</button>
+          <button class="btn btn-ghost" id="period-btn-month" style="padding:6px 12px;font-size:12px" onclick="setProfitPeriod('month')">هذا الشهر</button>
+        </div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">من تاريخ</label>
+            <input type="date" class="form-input" id="period-from">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">إلى تاريخ</label>
+            <input type="date" class="form-input" id="period-to">
+          </div>
+          <button class="btn btn-primary" style="padding:9px 16px" onclick="setProfitPeriod('custom')">عرض</button>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin:0">
+          <div class="stat-card teal" style="margin:0">
+            <div class="stat-label">إيرادات الفترة</div>
+            <div class="stat-value teal" id="period-revenue">€0</div>
+          </div>
+          <div class="stat-card teal" style="margin:0">
+            <div class="stat-label">ربح الفترة</div>
+            <div class="stat-value teal" id="period-profit">€0</div>
+          </div>
+          <div class="stat-card blue" style="margin:0">
+            <div class="stat-label">عدد الحجوزات</div>
+            <div class="stat-value blue" id="period-bookings">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="table-card">
       <div class="table-header">
         <div class="table-title">آخر الحجوزات</div>
@@ -1459,6 +1498,29 @@
       </div>
     </div>
 
+    <!-- [MAINTENANCE-MODE] Emergency full-site shutdown — deliberately
+         styled as a warning zone with explicit confirm() friction, since
+         turning this on takes down the entire site for every visitor. -->
+    <div class="table-card" style="margin-bottom:16px;border:1.5px solid var(--red,#e54848)">
+      <div class="table-header">
+        <div class="table-title" style="color:var(--red,#e54848)">🚨 إغلاق الموقع بالكامل (حالة طوارئ)</div>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:12px;color:var(--tx2)">
+          عند التفعيل، سيرى كل زائر للموقع شاشة صيانة فقط — لا يمكن البحث أو الحجز. استخدم هذا فقط في حال وجود مشكلة كبيرة (خلل بالدفع، ثغرة أمنية، إلخ).
+        </div>
+        <div id="maint-status-badge" style="font-size:13px;font-weight:700"></div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">رسالة للزوار (اختياري)</label>
+          <input type="text" class="form-input" id="maint-message" placeholder="مثال: نعمل على إصلاح مشكلة فنية، نعود قريباً">
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" id="maint-enable-btn" style="background:var(--red,#e54848);color:#fff" onclick="toggleMaintenanceMode(true)">🚨 إغلاق الموقع الآن</button>
+          <button class="btn btn-ghost" id="maint-disable-btn" onclick="toggleMaintenanceMode(false)">✅ إعادة تشغيل الموقع</button>
+        </div>
+      </div>
+    </div>
+
     <div class="table-card" style="margin-bottom:16px">
       <div class="table-header">
         <div class="table-title">🧾 بيانات الفاتورة (Rechnungsdaten)</div>
@@ -1657,9 +1719,39 @@ async function initDashboard() {
     loadTicketTiers(),
     loadAncillaryTiers(),
     loadLoyaltyConfigFromServer(),
+    loadCancellationBadge(),
   ]);
   calcExample();
   calcAncillaryExample();
+  setProfitPeriod('today');
+}
+
+// ============ [CANCEL-NOTIFY-FIX] Cancellation notifications ============
+async function loadCancellationBadge() {
+  try {
+    const res = await adminFetch('/admin/cancellations');
+    const j = await res.json();
+    if (!j.ok) return;
+    renderCancelBadge(j.unreadCount);
+    if (j.unreadCount > 0) {
+      showToast('🚫 لديك ' + j.unreadCount + ' إلغاء حجز جديد يحتاج مراجعة', 'error');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderCancelBadge(count) {
+  [document.getElementById('cancel-badge'), document.getElementById('cancel-badge-mobile')].forEach(function(el) {
+    if (!el) return;
+    if (count > 0) { el.textContent = count; el.style.display = 'inline-block'; }
+    else el.style.display = 'none';
+  });
+}
+
+async function markCancellationsAsRead() {
+  try {
+    await adminFetch('/admin/cancellations/mark-read', { method: 'POST' });
+    renderCancelBadge(0);
+  } catch (e) { console.error('Admin API error:', e); }
 }
 
 // ============ NAVIGATION ============
@@ -1689,14 +1781,14 @@ function showPage(name) {
     if (el) el.classList.toggle('active', p === name);
   });
 
-  if (name === 'bookings') loadBookingsFromServer();
+  if (name === 'bookings') { loadBookingsFromServer(); markCancellationsAsRead(); }
   if (name === 'reports') renderReports();
   if (name === 'customers') renderCustomers();
   if (name === 'invoices') renderInvoices();
   if (name === 'profit') renderTiers();
   if (name === 'ancillary') renderAncillaryTiers();
   if (name === 'loyalty') renderLoyaltyConfig();
-  if (name === 'settings') loadInvoiceConfigIntoForm();
+  if (name === 'settings') { loadInvoiceConfigIntoForm(); loadMaintenanceMode(); }
 }
 
 function toggleMoreMenu() {
@@ -1749,6 +1841,53 @@ async function loadBookingsFromServer() {
     const j = await res.json();
     if (j.ok) { allBookings = j.bookings; renderAllBookings(); }
   } catch (e) { console.error('Admin API error:', e); }
+}
+
+// ============ [PROFIT-PERIOD-FIX] Profit by period ============
+function fmtDateInput(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+async function setProfitPeriod(which) {
+  var fromEl = document.getElementById('period-from');
+  var toEl = document.getElementById('period-to');
+  var today = new Date();
+
+  if (which === 'today') {
+    fromEl.value = fmtDateInput(today);
+    toEl.value = fmtDateInput(today);
+  } else if (which === 'week') {
+    // Monday-start week, matching the standard week convention in Germany.
+    var dow = today.getDay(); // 0=Sun..6=Sat
+    var diffToMonday = (dow === 0) ? 6 : dow - 1;
+    var monday = new Date(today); monday.setDate(today.getDate() - diffToMonday);
+    fromEl.value = fmtDateInput(monday);
+    toEl.value = fmtDateInput(today);
+  } else if (which === 'month') {
+    var firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    fromEl.value = fmtDateInput(firstOfMonth);
+    toEl.value = fmtDateInput(today);
+  }
+  // 'custom' just uses whatever's already in the inputs.
+
+  ['today','week','month'].forEach(function(p) {
+    var btn = document.getElementById('period-btn-' + p);
+    if (btn) btn.classList.toggle('active', p === which);
+  });
+
+  if (!fromEl.value || !toEl.value) { showToast('اختر تاريخ البداية والنهاية', 'error'); return; }
+
+  try {
+    const res = await adminFetch('/admin/stats?from=' + fromEl.value + '&to=' + toEl.value);
+    const j = await res.json();
+    if (j.ok) {
+      document.getElementById('period-revenue').textContent = '€' + j.revenue.toFixed(2);
+      document.getElementById('period-profit').textContent = '€' + j.profit.toFixed(2);
+      document.getElementById('period-bookings').textContent = j.bookingsCount;
+    } else {
+      showToast(j.error || 'فشل تحميل البيانات', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
 
 // ============ STATS ============
@@ -1853,6 +1992,9 @@ function showBookingDetail(b) {
   var discount = Number(b.discount_amount) || 0;
   var route = escHtml(b.route_label || '—');
   var email = escHtml(b.customer_email || '—');
+  var custName = escHtml(b.customer_name || '—');
+  var custPhone = escHtml(b.customer_phone || '—');
+  var custDob = b.customer_dob ? new Date(b.customer_dob).toLocaleDateString('ar') : '—';
   var promoCode = escHtml(b.promo_code || '');
   var orderId = escHtml(b.duffel_order_id || '');
   var sessionId = escHtml(b.stripe_session_id || '');
@@ -1865,6 +2007,9 @@ function showBookingDetail(b) {
         <div class="detail-item"><div class="detail-key">عدد الركاب</div><div class="detail-val">${Number(b.passenger_count)||1}</div></div>
         <div class="detail-item"><div class="detail-key">البريد الإلكتروني</div><div class="detail-val">${email}</div></div>
         <div class="detail-item"><div class="detail-key">تاريخ الحجز</div><div class="detail-val">${b.created_at ? new Date(b.created_at).toLocaleDateString('ar') : '—'}</div></div>
+        <div class="detail-item"><div class="detail-key">اسم العميل</div><div class="detail-val">${custName}</div></div>
+        <div class="detail-item"><div class="detail-key">رقم الهاتف</div><div class="detail-val mono">${custPhone}</div></div>
+        <div class="detail-item"><div class="detail-key">تاريخ الميلاد</div><div class="detail-val">${custDob}</div></div>
       </div>
     </div>
 
@@ -2752,6 +2897,54 @@ function isInvoiceConfigComplete() {
   return !!(invoiceConfig && invoiceConfig.companyName && invoiceConfig.companyAddress && invoiceConfig.steuernummer);
 }
 
+// ============ [MAINTENANCE-MODE] Emergency full-site shutdown ============
+async function loadMaintenanceMode() {
+  try {
+    const res = await adminFetch('/admin/maintenance-mode');
+    const j = await res.json();
+    if (j.ok) renderMaintenanceStatus(j.enabled, j.message);
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderMaintenanceStatus(enabled, message) {
+  var badge = document.getElementById('maint-status-badge');
+  if (badge) {
+    badge.innerHTML = enabled
+      ? '<span style="color:var(--red,#e54848)">🔴 الموقع مغلق حالياً للزوار</span>'
+      : '<span style="color:var(--teal)">🟢 الموقع يعمل بشكل طبيعي</span>';
+  }
+  var msgInput = document.getElementById('maint-message');
+  if (msgInput && document.activeElement !== msgInput) msgInput.value = message || '';
+  var enableBtn = document.getElementById('maint-enable-btn');
+  var disableBtn = document.getElementById('maint-disable-btn');
+  if (enableBtn) enableBtn.disabled = enabled;
+  if (disableBtn) disableBtn.disabled = !enabled;
+}
+
+async function toggleMaintenanceMode(enable) {
+  // [MAINTENANCE-MODE] Deliberate friction — this affects every visitor to
+  // the site, in both directions (closing it AND reopening it are equally
+  // consequential one-tap actions), so both require an explicit confirm().
+  var confirmMsg = enable
+    ? 'تأكيد: سيتم إغلاق الموقع بالكامل لجميع الزوار فوراً. هل أنت متأكد؟'
+    : 'تأكيد: سيتم إعادة تشغيل الموقع وفتحه لجميع الزوار. هل أنت متأكد؟';
+  if (!confirm(confirmMsg)) return;
+  var message = (document.getElementById('maint-message') || {}).value || '';
+  try {
+    const res = await adminFetch('/admin/maintenance-mode', {
+      method: 'POST',
+      body: JSON.stringify({ enabled: enable, message: message }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      renderMaintenanceStatus(j.enabled, j.message);
+      showToast(enable ? '🚨 تم إغلاق الموقع' : '✅ تم إعادة تشغيل الموقع', enable ? 'error' : 'success');
+    } else {
+      showToast(j.error || 'فشل تنفيذ العملية', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
 // ============ [ADMIN-INVOICE] INVOICE NUMBERING — server only ============
 // The actual number is now reserved atomically by the server's
 // issue_invoice() Postgres function (a real SEQUENCE, race-safe under
@@ -3337,9 +3530,10 @@ async function downloadBatchSeparate() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
     الرئيسية
   </button>
-  <button class="bn-item" id="bn-bookings" onclick="showPage('bookings')">
+  <button class="bn-item" id="bn-bookings" onclick="showPage('bookings')" style="position:relative">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
     الحجوزات
+    <span id="cancel-badge-mobile" style="display:none;position:absolute;top:2px;right:18px;background:var(--red,#e54848);color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:0 5px;min-width:14px;text-align:center"></span>
   </button>
   <button class="bn-item" id="bn-customers" onclick="showPage('customers')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>

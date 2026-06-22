@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="data:application/json,{%22name%22:%22Airpiv%22,%22short_name%22:%22Airpiv%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23101d2c%22,%22theme_color%22:%22%2300a991%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%2300a991'/%3E%3Ctext x='96' y='120' font-size='72' font-family='sans-serif' font-weight='800' fill='%23fff' text-anchor='middle'%3EFW%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3525,6 +3528,34 @@ function showOfferExpiredAlert() {
 var PROXY = 'https://api.airpiv.com';
 if (!PROXY && location.hostname === 'localhost') console.warn('Airpiv: PROXY not configured');
 
+// [MAINTENANCE-MODE] Checked once on every page load. Fails OPEN on any
+// error (network failure, bad JSON, server down) — a visitor must never
+// be locked out just because this check itself couldn't complete; the
+// overlay only ever appears when the server explicitly confirms
+// maintenance mode is on.
+function checkMaintenanceMode() {
+  fetch(PROXY + '/maintenance-status')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (j && j.ok && j.enabled) showMaintenanceOverlay(j.message);
+    })
+    .catch(function(){ /* fail open — site behaves normally */ });
+}
+
+function showMaintenanceOverlay(message) {
+  var existing = document.getElementById('maintenance-overlay');
+  if (existing) return;
+  var ov = document.createElement('div');
+  ov.id = 'maintenance-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0A1822;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:system-ui,-apple-system,sans-serif';
+  ov.innerHTML =
+    '<div style="font-size:3rem;margin-bottom:16px">🛠️</div>' +
+    '<div style="font-family:Syne,sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:10px">Airpiv ist vorübergehend nicht verfügbar</div>' +
+    '<div style="font-size:14px;color:#8fa4b4;max-width:420px;line-height:1.6">' + (message ? escHtml(message) : 'Wir arbeiten gerade an einem technischen Problem. Bitte versuche es in Kürze erneut.') + '</div>';
+  document.body.appendChild(ov);
+  document.body.style.overflow = 'hidden';
+}
+
 // ═══ SUPABASE ═══
 var SUPA_URL = 'https://tflpaysskecpmdpwbvog.supabase.co';
 var SUPA_KEY = 'sb_publishable_ZXi_Rq2zYQIj3LJoNFRctQ_eZogIGD0';
@@ -6757,7 +6788,7 @@ function cancelOrderFlow(orderId) {
       var refund = j.refund_amount ? (j.refund_amount + ' ' + (j.refund_currency || 'EUR')) : tL('keine Erstattung','no refund','بدون استرداد');
       if (!confirm(tL('Rückerstattung','Refund','مبلغ الاسترداد') + ': ' + refund + '\n\n' + tL('Jetzt endgültig stornieren?','Cancel now for good?','تأكيد الإلغاء نهائياً؟'))) return;
       showToast('⏳ ' + tL('Stornierung wird ausgeführt...','Cancelling...','جارٍ الإلغاء...'), 'info');
-      fetch(PROXY + '/cancel-confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cancellation_id: j.cancellation_id }) })
+      fetch(PROXY + '/cancel-confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cancellation_id: j.cancellation_id, order_id: orderId }) })
         .then(function(r) { return r.json(); })
         .then(function(c) {
           if (c.ok) {
@@ -6984,7 +7015,7 @@ function showConfirmation(bookingData, opts) {
   var _qrData = encodeURIComponent('AIRPIV|' + (bookingData.reference || '') + '|' + (bookingData.orderId || ''));
   html += '<div class="confirm-card" style="text-align:center">';
   html += '<div class="confirm-card-title" style="justify-content:center">🎫 ' + tL('Buchungscode','Booking code','رمز الحجز') + '</div>';
-  html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=' + _qrData + '" alt="QR" style="width:168px;height:168px;background:#fff;border-radius:12px;padding:8px;border:1px solid var(--bd)">';
+  html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=' + _qrData + '" loading="lazy" alt="QR" style="width:168px;height:168px;background:#fff;border-radius:12px;padding:8px;border:1px solid var(--bd)">';
   html += '<div style="font-family:monospace;font-size:14px;font-weight:700;color:var(--tx);margin-top:10px;letter-spacing:.12em">' + escHtml(bookingData.reference || '') + '</div>';
   html += '<div style="font-size:10px;color:var(--tx3);margin-top:2px">' + tL('Am Flughafen vorzeigen','Show at the airport','اعرضه في المطار') + '</div>';
   html += '</div>';
@@ -9307,7 +9338,7 @@ function buildDets(o) {
       var seg = segs[i];
       var logo2 = 'https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/' + seg.al[0] + '.svg';
       h += '<div class="seg">';
-      h += '<div class="seg-logo"><img src="' + logo2 + '" onerror="this.style.display=\'none\'" alt=""></div>';
+      h += '<div class="seg-logo"><img src="' + logo2 + '" loading="lazy" onerror="this.style.display=\'none\'" alt=""></div>';
       h += '<div class="seg-b"><div class="seg-r2">' + seg.from + ' → ' + seg.to + '</div>';
       h += '<div class="seg-m">' + seg.al[1] + ' · Flug ' + seg.fn + ' · ' + p2(seg.dep.getHours()) + ':' + p2(seg.dep.getMinutes()) + ' – ' + p2(seg.arr.getHours()) + ':' + p2(seg.arr.getMinutes()) + '</div></div>';
       h += '<div class="seg-right"><div class="seg-time">' + p2(seg.dep.getHours()) + ':' + p2(seg.dep.getMinutes()) + ' → ' + p2(seg.arr.getHours()) + ':' + p2(seg.arr.getMinutes()) + '</div>';
@@ -9730,13 +9761,11 @@ function cancelOrder(el) {
           localStorage.setItem('fw_bookings', JSON.stringify(bks));
           loadMyBookings();
         } catch(e) {}
-        // Mark booking as cancelled in Supabase too, and void/reverse any
-        // linked referral reward for both the referrer and the referred user.
-        try {
-          if (_sb && FW_USER) {
-            _sb.from('bookings').update({ status: 'cancelled' }).eq('order_id', orderId).then(function(){});
-          }
-        } catch(e) {}
+        // [ADMIN-CANCEL-SYNC-FIX] The server's /cancel endpoint now marks
+        // the booking cancelled in our own bookings table itself (keyed
+        // correctly off duffel_order_id, server-side) right after Duffel
+        // confirms the cancellation — no client-side Supabase write needed
+        // or wanted here anymore.
         if (bookingRef) referralMarkBookingCancelled(bookingRef);
       } else {
         showToast('❌ ' + (j.error || 'Stornierung fehlgeschlagen'), 'error');
@@ -11207,6 +11236,7 @@ function handleHelper(action) {
 
 // ═══ DOM READY ═══
 document.addEventListener('DOMContentLoaded', function() {
+  checkMaintenanceMode();
   referralCaptureFromUrl();
   initDates();
   initDarkMode();
