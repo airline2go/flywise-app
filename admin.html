@@ -808,6 +808,9 @@
     <button class="nav-item" onclick="showPage('promos')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> كودات الخصم
     </button>
+    <button class="nav-item" onclick="showPage('blog')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span> المدونة
+    </button>
     <button class="nav-item" onclick="showPage('settings')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> الإعدادات
     </button>
@@ -1477,6 +1480,36 @@
     </div>
   </div>
 
+  <!-- ==================== BLOG ==================== -->
+  <div class="page" id="page-blog">
+    <div class="page-header">
+      <div>
+        <div class="page-title">المدونة</div>
+        <div class="page-sub">كتابة ونشر مقالات بدون الحاجة لمطوّر</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openBlogEditor()">✍️ مقال جديد</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>العنوان</th>
+            <th>الحالة</th>
+            <th>تاريخ النشر</th>
+            <th>المشاهدات</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="blog-posts-list">
+          <tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ==================== SETTINGS ==================== -->
   <div class="page" id="page-settings">
     <div class="page-header">
@@ -1754,8 +1787,108 @@ async function markCancellationsAsRead() {
   } catch (e) { console.error('Admin API error:', e); }
 }
 
+// ============ [BLOG-SYSTEM] Blog admin ============
+var allBlogPosts = [];
+
+async function loadBlogPosts() {
+  try {
+    const res = await adminFetch('/admin/blog-posts');
+    const j = await res.json();
+    if (j.ok) { allBlogPosts = j.posts; renderBlogPostsList(); }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderBlogPostsList() {
+  var tbody = document.getElementById('blog-posts-list');
+  if (!allBlogPosts.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مقالات بعد — اضغط "مقال جديد" للبدء</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allBlogPosts.map(function(p) {
+    var statusBadge = p.status === 'published'
+      ? '<span class="badge confirmed">✓ منشور</span>'
+      : '<span class="badge pending">◔ مسودة</span>';
+    var pubDate = p.published_at ? new Date(p.published_at).toLocaleDateString('ar') : '—';
+    return '<tr>' +
+      '<td>' + escHtml(p.title) + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td>' + pubDate + '</td>' +
+      '<td class="mono">' + (p.views_count || 0) + '</td>' +
+      '<td style="display:flex;gap:6px">' +
+        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick=\'openBlogEditor(' + escJsonAttr(p) + ')\'>تعديل</button>' +
+        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="deleteBlogPost(\'' + p.id + '\')">حذف</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function openBlogEditor(post) {
+  document.getElementById('blog-editor-title').textContent = post ? 'تعديل المقال' : 'مقال جديد';
+  document.getElementById('blog-edit-id').value = post ? post.id : '';
+  document.getElementById('blog-title').value = post ? post.title : '';
+  document.getElementById('blog-meta-desc').value = post ? (post.meta_description || '') : '';
+  document.getElementById('blog-meta-count').textContent = (post && post.meta_description) ? post.meta_description.length : 0;
+  document.getElementById('blog-excerpt').value = post ? (post.excerpt || '') : '';
+  document.getElementById('blog-cover').value = post ? (post.cover_image_url || '') : '';
+  document.getElementById('blog-content').value = post ? post.content : '';
+  updateBlogSlugPreview();
+  document.getElementById('blog-editor-modal').classList.add('open');
+}
+
+// [BLOG-SYSTEM] Mirrors the server's slugify() closely enough for a live
+// preview — the server is still the source of truth for the actual saved
+// slug (and handles collisions), this is just so the admin can see roughly
+// what URL their post will get before saving.
+function updateBlogSlugPreview() {
+  var title = document.getElementById('blog-title').value;
+  var umlauts = {'ä':'ae','ö':'oe','ü':'ue','Ä':'Ae','Ö':'Oe','Ü':'Ue','ß':'ss'};
+  var slug = title.replace(/[äöüÄÖÜß]/g, function(c){ return umlauts[c] || c; })
+    .toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
+  document.getElementById('blog-slug-preview').textContent = slug ? ('airpiv.com/blog-post.html?slug=' + slug) : '';
+}
+
+async function saveBlogPost(status) {
+  var id = document.getElementById('blog-edit-id').value;
+  var title = document.getElementById('blog-title').value.trim();
+  var content = document.getElementById('blog-content').value.trim();
+  if (!title || !content) { showToast('⚠️ العنوان والمحتوى مطلوبان', 'error'); return; }
+
+  var payload = {
+    title: title,
+    meta_description: document.getElementById('blog-meta-desc').value.trim(),
+    excerpt: document.getElementById('blog-excerpt').value.trim(),
+    cover_image_url: document.getElementById('blog-cover').value.trim(),
+    content: content,
+    status: status,
+  };
+
+  try {
+    const res = id
+      ? await adminFetch('/admin/blog-posts/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/blog-posts', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (j.ok) {
+      showToast(status === 'published' ? '🚀 تم النشر بنجاح!' : '💾 تم حفظ المسودة', 'success');
+      closeModal('blog-editor-modal');
+      loadBlogPosts();
+    } else {
+      showToast(j.error || 'فشل الحفظ', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteBlogPost(id) {
+  if (!confirm('تأكيد حذف هذا المقال نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/blog-posts/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف المقال', 'success'); loadBlogPosts(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
 // ============ NAVIGATION ============
-var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','settings'];
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','settings'];
 
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1789,6 +1922,7 @@ function showPage(name) {
   if (name === 'ancillary') renderAncillaryTiers();
   if (name === 'loyalty') renderLoyaltyConfig();
   if (name === 'settings') { loadInvoiceConfigIntoForm(); loadMaintenanceMode(); }
+  if (name === 'blog') loadBlogPosts();
 }
 
 function toggleMoreMenu() {
@@ -3518,6 +3652,10 @@ async function downloadBatchSeparate() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
     كودات الخصم
   </button>
+  <button class="more-menu-item" id="mm-blog" onclick="showPage('blog');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    المدونة
+  </button>
   <button class="more-menu-item" id="mm-settings" onclick="showPage('settings');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     الإعدادات
@@ -3546,6 +3684,46 @@ async function downloadBatchSeparate() {
 </nav>
 
 </div><!-- /app-shell -->
+
+<!-- Blog Editor Modal -->
+<div class="modal-overlay" id="blog-editor-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title" id="blog-editor-title">مقال جديد</div>
+      <button class="modal-close" onclick="closeModal('blog-editor-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="blog-edit-id">
+      <div class="form-group">
+        <label class="form-label">العنوان *</label>
+        <input type="text" class="form-input" id="blog-title" placeholder="Günstige Flüge buchen: 7 Tricks für bessere Preise" oninput="updateBlogSlugPreview()">
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px" id="blog-slug-preview"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">وصف SEO (Meta Description)</label>
+        <textarea class="form-input" id="blog-meta-desc" style="min-height:60px;resize:vertical" maxlength="160" oninput="document.getElementById('blog-meta-count').textContent=this.value.length"></textarea>
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px"><span id="blog-meta-count">0</span>/160 حرف — يظهر بنتائج البحث على Google</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">مقتطف قصير (يظهر بصفحة فهرس المدونة)</label>
+        <textarea class="form-input" id="blog-excerpt" style="min-height:60px;resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">رابط صورة الغلاف (اختياري)</label>
+        <input type="text" class="form-input" id="blog-cover" placeholder="https://airpiv.com/blog-images/...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">المحتوى *</label>
+        <textarea class="form-input" id="blog-content" style="min-height:280px;resize:vertical;font-family:monospace;font-size:13px" placeholder="<p>نص المقال هنا...</p>&#10;<h2>عنوان فرعي</h2>&#10;<p>المزيد من النص...</p>"></textarea>
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px">يدعم HTML بسيط: &lt;p&gt; &lt;h2&gt; &lt;h3&gt; &lt;strong&gt; &lt;ul&gt;&lt;li&gt; &lt;a&gt;</div>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="saveBlogPost('draft')">💾 حفظ كمسودة</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveBlogPost('published')">🚀 نشر الآن</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
