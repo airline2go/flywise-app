@@ -119,17 +119,36 @@ function renderPost(post) {
   document.getElementById('og-image').setAttribute('content', image);
   document.getElementById('twitter-image').setAttribute('content', image);
 
+  // Word count from the rendered text content (strip HTML tags first) —
+  // a real signal of article depth, computed from whatever the post
+  // actually contains rather than hardcoded.
+  var plainText = post.content.replace(/<[^>]+>/g, ' ');
+  var wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
+
   document.getElementById('article-schema').textContent = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": post.title,
     "description": description,
     "image": image,
+    // [BLOG-SCHEMA-FIX] Self-contained publisher object (name + logo)
+    // instead of an @id reference to index.html's organization schema —
+    // this page's structured data is now valid on its own even if a
+    // crawler reads it in isolation, never depending on another page's
+    // markup resolving correctly.
+    "publisher": {
+      "@type": "Organization",
+      "name": "Airpiv",
+      "url": "https://airpiv.com",
+      "logo": { "@type": "ImageObject", "url": "https://airpiv.com/airpiv-logo.png" }
+    },
     "author": { "@type": "Organization", "name": post.author || "Airpiv Team" },
-    "publisher": { "@id": "https://airpiv.com/#organization" },
     "datePublished": post.published_at,
     "dateModified": post.updated_at || post.published_at,
-    "mainEntityOfPage": { "@type": "WebPage", "@id": url }
+    "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+    "articleSection": "Reisetipps",
+    "wordCount": wordCount,
+    "inLanguage": "de-DE"
   });
 
   var dateStr = post.published_at ? new Date(post.published_at).toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : '';

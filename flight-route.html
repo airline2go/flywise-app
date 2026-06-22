@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-2K257GSWEM");
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Flüge | Airpiv</title>
+<meta name="description" id="page-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" id="page-canonical" href="https://airpiv.com/flight-route.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" id="og-title" content="Flüge | Airpiv">
+<meta property="og:description" id="og-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
+<meta property="og:url" id="og-url" content="https://airpiv.com/flight-route.html">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/shared-layout.css">
+<script type="application/ld+json" id="route-schema">{}</script>
+<style>
+.route-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
+.route-hero-cities{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.route-hero-arrow{color:var(--teal);font-size:1.3rem}
+.route-price-box{margin-top:18px}
+.route-price-val{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:var(--teal)}
+.route-price-lbl{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.route-cta{display:inline-flex;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
+.route-faq{margin-top:30px}
+.route-faq-item{border-bottom:1px solid var(--bd);padding:14px 0}
+.route-faq-q{font-weight:700;color:var(--tx);font-size:14px;margin-bottom:6px}
+.route-faq-a{font-size:13.5px;color:var(--tx2);line-height:1.6}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="/" class="logo"><img src="/airpiv-logo.png" alt="Airpiv"></a>
+    <div class="navr">
+      <a href="/" class="btn-t">Flüge suchen</a>
+    </div>
+  </div>
+</nav>
+
+<main id="route-main">
+  <a href="/" class="back-link">← Zurück zur Startseite</a>
+  <div id="route-content">
+    <p style="color:var(--tx3)">Lade Route…</p>
+  </div>
+</main>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
+    <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="/about.html">Über uns</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Kontakt</a></li><li><a href="/privacy.html">Datenschutz</a></li><li><a href="/terms.html">AGB</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv · Alle Rechte vorbehalten</p></div>
+</div></footer>
+
+<script>
+var PROXY = 'https://api.airpiv.com';
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+var params = new URLSearchParams(window.location.search);
+var slug = params.get('slug');
+
+if (!slug) {
+  renderNotFound();
+} else {
+  fetch(PROXY + '/route-pages/' + encodeURIComponent(slug))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j.ok || !j.route) { renderNotFound(); return; }
+      renderRoute(j.route);
+    })
+    .catch(function(){ renderNotFound(); });
+}
+
+function renderNotFound() {
+  document.getElementById('route-content').innerHTML =
+    '<h1>Route nicht gefunden</h1>' +
+    '<p style="color:var(--tx3)">Diese Flugroute ist nicht verfügbar.</p>' +
+    '<a href="/" class="btn-t" style="display:inline-flex;margin-top:12px">← Flüge suchen</a>';
+}
+
+function renderRoute(route) {
+  var title = 'Flüge von ' + route.origin_city + ' nach ' + route.destination_city;
+  var description = 'Günstige Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') finden und buchen — Preise vergleichen mit Airpiv.';
+  var url = 'https://airpiv.com/flight-route.html?slug=' + encodeURIComponent(route.slug);
+
+  document.getElementById('page-title').textContent = title + ' | Airpiv';
+  document.getElementById('page-description').setAttribute('content', description);
+  document.getElementById('page-canonical').setAttribute('href', url);
+  document.getElementById('og-title').setAttribute('content', title);
+  document.getElementById('og-description').setAttribute('content', description);
+  document.getElementById('og-url').setAttribute('content', url);
+
+  var introText = route.intro_text || ('Du planst eine Reise von ' + route.origin_city + ' nach ' + route.destination_city + '? Mit Airpiv vergleichst du in Sekunden hunderte Airlines und findest den besten Preis für deinen Flug — transparent, ohne versteckte Kosten und mit Bestpreisgarantie.');
+
+  var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
+
+  document.getElementById('route-content').innerHTML =
+    '<h1>' + escHtml(title) + '</h1>' +
+    '<div class="route-hero">' +
+      '<div class="route-hero-cities">' +
+        '<span>' + escHtml(route.origin_city) + '</span>' +
+        '<span class="route-hero-arrow">✈</span>' +
+        '<span>' + escHtml(route.destination_city) + '</span>' +
+      '</div>' +
+      '<div class="route-price-box" id="route-price-box">' +
+        '<div style="color:rgba(255,255,255,.5);font-size:13px">Preis wird geladen…</div>' +
+      '</div>' +
+      '<a href="' + bookingUrl + '" class="route-cta">Jetzt Flüge suchen →</a>' +
+    '</div>' +
+    '<section><p>' + escHtml(introText) + '</p></section>' +
+    '<section class="route-faq">' +
+      '<h2>Häufige Fragen</h2>' +
+      '<div class="route-faq-item"><div class="route-faq-q">Wie finde ich den günstigsten Flug von ' + escHtml(route.origin_city) + ' nach ' + escHtml(route.destination_city) + '?</div><div class="route-faq-a">Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis.</div></div>' +
+      '<div class="route-faq-item"><div class="route-faq-q">Welcher Flughafen wird in ' + escHtml(route.destination_city) + ' angeflogen?</div><div class="route-faq-a">Die Strecke nutzt den Flughafen ' + escHtml(route.destination_iata) + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.</div></div>' +
+      '<div class="route-faq-item"><div class="route-faq-q">Kann ich meine Buchung später ändern?</div><div class="route-faq-a">Das hängt vom gewählten Tarif der Airline ab — Details dazu siehst du vor der Zahlung in der Tarifübersicht.</div></div>' +
+    '</section>';
+
+  document.getElementById('route-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description,
+    "url": url,
+    "mainEntity": {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Wie finde ich den günstigsten Flug von " + route.origin_city + " nach " + route.destination_city + "?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis." }
+        },
+        {
+          "@type": "Question",
+          "name": "Welcher Flughafen wird in " + route.destination_city + " angeflogen?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Die Strecke nutzt den Flughafen " + route.destination_iata + "." }
+        }
+      ]
+    }
+  });
+
+  // Fetch the live indicative price separately — never blocks the rest of
+  // the page from rendering if Duffel is briefly slow/unavailable.
+  fetch(PROXY + '/route-price?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var box = document.getElementById('route-price-box');
+      if (j.ok && j.price != null) {
+        box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div>';
+      } else {
+        box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
+      }
+    })
+    .catch(function(){
+      document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
+    });
+}
+</script>
+
+</body>
+</html>

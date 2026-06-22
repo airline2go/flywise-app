@@ -1086,7 +1086,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:6px}
   .logo{font-size:1.24rem;gap:8px}
   .logo-i{width:32px;height:32px;font-size:.9rem}
   .navr{gap:3px;margin-left:14px;flex-shrink:0}
-  .navr .dm-btn[title="Debug Panel"]{display:none}
+
   .lang-btn{padding:3px 5px;font-size:10px;min-width:24px;min-height:28px}
   .dm-btn{width:30px;height:30px;font-size:14px}
   .btn-t{padding:6px 8px;font-size:11px;min-height:30px}
@@ -1330,31 +1330,6 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:6px}
 .bag-option-price{font-size:13px;font-weight:700;color:var(--teal2);flex-shrink:0}
 .bag-option-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .bag-option.selected .bag-option-check{background:var(--teal);border-color:var(--teal);color:#fff}
-
-
-/* ══ DEBUG PAGE ══ */
-.debug-page{display:none;position:fixed;inset:0;background:var(--navy);z-index:900;overflow-y:auto;padding:0 0 40px}
-.debug-page.open{display:block}
-.debug-hd{background:var(--navy2);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.1)}
-.debug-hd h2{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:#fff}
-.debug-close{background:rgba(255,255,255,.1);border:none;color:#fff;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px}
-.debug-body{padding:16px 18px}
-.debug-section{margin-bottom:20px}
-.debug-section h3{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.debug-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.debug-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px}
-.debug-card-val{font-family:monospace;font-size:1.2rem;font-weight:700;color:#5eead4}
-.debug-card-lbl{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px}
-.debug-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.debug-status.ok{background:rgba(16,185,129,.2);color:#34d399}
-.debug-status.err{background:rgba(220,38,38,.2);color:#f87171}
-.debug-log{background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px;max-height:200px;overflow-y:auto}
-.debug-log-entry{font-family:monospace;font-size:10px;color:rgba(255,255,255,.6);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.debug-log-entry:last-child{border:none}
-.debug-log-entry.err{color:#f87171}
-.debug-log-entry .time{color:rgba(255,255,255,.3);margin-right:6px}
-.debug-test-btn{width:100%;background:var(--teal);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px}
-.debug-test-btn:hover{background:var(--teal2)}
 
 
 /* ══ BOOKING CONFIRMATION PAGE ══ */
@@ -6206,91 +6181,6 @@ function fwLog(type, data) {
 }
 
 
-// ══ DEBUG PANEL ══════════════════════════════
-function openDebug() {
-  // Security: debug panel only accessible in development
-  var isDevEnv = location.hostname === 'localhost' ||
-                 location.hostname === '127.0.0.1' ||
-                 location.search.indexOf('debug=flywise2024') !== -1;
-  if (!isDevEnv) return;
-  document.getElementById('debug-page').classList.add('open');
-  refreshDebug();
-}
-
-function refreshDebug() {
-  document.getElementById('dbg-searches').textContent = FW_LOG.searches;
-  document.getElementById('dbg-requests').textContent = FW_LOG.requests;
-  document.getElementById('dbg-resp-time').textContent = FW_LOG.lastResponseTime || '—';
-  document.getElementById('dbg-req-id').textContent = FW_LOG.lastReqId || '—';
-  document.getElementById('dbg-order-id').textContent = FW_LOG.lastOrderId || '—';
-  document.getElementById('debug-proxy-url').textContent = 'Proxy: ' + PROXY + ' | Mode: ' + (API.duffelMode || 'unknown') + ' | Requests: ' + API.requestCount;
-  // Update connection status
-  var statusEl = document.getElementById('debug-conn-status');
-  if (statusEl && API.serverVersion) {
-    statusEl.className = 'debug-status ok';
-    statusEl.textContent = '✅ Verbunden · v' + API.serverVersion + ' · Duffel: ' + (API.isTest ? 'TEST' : 'LIVE');
-  }
-
-  // Results count from last search
-  var resEl = document.getElementById('dbg-results');
-  if (resEl) resEl.textContent = allOffers.length || '—';
-
-  // Error log
-  var errEl = document.getElementById('dbg-errors');
-  if (errEl) {
-    if (FW_LOG.errors.length === 0) {
-      errEl.innerHTML = '<div class="debug-log-entry" style="color:rgba(255,255,255,.3)">Keine Fehler ✅</div>';
-    } else {
-      errEl.innerHTML = FW_LOG.errors.map(function(e) {
-        return '<div class="debug-log-entry err"><span class="time">' + escHtml(e.time.slice(11,19)) + '</span>' + escHtml(e.msg) + '</div>';
-      }).join('');
-    }
-  }
-
-  // Activity log
-  var actEl = document.getElementById('dbg-activity');
-  if (actEl) {
-    if (FW_LOG.history.length === 0) {
-      actEl.innerHTML = '<div class="debug-log-entry" style="color:rgba(255,255,255,.3)">Keine Aktivität</div>';
-    } else {
-      actEl.innerHTML = FW_LOG.history.slice(0,20).map(function(e) {
-        var icon = e.type === 'search' ? '🔍' : e.type === 'response' ? '✅' : e.type === 'error' ? '❌' : '📦';
-        var detail = e.type === 'search' ? (escHtml(e.data.orig) + '→' + escHtml(e.data.dest)) :
-                     e.type === 'response' ? (escHtml(String(e.data.status)) + ' ' + escHtml(String(e.data.ms)) + 'ms ' + escHtml(String(e.data.count||0)) + ' results') :
-                     e.type === 'error' ? escHtml(e.data.msg) :
-                     e.type === 'order' ? escHtml(e.data.orderId) : '';
-        return '<div class="debug-log-entry"><span class="time">' + escHtml(e.time.slice(11,19)) + '</span>' + icon + ' ' + detail + '</div>';
-      }).join('');
-    }
-  }
-}
-
-async function debugTestConnection() {
-  var statusEl = document.getElementById('debug-conn-status');
-  statusEl.className = 'debug-status';
-  statusEl.textContent = '⏳ Teste...';
-  try {
-    var t0 = Date.now();
-    var r = await fetch(PROXY + '/health');
-    var ms = Date.now() - t0;
-    if (r.ok) {
-      var j = await r.json();
-      statusEl.className = 'debug-status ok';
-      statusEl.textContent = '✅ Verbunden · ' + ms + 'ms · Token: ' + (j.tokenConfigured ? '✓' : '✗');
-      fwLog('response', {status: r.status, ms: ms, count: 0});
-    } else {
-      statusEl.className = 'debug-status err';
-      statusEl.textContent = '❌ HTTP ' + r.status;
-    }
-  } catch(e) {
-    statusEl.className = 'debug-status err';
-    statusEl.textContent = '❌ ' + e.message;
-    fwLog('error', {msg: 'Health check: ' + e.message});
-  }
-  refreshDebug();
-}
-
-
 // ══ BOOKING CONFIRMATION ═════════════════════
 var lastBooking = null;
 
@@ -10799,6 +10689,21 @@ function referralLinkFor(userId) {
   return base + '?ref=' + referralCodeFor(userId);
 }
 
+// [ROUTE-PAGES] Pre-fill the search form from ?from=IATA&to=IATA in the
+// URL — used by the SEO route landing pages' "Jetzt buchen" link. Reuses
+// pickAC(), the same function manual airport selection uses, so the
+// resulting state is identical to the customer having picked these
+// airports themselves.
+function prefillSearchFromUrl() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var from = params.get('from');
+    var to = params.get('to');
+    if (from) pickAC('from', from.toUpperCase(), from.toUpperCase(), from.toUpperCase());
+    if (to) pickAC('to', to.toUpperCase(), to.toUpperCase(), to.toUpperCase());
+  } catch (e) {}
+}
+
 // Capture ?ref=CODE from the URL on page load and remember it locally until signup
 function referralCaptureFromUrl() {
   try {
@@ -11250,6 +11155,7 @@ function handleHelper(action) {
 document.addEventListener('DOMContentLoaded', function() {
   checkMaintenanceMode();
   referralCaptureFromUrl();
+  prefillSearchFromUrl();
   initDates();
   initDarkMode();
   initCookie();
@@ -12184,66 +12090,6 @@ Telefon: [Ihre Telefonnummer]</p>
         <span class="bflow-price" id="bflow-btn-price"></span>
       </button>
     </div>
-  </div>
-</div>
-
-
-<!-- ══ DEBUG / ADMIN PAGE ══ -->
-<div class="debug-page" id="debug-page">
-  <div class="debug-hd">
-    <h2>🛠 Airpiv Debug Panel</h2>
-    <button class="debug-close" onclick="document.getElementById('debug-page').classList.remove('open')">✕ Schließen</button>
-  </div>
-  <div class="debug-body">
-
-    <!-- Connection Status -->
-    <div class="debug-section">
-      <h3>🔌 Duffel Verbindung</h3>
-      <div id="debug-conn-status" class="debug-status err">⚪ Unbekannt</div>
-      <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,.4)" id="debug-proxy-url"></div>
-      <button class="debug-test-btn" style="margin-top:10px" onclick="debugTestConnection()">🔄 Verbindung testen</button>
-    </div>
-
-    <!-- Stats -->
-    <div class="debug-section">
-      <h3>📊 Statistiken</h3>
-      <div class="debug-grid">
-        <div class="debug-card"><div class="debug-card-val" id="dbg-searches">0</div><div class="debug-card-lbl">Suchen</div></div>
-        <div class="debug-card"><div class="debug-card-val" id="dbg-requests">0</div><div class="debug-card-lbl">API Anfragen</div></div>
-        <div class="debug-card"><div class="debug-card-val" id="dbg-resp-time">—</div><div class="debug-card-lbl">Letzte Antwortzeit</div></div>
-        <div class="debug-card"><div class="debug-card-val" id="dbg-results">—</div><div class="debug-card-lbl">Letzte Ergebnisse</div></div>
-      </div>
-    </div>
-
-    <!-- Last IDs -->
-    <div class="debug-section">
-      <h3>🔑 Letzte IDs</h3>
-      <div class="debug-card" style="margin-bottom:8px">
-        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px">LAST REQUEST ID</div>
-        <div style="font-family:monospace;font-size:11px;color:#5eead4;word-break:break-all" id="dbg-req-id">—</div>
-      </div>
-      <div class="debug-card">
-        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px">LAST ORDER ID</div>
-        <div style="font-family:monospace;font-size:11px;color:#f9ba00;word-break:break-all" id="dbg-order-id">—</div>
-      </div>
-    </div>
-
-    <!-- Error Log -->
-    <div class="debug-section">
-      <h3>⚠️ Fehlerprotokoll</h3>
-      <div class="debug-log" id="dbg-errors">
-        <div class="debug-log-entry" style="color:rgba(255,255,255,.3)">Keine Fehler</div>
-      </div>
-    </div>
-
-    <!-- Activity Log -->
-    <div class="debug-section">
-      <h3>📋 Aktivitätsprotokoll</h3>
-      <div class="debug-log" id="dbg-activity">
-        <div class="debug-log-entry" style="color:rgba(255,255,255,.3)">Keine Aktivität</div>
-      </div>
-    </div>
-
   </div>
 </div>
 
