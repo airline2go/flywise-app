@@ -1,0 +1,57 @@
+/* ============================================================
+   Airpiv — Shared layout styles for static content pages
+   (about.html, contact.html, privacy.html, terms.html, 404.html)
+   Colors/fonts extracted directly from index.html's :root and
+   header/footer rules — kept in sync manually since these are
+   plain static files with no build step.
+   ============================================================ */
+:root{
+  --teal:#0FB5A0;--teal2:#0A9384;--teal-lt:#e6f7f4;
+  --pink:#FF5A5F;--pink2:#E63E52;--navy:#0A1822;--navy2:#16283a;
+  --bg:#ffffff;--bg2:#f6f8fa;--bd:#e1e7ec;--bd2:#c8d4de;
+  --tx:#101d2c;--tx2:#46586c;--tx3:#8fa4b4;
+  --gr:#0f9d58;--gr-bg:#e8f5ee;
+  --rd:#dc2626;--rd-bg:#fef2f2;
+  --pad:20px;--r:14px;--r-sm:10px;--r-xs:8px;
+}
+*{box-sizing:border-box}
+html{max-width:100vw;width:100%;overflow-x:hidden}
+body{margin:0;font-family:'Space Grotesk','Segoe UI',system-ui,sans-serif;color:var(--tx);background:var(--bg);overflow-x:hidden;line-height:1.6;width:100%;min-width:0}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;-webkit-appearance:none;appearance:none}
+h1,h2,h3{font-family:'Syne',sans-serif;letter-spacing:-.01em}
+
+/* ── Header (matches index.html's nav.topnav) ── */
+nav.topnav{background:var(--navy);position:sticky;top:0;z-index:300;box-shadow:0 2px 12px rgba(0,0,0,.3);width:100%}
+.navi{max-width:1240px;margin:0 auto;padding:0 var(--pad);display:flex;align-items:center;height:54px;gap:8px}
+.logo{display:flex;align-items:center;flex-shrink:0}
+.logo img{height:38px;width:auto;display:block}
+.navr{display:flex;gap:10px;margin-left:auto;align-items:center}
+.btn-t{background:var(--teal);color:#fff;padding:8px 16px;border-radius:var(--r-xs);font-size:13px;font-weight:700;cursor:pointer;border:none;min-height:38px;display:inline-flex;align-items:center}
+
+/* ── Page content shell ── */
+main{max-width:760px;margin:0 auto;padding:40px var(--pad) 70px}
+main h1{font-size:1.9rem;color:var(--tx);margin:0 0 6px}
+main .sub{color:var(--tx3);font-size:14px;margin:0 0 30px}
+main section{margin-bottom:26px}
+main h2{font-size:1.15rem;color:var(--tx);margin:0 0 10px}
+main p{color:var(--tx2);font-size:14.5px;line-height:1.7;margin:0 0 12px}
+main a.link{color:var(--teal);text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--teal);font-size:13px;font-weight:700;margin-bottom:20px}
+
+/* ── Footer (matches index.html's <footer>) ── */
+footer{background:var(--navy);color:rgba(255,255,255,.7);margin-top:40px}
+.fi2{max-width:1240px;margin:0 auto;padding:36px var(--pad) 24px}
+.fgr{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:24px}
+.flo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:#fff;margin-bottom:8px}
+.fdes{font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.6;max-width:280px}
+.fcol h4{font-size:12px;color:rgba(255,255,255,.9);margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em}
+.fcol ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.fcol a{font-size:13px;color:rgba(255,255,255,.6)}
+.fbot{border-top:1px solid rgba(255,255,255,.1);padding-top:18px;font-size:12px;color:rgba(255,255,255,.5)}
+@media (max-width:760px){.fgr{grid-template-columns:1fr 1fr;gap:20px}}
+@media (max-width:480px){.fgr{grid-template-columns:1fr}}
+
+[data-theme=dark] body{background:var(--navy);color:#eef3f7}
+[data-theme=dark] main h1,[data-theme=dark] main h2{color:#eef3f7}
+[data-theme=dark] main p{color:#aebcc9}

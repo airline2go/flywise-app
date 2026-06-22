@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kontakt | Airpiv</title>
+<meta name="description" content="Kontaktiere das Airpiv-Team per E-Mail, Live-Chat oder Kontaktformular. Wir sind täglich von 8 bis 22 Uhr für dich erreichbar.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://airpiv.com/contact.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kontakt | Airpiv">
+<meta property="og:description" content="Kontaktiere das Airpiv-Team — per E-Mail, Live-Chat oder Kontaktformular.">
+<meta property="og:url" content="https://airpiv.com/contact.html">
+
+<link rel="stylesheet" href="/shared-layout.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "@id": "https://airpiv.com/contact.html",
+  "url": "https://airpiv.com/contact.html",
+  "name": "Kontakt | Airpiv",
+  "isPartOf": { "@id": "https://airpiv.com/#website" },
+  "about": { "@id": "https://airpiv.com/#organization" },
+  "inLanguage": "de-DE"
+}
+</script>
+<style>
+.fi{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:9px;padding:11px 12px;font-size:14px;color:var(--tx);outline:none;font-family:inherit}
+.fi:focus{border-color:var(--teal)}
+.fg{margin-bottom:10px}
+.fg label{display:block;font-size:12px;color:var(--tx2);margin-bottom:5px;font-weight:600}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.fgrid{grid-template-columns:1fr}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;display:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.show{display:block}
+#toast.error{background:#dc2626}
+#toast.success{background:#0f9d58}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="/" class="logo"><img src="/airpiv-logo.png" alt="Airpiv"></a>
+    <div class="navr">
+      <a href="/" class="btn-t">Flüge suchen</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <a href="/" class="back-link">← Zurück zur Startseite</a>
+  <h1>Kontakt</h1>
+  <p class="sub">Wir sind für dich da — per Live-Chat, E-Mail oder Formular.</p>
+
+  <section style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+    <div style="background:linear-gradient(135deg,#0A1822,#16283a);border-radius:14px;padding:18px 14px;text-align:center;border:1px solid rgba(15,181,160,.18)">
+      <div style="font-size:13px;font-weight:700;color:#fff">📧 E-Mail</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">support@airpiv.com</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#0A1822,#16283a);border-radius:14px;padding:18px 14px;text-align:center;border:1px solid rgba(15,181,160,.18)">
+      <div style="font-size:13px;font-weight:700;color:#fff">🕑 Erreichbar</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Täglich 8–22 Uhr</div>
+    </div>
+  </section>
+
+  <section>
+    <a href="/#contact" class="btn-t" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:24px">💬 Live-Chat jetzt starten</a>
+  </section>
+
+  <section>
+    <h2>📬 Nachricht schreiben</h2>
+    <div class="fgrid">
+      <div class="fg"><label>Name</label><input class="fi" id="ct-name" placeholder="Max Mustermann"></div>
+      <div class="fg"><label>E-Mail</label><input class="fi" id="ct-email" type="email" placeholder="max@mail.de"></div>
+    </div>
+    <div class="fg"><label>Betreff</label><input class="fi" id="ct-sub2" placeholder="Womit können wir helfen?"></div>
+    <div class="fg"><label>Nachricht</label><textarea class="fi" id="ct-msg" style="min-height:120px;resize:vertical" placeholder="Deine Nachricht..."></textarea></div>
+    <button id="ct-send-btn" onclick="sendCt()" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">Senden ✉️</button>
+  </section>
+</main>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
+    <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="/about.html">Über uns</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Kontakt</a></li><li><a href="/privacy.html">Datenschutz</a></li><li><a href="/terms.html">AGB</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv · Alle Rechte vorbehalten</p></div>
+</div></footer>
+
+<div id="toast"></div>
+<script>
+var PROXY = 'https://api.airpiv.com';
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  setTimeout(function(){ t.className = ''; }, 3500);
+}
+
+function sendCt() {
+  var n = document.getElementById('ct-name');
+  var e = document.getElementById('ct-email');
+  var s = document.getElementById('ct-sub2');
+  var m = document.getElementById('ct-msg');
+  if (!n.value.trim() || !e.value.trim() || !m.value.trim()) {
+    showToast('⚠️ Bitte alle Felder ausfüllen', 'error');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.value.trim())) {
+    showToast('⚠️ Ungültige E-Mail-Adresse', 'error');
+    return;
+  }
+  var sendBtn = document.getElementById('ct-send-btn');
+  sendBtn.disabled = true; sendBtn.textContent = '…';
+  fetch(PROXY + '/contact', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name: n.value.trim(), email: e.value.trim(), subject: s.value.trim(), message: m.value.trim() })
+  }).then(function(r){ return r.json(); }).then(function(j){
+    sendBtn.disabled = false; sendBtn.textContent = 'Senden ✉️';
+    if (j.ok) {
+      showToast('✉️ Gesendet! Wir melden uns bald.', 'success');
+      n.value = ''; e.value = ''; s.value = ''; m.value = '';
+    } else {
+      showToast('❌ ' + (j.error || 'Senden fehlgeschlagen'), 'error');
+    }
+  }).catch(function(){
+    sendBtn.disabled = false; sendBtn.textContent = 'Senden ✉️';
+    showToast('❌ Verbindungsfehler. Bitte später erneut versuchen.', 'error');
+  });
+}
+</script>
+
+</body>
+</html>
