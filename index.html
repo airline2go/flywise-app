@@ -2,7 +2,17 @@
 <html lang="de" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2K257GSWEM');
+</script>
+
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -36,7 +46,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Airpiv | Günstige Flüge buchen & Flugtickets vergleichen">
 <meta property="og:description" content="Günstige Flüge suchen und buchen auf Airpiv. Last-Minute-Angebote, Bestpreisgarantie, keine versteckten Kosten.">
-<meta property="og:image" content="https://airpiv.com/images/og-image.png">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
@@ -46,6 +56,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Airpiv – Flüge vergleichen & buchen">
 <meta name="twitter:description" content="Günstige Flüge suchen und buchen auf Airpiv. Bestpreisgarantie!">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:url" content="https://airpiv.com">
 
 <!-- Structured Data / JSON-LD -->
 <script type="application/ld+json">
@@ -58,11 +70,11 @@
     "url": "https://airpiv.com",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://airpiv.com/images/og-image.png",
+      "url": "https://airpiv.com/og-image.png",
       "width": 1200,
       "height": 630
     },
-    "image": "https://airpiv.com/images/og-image.png",
+    "image": "https://airpiv.com/og-image.png",
     "description": "Airpiv ist eine Flugbuchungsplattform, auf der Sie günstige Flüge weltweit suchen, vergleichen und buchen können.",
     "sameAs": [],
     "contactPoint": {
@@ -12007,7 +12019,7 @@ document.addEventListener('keydown', function(e) {
 <div class="ps"><h3>4. Datenweitergabe</h3><p>Wir verkaufen deine Daten nicht an Dritte. Wir geben Daten ausschließlich weiter an:</p>
 <ul><li><strong>Duffel Technologies Ltd.</strong> — zur technischen Abwicklung der Buchung</li><li><strong>Die jeweilige Airline</strong> — zur Ausstellung des Tickets und Bestätigung der Sitzplatzbuchung</li></ul></div>
 <div class="ps"><h3>5. Zahlungsdaten</h3><p>Wir speichern keine Kreditkartennummern. Zahlungen werden direkt über die verschlüsselte Zahlungsplattform Stripe gemäß PCI-DSS-Standard abgewickelt.</p></div>
-<div class="ps"><h3>6. Cookies</h3><p>Wir verwenden technisch notwendige Cookies (Dark Mode, Cookie-Einstellungen). Es werden keine Tracking- oder Marketing-Cookies gesetzt.</p></div>
+<div class="ps"><h3>6. Cookies und Analyse-Tools</h3><p>Wir verwenden technisch notwendige Cookies (Dark Mode, Cookie-Einstellungen). Zusätzlich nutzen wir Google Analytics 4, um zu verstehen, wie Besucher unsere Website nutzen und sie kontinuierlich zu verbessern. Dabei werden anonymisierte Nutzungsdaten (z. B. besuchte Seiten, Verweildauer) erhoben. Es werden keine Daten zu Werbezwecken an Dritte verkauft.</p></div>
 <div class="ps"><h3>7. Deine Rechte</h3><p>Du hast jederzeit das Recht, Auskunft über deine gespeicherten Daten zu verlangen, sie zu berichtigen oder ihre Löschung zu verlangen ("Recht auf Vergessenwerden"). Kontaktiere uns dazu unter <a href="mailto:privacy@airpiv.com">privacy@airpiv.com</a>.</p></div></div></div>
 
 <!-- TERMS & CONDITIONS -->
