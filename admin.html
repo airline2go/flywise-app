@@ -396,6 +396,29 @@
     outline: none;
     transition: border-color 0.15s;
   }
+  .route-ac-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  }
+  .route-ac-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-ac-item:last-child { border-bottom: none; }
+  .route-ac-item:hover { background: var(--bg3); }
+  .route-ac-item .ac-code { font-family: var(--mono); color: var(--teal); font-weight: 700; margin-left: 6px; }
 
   .form-input:focus { border-color: var(--teal); }
 
@@ -1952,30 +1975,134 @@ function renderRoutePagesList() {
   }).join('');
 }
 
+// [ROUTE-AIRPORT-SEARCH] Tracks the currently-selected city name for each
+// direction separately from the search input's displayed text (which
+// shows "City (CODE)") — the API needs the plain city name.
+var routeSelectedOriginCity = '';
+var routeSelectedDestCity = '';
+var routeSearchDebounce = {};
+
 function openRouteEditor(route) {
   document.getElementById('route-editor-title').textContent = route ? 'تعديل المسار' : 'مسار جديد';
   document.getElementById('route-edit-id').value = route ? route.id : '';
-  document.getElementById('route-origin-city').value = route ? route.origin_city : '';
-  document.getElementById('route-origin-iata').value = route ? route.origin_iata : '';
-  document.getElementById('route-dest-city').value = route ? route.destination_city : '';
-  document.getElementById('route-dest-iata').value = route ? route.destination_iata : '';
+  if (route) {
+    document.getElementById('route-origin-search').value = route.origin_city + ' (' + route.origin_iata + ')';
+    document.getElementById('route-origin-iata').value = route.origin_iata;
+    document.getElementById('route-origin-lat').value = route.origin_lat || '';
+    document.getElementById('route-origin-lng').value = route.origin_lng || '';
+    document.getElementById('route-dest-search').value = route.destination_city + ' (' + route.destination_iata + ')';
+    document.getElementById('route-dest-iata').value = route.destination_iata;
+    document.getElementById('route-dest-lat').value = route.destination_lat || '';
+    document.getElementById('route-dest-lng').value = route.destination_lng || '';
+    routeSelectedOriginCity = route.origin_city;
+    routeSelectedDestCity = route.destination_city;
+    updateRouteDistancePreview();
+  } else {
+    ['route-origin-search','route-origin-iata','route-origin-lat','route-origin-lng',
+     'route-dest-search','route-dest-iata','route-dest-lat','route-dest-lng'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    routeSelectedOriginCity = '';
+    routeSelectedDestCity = '';
+    document.getElementById('route-distance-preview').textContent = '';
+  }
   document.getElementById('route-intro').value = route ? (route.intro_text || '') : '';
   document.getElementById('route-editor-modal').classList.add('open');
 }
 
-async function saveRoutePage(status) {
-  var id = document.getElementById('route-edit-id').value;
-  var originCity = document.getElementById('route-origin-city').value.trim();
-  var originIata = document.getElementById('route-origin-iata').value.trim().toUpperCase();
-  var destCity = document.getElementById('route-dest-city').value.trim();
-  var destIata = document.getElementById('route-dest-iata').value.trim().toUpperCase();
-
-  if (!originCity || !originIata || !destCity || !destIata) {
-    showToast('⚠️ جميع الحقول المطلوبة (*) لازمة', 'error');
+// [ROUTE-AIRPORT-SEARCH] Live airport/city search reusing the same public
+// GET /search/airports endpoint the main booking flow's search bar uses —
+// debounced (350ms) so typing quickly doesn't fire a request per
+// keystroke, and requires 2+ characters to match the endpoint's own
+// minimum query length.
+function routeAirportSearch(which, query) {
+  clearTimeout(routeSearchDebounce[which]);
+  var dropdown = document.getElementById('route-' + which + '-results');
+  if (!query || query.trim().length < 2) {
+    dropdown.style.display = 'none';
     return;
   }
-  if (originIata.length !== 3 || destIata.length !== 3) {
-    showToast('⚠️ كود المطار يجب أن يكون 3 أحرف بالضبط (مثل BER)', 'error');
+  routeSearchDebounce[which] = setTimeout(function() {
+    adminFetch('/search/airports?q=' + encodeURIComponent(query.trim()))
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (!j.ok || !j.airports || !j.airports.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد نتائج</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        // Only airports carry coordinates (cities don't — see server
+        // comment) and the route page needs a specific airport anyway
+        // (flight search is always by airport code), so cities are
+        // filtered out of this picker entirely.
+        var airportsOnly = j.airports.filter(function(a) { return a.type === 'airport'; });
+        if (!airportsOnly.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد مطارات مطابقة</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        dropdown.innerHTML = airportsOnly.map(function(a) {
+          return '<div class="route-ac-item" onclick=\'selectRouteAirport("' + which + '",' + escJsonAttr(a) + ')\'>' +
+            escHtml(a.city) + ' — ' + escHtml(a.name) + '<span class="ac-code">' + escHtml(a.code) + '</span>' +
+          '</div>';
+        }).join('');
+        dropdown.style.display = 'block';
+      })
+      .catch(function() { dropdown.style.display = 'none'; });
+  }, 350);
+}
+
+function selectRouteAirport(which, airport) {
+  document.getElementById('route-' + which + '-search').value = airport.city + ' (' + airport.code + ')';
+  document.getElementById('route-' + which + '-iata').value = airport.code;
+  document.getElementById('route-' + which + '-lat').value = airport.lat != null ? airport.lat : '';
+  document.getElementById('route-' + which + '-lng').value = airport.lng != null ? airport.lng : '';
+  if (which === 'origin') routeSelectedOriginCity = airport.city;
+  else routeSelectedDestCity = airport.city;
+  document.getElementById('route-' + which + '-results').style.display = 'none';
+  updateRouteDistancePreview();
+}
+
+// [ROUTE-AIRPORT-SEARCH] Client-side preview only (mirrors the server's
+// own Haversine calculation) — shown immediately after picking both
+// airports so the admin sees the real computed distance/haul type before
+// even saving. The server recomputes and stores the authoritative value
+// independently; this is purely informational feedback in the form.
+function updateRouteDistancePreview() {
+  var oLat = parseFloat(document.getElementById('route-origin-lat').value);
+  var oLng = parseFloat(document.getElementById('route-origin-lng').value);
+  var dLat = parseFloat(document.getElementById('route-dest-lat').value);
+  var dLng = parseFloat(document.getElementById('route-dest-lng').value);
+  var preview = document.getElementById('route-distance-preview');
+  if (isNaN(oLat) || isNaN(oLng) || isNaN(dLat) || isNaN(dLng)) { preview.textContent = ''; return; }
+  var R = 6371;
+  var toRad = function(d) { return d * Math.PI / 180; };
+  var dLatRad = toRad(dLat - oLat), dLngRad = toRad(dLng - oLng);
+  var a = Math.sin(dLatRad/2)**2 + Math.cos(toRad(oLat)) * Math.cos(toRad(dLat)) * Math.sin(dLngRad/2)**2;
+  var distKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  var haul = distKm < 1500 ? 'short-haul (رحلة قريبة)' : 'long-haul (رحلة طويلة)';
+  preview.textContent = '📏 المسافة المحسوبة: ' + distKm.toLocaleString() + ' كم · ' + haul;
+}
+
+// Hide dropdowns when clicking elsewhere in the modal.
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#route-origin-search') && !e.target.closest('#route-origin-results')) {
+    var od = document.getElementById('route-origin-results'); if (od) od.style.display = 'none';
+  }
+  if (!e.target.closest('#route-dest-search') && !e.target.closest('#route-dest-results')) {
+    var dd = document.getElementById('route-dest-results'); if (dd) dd.style.display = 'none';
+  }
+});
+
+async function saveRoutePage(status) {
+  var id = document.getElementById('route-edit-id').value;
+  var originIata = document.getElementById('route-origin-iata').value.trim().toUpperCase();
+  var destIata = document.getElementById('route-dest-iata').value.trim().toUpperCase();
+  var originCity = routeSelectedOriginCity;
+  var destCity = routeSelectedDestCity;
+
+  if (!originCity || !originIata || !destCity || !destIata) {
+    showToast('⚠️ اختر المطارين من نتائج البحث أولاً', 'error');
     return;
   }
 
@@ -1984,6 +2111,10 @@ async function saveRoutePage(status) {
     origin_iata: originIata,
     destination_city: destCity,
     destination_iata: destIata,
+    origin_lat: document.getElementById('route-origin-lat').value || null,
+    origin_lng: document.getElementById('route-origin-lng').value || null,
+    destination_lat: document.getElementById('route-dest-lat').value || null,
+    destination_lng: document.getElementById('route-dest-lng').value || null,
     intro_text: document.getElementById('route-intro').value.trim(),
     status: status,
   };
@@ -3865,26 +3996,29 @@ async function downloadBatchSeparate() {
     </div>
     <div class="modal-body">
       <input type="hidden" id="route-edit-id">
-      <div class="form-group" style="display:flex;gap:10px">
-        <div style="flex:1">
-          <label class="form-label">من (مدينة) *</label>
-          <input type="text" class="form-input" id="route-origin-city" placeholder="Berlin">
-        </div>
-        <div style="flex:1">
-          <label class="form-label">كود المطار (IATA) *</label>
-          <input type="text" class="form-input" id="route-origin-iata" placeholder="BER" maxlength="3" style="text-transform:uppercase">
-        </div>
+      <!-- [ROUTE-AIRPORT-SEARCH] Hidden fields hold the REAL data (city
+           name, IATA code, coordinates) returned by the airport search —
+           never typed manually, eliminating IATA-code typos and supplying
+           the lat/lng the distance calculation actually needs. -->
+      <input type="hidden" id="route-origin-iata">
+      <input type="hidden" id="route-origin-lat">
+      <input type="hidden" id="route-origin-lng">
+      <input type="hidden" id="route-dest-iata">
+      <input type="hidden" id="route-dest-lat">
+      <input type="hidden" id="route-dest-lng">
+
+      <div class="form-group" style="position:relative">
+        <label class="form-label">من (مدينة أو مطار) *</label>
+        <input type="text" class="form-input" id="route-origin-search" placeholder="ابحث: Berlin, BER..." autocomplete="off" oninput="routeAirportSearch('origin', this.value)">
+        <div id="route-origin-results" class="route-ac-dropdown" style="display:none"></div>
       </div>
-      <div class="form-group" style="display:flex;gap:10px">
-        <div style="flex:1">
-          <label class="form-label">إلى (مدينة) *</label>
-          <input type="text" class="form-input" id="route-dest-city" placeholder="London">
-        </div>
-        <div style="flex:1">
-          <label class="form-label">كود المطار (IATA) *</label>
-          <input type="text" class="form-input" id="route-dest-iata" placeholder="LHR" maxlength="3" style="text-transform:uppercase">
-        </div>
+      <div class="form-group" style="position:relative">
+        <label class="form-label">إلى (مدينة أو مطار) *</label>
+        <input type="text" class="form-input" id="route-dest-search" placeholder="ابحث: London, LHR..." autocomplete="off" oninput="routeAirportSearch('dest', this.value)">
+        <div id="route-dest-results" class="route-ac-dropdown" style="display:none"></div>
       </div>
+      <div id="route-distance-preview" style="font-size:12px;color:var(--tx3);margin:-4px 0 6px"></div>
+
       <div class="form-group">
         <label class="form-label">نص SEO تعريفي (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
         <textarea class="form-input" id="route-intro" style="min-height:90px;resize:vertical" placeholder="مثال: ابحث عن أرخص رحلات الطيران من برلين إلى لندن..."></textarea>
