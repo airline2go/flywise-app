@@ -41,6 +41,10 @@
 .route-faq-item{border-bottom:1px solid var(--bd);padding:14px 0}
 .route-faq-q{font-weight:700;color:var(--tx);font-size:14px;margin-bottom:6px}
 .route-faq-a{font-size:13.5px;color:var(--tx2);line-height:1.6}
+.related-routes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.related-route-card{display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
+.related-route-card:hover{border-color:var(--teal)}
+@media (max-width:480px){.related-routes-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -105,8 +109,11 @@ function renderNotFound() {
 }
 
 function renderRoute(route) {
-  var title = 'Flüge von ' + route.origin_city + ' nach ' + route.destination_city;
-  var description = 'Günstige Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') finden und buchen — Preise vergleichen mit Airpiv.';
+  // [ROUTE-SEO-OVERRIDES] Falls back to the exact same auto-generated
+  // text as before when the admin hasn't set a custom override — zero
+  // behavior change for any route that doesn't use this field.
+  var title = route.custom_title || ('Flüge von ' + route.origin_city + ' nach ' + route.destination_city);
+  var description = route.custom_meta_description || ('Günstige Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') finden und buchen — Preise vergleichen mit Airpiv.');
   var url = 'https://airpiv.com/flight-route.html?slug=' + encodeURIComponent(route.slug);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
@@ -120,6 +127,27 @@ function renderRoute(route) {
 
   var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
 
+  // [ROUTE-PAGES-DISTANCE] Real, server-computed distance — shown only
+  // when available (older routes created before this feature, or any
+  // route missing coordinates for some reason, simply don't show this
+  // line rather than displaying a fabricated/guessed number).
+  var distanceHtml = '';
+  if (route.distance_km != null) {
+    var haulLabel = route.haul_type === 'long-haul' ? 'Langstreckenflug' : 'Kurzstreckenflug';
+    distanceHtml = '<div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px">📏 ' + route.distance_km.toLocaleString('de-DE') + ' km · ' + haulLabel + '</div>';
+  }
+
+  // [ROUTE-FAQ-OVERRIDE] Uses the admin's custom FAQ when set, otherwise
+  // falls back to the exact same 3 generic questions as before.
+  var faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq : [
+    { question: 'Wie finde ich den günstigsten Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?', answer: 'Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis.' },
+    { question: 'Welcher Flughafen wird in ' + route.destination_city + ' angeflogen?', answer: 'Die Strecke nutzt den Flughafen ' + route.destination_iata + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.' },
+    { question: 'Kann ich meine Buchung später ändern?', answer: 'Das hängt vom gewählten Tarif der Airline ab — Details dazu siehst du vor der Zahlung in der Tarifübersicht.' },
+  ];
+  var faqHtml = faqItems.map(function(f) {
+    return '<div class="route-faq-item"><div class="route-faq-q">' + escHtml(f.question) + '</div><div class="route-faq-a">' + escHtml(f.answer) + '</div></div>';
+  }).join('');
+
   document.getElementById('route-content').innerHTML =
     '<h1>' + escHtml(title) + '</h1>' +
     '<div class="route-hero">' +
@@ -128,6 +156,7 @@ function renderRoute(route) {
         '<span class="route-hero-arrow">✈</span>' +
         '<span>' + escHtml(route.destination_city) + '</span>' +
       '</div>' +
+      distanceHtml +
       '<div class="route-price-box" id="route-price-box">' +
         '<div style="color:rgba(255,255,255,.5);font-size:13px">Preis wird geladen…</div>' +
       '</div>' +
@@ -136,10 +165,41 @@ function renderRoute(route) {
     '<section><p>' + escHtml(introText) + '</p></section>' +
     '<section class="route-faq">' +
       '<h2>Häufige Fragen</h2>' +
-      '<div class="route-faq-item"><div class="route-faq-q">Wie finde ich den günstigsten Flug von ' + escHtml(route.origin_city) + ' nach ' + escHtml(route.destination_city) + '?</div><div class="route-faq-a">Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis.</div></div>' +
-      '<div class="route-faq-item"><div class="route-faq-q">Welcher Flughafen wird in ' + escHtml(route.destination_city) + ' angeflogen?</div><div class="route-faq-a">Die Strecke nutzt den Flughafen ' + escHtml(route.destination_iata) + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.</div></div>' +
-      '<div class="route-faq-item"><div class="route-faq-q">Kann ich meine Buchung später ändern?</div><div class="route-faq-a">Das hängt vom gewählten Tarif der Airline ab — Details dazu siehst du vor der Zahlung in der Tarifübersicht.</div></div>' +
-    '</section>';
+      faqHtml +
+    '</section>' +
+    '<section id="related-routes-section"></section>';
+
+  document.getElementById('route-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description,
+    "url": url,
+    "mainEntity": {
+      "@type": "FAQPage",
+      "mainEntity": faqItems.map(function(f) {
+        return { "@type": "Question", "name": f.question, "acceptedAnswer": { "@type": "Answer", "text": f.answer } };
+      })
+    }
+  });
+
+  // [RELATED-ROUTES] Fetched separately — never blocks the rest of the
+  // page from rendering, and the section simply doesn't appear if there
+  // are no related routes to show (e.g. the very first route published).
+  fetch(PROXY + '/route-pages/' + encodeURIComponent(route.slug) + '/related')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j.ok || !j.related || !j.related.length) return;
+      var section = document.getElementById('related-routes-section');
+      section.innerHTML = '<h2>Ähnliche Flugrouten</h2><div class="related-routes-grid">' +
+        j.related.map(function(r) {
+          return '<a class="related-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+            escHtml(r.origin_city) + ' → ' + escHtml(r.destination_city) +
+          '</a>';
+        }).join('') +
+      '</div>';
+    })
+    .catch(function(){ /* related routes are a bonus, not critical — fail silently */ });
 
   document.getElementById('route-schema').textContent = JSON.stringify({
     "@context": "https://schema.org",

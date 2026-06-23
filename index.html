@@ -42,6 +42,18 @@
   var base='https://airpiv.com';
   var path=window.location.pathname.replace(/\/+$/,'')||'/';
   var canonical=base+(path==='/'?'/':path+'/');
+  // [HREFLANG-CANONICAL-FIX] Each language's URL must be canonical to
+  // ITSELF, not silently collapsed back to the bare URL — otherwise the
+  // hreflang tags above (which claim ?lang=de/en/ar are distinct,
+  // self-referencing indexable pages) directly contradict the canonical
+  // tag (which previously always pointed to the param-less URL no matter
+  // what), telling Google "ignore the language-specific URL, this is
+  // really just the default page" — exactly defeating the purpose of
+  // having hreflang tags at all.
+  var langParam = new URLSearchParams(window.location.search).get('lang');
+  if (langParam && ['de','en','ar'].indexOf(langParam) !== -1) {
+    canonical += '?lang=' + langParam;
+  }
   document.getElementById('canonical-url').setAttribute('href',canonical);
 })();
 </script>
@@ -3383,6 +3395,18 @@ function setLang(lang) {
     var url = new URL(window.location.href);
     url.searchParams.set('lang', lang);
     window.history.replaceState({}, document.title, url.toString());
+    // [HREFLANG-CANONICAL-FIX] Keep the canonical tag self-referencing
+    // after a runtime language switch too — the initial-load script only
+    // sets this once; without updating it here, switching language via
+    // the UI buttons would silently leave canonical pointing at the
+    // bare URL again, recreating the exact canonical/hreflang
+    // contradiction already fixed for the initial-load case.
+    var canonicalEl = document.getElementById('canonical-url');
+    if (canonicalEl) {
+      var canonicalUrl = new URL(canonicalEl.getAttribute('href'), window.location.origin);
+      canonicalUrl.searchParams.set('lang', lang);
+      canonicalEl.setAttribute('href', canonicalUrl.toString());
+    }
   } catch(e) {}
   var lsub = document.getElementById('lsub');
   if (lsub) lsub.textContent = t('loading');
@@ -4141,15 +4165,24 @@ function checkStripeReturn(forcedSessionId) {
           });
         });
     } else if (j.booking_failed_after_payment) {
-      // Payment OK but booking failed — show the REAL Duffel reason so it can be fixed
+      // [OFFER-UNAVAILABLE-UX-FIX] Show a clear, non-technical message
+      // instead of the raw Duffel/airline error text — a customer can't
+      // act on "Please select another offer, or create a new offer
+      // request..." and showing it verbatim is exactly the kind of
+      // technical-error UX that erodes trust after something has already
+      // gone wrong. The real Duffel reason is still logged (fwLog) for
+      // support to investigate, just not surfaced directly.
       var dReason = '';
       try {
         if (j.duffel_errors && j.duffel_errors.length) dReason = j.duffel_errors.map(function(e){ return e.message || e.title || ''; }).join(' | ');
         else if (j.details && j.details.length) dReason = j.details.map(function(e){ return e.message || e.title || ''; }).join(' | ');
       } catch(e) {}
-      var fullMsg = (j.error || t('pay_booking_failed')) + (dReason ? ('\n\nDuffel: ' + dReason) : '');
-      alert('⚠️ ' + fullMsg);
-      showToast('⚠️ ' + (dReason || j.error || t('pay_booking_failed')), 'error');
+      fwLog('error', { msg: 'booking_failed_after_payment: ' + dReason, refunded: j.refunded });
+      var userMsg = j.refunded
+        ? 'Der Flugpreis hat sich kurzfristig geändert oder das Angebot ist nicht mehr verfügbar. Deine Zahlung wurde vollständig zurückerstattet — du kannst sofort erneut suchen und buchen.'
+        : 'Die Buchung konnte leider nicht abgeschlossen werden. Bitte kontaktiere unseren Support — wir kümmern uns sofort um deine Zahlung.';
+      alert((j.refunded ? '↩️ ' : '⚠️ ') + userMsg);
+      showToast((j.refunded ? '↩️ ' : '⚠️ ') + userMsg, 'error');
     } else if (j.processing) {
       // [RACE-CONDITION-FIX] The server's /confirm-payment rejects a
       // second concurrent call for the same session_id with 409 +
@@ -4485,6 +4518,18 @@ function startStripeCheckoutSession(offerId3, paxArr3, orderServices, amounts, o
           // [PRICE-CHECK] Fare moved since the customer saw it — ask before
           // any money moves. bfBtn stays disabled until they choose.
           openPriceChanged(j, amounts);
+        } else if (res.status === 409 && j.code === 'OFFER_UNAVAILABLE') {
+          // [OFFER-UNAVAILABLE-UX-FIX] The offer expired/no longer exists
+          // at all (distinct from PRICE_CHANGED, where it's still bookable
+          // at a different price) — previously this just showed a toast
+          // and left the customer stuck on a dead offer's checkout page.
+          // Closing the flow and re-running their last search lands them
+          // on fresh, currently-valid offers automatically, instead of
+          // requiring them to notice the toast and figure out the next
+          // step themselves.
+          showToast('⚠️ ' + (j.error || 'Dieses Angebot ist nicht mehr verfügbar. Wir suchen aktuelle Angebote für dich.'), 'info');
+          closeBflow();
+          setTimeout(function(){ doSearch(); }, 300);
         } else {
           if (bfBtn) { bfBtn.disabled=false; }
           showToast('❌ ' + (j.error||'Zahlung konnte nicht gestartet werden'), 'error');

@@ -962,6 +962,10 @@
       </div>
     </div>
 
+    <!-- [BOOKING-FAILURE-NOTIFY] Recent issues — only rendered when there's
+         at least one cancellation or post-payment failure to show. -->
+    <div id="booking-issues-panel" style="display:none;margin-bottom:18px"></div>
+
     <div class="table-card">
       <table>
         <thead>
@@ -1817,12 +1821,23 @@ async function initDashboard() {
 // ============ [CANCEL-NOTIFY-FIX] Cancellation notifications ============
 async function loadCancellationBadge() {
   try {
-    const res = await adminFetch('/admin/cancellations');
-    const j = await res.json();
-    if (!j.ok) return;
-    renderCancelBadge(j.unreadCount);
-    if (j.unreadCount > 0) {
-      showToast('🚫 لديك ' + j.unreadCount + ' إلغاء حجز جديد يحتاج مراجعة', 'error');
+    const [cancelRes, failureRes] = await Promise.all([
+      adminFetch('/admin/cancellations'),
+      adminFetch('/admin/booking-failures'),
+    ]);
+    const cancelJ = await cancelRes.json();
+    const failureJ = await failureRes.json();
+    const cancelCount = cancelJ.ok ? cancelJ.unreadCount : 0;
+    const failureCount = failureJ.ok ? failureJ.unreadCount : 0;
+    renderCancelBadge(cancelCount + failureCount);
+    if (cancelCount > 0) {
+      showToast('🚫 لديك ' + cancelCount + ' إلغاء حجز جديد يحتاج مراجعة', 'error');
+    }
+    if (failureCount > 0) {
+      // [BOOKING-FAILURE-NOTIFY] Distinct, more urgent wording — a
+      // charged customer with a failed booking (even auto-refunded) is a
+      // worse outcome than a clean cancellation and needs to read as such.
+      showToast('🆘 لديك ' + failureCount + ' مشكلة في حجز بعد الدفع — راجع فوراً', 'error');
     }
   } catch (e) { console.error('Admin API error:', e); }
 }
@@ -1837,8 +1852,58 @@ function renderCancelBadge(count) {
 
 async function markCancellationsAsRead() {
   try {
-    await adminFetch('/admin/cancellations/mark-read', { method: 'POST' });
+    // [BOOKING-FAILURE-NOTIFY] Both notification types live on the same
+    // badge (the Bookings nav item) — opening that page should clear both,
+    // since the admin is about to see both kinds of events listed there.
+    await Promise.all([
+      adminFetch('/admin/cancellations/mark-read', { method: 'POST' }),
+      adminFetch('/admin/booking-failures/mark-read', { method: 'POST' }),
+    ]);
     renderCancelBadge(0);
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+// [BOOKING-FAILURE-NOTIFY] Renders both cancellation and booking-failure
+// events as cards at the top of the Bookings page — the panel is hidden
+// entirely when there's nothing to show, so it never adds clutter for the
+// common case (no issues).
+async function loadBookingIssuesPanel() {
+  try {
+    const [cancelRes, failureRes] = await Promise.all([
+      adminFetch('/admin/cancellations'),
+      adminFetch('/admin/booking-failures'),
+    ]);
+    const cancelJ = await cancelRes.json();
+    const failureJ = await failureRes.json();
+    const cancelEvents = cancelJ.ok ? (cancelJ.events || []).slice(0, 5) : [];
+    const failureEvents = failureJ.ok ? (failureJ.events || []).slice(0, 5) : [];
+    const panel = document.getElementById('booking-issues-panel');
+    if (!cancelEvents.length && !failureEvents.length) { panel.style.display = 'none'; return; }
+
+    var html = '';
+    failureEvents.forEach(function(ev) {
+      var refundBadge = ev.refunded
+        ? '<span class="badge confirmed">✓ تم الاسترجاع</span>'
+        : '<span class="badge cancelled" style="background:rgba(220,38,38,.15);color:#dc2626">⚠ لم يُسترجع — تحقق فوراً</span>';
+      html += '<div style="background:var(--bg2);border:1px solid #dc2626;border-radius:10px;padding:14px 16px;margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">' +
+          '<div style="font-weight:700;color:#dc2626;font-size:13px">🆘 فشل حجز بعد الدفع</div>' +
+          refundBadge +
+        '</div>' +
+        '<div style="font-size:12.5px;color:var(--tx2);margin-bottom:4px">' + escHtml(ev.message || 'سبب غير معروف') + '</div>' +
+        '<div style="font-size:11px;color:var(--tx3)" class="mono">Session: ' + escHtml(ev.session_id || '—') + ' · ' + new Date(ev.at).toLocaleString('ar') + '</div>' +
+      '</div>';
+    });
+    cancelEvents.forEach(function(ev) {
+      var b = ev.booking;
+      html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">' +
+        '<div style="font-weight:700;color:var(--tx);font-size:13px;margin-bottom:6px">✕ إلغاء حجز من العميل</div>' +
+        '<div style="font-size:12.5px;color:var(--tx2)">' + (b ? (escHtml(b.route_label || '') + ' · ' + escHtml(b.customer_email || '')) : 'تفاصيل الحجز غير متوفرة') + '</div>' +
+        '<div style="font-size:11px;color:var(--tx3);margin-top:4px" class="mono">' + new Date(ev.at).toLocaleString('ar') + '</div>' +
+      '</div>';
+    });
+    panel.innerHTML = html;
+    panel.style.display = 'block';
   } catch (e) { console.error('Admin API error:', e); }
 }
 
@@ -1982,6 +2047,37 @@ var routeSelectedOriginCity = '';
 var routeSelectedDestCity = '';
 var routeSearchDebounce = {};
 
+// [ROUTE-FAQ-OVERRIDE] Dynamic FAQ row management — each row is a
+// question + answer pair; readRouteFaqItems() collects only rows where
+// BOTH fields are filled in (a half-empty row is silently ignored rather
+// than saved as a broken FAQ entry).
+function addRouteFaqItem(question, answer) {
+  var list = document.getElementById('route-faq-list');
+  var row = document.createElement('div');
+  row.className = 'route-faq-row';
+  row.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;position:relative';
+  row.innerHTML =
+    '<input type="text" class="form-input route-faq-q" placeholder="السؤال" style="margin-bottom:6px" value="' + escHtml(question || '') + '">' +
+    '<textarea class="form-input route-faq-a" placeholder="الجواب" style="min-height:50px;resize:vertical">' + escHtml(answer || '') + '</textarea>' +
+    '<button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:6px;left:6px;background:none;border:none;color:#f87171;cursor:pointer;font-size:14px">✕</button>';
+  list.appendChild(row);
+}
+
+function readRouteFaqItems() {
+  var rows = document.querySelectorAll('#route-faq-list .route-faq-row');
+  var items = [];
+  rows.forEach(function(row) {
+    var q = row.querySelector('.route-faq-q').value.trim();
+    var a = row.querySelector('.route-faq-a').value.trim();
+    if (q && a) items.push({ question: q, answer: a });
+  });
+  return items;
+}
+
+function clearRouteFaqList() {
+  document.getElementById('route-faq-list').innerHTML = '';
+}
+
 function openRouteEditor(route) {
   document.getElementById('route-editor-title').textContent = route ? 'تعديل المسار' : 'مسار جديد';
   document.getElementById('route-edit-id').value = route ? route.id : '';
@@ -2007,6 +2103,12 @@ function openRouteEditor(route) {
     document.getElementById('route-distance-preview').textContent = '';
   }
   document.getElementById('route-intro').value = route ? (route.intro_text || '') : '';
+  document.getElementById('route-custom-title').value = route ? (route.custom_title || '') : '';
+  document.getElementById('route-custom-desc').value = route ? (route.custom_meta_description || '') : '';
+  clearRouteFaqList();
+  if (route && route.custom_faq && route.custom_faq.length) {
+    route.custom_faq.forEach(function(item) { addRouteFaqItem(item.question, item.answer); });
+  }
   document.getElementById('route-editor-modal').classList.add('open');
 }
 
@@ -2024,7 +2126,10 @@ function routeAirportSearch(which, query) {
   }
   routeSearchDebounce[which] = setTimeout(function() {
     adminFetch('/search/airports?q=' + encodeURIComponent(query.trim()))
-      .then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(function(j) {
         if (!j.ok || !j.airports || !j.airports.length) {
           dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد نتائج</div>';
@@ -2037,7 +2142,7 @@ function routeAirportSearch(which, query) {
         // filtered out of this picker entirely.
         var airportsOnly = j.airports.filter(function(a) { return a.type === 'airport'; });
         if (!airportsOnly.length) {
-          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد مطارات مطابقة</div>';
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد مطارات مطابقة (فقط مدينة بدون مطار محدد)</div>';
           dropdown.style.display = 'block';
           return;
         }
@@ -2048,7 +2153,14 @@ function routeAirportSearch(which, query) {
         }).join('');
         dropdown.style.display = 'block';
       })
-      .catch(function() { dropdown.style.display = 'none'; });
+      .catch(function(err) {
+        // [SEARCH-ERROR-VISIBILITY-FIX] Previously failed silently here —
+        // a 401/429/500 or network error looked identical to "no results
+        // for Berlin", with nothing telling the admin the request itself
+        // never succeeded.
+        dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ خطأ في البحث: ' + escHtml(err.message) + '</div>';
+        dropdown.style.display = 'block';
+      });
   }, 350);
 }
 
@@ -2116,6 +2228,9 @@ async function saveRoutePage(status) {
     destination_lat: document.getElementById('route-dest-lat').value || null,
     destination_lng: document.getElementById('route-dest-lng').value || null,
     intro_text: document.getElementById('route-intro').value.trim(),
+    custom_title: document.getElementById('route-custom-title').value.trim(),
+    custom_meta_description: document.getElementById('route-custom-desc').value.trim(),
+    custom_faq: readRouteFaqItems(),
     status: status,
   };
 
@@ -2171,7 +2286,7 @@ function showPage(name) {
     if (el) el.classList.toggle('active', p === name);
   });
 
-  if (name === 'bookings') { loadBookingsFromServer(); markCancellationsAsRead(); }
+  if (name === 'bookings') { loadBookingsFromServer(); markCancellationsAsRead(); loadBookingIssuesPanel(); }
   if (name === 'reports') renderReports();
   if (name === 'customers') renderCustomers();
   if (name === 'invoices') renderInvoices();
@@ -3976,8 +4091,8 @@ async function downloadBatchSeparate() {
       </div>
       <div class="form-group">
         <label class="form-label">المحتوى *</label>
-        <textarea class="form-input" id="blog-content" style="min-height:280px;resize:vertical;font-family:monospace;font-size:13px" placeholder="<p>نص المقال هنا...</p>&#10;<h2>عنوان فرعي</h2>&#10;<p>المزيد من النص...</p>"></textarea>
-        <div style="font-size:11px;color:var(--tx3);margin-top:4px">يدعم HTML بسيط: &lt;p&gt; &lt;h2&gt; &lt;h3&gt; &lt;strong&gt; &lt;ul&gt;&lt;li&gt; &lt;a&gt;</div>
+        <textarea class="form-input" id="blog-content" style="min-height:280px;resize:vertical;font-size:13.5px" placeholder="اكتب المقال بشكل طبيعي — فقرة، ثم سطر فاضي، ثم الفقرة التالية...&#10;&#10;مثل ما تكتب رسالة واتساب أو إيميل عادي. التنسيق يصير تلقائياً."></textarea>
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px">✨ اكتب بشكل طبيعي (فقرة، سطر فاضي، فقرة) — يتنسق تلقائياً. أو استخدم HTML مباشرة (&lt;h2&gt; &lt;strong&gt; وغيرها) للتحكم الكامل.</div>
       </div>
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveBlogPost('draft')">💾 حفظ كمسودة</button>
@@ -4023,6 +4138,27 @@ async function downloadBatchSeparate() {
         <label class="form-label">نص SEO تعريفي (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
         <textarea class="form-input" id="route-intro" style="min-height:90px;resize:vertical" placeholder="مثال: ابحث عن أرخص رحلات الطيران من برلين إلى لندن..."></textarea>
       </div>
+
+      <!-- [ROUTE-SEO-OVERRIDES] Optional advanced fields — collapsed by
+           default since most routes are fine with the automatic
+           title/description/FAQ generation. -->
+      <details style="margin-bottom:14px">
+        <summary style="cursor:pointer;font-size:12.5px;color:var(--tx2);font-weight:600;margin-bottom:10px">⚙️ خيارات SEO متقدمة (اختياري)</summary>
+        <div class="form-group">
+          <label class="form-label">عنوان SEO مخصص (Title) — اتركه فارغاً للتوليد التلقائي</label>
+          <input type="text" class="form-input" id="route-custom-title" placeholder="مثال: Flüge Berlin (BER) nach London (LHR) günstig vergleichen">
+        </div>
+        <div class="form-group">
+          <label class="form-label">وصف SEO مخصص (Meta Description) — اتركه فارغاً للتوليد التلقائي</label>
+          <textarea class="form-input" id="route-custom-desc" style="min-height:60px;resize:vertical" maxlength="160"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">أسئلة شائعة مخصصة (اختياري — اتركها فارغة لاستخدام 3 أسئلة عامة تلقائية)</label>
+          <div id="route-faq-list"></div>
+          <button type="button" class="btn btn-ghost" style="margin-top:6px;font-size:12px;padding:6px 12px" onclick="addRouteFaqItem()">➕ إضافة سؤال</button>
+        </div>
+      </details>
+
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveRoutePage('draft')">💾 حفظ كمسودة</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveRoutePage('published')">🚀 نشر الآن</button>
