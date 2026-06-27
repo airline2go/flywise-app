@@ -837,6 +837,9 @@
     <button class="nav-item" onclick="showPage('routes')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span> صفحات المسارات
     </button>
+    <button class="nav-item" onclick="showPage('errorlogs')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span> سجل الأخطاء
+    </button>
     <button class="nav-item" onclick="showPage('settings')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> الإعدادات
     </button>
@@ -1569,6 +1572,50 @@
     </div>
   </div>
 
+  <!-- ==================== ERROR LOGS ==================== -->
+  <div class="page" id="page-errorlogs">
+    <div class="page-header">
+      <div>
+        <div class="page-title">سجل الأخطاء</div>
+        <div class="page-sub">كل الأخطاء التقنية المسجّلة من السيرفر — Stripe، Duffel، البريد، والحجوزات</div>
+      </div>
+      <div class="header-actions">
+        <select class="form-input" id="errlog-filter-level" style="width:auto" onchange="loadErrorLogs()">
+          <option value="">كل المستويات</option>
+          <option value="fatal">🔴 Fatal</option>
+          <option value="error">🟠 Error</option>
+          <option value="warn">🟡 Warn</option>
+        </select>
+        <select class="form-input" id="errlog-filter-source" style="width:auto" onchange="loadErrorLogs()">
+          <option value="">كل المصادر</option>
+          <option value="stripe">Stripe</option>
+          <option value="duffel">Duffel</option>
+          <option value="email">Email</option>
+          <option value="booking">Booking</option>
+          <option value="server">Server</option>
+        </select>
+        <button class="btn btn-ghost" onclick="clearErrorLogs()">🗑 تنظيف السجل</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>المستوى</th>
+            <th>المصدر</th>
+            <th>الرسالة</th>
+            <th>الوقت</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="errorlogs-list">
+          <tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ==================== SETTINGS ==================== -->
   <div class="page" id="page-settings">
     <div class="page-header">
@@ -2259,8 +2306,53 @@ async function deleteRoutePage(id) {
   } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
 
+// ============ [ERROR-LOGS] Error logs admin ============
+async function loadErrorLogs() {
+  var tbody = document.getElementById('errorlogs-list');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>';
+  try {
+    var level = document.getElementById('errlog-filter-level').value;
+    var source = document.getElementById('errlog-filter-source').value;
+    var qs = [];
+    if (level) qs.push('level=' + encodeURIComponent(level));
+    if (source) qs.push('source=' + encodeURIComponent(source));
+    const res = await adminFetch('/admin/error-logs' + (qs.length ? '?' + qs.join('&') : ''));
+    const j = await res.json();
+    if (!j.ok) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">' + (j.error||'فشل التحميل') + '</td></tr>'; return; }
+    if (!j.logs.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">لا توجد أخطاء مسجّلة 🎉</td></tr>';
+      return;
+    }
+    var levelIcons = { fatal: '🔴', error: '🟠', warn: '🟡' };
+    tbody.innerHTML = j.logs.map(function(l, idx) {
+      var metaStr = l.meta ? JSON.stringify(l.meta, null, 2) : '';
+      return '<tr>' +
+        '<td>' + (levelIcons[l.level] || '⚪') + ' ' + escHtml(l.level) + '</td>' +
+        '<td><span class="badge pending">' + escHtml(l.source || 'server') + '</span></td>' +
+        '<td style="max-width:320px">' + escHtml(l.message) +
+          (metaStr ? '<br><a href="#" onclick="event.preventDefault();this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'" style="font-size:11px;color:var(--teal)">عرض التفاصيل</a><pre class="mono" style="display:none;font-size:11px;background:var(--bg2);padding:8px;border-radius:6px;margin-top:6px;overflow-x:auto;max-width:300px">' + escHtml(metaStr) + '</pre>' : '') +
+        '</td>' +
+        '<td style="font-size:11px;white-space:nowrap">' + new Date(l.created_at).toLocaleString('ar') + '</td>' +
+        '<td></td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">خطأ في الاتصال بالسيرفر</td></tr>';
+  }
+}
+
+async function clearErrorLogs() {
+  if (!confirm('تأكيد حذف كل سجل الأخطاء نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/error-logs', { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم تنظيف السجل', 'success'); loadErrorLogs(); }
+    else showToast(j.error || 'فشل التنظيف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
 // ============ NAVIGATION ============
-var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','settings'];
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','settings'];
 
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2296,6 +2388,7 @@ function showPage(name) {
   if (name === 'settings') { loadInvoiceConfigIntoForm(); loadMaintenanceMode(); }
   if (name === 'blog') loadBlogPosts();
   if (name === 'routes') loadRoutePages();
+  if (name === 'errorlogs') loadErrorLogs();
 }
 
 function toggleMoreMenu() {
@@ -4032,6 +4125,10 @@ async function downloadBatchSeparate() {
   <button class="more-menu-item" id="mm-routes" onclick="showPage('routes');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
     صفحات المسارات
+  </button>
+  <button class="more-menu-item" id="mm-errorlogs" onclick="showPage('errorlogs');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    سجل الأخطاء
   </button>
   <button class="more-menu-item" id="mm-settings" onclick="showPage('settings');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
