@@ -1552,6 +1552,7 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-ghost" onclick="runRouteBackfill()">🔧 إصلاح المسارات القديمة</button>
+        <button class="btn btn-ghost" onclick="clearRoutePriceCache()">🔄 تحديث كل الأسعار</button>
         <button class="btn btn-primary" onclick="openRouteEditor()">➕ مسار جديد</button>
       </div>
     </div>
@@ -2099,6 +2100,27 @@ async function runRouteBackfill() {
     if (j.ok) {
       showToast('✅ تم: ' + j.updated + ' مسار تم تحديثه، ' + j.skipped + ' لم يحتج تعديل' + (j.failed ? '، ' + j.failed + ' فشل (راجع سجل الأخطاء)' : ''), j.failed ? 'error' : 'success');
       loadRoutePages();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// [DATE-MATCH-FIX] Clears all cached route prices — needed for routes
+// published before departure_date was added to the price cache, whose
+// cached price entry shows a price but has departure_date missing
+// entirely, so the booking link never gets the &depart= param even
+// though the underlying fix is correct. Without this, the admin would
+// otherwise have to wait up to 6 hours for the old cache to expire
+// naturally.
+async function clearRoutePriceCache() {
+  if (!confirm('سيتم حذف كل الأسعار المخزّنة مؤقتاً — سيُعاد جلب السعر الحقيقي (مع التاريخ) لكل مسار عند أول زيارة بعد هذا. هل تريد المتابعة؟')) return;
+  showToast('⏳ جارٍ تحديث الأسعار...', 'info');
+  try {
+    const res = await adminFetch('/admin/route-pages/clear-price-cache', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ تم حذف ' + j.cleared + ' سعر مخزّن — سيُعاد جلبه عند الزيارة القادمة', 'success');
     } else {
       showToast(j.error || 'فشلت العملية', 'error');
     }
