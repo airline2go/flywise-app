@@ -2572,7 +2572,21 @@ function bflowStep4(o) {
   h += '<div class="pp-head"><span class="pp-head-ico">' + ppIcon('mail', 16) + '</span><span class="pp-head-t">' + t('pf_contact') + '</span></div>';
   h += '<div class="pp-grid">';
   h += '<div class="pp-field"><label>' + t('pf_email') + ' *</label>';
-  h += '<input class="fi" type="email" id="bf-contact-email" placeholder="max@mail.de" oninput="validateEmailField(this)" onblur="validateEmailField(this)">';
+  // [ACCOUNT-EMAIL-LOCK-FIX] A logged-in customer's contact email must
+  // match their account email — this is what bookings.customer_email
+  // gets saved as, and link_guest_bookings_to_user() (and "Meine
+  // Buchungen" generally) matches bookings to an account by exact email.
+  // Previously this field always rendered blank and fully editable even
+  // when logged in, so a customer could accidentally type a different
+  // email and have their own booking not show up under their account
+  // later. A guest (not logged in) still gets a blank, fully editable
+  // field — nothing changes for that case.
+  if (FW_USER && FW_USER.email) {
+    h += '<input class="fi" type="email" id="bf-contact-email" value="' + escHtml(FW_USER.email) + '" readonly style="background:var(--bg2);color:var(--tx2);cursor:not-allowed">';
+    h += '<div style="font-size:11px;color:var(--tx3);margin-top:4px">' + tL('Konto-E-Mail — damit dein Flug in „Meine Buchungen" erscheint.','Account email — so your flight shows up under "My Bookings".','إيميل حسابك — لتظهر رحلتك في "حجوزاتي".') + '</div>';
+  } else {
+    h += '<input class="fi" type="email" id="bf-contact-email" placeholder="max@mail.de" oninput="validateEmailField(this)" onblur="validateEmailField(this)">';
+  }
   h += '<div class="field-msg" id="bf-contact-email-msg"></div></div>';
   h += '<div class="pp-field"><label>' + t('pf_phone') + ' *</label>';
   h += '<div class="phone-row">';
@@ -3691,6 +3705,37 @@ function orderToBookingData(order, bookingRow) {
   var seatsPrice = netSeatsTotal + (netAncillaryTotal > 0 ? ancillaryMargin * (netSeatsTotal / netAncillaryTotal) : 0);
   var ticketPrice = hasOwnRecord ? (netDuffelAmount - netAncillaryTotal + (Number(bookingRow.ticketMargin) || 0)) : (netDuffelAmount - netAncillaryTotal);
 
+  // [MARGIN-DISPLAY-FIX] purchasedBagServices/allSeats above were built
+  // from Duffel's raw service prices (e.g. a bag's real net cost of 20€)
+  // — every consumer of THESE SAME arrays (the confirmation screen's
+  // "Gepäck"/"Sitzplätze" detail rows, "Meine Buchungen", and the
+  // confirmation email) showed that raw net price, while the price
+  // summary a few lines below showed the margin-included total (28€) for
+  // the exact same purchase — the customer correctly noticed the two
+  // numbers for "the same bag" didn't match. Fixed once here, at the
+  // source, by distributing the category-level margin (bagsPrice/
+  // seatsPrice total margin) down to each INDIVIDUAL item proportionally
+  // by its own net cost share within its category (not an equal split —
+  // a 15€ bag and a 5€ bag each get their fair share of the margin).
+  // Mutating .amount/.netPrice in place means every place that reads
+  // these arrays afterward automatically shows the corrected price with
+  // no separate fix needed in the confirmation screen, "Meine Buchungen",
+  // or the email — they all already consume these same two arrays.
+  var bagsMarginTotal = bagsPrice - netBagsTotal;
+  if (netBagsTotal > 0 && bagsMarginTotal !== 0) {
+    purchasedBagServices.forEach(function(bag) {
+      bag.amount = Math.round((bag.amount + bagsMarginTotal * (bag.amount / netBagsTotal)) * 100) / 100;
+    });
+  }
+  var seatsMarginTotal = seatsPrice - netSeatsTotal;
+  if (netSeatsTotal > 0 && seatsMarginTotal !== 0) {
+    allSeats.forEach(function(seat) {
+      if (seat.netPrice != null) {
+        seat.netPrice = Math.round((seat.netPrice + seatsMarginTotal * (seat.netPrice / netSeatsTotal)) * 100) / 100;
+      }
+    });
+  }
+
   return {
     reference: order.booking_reference, orderId: order.id,
     offer: {
@@ -3715,7 +3760,7 @@ function orderToBookingData(order, bookingRow) {
     basePrice: netDuffelAmount, extrasPrice: Math.round((bagsPrice + seatsPrice) * 100) / 100, totalPrice: customerPaid,
     discountAmount: discountAmount, loyaltyDiscount: loyaltyDiscount, promoCode: promoCode,
     hasOwnFinancialRecord: hasOwnRecord,
-    contactEmail: (order.passengers && order.passengers[0] ? order.passengers[0].email : '')
+    contactEmail: (bookingRow && bookingRow.customerEmail) || (order.passengers && order.passengers[0] ? order.passengers[0].email : '')
   };
 }
 
@@ -3734,7 +3779,14 @@ function openBookingDetail(orderId) {
       if (j.ok && j.order) showConfirmation(orderToBookingData(j.order, j.booking), { viewOnly: true });
       else showToast('❌ ' + (j.error || tL('Konnte Buchung nicht laden','Could not load booking','تعذّر تحميل الحجز')), 'error');
     })
-    .catch(function() { showToast('❌ ' + tL('Verbindungsfehler','Connection error','خطأ في الاتصال'), 'error'); });
+    .catch(function(err) {
+      // [DIAGNOSTIC-FIX] Show the REAL error name/message instead of a
+      // generic "connection error" — without browser devtools available,
+      // this is the only way to tell a timeout apart from a CORS block,
+      // DNS failure, or any other root cause. Kept deliberately ugly/
+      // technical-looking (this is a diagnostic aid, not normal UX copy).
+      showToast('❌ Fehler: ' + (err && err.name ? err.name + ' — ' : '') + (err && err.message ? err.message : String(err)), 'error');
+    });
 }
 
 // Cancel per Duffel: step 1 get refund quote → confirm → step 2 execute
@@ -3884,14 +3936,26 @@ function showConfirmation(bookingData, opts) {
     if (bookingData.seats && bookingData.seats.length) {
       html += '<div class="confirm-card">';
       html += '<div class="confirm-card-title">💺 ' + tL('Sitzplätze','Seats','المقاعد') + '</div>';
-      var hasMultipleLegs = legs.length > 1;
+      // [LEGS-UNDEFINED-FIX] "legs" was referenced here without ever being
+      // defined in this function's scope — it only existed in a totally
+      // unrelated function elsewhere in the file, so this threw
+      // "ReferenceError: legs is not defined" and broke the entire
+      // confirmation screen (both right after payment and from "Meine
+      // Buchungen" later) any time the booking had at least one seat
+      // selected. The real leg count depends on trip type: multi-city
+      // has o.legs (an array, 3+ legs); a round trip is 2 legs (outbound
+      // + o.ret); a one-way trip is 1 — computed here from what's
+      // actually present on this booking, the same trip-type checks
+      // already used a few lines above to render the flight segments.
+      var totalLegs = (o.multiCity && Array.isArray(o.legs)) ? o.legs.length : ((o.ret && o.ret.segs) ? 2 : 1);
+      var hasMultipleLegs = totalLegs > 1;
       bookingData.seats.forEach(function(seat) {
         // [SEAT-LEG-LABEL-FIX] "Hinflug"/"Rückflug" for a simple round
         // trip (legs[0]/legs[1]) — "Flug N" for genuine multi-city (3+
         // legs), where "outbound/return" wouldn't make sense.
         var legLabel = '';
         if (hasMultipleLegs && seat.legNumber) {
-          if (legs.length === 2) legLabel = seat.legNumber === 1 ? tL('Hinflug','Outbound','الذهاب') : tL('Rückflug','Return','العودة');
+          if (totalLegs === 2) legLabel = seat.legNumber === 1 ? tL('Hinflug','Outbound','الذهاب') : tL('Rückflug','Return','العودة');
           else legLabel = tL('Flug','Flight','الرحلة') + ' ' + seat.legNumber;
           if (seat.route) legLabel += ' (' + escHtml(seat.route) + ')';
         }
@@ -3912,7 +3976,15 @@ function showConfirmation(bookingData, opts) {
       html += '<div class="confirm-pax-item">';
       html += '<div class="confirm-pax-avatar">👤</div>';
       html += '<div><div class="confirm-pax-name">' + escHtml(pax.fn) + ' ' + escHtml(pax.ln) + '</div>';
-      html += '<div class="confirm-pax-type">' + types[typeIdx] + (pax.dob ? ' · Geb. ' + pax.dob : '') + '</div></div>';
+      html += '<div class="confirm-pax-type">' + types[typeIdx] + (pax.dob ? ' · Geb. ' + pax.dob : '') + '</div>';
+      // [CONTACT-EMAIL-DISPLAY] The page-5 contact email, shown under
+      // each passenger's name — one shared booking-contact email, not a
+      // separate email per passenger (Duffel/this booking flow only ever
+      // collects one).
+      if (bookingData.contactEmail) {
+        html += '<div class="confirm-pax-type" style="margin-top:2px">✉ ' + escHtml(bookingData.contactEmail) + '</div>';
+      }
+      html += '</div>';
       html += '</div>';
     }
     html += '</div>';
@@ -6836,6 +6908,15 @@ function initAuth() {
   }).catch(function(){ maybeShowWelcomeBanner(); });
   // React to login/logout across tabs
   _sb.auth.onAuthStateChange(function(event, session){
+    // [PASSWORD-RECOVERY-FIX] The actual missing trigger — Supabase fires
+    // this specific event (distinct from a normal SIGNED_IN) when the
+    // customer returns from the reset-password email link. Without this,
+    // they just landed back on the homepage with no indication anything
+    // special was supposed to happen.
+    if (event === 'PASSWORD_RECOVERY') {
+      showNewPasswordBox();
+      return;
+    }
     if (session && session.user) {
       FW_USER = mapSupaUser(session.user);
       updateUserNav(FW_USER);
@@ -7053,6 +7134,54 @@ function hideForgotBox() {
   if (box) { box.classList.remove('show'); }
   var o = document.getElementById('auth-ok');
   if (o) { o.textContent = ''; o.className = 'auth-ok'; }
+}
+
+// [PASSWORD-RECOVERY-FIX] Called when Supabase fires PASSWORD_RECOVERY
+// (the customer just landed back on the site from the reset-password
+// email link). Opens the auth modal directly into "set new password"
+// mode — login/register tabs and forms are hidden so there's no way to
+// get confused and try logging in with the OLD (forgotten) password
+// instead. This is the piece that was completely missing before: the
+// email's redirectTo brought them back to the site, but nothing ever
+// detected this state or gave them anywhere to actually type a new
+// password.
+function showNewPasswordBox() {
+  document.getElementById('auth-tab-login').style.display = 'none';
+  document.getElementById('auth-tab-register').style.display = 'none';
+  document.getElementById('auth-form-login').style.display = 'none';
+  document.getElementById('auth-form-register').style.display = 'none';
+  document.getElementById('auth-sub').textContent = 'Neues Passwort festlegen';
+  var box = document.getElementById('auth-newpass-box');
+  if (box) box.classList.add('show');
+  document.getElementById('auth-ov').classList.add('open');
+}
+
+async function doSetNewPassword() {
+  var pass = document.getElementById('newpass-input').value;
+  if (!pass || pass.length < 6) { showAuthErr('Passwort muss mindestens 6 Zeichen haben.'); return; }
+  var btn = document.getElementById('newpass-send-btn');
+  var txt = document.getElementById('newpass-send-txt');
+  btn.disabled = true; txt.textContent = '⏳ Wird gespeichert...';
+  try {
+    var { error } = await _sb.auth.updateUser({ password: pass });
+    if (error) {
+      showAuthErr(error.message);
+    } else {
+      // [PASSWORD-RECOVERY-FIX] Password is set — restore the normal
+      // login/register modal state (in case the customer opens the
+      // modal again later this session) and close it. They're now
+      // signed in with the new password automatically (Supabase's
+      // updateUser keeps the recovery session active).
+      document.getElementById('auth-newpass-box').classList.remove('show');
+      document.getElementById('auth-tab-login').style.display = '';
+      document.getElementById('auth-tab-register').style.display = '';
+      closeAuthModal();
+      showToast('✅ Passwort erfolgreich geändert!', 'success');
+    }
+  } catch (e) {
+    showAuthErr('Fehler beim Speichern. Bitte versuche es erneut.');
+  }
+  btn.disabled = false; txt.textContent = 'Passwort speichern ✓';
 }
 async function doResetPassword() {
   var email = (document.getElementById('reset-email').value || '').trim();
@@ -7753,17 +7882,58 @@ function referralLinkFor(userId) {
 }
 
 // [ROUTE-PAGES] Pre-fill the search form from ?from=IATA&to=IATA in the
-// URL — used by the SEO route landing pages' "Jetzt buchen" link. Reuses
-// pickAC(), the same function manual airport selection uses, so the
-// resulting state is identical to the customer having picked these
-// airports themselves.
+// URL — used by the SEO route landing pages' "Jetzt buchen" link. Fetches
+// each airport's real name/city from the same /search/airports endpoint
+// the normal autocomplete uses, then calls pickAC() with that real data
+// — so the search bar shows "Berlin Brandenburg · BER" exactly as if the
+// customer had typed and picked it themselves, not the IATA code
+// repeated as a placeholder name/city.
 function prefillSearchFromUrl() {
   try {
     var params = new URLSearchParams(window.location.search);
     var from = params.get('from');
     var to = params.get('to');
-    if (from) pickAC('from', from.toUpperCase(), from.toUpperCase(), from.toUpperCase());
-    if (to) pickAC('to', to.toUpperCase(), to.toUpperCase(), to.toUpperCase());
+    if (from) prefillAirportField('from', from.toUpperCase());
+    if (to) prefillAirportField('to', to.toUpperCase());
+  } catch (e) {}
+}
+
+function prefillAirportField(side, code) {
+  // Show something immediately (better than a blank field while the
+  // lookup is in flight), then replace it with the real name/city the
+  // moment the lookup resolves.
+  pickAC(side, code, code, code);
+  fetch(PROXY + '/search/airports?q=' + encodeURIComponent(code))
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (!json.ok || !json.airports || !json.airports.length) return;
+      var match = json.airports.find(function(a) { return a.code === code && a.type === 'airport'; }) || json.airports.find(function(a) { return a.code === code; });
+      if (match) pickAC(side, match.code, match.name, match.city);
+    })
+    .catch(function() { /* keep the IATA-code fallback already shown */ });
+}
+
+// [DATE-MATCH-FIX] Pre-fill the departure date from ?depart=YYYY-MM-DD —
+// set by flight-route.html's "Jetzt Flüge suchen" link once the exact
+// date its indicative price was computed for is known, so the customer
+// searches for that SAME date instead of defaulting to today (which
+// would likely show a different, probably higher, last-minute fare).
+// Applies it through the exact same confirmCal() the calendar's own
+// confirm button uses — identical behavior to picking the date manually,
+// no duplicated update logic to drift out of sync later.
+function prefillDateFromUrl() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var depart = params.get('depart');
+    if (!depart || !/^\d{4}-\d{2}-\d{2}$/.test(depart)) return;
+    var d = new Date(depart + 'T00:00:00');
+    var today = new Date(); today.setHours(0,0,0,0);
+    var twoYearsOut = new Date(); twoYearsOut.setFullYear(twoYearsOut.getFullYear() + 2);
+    // A stale or malformed ?depart= (e.g. an old bookmarked link) must
+    // never silently set a date in the past or an unreasonable far future.
+    if (isNaN(d.getTime()) || d < today || d > twoYearsOut) return;
+    calDepDate = depart;
+    confirmCal();
   } catch (e) {}
 }
 
@@ -8238,6 +8408,10 @@ document.addEventListener('DOMContentLoaded', function() {
   referralCaptureFromUrl();
   prefillSearchFromUrl();
   initDates();
+  // [DATE-MATCH-FIX] Must run AFTER initDates() — initDates()
+  // unconditionally resets calDepDate to null and clears #dep-date,
+  // which would silently wipe out a date prefilled before it.
+  prefillDateFromUrl();
   initDarkMode();
   initCookie();
   initLang();
