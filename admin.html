@@ -2133,16 +2133,18 @@ function openRouteEditor(route) {
     document.getElementById('route-origin-iata').value = route.origin_iata;
     document.getElementById('route-origin-lat').value = route.origin_lat || '';
     document.getElementById('route-origin-lng').value = route.origin_lng || '';
+    document.getElementById('route-origin-country').value = route.origin_country || '';
     document.getElementById('route-dest-search').value = route.destination_city + ' (' + route.destination_iata + ')';
     document.getElementById('route-dest-iata').value = route.destination_iata;
     document.getElementById('route-dest-lat').value = route.destination_lat || '';
     document.getElementById('route-dest-lng').value = route.destination_lng || '';
+    document.getElementById('route-dest-country').value = route.destination_country || '';
     routeSelectedOriginCity = route.origin_city;
     routeSelectedDestCity = route.destination_city;
     updateRouteDistancePreview();
   } else {
-    ['route-origin-search','route-origin-iata','route-origin-lat','route-origin-lng',
-     'route-dest-search','route-dest-iata','route-dest-lat','route-dest-lng'].forEach(function(id) {
+    ['route-origin-search','route-origin-iata','route-origin-lat','route-origin-lng','route-origin-country',
+     'route-dest-search','route-dest-iata','route-dest-lat','route-dest-lng','route-dest-country'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     routeSelectedOriginCity = '';
@@ -2216,6 +2218,7 @@ function selectRouteAirport(which, airport) {
   document.getElementById('route-' + which + '-iata').value = airport.code;
   document.getElementById('route-' + which + '-lat').value = airport.lat != null ? airport.lat : '';
   document.getElementById('route-' + which + '-lng').value = airport.lng != null ? airport.lng : '';
+  document.getElementById('route-' + which + '-country').value = airport.country || '';
   if (which === 'origin') routeSelectedOriginCity = airport.city;
   else routeSelectedDestCity = airport.city;
   document.getElementById('route-' + which + '-results').style.display = 'none';
@@ -2274,6 +2277,8 @@ async function saveRoutePage(status) {
     origin_lng: document.getElementById('route-origin-lng').value || null,
     destination_lat: document.getElementById('route-dest-lat').value || null,
     destination_lng: document.getElementById('route-dest-lng').value || null,
+    origin_country: document.getElementById('route-origin-country').value || null,
+    destination_country: document.getElementById('route-dest-country').value || null,
     intro_text: document.getElementById('route-intro').value.trim(),
     custom_title: document.getElementById('route-custom-title').value.trim(),
     custom_meta_description: document.getElementById('route-custom-desc').value.trim(),
@@ -4215,9 +4220,11 @@ async function downloadBatchSeparate() {
       <input type="hidden" id="route-origin-iata">
       <input type="hidden" id="route-origin-lat">
       <input type="hidden" id="route-origin-lng">
+      <input type="hidden" id="route-origin-country">
       <input type="hidden" id="route-dest-iata">
       <input type="hidden" id="route-dest-lat">
       <input type="hidden" id="route-dest-lng">
+      <input type="hidden" id="route-dest-country">
 
       <div class="form-group" style="position:relative">
         <label class="form-label">من (مدينة أو مطار) *</label>

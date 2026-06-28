@@ -45,6 +45,17 @@
 .related-route-card{display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
 .related-route-card:hover{border-color:var(--teal)}
 @media (max-width:480px){.related-routes-grid{grid-template-columns:1fr}}
+.breadcrumb{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--tx3);margin-bottom:14px;flex-wrap:wrap}
+.breadcrumb a{color:var(--teal);text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.airport-info-section{margin-top:24px}
+.airport-info-section h2{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--tx);margin-bottom:10px}
+.airport-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.airport-info-card{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;text-decoration:none}
+.airport-info-card:hover{border-color:var(--teal)}
+.airport-info-code{font-family:monospace;font-weight:800;color:var(--teal);font-size:1.1rem}
+.airport-info-city{font-size:12.5px;color:var(--tx2);margin-top:2px}
+@media (max-width:480px){.airport-info-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -62,7 +73,6 @@
 </nav>
 
 <main id="route-main">
-  <a href="/" class="back-link">← Zurück zur Startseite</a>
   <div id="route-content">
     <p style="color:var(--tx3)">Lade Route…</p>
   </div>
@@ -127,6 +137,32 @@ function renderRoute(route) {
 
   var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
 
+  // [BREADCRUMB] Home → Country → City → Route — the full chain via the
+  // destination side (the more relevant classification for "which
+  // country/city is this flight going to"). Each segment degrades
+  // independently: a route missing destination_country or
+  // destination_city_slug (e.g. created before these columns existed)
+  // simply skips that segment rather than showing a broken link.
+  var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span>';
+  if (route.destination_country) {
+    breadcrumbHtml += '<a href="/country.html?code=' + encodeURIComponent(route.destination_country) + '">' + escHtml(route.destination_country) + '</a><span>›</span>';
+  }
+  if (route.destination_city_slug) {
+    breadcrumbHtml += '<a href="/city.html?slug=' + encodeURIComponent(route.destination_city_slug) + '">' + escHtml(route.destination_city) + '</a><span>›</span>';
+  }
+  breadcrumbHtml += '<span>' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + '</span></nav>';
+
+  // [AIRPORT-INFO] Links to both airport pages — what the original
+  // report's route-page checklist asked for ("معلومات المطارين"). Kept
+  // as a separate in-content section rather than extending the
+  // breadcrumb to a 5th level (Airport), which would make it unwieldy —
+  // the breadcrumb stays at the planned 4 levels (Home → Country → City
+  // → Route).
+  var airportInfoHtml = '<section class="airport-info-section"><h2>Flughafeninformationen</h2><div class="airport-info-grid">' +
+    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
+    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
+  '</div></section>';
+
   // [ROUTE-PAGES-DISTANCE] Real, server-computed distance — shown only
   // when available (older routes created before this feature, or any
   // route missing coordinates for some reason, simply don't show this
@@ -149,6 +185,7 @@ function renderRoute(route) {
   }).join('');
 
   document.getElementById('route-content').innerHTML =
+    breadcrumbHtml +
     '<h1>' + escHtml(title) + '</h1>' +
     '<div class="route-hero">' +
       '<div class="route-hero-cities">' +
@@ -163,6 +200,7 @@ function renderRoute(route) {
       '<a href="' + bookingUrl + '" class="route-cta">Jetzt Flüge suchen →</a>' +
     '</div>' +
     '<section><p>' + escHtml(introText) + '</p></section>' +
+    airportInfoHtml +
     '<section class="route-faq">' +
       '<h2>Häufige Fragen</h2>' +
       faqHtml +

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-2K257GSWEM");
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Flüge | Airpiv</title>
+<meta name="description" id="page-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" id="page-canonical" href="https://airpiv.com/country.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" id="og-title" content="Flüge | Airpiv">
+<meta property="og:description" id="og-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
+<meta property="og:url" id="og-url" content="https://airpiv.com/country.html">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/shared-layout.css">
+<script type="application/ld+json" id="country-schema">{}</script>
+<style>
+.country-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
+.country-hero-name{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff}
+.country-hero-sub{color:rgba(255,255,255,.55);font-size:13px;margin-top:6px}
+.breadcrumb{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--tx3);margin-bottom:14px;flex-wrap:wrap}
+.breadcrumb a{color:var(--teal);text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.country-routes-section{margin-top:28px}
+.country-routes-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.country-route-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.country-route-card{display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
+.country-route-card:hover{border-color:var(--teal)}
+.country-route-card .arrow{color:var(--teal);margin:0 4px}
+@media (max-width:480px){.country-route-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="/" class="logo"><picture>
+      <source srcset="/airpiv-logo.webp" type="image/webp">
+      <img src="/airpiv-logo.png" alt="Airpiv">
+    </picture></a>
+    <div class="navr">
+      <a href="/" class="btn-t">Flüge suchen</a>
+    </div>
+  </div>
+</nav>
+
+<main id="country-main">
+  <div id="country-content">
+    <p style="color:var(--tx3)">Lade Land…</p>
+  </div>
+</main>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
+    <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="/about.html">Über uns</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Kontakt</a></li><li><a href="/privacy.html">Datenschutz</a></li><li><a href="/terms.html">AGB</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv · Alle Rechte vorbehalten</p></div>
+</div></footer>
+
+<script>
+var PROXY = 'https://api.airpiv.com';
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+var params = new URLSearchParams(window.location.search);
+var code = params.get('code');
+
+if (!code) {
+  renderNotFound();
+} else {
+  fetch(PROXY + '/countries/' + encodeURIComponent(code))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j.ok || !j.country) { renderNotFound(); return; }
+      renderCountry(j.country, j.routes || []);
+    })
+    .catch(function(){ renderNotFound(); });
+}
+
+function renderNotFound() {
+  document.getElementById('country-content').innerHTML =
+    '<a href="/" class="back-link">← Zurück zur Startseite</a>' +
+    '<h1>Land nicht gefunden</h1>' +
+    '<p style="color:var(--tx3)">Für dieses Land sind aktuell keine Flugrouten verfügbar.</p>' +
+    '<a href="/" class="btn-t" style="display:inline-flex;margin-top:12px">← Flüge suchen</a>';
+}
+
+function renderCountry(country, routes) {
+  var title = 'Flüge nach ' + country.name;
+  var description = 'Günstige Flüge nach ' + country.name + ' finden und buchen — vergleiche alle verfügbaren Strecken mit Airpiv.';
+  var url = 'https://airpiv.com/country.html?code=' + encodeURIComponent(country.code);
+
+  document.getElementById('page-title').textContent = title + ' | Airpiv';
+  document.getElementById('page-description').setAttribute('content', description);
+  document.getElementById('page-canonical').setAttribute('href', url);
+  document.getElementById('og-title').setAttribute('content', title);
+  document.getElementById('og-description').setAttribute('content', description);
+  document.getElementById('og-url').setAttribute('content', url);
+
+  var introText = country.intro_text || ('Entdecke alle Flugverbindungen von und nach ' + country.name + '. Airpiv vergleicht in Echtzeit hunderte Airlines und findet den besten Preis für deine Reise.');
+
+  // [BREADCRUMB] Home → Country — the second level of the planned
+  // Home → Country → City → Route hierarchy (city pages come next).
+  var breadcrumbHtml =
+    '<nav class="breadcrumb" aria-label="Breadcrumb">' +
+      '<a href="/">Startseite</a><span>›</span>' +
+      '<span>' + escHtml(country.name) + '</span>' +
+    '</nav>';
+
+  // [COUNTRY-ROUTES] Split into "from" (this country is the origin) and
+  // "to" (this country is the destination) — a route where the SAME
+  // country is both origin and destination (a domestic route) appears
+  // in both sections, which is correct: it's relevant to someone
+  // browsing this country's page either way.
+  var fromRoutes = routes.filter(function(r) { return r.origin_country === country.code; });
+  var toRoutes = routes.filter(function(r) { return r.destination_country === country.code; });
+
+  function routeCardHtml(r) {
+    return '<a class="country-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+      escHtml(r.origin_city) + '<span class="arrow">→</span>' + escHtml(r.destination_city) +
+    '</a>';
+  }
+
+  var fromSectionHtml = fromRoutes.length
+    ? '<section class="country-routes-section"><h2>Flüge ab ' + escHtml(country.name) + '</h2><div class="country-route-grid">' + fromRoutes.map(routeCardHtml).join('') + '</div></section>'
+    : '';
+  var toSectionHtml = toRoutes.length
+    ? '<section class="country-routes-section"><h2>Flüge nach ' + escHtml(country.name) + '</h2><div class="country-route-grid">' + toRoutes.map(routeCardHtml).join('') + '</div></section>'
+    : '';
+
+  document.getElementById('country-content').innerHTML =
+    breadcrumbHtml +
+    '<h1>' + escHtml(title) + '</h1>' +
+    '<div class="country-hero">' +
+      '<div class="country-hero-name">✈ ' + escHtml(country.name) + '</div>' +
+      '<div class="country-hero-sub">' + routes.length + ' verfügbare ' + (routes.length === 1 ? 'Flugroute' : 'Flugrouten') + '</div>' +
+    '</div>' +
+    '<section><p>' + escHtml(introText) + '</p></section>' +
+    fromSectionHtml +
+    toSectionHtml;
+
+  // [BREADCRUMB-SCHEMA] Matches the visible breadcrumb above —
+  // structured data for rich-result breadcrumbs in search.
+  document.getElementById('country-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description,
+    "url": url,
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Startseite", "item": "https://airpiv.com/" },
+        { "@type": "ListItem", "position": 2, "name": country.name, "item": url }
+      ]
+    }
+  });
+}
+</script>
+
+</body>
+</html>
