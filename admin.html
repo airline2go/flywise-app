@@ -1996,15 +1996,23 @@ function renderBlogPostsList() {
 // row's markup or silently disable these buttons. Attached once via
 // event delegation rather than re-attached after every render.
 document.addEventListener('click', function(e) {
-  var editBtn = e.target.closest('.blog-edit-btn');
-  if (editBtn) {
-    var post = allBlogPosts.find(function(p) { return p.id === editBtn.getAttribute('data-id'); });
-    if (post) openBlogEditor(post);
-    return;
-  }
-  var delBtn = e.target.closest('.blog-delete-btn');
-  if (delBtn) {
-    deleteBlogPost(delBtn.getAttribute('data-id'));
+  try {
+    var editBtn = e.target.closest('.blog-edit-btn');
+    if (editBtn) {
+      var post = allBlogPosts.find(function(p) { return p.id === editBtn.getAttribute('data-id'); });
+      if (post) openBlogEditor(post);
+      return;
+    }
+    var delBtn = e.target.closest('.blog-delete-btn');
+    if (delBtn) {
+      deleteBlogPost(delBtn.getAttribute('data-id'));
+    }
+  } catch (err) {
+    // [DIAGNOSTIC] If anything throws here — before deleteBlogPost's own
+    // try/catch even gets a chance to run — this guarantees a visible
+    // error instead of total silence, which is the actual symptom being
+    // diagnosed right now.
+    alert('DEBUG ERROR (blog click handler): ' + (err && err.message ? err.message : String(err)));
   }
 });
 
@@ -2070,7 +2078,13 @@ async function deleteBlogPost(id) {
     const j = await res.json();
     if (j.ok) { showToast('🗑 تم حذف المقال', 'success'); loadBlogPosts(); }
     else showToast(j.error || 'فشل الحذف', 'error');
-  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+  } catch (e) {
+    // [DIAGNOSTIC] alert() as a backup alongside showToast — in case
+    // showToast itself is broken for any reason, this guarantees a
+    // visible error appears instead of this catch block failing silently.
+    try { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); } catch (e2) {}
+    alert('DEBUG ERROR (deleteBlogPost): ' + (e && e.message ? e.message : String(e)));
+  }
 }
 
 // ============ [ROUTE-PAGES] Route landing pages admin ============
@@ -2125,15 +2139,19 @@ function renderRoutePagesList() {
 // only a short id string goes into the row's HTML, immune to anything in
 // the route's intro_text/custom_title content.
 document.addEventListener('click', function(e) {
-  var editBtn = e.target.closest('.route-edit-btn');
-  if (editBtn) {
-    var route = allRoutePages.find(function(r) { return r.id === editBtn.getAttribute('data-id'); });
-    if (route) openRouteEditor(route);
-    return;
-  }
-  var delBtn = e.target.closest('.route-delete-btn');
-  if (delBtn) {
-    deleteRoutePage(delBtn.getAttribute('data-id'));
+  try {
+    var editBtn = e.target.closest('.route-edit-btn');
+    if (editBtn) {
+      var route = allRoutePages.find(function(r) { return r.id === editBtn.getAttribute('data-id'); });
+      if (route) openRouteEditor(route);
+      return;
+    }
+    var delBtn = e.target.closest('.route-delete-btn');
+    if (delBtn) {
+      deleteRoutePage(delBtn.getAttribute('data-id'));
+    }
+  } catch (err) {
+    alert('DEBUG ERROR (route click handler): ' + (err && err.message ? err.message : String(err)));
   }
 });
 
@@ -2358,7 +2376,10 @@ async function deleteRoutePage(id) {
     const j = await res.json();
     if (j.ok) { showToast('🗑 تم حذف المسار', 'success'); loadRoutePages(); }
     else showToast(j.error || 'فشل الحذف', 'error');
-  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+  } catch (e) {
+    try { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); } catch (e2) {}
+    alert('DEBUG ERROR (deleteRoutePage): ' + (e && e.message ? e.message : String(e)));
+  }
 }
 
 // ============ [ERROR-LOGS] Error logs admin ============
