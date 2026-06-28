@@ -6940,14 +6940,26 @@ function showConfirmation(bookingData, opts) {
     if (bookingData.seats && bookingData.seats.length) {
       html += '<div class="confirm-card">';
       html += '<div class="confirm-card-title">💺 ' + tL('Sitzplätze','Seats','المقاعد') + '</div>';
-      var hasMultipleLegs = legs.length > 1;
+      // [LEGS-UNDEFINED-FIX] "legs" was referenced here without ever being
+      // defined in this function's scope — it only existed in a totally
+      // unrelated function elsewhere in the file, so this threw
+      // "ReferenceError: legs is not defined" and broke the entire
+      // confirmation screen (both right after payment and from "Meine
+      // Buchungen" later) any time the booking had at least one seat
+      // selected. The real leg count depends on trip type: multi-city
+      // has o.legs (an array, 3+ legs); a round trip is 2 legs (outbound
+      // + o.ret); a one-way trip is 1 — computed here from what's
+      // actually present on this booking, the same trip-type checks
+      // already used a few lines above to render the flight segments.
+      var totalLegs = (o.multiCity && Array.isArray(o.legs)) ? o.legs.length : ((o.ret && o.ret.segs) ? 2 : 1);
+      var hasMultipleLegs = totalLegs > 1;
       bookingData.seats.forEach(function(seat) {
         // [SEAT-LEG-LABEL-FIX] "Hinflug"/"Rückflug" for a simple round
         // trip (legs[0]/legs[1]) — "Flug N" for genuine multi-city (3+
         // legs), where "outbound/return" wouldn't make sense.
         var legLabel = '';
         if (hasMultipleLegs && seat.legNumber) {
-          if (legs.length === 2) legLabel = seat.legNumber === 1 ? tL('Hinflug','Outbound','الذهاب') : tL('Rückflug','Return','العودة');
+          if (totalLegs === 2) legLabel = seat.legNumber === 1 ? tL('Hinflug','Outbound','الذهاب') : tL('Rückflug','Return','العودة');
           else legLabel = tL('Flug','Flight','الرحلة') + ' ' + seat.legNumber;
           if (seat.route) legLabel += ' (' + escHtml(seat.route) + ')';
         }
