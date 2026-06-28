@@ -6740,6 +6740,37 @@ function orderToBookingData(order, bookingRow) {
   var seatsPrice = netSeatsTotal + (netAncillaryTotal > 0 ? ancillaryMargin * (netSeatsTotal / netAncillaryTotal) : 0);
   var ticketPrice = hasOwnRecord ? (netDuffelAmount - netAncillaryTotal + (Number(bookingRow.ticketMargin) || 0)) : (netDuffelAmount - netAncillaryTotal);
 
+  // [MARGIN-DISPLAY-FIX] purchasedBagServices/allSeats above were built
+  // from Duffel's raw service prices (e.g. a bag's real net cost of 20€)
+  // — every consumer of THESE SAME arrays (the confirmation screen's
+  // "Gepäck"/"Sitzplätze" detail rows, "Meine Buchungen", and the
+  // confirmation email) showed that raw net price, while the price
+  // summary a few lines below showed the margin-included total (28€) for
+  // the exact same purchase — the customer correctly noticed the two
+  // numbers for "the same bag" didn't match. Fixed once here, at the
+  // source, by distributing the category-level margin (bagsPrice/
+  // seatsPrice total margin) down to each INDIVIDUAL item proportionally
+  // by its own net cost share within its category (not an equal split —
+  // a 15€ bag and a 5€ bag each get their fair share of the margin).
+  // Mutating .amount/.netPrice in place means every place that reads
+  // these arrays afterward automatically shows the corrected price with
+  // no separate fix needed in the confirmation screen, "Meine Buchungen",
+  // or the email — they all already consume these same two arrays.
+  var bagsMarginTotal = bagsPrice - netBagsTotal;
+  if (netBagsTotal > 0 && bagsMarginTotal !== 0) {
+    purchasedBagServices.forEach(function(bag) {
+      bag.amount = Math.round((bag.amount + bagsMarginTotal * (bag.amount / netBagsTotal)) * 100) / 100;
+    });
+  }
+  var seatsMarginTotal = seatsPrice - netSeatsTotal;
+  if (netSeatsTotal > 0 && seatsMarginTotal !== 0) {
+    allSeats.forEach(function(seat) {
+      if (seat.netPrice != null) {
+        seat.netPrice = Math.round((seat.netPrice + seatsMarginTotal * (seat.netPrice / netSeatsTotal)) * 100) / 100;
+      }
+    });
+  }
+
   return {
     reference: order.booking_reference, orderId: order.id,
     offer: {
@@ -6764,7 +6795,7 @@ function orderToBookingData(order, bookingRow) {
     basePrice: netDuffelAmount, extrasPrice: Math.round((bagsPrice + seatsPrice) * 100) / 100, totalPrice: customerPaid,
     discountAmount: discountAmount, loyaltyDiscount: loyaltyDiscount, promoCode: promoCode,
     hasOwnFinancialRecord: hasOwnRecord,
-    contactEmail: (order.passengers && order.passengers[0] ? order.passengers[0].email : '')
+    contactEmail: (bookingRow && bookingRow.customerEmail) || (order.passengers && order.passengers[0] ? order.passengers[0].email : '')
   };
 }
 
@@ -6980,7 +7011,15 @@ function showConfirmation(bookingData, opts) {
       html += '<div class="confirm-pax-item">';
       html += '<div class="confirm-pax-avatar">👤</div>';
       html += '<div><div class="confirm-pax-name">' + escHtml(pax.fn) + ' ' + escHtml(pax.ln) + '</div>';
-      html += '<div class="confirm-pax-type">' + types[typeIdx] + (pax.dob ? ' · Geb. ' + pax.dob : '') + '</div></div>';
+      html += '<div class="confirm-pax-type">' + types[typeIdx] + (pax.dob ? ' · Geb. ' + pax.dob : '') + '</div>';
+      // [CONTACT-EMAIL-DISPLAY] The page-5 contact email, shown under
+      // each passenger's name — one shared booking-contact email, not a
+      // separate email per passenger (Duffel/this booking flow only ever
+      // collects one).
+      if (bookingData.contactEmail) {
+        html += '<div class="confirm-pax-type" style="margin-top:2px">✉ ' + escHtml(bookingData.contactEmail) + '</div>';
+      }
+      html += '</div>';
       html += '</div>';
     }
     html += '</div>';
