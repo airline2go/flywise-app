@@ -1983,12 +1983,30 @@ function renderBlogPostsList() {
       '<td>' + pubDate + '</td>' +
       '<td class="mono">' + (p.views_count || 0) + '</td>' +
       '<td style="display:flex;gap:6px">' +
-        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick=\'openBlogEditor(' + escJsonAttr(p) + ')\'>تعديل</button>' +
-        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="deleteBlogPost(\'' + p.id + '\')">حذف</button>' +
+        '<button class="btn btn-ghost blog-edit-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(p.id) + '">تعديل</button>' +
+        '<button class="btn btn-ghost blog-delete-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(p.id) + '">حذف</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
+// [BLOG-DELETE-FIX] Delegated click handler — only a short id string ever
+// goes into the row's HTML now (no post content/title embedded in any
+// attribute), so nothing about a post's content can ever break the
+// row's markup or silently disable these buttons. Attached once via
+// event delegation rather than re-attached after every render.
+document.addEventListener('click', function(e) {
+  var editBtn = e.target.closest('.blog-edit-btn');
+  if (editBtn) {
+    var post = allBlogPosts.find(function(p) { return p.id === editBtn.getAttribute('data-id'); });
+    if (post) openBlogEditor(post);
+    return;
+  }
+  var delBtn = e.target.closest('.blog-delete-btn');
+  if (delBtn) {
+    deleteBlogPost(delBtn.getAttribute('data-id'));
+  }
+});
 
 function openBlogEditor(post) {
   document.getElementById('blog-editor-title').textContent = post ? 'تعديل المقال' : 'مقال جديد';
@@ -2096,12 +2114,28 @@ function renderRoutePagesList() {
       '<td>' + statusBadge + '</td>' +
       '<td class="mono" style="font-size:11px">flight-route.html?slug=' + escHtml(r.slug) + '</td>' +
       '<td style="display:flex;gap:6px">' +
-        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick=\'openRouteEditor(' + escJsonAttr(r) + ')\'>تعديل</button>' +
-        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="deleteRoutePage(\'' + r.id + '\')">حذف</button>' +
+        '<button class="btn btn-ghost route-edit-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">تعديل</button>' +
+        '<button class="btn btn-ghost route-delete-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">حذف</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
+// [ROUTE-DELETE-FIX] Same delegated-click fix as the blog posts list —
+// only a short id string goes into the row's HTML, immune to anything in
+// the route's intro_text/custom_title content.
+document.addEventListener('click', function(e) {
+  var editBtn = e.target.closest('.route-edit-btn');
+  if (editBtn) {
+    var route = allRoutePages.find(function(r) { return r.id === editBtn.getAttribute('data-id'); });
+    if (route) openRouteEditor(route);
+    return;
+  }
+  var delBtn = e.target.closest('.route-delete-btn');
+  if (delBtn) {
+    deleteRoutePage(delBtn.getAttribute('data-id'));
+  }
+});
 
 // [ROUTE-AIRPORT-SEARCH] Tracks the currently-selected city name for each
 // direction separately from the search input's displayed text (which
