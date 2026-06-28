@@ -8412,6 +8412,30 @@ document.addEventListener('DOMContentLoaded', function() {
   // unconditionally resets calDepDate to null and clears #dep-date,
   // which would silently wipe out a date prefilled before it.
   prefillDateFromUrl();
+  // [AUTO-SEARCH-FROM-ROUTE-FIX] When arriving from a route page's
+  // "Jetzt Flüge suchen" link (?from=...&to=...&depart=...), the
+  // customer should land directly on ready search results — not just a
+  // pre-filled form requiring one more tap. Only triggers when the URL
+  // actually carries from+to (never on a normal homepage visit with no
+  // params). A short delay (not because of any async dependency —
+  // pickAC() inside prefillSearchFromUrl already sets fromI/toI
+  // synchronously with the IATA code before any fetch resolves) just
+  // lets the DOM finish settling from the prefill calls above.
+  (function() {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('from') && p.get('to')) {
+        // [AUTO-SEARCH-FROM-ROUTE-FIX] trip defaults to 'rr' (round-trip)
+        // always — a route page's link only carries from/to/depart, no
+        // return date, so doSearch() would otherwise reject the
+        // auto-search and ask for a return date the customer was never
+        // prompted for. This matches what the link actually represents:
+        // a one-way search for the indicative date.
+        trip = 'ow';
+        setTimeout(function() { doSearch(); }, 150);
+      }
+    } catch (e) {}
+  })();
   initDarkMode();
   initCookie();
   initLang();
