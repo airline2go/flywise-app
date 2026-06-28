@@ -4036,15 +4036,6 @@ function showConfirmation(bookingData, opts) {
   html += '<span class="confirm-price-total">' + fmt(pdGrandTotal) + '</span></div>';
   html += '</div>';
 
-  // ── Travel Insurance Banner ──
-  html += '<a href="https://ektatraveling.tpo.mx/1qYI0Y2A" target="_blank" rel="noopener" style="text-decoration:none;display:block;margin-bottom:12px">';
-  html += '<div style="background:linear-gradient(135deg,#0FB5A0 0%,#0A9384 100%);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(15,181,160,.3)">';
-  html += '<div style="font-size:2rem;flex-shrink:0">🛡️</div>';
-  html += '<div style="flex:1">';
-  html += '<div style="font-family:\'Syne\',sans-serif;font-size:15px;font-weight:800;color:#fff;margin-bottom:3px">Reise abgesichert?</div>';
-  html += '<div style="font-size:12px;color:rgba(255,255,255,.85);line-height:1.5">Schütze deine Reise mit einer Reiseversicherung — schnell, einfach & günstig.</div>';
-  html += '<div style="margin-top:8px;display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.35)">Jetzt versichern →</div>';
-  html += '</div></div></a>';
   var _qrData = encodeURIComponent('AIRPIV|' + (bookingData.reference || '') + '|' + (bookingData.orderId || ''));
   html += '<div class="confirm-card" style="text-align:center">';
   html += '<div class="confirm-card-title" style="justify-content:center">🎫 ' + tL('Buchungscode','Booking code','رمز الحجز') + '</div>';
@@ -7888,14 +7879,24 @@ function referralLinkFor(userId) {
 // — so the search bar shows "Berlin Brandenburg · BER" exactly as if the
 // customer had typed and picked it themselves, not the IATA code
 // repeated as a placeholder name/city.
+// [AUTO-SEARCH-CITYNAME-FIX] Returns a real Promise that resolves only
+// once city-name prefilling actually completes (both lookups done,
+// success or failure) — used by the auto-search trigger below to know
+// for certain fromC/toC are populated before searching, instead of
+// guessing a fixed delay that could be shorter than the real network
+// round-trip (which was exactly the "results header shows IATA codes,
+// not city names" symptom reported: doSearch() ran before the lookup
+// resolved, falling back to the bare code).
 function prefillSearchFromUrl() {
+  var pending = [];
   try {
     var params = new URLSearchParams(window.location.search);
     var from = params.get('from');
     var to = params.get('to');
-    if (from) prefillAirportField('from', from.toUpperCase());
-    if (to) prefillAirportField('to', to.toUpperCase());
+    if (from) pending.push(prefillAirportField('from', from.toUpperCase()));
+    if (to) pending.push(prefillAirportField('to', to.toUpperCase()));
   } catch (e) {}
+  return Promise.all(pending);
 }
 
 function prefillAirportField(side, code) {
@@ -7903,7 +7904,7 @@ function prefillAirportField(side, code) {
   // lookup is in flight), then replace it with the real name/city the
   // moment the lookup resolves.
   pickAC(side, code, code, code);
-  fetch(PROXY + '/search/airports?q=' + encodeURIComponent(code))
+  return fetch(PROXY + '/search/airports?q=' + encodeURIComponent(code))
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (!json.ok || !json.airports || !json.airports.length) return;
@@ -8406,7 +8407,14 @@ function handleHelper(action) {
 document.addEventListener('DOMContentLoaded', function() {
   checkMaintenanceMode();
   referralCaptureFromUrl();
-  prefillSearchFromUrl();
+  // [AUTO-SEARCH-CITYNAME-FIX] prefillSearchFromUrl() now returns a real
+  // Promise that resolves only once the city-name lookups actually
+  // complete — the auto-search trigger below awaits it directly instead
+  // of guessing a fixed delay, which previously caused the results page
+  // to show bare IATA codes ("HAM → CDG") instead of real city names
+  // ("Hamburg → Paris") whenever the network round-trip took longer than
+  // the guessed delay (confirmed by an actual customer report).
+  var prefillDone = prefillSearchFromUrl();
   initDates();
   // [DATE-MATCH-FIX] Must run AFTER initDates() — initDates()
   // unconditionally resets calDepDate to null and clears #dep-date,
@@ -8417,10 +8425,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // customer should land directly on ready search results — not just a
   // pre-filled form requiring one more tap. Only triggers when the URL
   // actually carries from+to (never on a normal homepage visit with no
-  // params). A short delay (not because of any async dependency —
-  // pickAC() inside prefillSearchFromUrl already sets fromI/toI
-  // synchronously with the IATA code before any fetch resolves) just
-  // lets the DOM finish settling from the prefill calls above.
+  // params). Now genuinely waits for prefillDone (the real city-name
+  // lookups) before searching, instead of guessing a delay.
   (function() {
     try {
       var p = new URLSearchParams(window.location.search);
@@ -8432,7 +8438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // prompted for. This matches what the link actually represents:
         // a one-way search for the indicative date.
         trip = 'ow';
-        setTimeout(function() { doSearch(); }, 150);
+        prefillDone.then(function() { doSearch(); });
       }
     } catch (e) {}
   })();
@@ -9326,28 +9332,23 @@ function confirmDobCal() {
     if (d.head) d.head.appendChild(s);
 })(document, window, 'BrevoConversations');
 
-function openInsuranceLink() {
-  window.open('https://ektatraveling.tpo.mx/1qYI0Y2A', '_blank', 'noopener,noreferrer');
-}
-
 function switchSvcTab(tab) {
   document.querySelectorAll('.svc-tab').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('svc-' + tab).classList.add('active');
 
   var flightsContent = document.getElementById('flights-content');
   var comingSoon = document.getElementById('coming-soon-msg');
-  var insPromo = document.getElementById('ins-promo');
   var icon = document.getElementById('coming-soon-icon');
   var title = document.getElementById('coming-soon-title');
   var sub = document.getElementById('coming-soon-sub');
   var T = (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS[(typeof LANG !== 'undefined' ? LANG : 'de')]) ? TRANSLATIONS[(typeof LANG !== 'undefined' ? LANG : 'de')] : {};
 
   flightsContent.style.display = (tab === 'flights') ? '' : 'none';
-  comingSoon.classList.toggle('show', (tab === 'hotels' || tab === 'cars'));
-  if (insPromo) insPromo.classList.toggle('show', tab === 'insurance');
+  comingSoon.classList.toggle('show', (tab === 'hotels' || tab === 'cars' || tab === 'insurance'));
 
   if (tab === 'hotels') { icon.textContent = '🏨'; title.textContent = T.coming_soon_title || 'Demnächst'; sub.textContent = T.coming_soon_hotels || 'Hotelbuchung kommt bald. Bleib dran!'; }
   if (tab === 'cars')   { icon.textContent = '🚗'; title.textContent = T.coming_soon_title || 'Demnächst'; sub.textContent = T.coming_soon_cars || 'Mietwagen kommt bald. Bleib dran!'; }
+  if (tab === 'insurance') { icon.textContent = '🛡️'; title.textContent = T.coming_soon_title || 'Demnächst'; sub.textContent = T.coming_soon_insurance || 'Reiseversicherung kommt bald. Bleib dran!'; }
 }
 
 function openBrevoChat() {

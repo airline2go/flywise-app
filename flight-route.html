@@ -56,6 +56,13 @@
 .airport-info-code{font-family:monospace;font-weight:800;color:var(--teal);font-size:1.1rem}
 .airport-info-city{font-size:12.5px;color:var(--tx2);margin-top:2px}
 @media (max-width:480px){.airport-info-grid{grid-template-columns:1fr}}
+.route-insights-section{margin-top:24px}
+.route-insights-section h2{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--tx);margin-bottom:10px}
+.route-insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.route-insight-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;text-align:center}
+.route-insight-val{font-family:'Syne',sans-serif;font-weight:800;color:var(--teal);font-size:1.15rem}
+.route-insight-lbl{font-size:11.5px;color:var(--tx3);margin-top:4px}
+@media (max-width:480px){.route-insights-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -174,11 +181,19 @@ function renderRoute(route) {
   }
 
   // [ROUTE-FAQ-OVERRIDE] Uses the admin's custom FAQ when set, otherwise
-  // falls back to the exact same 3 generic questions as before.
+  // falls back to real per-route data — the haul-type/distance question
+  // replaces the old route-agnostic "Can I change my booking later?"
+  // (flagged in an SEO review as adding no real value since it applies
+  // to literally any route). A 4th question about flight duration/direct
+  // availability is appended separately once real insights data arrives
+  // asynchronously below — never built ahead of time with a placeholder.
+  var haulQuestion = route.distance_km != null
+    ? { question: 'Wie weit ist es von ' + route.origin_city + ' nach ' + route.destination_city + '?',
+        answer: 'Die Entfernung beträgt rund ' + route.distance_km.toLocaleString('de-DE') + ' km — ' + (route.haul_type === 'long-haul' ? 'ein Langstreckenflug.' : 'ein Kurzstreckenflug.') }
+    : { question: 'Welcher Flughafen wird in ' + route.destination_city + ' angeflogen?', answer: 'Die Strecke nutzt den Flughafen ' + route.destination_iata + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.' };
   var faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq : [
     { question: 'Wie finde ich den günstigsten Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?', answer: 'Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis.' },
-    { question: 'Welcher Flughafen wird in ' + route.destination_city + ' angeflogen?', answer: 'Die Strecke nutzt den Flughafen ' + route.destination_iata + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.' },
-    { question: 'Kann ich meine Buchung später ändern?', answer: 'Das hängt vom gewählten Tarif der Airline ab — Details dazu siehst du vor der Zahlung in der Tarifübersicht.' },
+    haulQuestion,
   ];
   var faqHtml = faqItems.map(function(f) {
     return '<div class="route-faq-item"><div class="route-faq-q">' + escHtml(f.question) + '</div><div class="route-faq-a">' + escHtml(f.answer) + '</div></div>';
@@ -201,11 +216,21 @@ function renderRoute(route) {
     '</div>' +
     '<section><p>' + escHtml(introText) + '</p></section>' +
     airportInfoHtml +
+    '<section id="route-insights-section"></section>' +
     '<section class="route-faq">' +
       '<h2>Häufige Fragen</h2>' +
       faqHtml +
     '</section>' +
     '<section id="related-routes-section"></section>';
+
+  function buildFaqSchema(items) {
+    return {
+      "@type": "FAQPage",
+      "mainEntity": items.map(function(f) {
+        return { "@type": "Question", "name": f.question, "acceptedAnswer": { "@type": "Answer", "text": f.answer } };
+      })
+    };
+  }
 
   document.getElementById('route-schema').textContent = JSON.stringify({
     "@context": "https://schema.org",
@@ -213,12 +238,7 @@ function renderRoute(route) {
     "name": title,
     "description": description,
     "url": url,
-    "mainEntity": {
-      "@type": "FAQPage",
-      "mainEntity": faqItems.map(function(f) {
-        return { "@type": "Question", "name": f.question, "acceptedAnswer": { "@type": "Answer", "text": f.answer } };
-      })
-    }
+    "mainEntity": buildFaqSchema(faqItems)
   });
 
   // [RELATED-ROUTES] Fetched separately — never blocks the rest of the
@@ -283,6 +303,55 @@ function renderRoute(route) {
         }
       } else {
         box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
+      }
+      // [ROUTE-INSIGHTS] Real flight facts from the same Duffel offers
+      // just fetched for pricing — never invented. Only rendered when
+      // insights actually came back; an older cached price entry or a
+      // route with zero offers simply skips this section rather than
+      // showing fabricated numbers.
+      if (j.ok && j.insights) {
+        var ins = j.insights;
+        function fmtHrsMin(min) {
+          var h = Math.floor(min / 60), m = min % 60;
+          return h + ' Std' + (m > 0 ? ' ' + m + ' Min' : '');
+        }
+        var directLine = ins.allDirect
+          ? 'Alle gefundenen Flüge sind Direktflüge.'
+          : (ins.directAvailable ? 'Direktflüge sind auf dieser Strecke verfügbar.' : 'Auf dieser Strecke gibt es aktuell keine Direktflüge — mit Zwischenstopp.');
+        var airlinesLine = ins.airlines.length
+          ? ('Fliegende Airlines: ' + ins.airlines.join(', ') + '.')
+          : '';
+        var insightsHtml = '<section class="route-insights-section"><h2>Flugdaten für diese Strecke</h2><div class="route-insights-grid">' +
+          '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">Durchschnittliche Flugzeit</div></div>' +
+          '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">Kürzeste gefundene Flugzeit</div></div>' +
+        '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
+        var insightsTarget = document.getElementById('route-insights-section');
+        if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
+
+        // [ROUTE-FAQ-OVERRIDE] Append a 4th, real-data FAQ question about
+        // duration/direct-flight availability — exactly the route-specific
+        // question type asked for ("Gibt es Direktflüge?"), built from
+        // real Duffel data for THIS route rather than invented at
+        // page-build time. Appended, not replacing the synchronous
+        // distance-based questions already shown.
+        if (!route.custom_faq || !route.custom_faq.length) {
+          var durationFaqHtml = '<div class="route-faq-item"><div class="route-faq-q">Wie lange dauert der Flug von ' + escHtml(route.origin_city) + ' nach ' + escHtml(route.destination_city) + '?</div><div class="route-faq-a">Die durchschnittliche Flugzeit liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine + '</div></div>';
+          var faqSection = document.querySelector('.route-faq');
+          if (faqSection) faqSection.insertAdjacentHTML('beforeend', durationFaqHtml);
+
+          // [ROUTE-FAQ-OVERRIDE] Keep structured data in sync with what's
+          // now visible — without this, the schema would still claim
+          // only 2 questions while the page visibly shows 3.
+          var durationFaqItem = { question: 'Wie lange dauert der Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?', answer: 'Die durchschnittliche Flugzeit liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine };
+          document.getElementById('route-schema').textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": title,
+            "description": description,
+            "url": url,
+            "mainEntity": buildFaqSchema(faqItems.concat([durationFaqItem]))
+          });
+        }
       }
     })
     .catch(function(){
