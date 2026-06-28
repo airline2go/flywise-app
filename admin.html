@@ -1551,6 +1551,7 @@
         <div class="page-sub">صفحات هبوط لمسارات شائعة بسعر حقيقي محدّث، لجذب زيارات من Google</div>
       </div>
       <div class="header-actions">
+        <button class="btn btn-ghost" onclick="runRouteBackfill()">🔧 إصلاح المسارات القديمة</button>
         <button class="btn btn-primary" onclick="openRouteEditor()">➕ مسار جديد</button>
       </div>
     </div>
@@ -2056,6 +2057,21 @@ async function deleteBlogPost(id) {
 
 // ============ [ROUTE-PAGES] Route landing pages admin ============
 var allRoutePages = [];
+
+async function runRouteBackfill() {
+  if (!confirm('سيتم فحص كل المسارات القديمة وإضافة بيانات الدولة/المدينة الناقصة لها (يستخدم بيانات حقيقية من Duffel). قد يستغرق دقيقة أو أكثر حسب عدد المسارات. هل تريد المتابعة؟')) return;
+  showToast('⏳ جارٍ الإصلاح، يرجى الانتظار...', 'info');
+  try {
+    const res = await adminFetch('/admin/route-pages/backfill-locations', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ تم: ' + j.updated + ' مسار تم تحديثه، ' + j.skipped + ' لم يحتج تعديل' + (j.failed ? '، ' + j.failed + ' فشل (راجع سجل الأخطاء)' : ''), j.failed ? 'error' : 'success');
+      loadRoutePages();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
 
 async function loadRoutePages() {
   try {
