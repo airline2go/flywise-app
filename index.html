@@ -6783,7 +6783,14 @@ function openBookingDetail(orderId) {
       if (j.ok && j.order) showConfirmation(orderToBookingData(j.order, j.booking), { viewOnly: true });
       else showToast('❌ ' + (j.error || tL('Konnte Buchung nicht laden','Could not load booking','تعذّر تحميل الحجز')), 'error');
     })
-    .catch(function() { showToast('❌ ' + tL('Verbindungsfehler','Connection error','خطأ في الاتصال'), 'error'); });
+    .catch(function(err) {
+      // [DIAGNOSTIC-FIX] Show the REAL error name/message instead of a
+      // generic "connection error" — without browser devtools available,
+      // this is the only way to tell a timeout apart from a CORS block,
+      // DNS failure, or any other root cause. Kept deliberately ugly/
+      // technical-looking (this is a diagnostic aid, not normal UX copy).
+      showToast('❌ Fehler: ' + (err && err.name ? err.name + ' — ' : '') + (err && err.message ? err.message : String(err)), 'error');
+    });
 }
 
 // Cancel per Duffel: step 1 get refund quote → confirm → step 2 execute
@@ -10833,6 +10840,30 @@ function prefillAirportField(side, code) {
     .catch(function() { /* keep the IATA-code fallback already shown */ });
 }
 
+// [DATE-MATCH-FIX] Pre-fill the departure date from ?depart=YYYY-MM-DD —
+// set by flight-route.html's "Jetzt Flüge suchen" link once the exact
+// date its indicative price was computed for is known, so the customer
+// searches for that SAME date instead of defaulting to today (which
+// would likely show a different, probably higher, last-minute fare).
+// Applies it through the exact same confirmCal() the calendar's own
+// confirm button uses — identical behavior to picking the date manually,
+// no duplicated update logic to drift out of sync later.
+function prefillDateFromUrl() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var depart = params.get('depart');
+    if (!depart || !/^\d{4}-\d{2}-\d{2}$/.test(depart)) return;
+    var d = new Date(depart + 'T00:00:00');
+    var today = new Date(); today.setHours(0,0,0,0);
+    var twoYearsOut = new Date(); twoYearsOut.setFullYear(twoYearsOut.getFullYear() + 2);
+    // A stale or malformed ?depart= (e.g. an old bookmarked link) must
+    // never silently set a date in the past or an unreasonable far future.
+    if (isNaN(d.getTime()) || d < today || d > twoYearsOut) return;
+    calDepDate = depart;
+    confirmCal();
+  } catch (e) {}
+}
+
 // Capture ?ref=CODE from the URL on page load and remember it locally until signup
 function referralCaptureFromUrl() {
   try {
@@ -11304,6 +11335,10 @@ document.addEventListener('DOMContentLoaded', function() {
   referralCaptureFromUrl();
   prefillSearchFromUrl();
   initDates();
+  // [DATE-MATCH-FIX] Must run AFTER initDates() — initDates()
+  // unconditionally resets calDepDate to null and clears #dep-date,
+  // which would silently wipe out a date prefilled before it.
+  prefillDateFromUrl();
   initDarkMode();
   initCookie();
   initLang();

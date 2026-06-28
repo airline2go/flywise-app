@@ -270,6 +270,17 @@ function renderRoute(route) {
       var box = document.getElementById('route-price-box');
       if (j.ok && j.price != null) {
         box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div>';
+        // [DATE-MATCH-FIX] Carry the exact date this price was computed
+        // for into the search link — clicking "Jetzt Flüge suchen" now
+        // lands the customer on a search for that SAME date, instead of
+        // defaulting to today (which would likely show a different,
+        // probably higher, last-minute fare right after they just saw
+        // this indicative price — a bait-and-switch feeling worth
+        // avoiding). Only added when a real date actually came back.
+        if (j.departure_date) {
+          var ctaLink = document.querySelector('.route-cta');
+          if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '&depart=' + encodeURIComponent(j.departure_date);
+        }
       } else {
         box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
       }
