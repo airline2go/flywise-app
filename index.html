@@ -9943,6 +9943,15 @@ function initAuth() {
   }).catch(function(){ maybeShowWelcomeBanner(); });
   // React to login/logout across tabs
   _sb.auth.onAuthStateChange(function(event, session){
+    // [PASSWORD-RECOVERY-FIX] The actual missing trigger — Supabase fires
+    // this specific event (distinct from a normal SIGNED_IN) when the
+    // customer returns from the reset-password email link. Without this,
+    // they just landed back on the homepage with no indication anything
+    // special was supposed to happen.
+    if (event === 'PASSWORD_RECOVERY') {
+      showNewPasswordBox();
+      return;
+    }
     if (session && session.user) {
       FW_USER = mapSupaUser(session.user);
       updateUserNav(FW_USER);
@@ -10160,6 +10169,54 @@ function hideForgotBox() {
   if (box) { box.classList.remove('show'); }
   var o = document.getElementById('auth-ok');
   if (o) { o.textContent = ''; o.className = 'auth-ok'; }
+}
+
+// [PASSWORD-RECOVERY-FIX] Called when Supabase fires PASSWORD_RECOVERY
+// (the customer just landed back on the site from the reset-password
+// email link). Opens the auth modal directly into "set new password"
+// mode — login/register tabs and forms are hidden so there's no way to
+// get confused and try logging in with the OLD (forgotten) password
+// instead. This is the piece that was completely missing before: the
+// email's redirectTo brought them back to the site, but nothing ever
+// detected this state or gave them anywhere to actually type a new
+// password.
+function showNewPasswordBox() {
+  document.getElementById('auth-tab-login').style.display = 'none';
+  document.getElementById('auth-tab-register').style.display = 'none';
+  document.getElementById('auth-form-login').style.display = 'none';
+  document.getElementById('auth-form-register').style.display = 'none';
+  document.getElementById('auth-sub').textContent = 'Neues Passwort festlegen';
+  var box = document.getElementById('auth-newpass-box');
+  if (box) box.classList.add('show');
+  document.getElementById('auth-ov').classList.add('open');
+}
+
+async function doSetNewPassword() {
+  var pass = document.getElementById('newpass-input').value;
+  if (!pass || pass.length < 6) { showAuthErr('Passwort muss mindestens 6 Zeichen haben.'); return; }
+  var btn = document.getElementById('newpass-send-btn');
+  var txt = document.getElementById('newpass-send-txt');
+  btn.disabled = true; txt.textContent = '⏳ Wird gespeichert...';
+  try {
+    var { error } = await _sb.auth.updateUser({ password: pass });
+    if (error) {
+      showAuthErr(error.message);
+    } else {
+      // [PASSWORD-RECOVERY-FIX] Password is set — restore the normal
+      // login/register modal state (in case the customer opens the
+      // modal again later this session) and close it. They're now
+      // signed in with the new password automatically (Supabase's
+      // updateUser keeps the recovery session active).
+      document.getElementById('auth-newpass-box').classList.remove('show');
+      document.getElementById('auth-tab-login').style.display = '';
+      document.getElementById('auth-tab-register').style.display = '';
+      closeAuthModal();
+      showToast('✅ Passwort erfolgreich geändert!', 'success');
+    }
+  } catch (e) {
+    showAuthErr('Fehler beim Speichern. Bitte versuche es erneut.');
+  }
+  btn.disabled = false; txt.textContent = 'Passwort speichern ✓';
 }
 async function doResetPassword() {
   var email = (document.getElementById('reset-email').value || '').trim();
@@ -12582,6 +12639,18 @@ Telefon: [Ihre Telefonnummer]</p>
           <button class="auth-reset-cancel" onclick="hideForgotBox()">Abbrechen</button>
           <button class="auth-reset-send" id="reset-send-btn" onclick="doResetPassword()">
             <span id="reset-send-txt">Link senden ✉️</span>
+          </button>
+        </div>
+      </div>
+      <!-- New Password Box (shown after returning from the reset-password
+           email link — detected via PASSWORD_RECOVERY, see JS below) -->
+      <div class="auth-reset-box" id="auth-newpass-box">
+        <div class="auth-reset-box-title">🔑 Neues Passwort festlegen</div>
+        <div class="auth-reset-box-sub">Gib dein neues Passwort ein.</div>
+        <input class="auth-reset-input" id="newpass-input" type="password" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="new-password">
+        <div class="auth-reset-btns">
+          <button class="auth-reset-send" id="newpass-send-btn" onclick="doSetNewPassword()" style="width:100%">
+            <span id="newpass-send-txt">Passwort speichern ✓</span>
           </button>
         </div>
       </div>
