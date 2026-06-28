@@ -10802,18 +10802,35 @@ function referralLinkFor(userId) {
 }
 
 // [ROUTE-PAGES] Pre-fill the search form from ?from=IATA&to=IATA in the
-// URL — used by the SEO route landing pages' "Jetzt buchen" link. Reuses
-// pickAC(), the same function manual airport selection uses, so the
-// resulting state is identical to the customer having picked these
-// airports themselves.
+// URL — used by the SEO route landing pages' "Jetzt buchen" link. Fetches
+// each airport's real name/city from the same /search/airports endpoint
+// the normal autocomplete uses, then calls pickAC() with that real data
+// — so the search bar shows "Berlin Brandenburg · BER" exactly as if the
+// customer had typed and picked it themselves, not the IATA code
+// repeated as a placeholder name/city.
 function prefillSearchFromUrl() {
   try {
     var params = new URLSearchParams(window.location.search);
     var from = params.get('from');
     var to = params.get('to');
-    if (from) pickAC('from', from.toUpperCase(), from.toUpperCase(), from.toUpperCase());
-    if (to) pickAC('to', to.toUpperCase(), to.toUpperCase(), to.toUpperCase());
+    if (from) prefillAirportField('from', from.toUpperCase());
+    if (to) prefillAirportField('to', to.toUpperCase());
   } catch (e) {}
+}
+
+function prefillAirportField(side, code) {
+  // Show something immediately (better than a blank field while the
+  // lookup is in flight), then replace it with the real name/city the
+  // moment the lookup resolves.
+  pickAC(side, code, code, code);
+  fetch(PROXY + '/search/airports?q=' + encodeURIComponent(code))
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (!json.ok || !json.airports || !json.airports.length) return;
+      var match = json.airports.find(function(a) { return a.code === code && a.type === 'airport'; }) || json.airports.find(function(a) { return a.code === code; });
+      if (match) pickAC(side, match.code, match.name, match.city);
+    })
+    .catch(function() { /* keep the IATA-code fallback already shown */ });
 }
 
 // Capture ?ref=CODE from the URL on page load and remember it locally until signup
