@@ -113,8 +113,22 @@ function renderNotFound() {
 }
 
 function renderAirport(airport, routes) {
-  var title = 'Flughafen ' + airport.code + ' (' + airport.city + ')';
-  var description = 'Flüge ab und nach ' + airport.city + ' (' + airport.code + ') vergleichen und buchen — alle verfügbaren Strecken mit Airpiv.';
+  // [CONTENT-VARIATION-FIX] Real signal: haul-type mix. An airport
+  // serving only short-haul routes vs one with long-haul connections
+  // represents a genuinely different traveler intent (weekend trips vs
+  // intercontinental travel) — the copy reflects that real distinction.
+  var hasLongHaul = routes.some(function(r) { return r.haul_type === 'long-haul'; });
+  var title, description;
+  if (routes.length === 1) {
+    title = 'Flughafen ' + airport.code + ' — Direktflug ab ' + airport.city;
+    description = 'Der Flughafen ' + airport.code + ' in ' + airport.city + ' bietet eine Direktverbindung. Preis vergleichen und buchen mit Airpiv.';
+  } else if (hasLongHaul) {
+    title = 'Flughafen ' + airport.code + ' (' + airport.city + ') — Kurz- & Langstrecke';
+    description = 'Vom Flughafen ' + airport.code + ' in ' + airport.city + ' aus erreichst du sowohl europäische als auch interkontinentale Ziele. Alle Strecken im Vergleich.';
+  } else {
+    title = 'Flughafen ' + airport.code + ' (' + airport.city + ') — alle Strecken';
+    description = routes.length + ' Flugverbindungen ab und nach ' + airport.city + ' (' + airport.code + '). Vergleiche alle Strecken und Preise mit Airpiv.';
+  }
   var url = 'https://airpiv.com/airport.html?code=' + encodeURIComponent(airport.code);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';

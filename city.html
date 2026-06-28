@@ -110,8 +110,28 @@ function renderNotFound() {
 }
 
 function renderCity(city, routes) {
-  var title = 'Flüge nach ' + city.name;
-  var description = 'Günstige Flüge nach ' + city.name + ' finden und buchen — vergleiche alle verfügbaren Strecken mit Airpiv.';
+  // [CONTENT-VARIATION-FIX] Same principle as country.html, but using
+  // two real per-city signals: route count AND airport count. A city
+  // served by multiple airports (e.g. London: LHR+LGW) is genuinely a
+  // richer, different page than a single-airport city — the copy now
+  // reflects that real distinction instead of just substituting the name.
+  var title, description;
+  var multiAirport = city.airport_codes && city.airport_codes.length > 1;
+  if (routes.length === 1) {
+    var r = routes[0];
+    var otherCity = r.origin_city_slug === city.city_slug ? r.destination_city : r.origin_city;
+    title = 'Flug ' + city.name + ' ↔ ' + otherCity;
+    description = 'Direktverbindung zwischen ' + city.name + ' und ' + otherCity + ': Preise vergleichen und günstig buchen mit Airpiv.';
+  } else if (multiAirport) {
+    title = 'Flüge nach ' + city.name + ' — alle Flughäfen im Vergleich';
+    description = city.name + ' wird von ' + city.airport_codes.length + ' Flughäfen bedient (' + city.airport_codes.join(', ') + '). Vergleiche alle Strecken mit Airpiv.';
+  } else if (routes.length <= 4) {
+    title = city.name + ' Flüge — ' + routes.length + ' Strecken im Vergleich';
+    description = routes.length + ' Flugverbindungen von und nach ' + city.name + ' im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.';
+  } else {
+    title = 'Günstige Flüge nach ' + city.name + ' — alle Strecken';
+    description = 'Über ' + routes.length + ' Flugverbindungen nach ' + city.name + '. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.';
+  }
   var url = 'https://airpiv.com/city.html?slug=' + encodeURIComponent(city.city_slug);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';

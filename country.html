@@ -107,8 +107,26 @@ function renderNotFound() {
 }
 
 function renderCountry(country, routes) {
-  var title = 'Flüge nach ' + country.name;
-  var description = 'Günstige Flüge nach ' + country.name + ' finden und buchen — vergleiche alle verfügbaren Strecken mit Airpiv.';
+  // [CONTENT-VARIATION-FIX] Title/description vary by route count (a
+  // real, defensible signal — not arbitrary) rather than one fixed
+  // template with only the name substituted. A country with a single
+  // route gets specific, route-naming copy; a few routes gets
+  // "compare options" framing; many routes gets "explore all
+  // destinations" framing — genuinely different wording driven by what's
+  // actually true about each country's page, not just its name.
+  var title, description;
+  if (routes.length === 1) {
+    var r = routes[0];
+    var otherCity = r.origin_country === country.code ? r.destination_city : r.origin_city;
+    title = 'Flug nach ' + country.name + ' — ' + otherCity + ' ↔ ' + country.name;
+    description = 'Direktverbindung zwischen ' + otherCity + ' und ' + country.name + ': Preise vergleichen und günstig buchen mit Airpiv.';
+  } else if (routes.length <= 4) {
+    title = country.name + ' Flüge — ' + routes.length + ' Strecken im Vergleich';
+    description = routes.length + ' Flugverbindungen von und nach ' + country.name + ' im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.';
+  } else {
+    title = 'Günstige Flüge nach ' + country.name + ' — alle Reiseziele';
+    description = 'Über ' + routes.length + ' Flugverbindungen nach ' + country.name + '. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.';
+  }
   var url = 'https://airpiv.com/country.html?code=' + encodeURIComponent(country.code);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
