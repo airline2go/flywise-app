@@ -1870,15 +1870,18 @@ async function initDashboard() {
 // ============ [CANCEL-NOTIFY-FIX] Cancellation notifications ============
 async function loadCancellationBadge() {
   try {
-    const [cancelRes, failureRes] = await Promise.all([
+    const [cancelRes, failureRes, syncRes] = await Promise.all([
       adminFetch('/admin/cancellations'),
       adminFetch('/admin/booking-failures'),
+      adminFetch('/admin/sync-failures'),
     ]);
     const cancelJ = await cancelRes.json();
     const failureJ = await failureRes.json();
+    const syncJ = await syncRes.json();
     const cancelCount = cancelJ.ok ? cancelJ.unreadCount : 0;
     const failureCount = failureJ.ok ? failureJ.unreadCount : 0;
-    renderCancelBadge(cancelCount + failureCount);
+    const syncCount = syncJ.ok ? syncJ.unreadCount : 0;
+    renderCancelBadge(cancelCount + failureCount + syncCount);
     if (cancelCount > 0) {
       showToast('🚫 لديك ' + cancelCount + ' إلغاء حجز جديد يحتاج مراجعة', 'error');
     }
@@ -1887,6 +1890,11 @@ async function loadCancellationBadge() {
       // charged customer with a failed booking (even auto-refunded) is a
       // worse outcome than a clean cancellation and needs to read as such.
       showToast('🆘 لديك ' + failureCount + ' مشكلة في حجز بعد الدفع — راجع فوراً', 'error');
+    }
+    if (syncCount > 0) {
+      // [SYNC-FAILURE-NOTIFY] The most urgent of the three — our own
+      // records have silently drifted from what actually happened.
+      showToast('⚠️ لديك ' + syncCount + ' حجز يحتاج مزامنة يدوية — راجع فوراً', 'error');
     }
   } catch (e) { console.error('Admin API error:', e); }
 }
@@ -1901,12 +1909,14 @@ function renderCancelBadge(count) {
 
 async function markCancellationsAsRead() {
   try {
-    // [BOOKING-FAILURE-NOTIFY] Both notification types live on the same
-    // badge (the Bookings nav item) — opening that page should clear both,
-    // since the admin is about to see both kinds of events listed there.
+    // [BOOKING-FAILURE-NOTIFY] / [SYNC-FAILURE-NOTIFY] All three
+    // notification types live on the same badge (the Bookings nav item)
+    // — opening that page should clear all of them, since the admin is
+    // about to see all three kinds of events listed there.
     await Promise.all([
       adminFetch('/admin/cancellations/mark-read', { method: 'POST' }),
       adminFetch('/admin/booking-failures/mark-read', { method: 'POST' }),
+      adminFetch('/admin/sync-failures/mark-read', { method: 'POST' }),
     ]);
     renderCancelBadge(0);
   } catch (e) { console.error('Admin API error:', e); }
@@ -1918,18 +1928,37 @@ async function markCancellationsAsRead() {
 // common case (no issues).
 async function loadBookingIssuesPanel() {
   try {
-    const [cancelRes, failureRes] = await Promise.all([
+    const [cancelRes, failureRes, syncRes] = await Promise.all([
       adminFetch('/admin/cancellations'),
       adminFetch('/admin/booking-failures'),
+      adminFetch('/admin/sync-failures'),
     ]);
     const cancelJ = await cancelRes.json();
     const failureJ = await failureRes.json();
+    const syncJ = await syncRes.json();
     const cancelEvents = cancelJ.ok ? (cancelJ.events || []).slice(0, 5) : [];
     const failureEvents = failureJ.ok ? (failureJ.events || []).slice(0, 5) : [];
+    const syncEvents = syncJ.ok ? (syncJ.events || []).slice(0, 5) : [];
     const panel = document.getElementById('booking-issues-panel');
-    if (!cancelEvents.length && !failureEvents.length) { panel.style.display = 'none'; return; }
+    if (!cancelEvents.length && !failureEvents.length && !syncEvents.length) { panel.style.display = 'none'; return; }
 
     var html = '';
+    // [SYNC-FAILURE-NOTIFY] Shown FIRST — the most dangerous category:
+    // the real operation succeeded with Duffel, but our database doesn't
+    // know it yet. Distinct purple/critical styling sets it apart from
+    // the red booking-failure cards below.
+    syncEvents.forEach(function(ev) {
+      var b = ev.booking;
+      html += '<div style="background:var(--bg2);border:1.5px solid #7c3aed;border-radius:10px;padding:14px 16px;margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">' +
+          '<div style="font-weight:700;color:#7c3aed;font-size:13px">⚠️ مزامنة مفقودة — العملية نجحت فعلاً لكن قاعدتنا لم تتحدث</div>' +
+        '</div>' +
+        '<div style="font-size:12.5px;color:var(--tx2);margin-bottom:4px">' + escHtml(ev.message || '') + '</div>' +
+        (b ? '<div style="font-size:12px;color:var(--tx2);margin-bottom:4px">' + escHtml(b.route_label || '') + ' · ' + escHtml(b.customer_email || '') + ' · ' + (ev.refund_amount || '—') + '</div>' : '') +
+        '<div style="font-size:11px;color:var(--tx3);margin-bottom:8px" class="mono">Order: ' + escHtml(ev.order_id || '—') + ' · ' + new Date(ev.at).toLocaleString('ar') + '</div>' +
+        '<button class="btn btn-ghost" style="padding:5px 12px;font-size:11px" onclick="resolveSyncFailure(\'' + escHtml(ev.order_id) + '\')">✓ تأكيد: تمت المزامنة يدوياً</button>' +
+      '</div>';
+    });
     failureEvents.forEach(function(ev) {
       var refundBadge = ev.refunded
         ? '<span class="badge confirmed">✓ تم الاسترجاع</span>'
@@ -1954,6 +1983,20 @@ async function loadBookingIssuesPanel() {
     panel.innerHTML = html;
     panel.style.display = 'block';
   } catch (e) { console.error('Admin API error:', e); }
+}
+
+// [SYNC-FAILURE-NOTIFY] Manual reconciliation action — once the admin has
+// independently verified (e.g. checking Duffel's own dashboard) that the
+// cancellation genuinely went through, this fixes the drifted status in
+// one click rather than requiring direct database access.
+async function resolveSyncFailure(orderId) {
+  if (!confirm('تأكيد: تحققت من Duffel مباشرة وهذا الحجز ملغي فعلاً؟ سيتم تحديث الحالة بقاعدتنا الآن.')) return;
+  try {
+    const res = await adminFetch('/admin/sync-failures/' + encodeURIComponent(orderId) + '/resolve', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) { showToast('✅ تم تحديث الحالة بنجاح', 'success'); loadBookingIssuesPanel(); loadBookingsFromServer(); }
+    else showToast(j.error || 'فشل التحديث', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر', 'error'); }
 }
 
 // ============ [BLOG-SYSTEM] Blog admin ============
