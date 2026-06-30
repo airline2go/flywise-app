@@ -1349,6 +1349,31 @@ Telefon: [Ihre Telefonnummer]</p>
   </div>
 </div>
 
+<!-- [CANCEL-MODAL-FIX] Branded cancellation flow replacing native confirm()
+     dialogs. Same seat-confirm-ov visual pattern as the rest of the app.
+     Step 1 shows the real refund quote from /cancel-quote before any
+     irreversible action; step 2 is the loading state while /cancel-confirm
+     executes. cancelOrderFlow() in app.js drives this. -->
+<div class="seat-confirm-ov" id="cancel-confirm-ov" role="dialog" aria-modal="true" onclick="if(event.target===this)closeCancelConfirm()">
+  <div class="seat-confirm" style="text-align:start">
+    <div style="text-align:center;font-size:2.2rem;margin-bottom:6px">✈️</div>
+    <div class="seat-confirm-q" style="text-align:center" id="cc-title">Buchung stornieren?</div>
+    <div class="seat-confirm-p" style="text-align:center" id="cc-sub">Bitte prüfe die Rückerstattung, bevor du fortfährst.</div>
+    <div id="cc-body" style="background:var(--bg2);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <div style="text-align:center;padding:10px 0;color:var(--tx3);font-size:13px" id="cc-loading">⏳ Stornierungsbedingungen werden geprüft...</div>
+      <div id="cc-refund-row" style="display:none;justify-content:space-between;align-items:center;padding:5px 0">
+        <span style="font-size:13px;color:var(--tx3)">Rückerstattung</span>
+        <span style="font-size:18px;font-weight:800;color:var(--gr)" id="cc-refund-val">—</span>
+      </div>
+    </div>
+    <div class="seat-confirm-btns" id="cc-btns" style="display:none">
+      <button class="seat-confirm-cancel" id="cc-cancel-btn" onclick="closeCancelConfirm()">Abbrechen</button>
+      <button class="seat-confirm-ok" id="cc-continue-btn" style="background:var(--rd)" onclick="executeCancelOrder()">Jetzt stornieren</button>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:12px;text-align:center;line-height:1.5">Diese Aktion kann nicht rückgängig gemacht werden.</div>
+  </div>
+</div>
+
 <!-- ══ WELCOME REWARDS BANNER ══ -->
 <div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeAuthBanner()">
   <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:22px;padding:30px 24px 26px;max-width:380px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:welcomePop .4s cubic-bezier(.34,1.56,.64,1) both">
