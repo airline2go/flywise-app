@@ -359,7 +359,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="from-in" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acS('from',this.value)" onfocus="acS('from',this.value);scrollFieldIntoView(this)">
+          <input id="from-in" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
           <div class="kfield-sub" id="from-sub">Berlin Brandenburg · BER</div>
         </div>
         <button class="kclear" onclick="clearField('from')">&#x2715;</button>
@@ -381,7 +381,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="to-in" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acS('to',this.value)" onfocus="acS('to',this.value);scrollFieldIntoView(this)">
+          <input id="to-in" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acS('to',this.value)" onfocus="closeOtherAcDrops('to');acS('to',this.value);scrollFieldIntoView(this)">
           <div class="kfield-sub" id="to-sub" data-i18n="to_sub_default">Wohin soll es gehen?</div>
         </div>
         <div class="acdrop" id="to-ac" role="listbox" aria-label="Zielflughäfen"></div>
