@@ -1311,6 +1311,21 @@ Telefon: [Ihre Telefonnummer]</p>
     </div>
   </div>
 </div>
+<!-- [CANCEL-FLOW-BRAND-FIX] Replaces the browser's native confirm() dialog
+     (which showed Chrome chrome, not Airpiv branding) for the booking
+     cancellation flow. Same seat-confirm-ov visual pattern, with a
+     refund-amount summary and explicit non-refundable warning. -->
+<div class="seat-confirm-ov" id="cancel-confirm-ov" onclick="if(event.target===this)closeCancelConfirm()">
+  <div class="seat-confirm" style="text-align:start">
+    <div class="seat-confirm-q" id="cancel-confirm-title">Buchung stornieren?</div>
+    <div id="cancel-confirm-body" style="margin:10px 0 14px"></div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" id="cancel-confirm-back" onclick="closeCancelConfirm()">Abbrechen</button>
+      <button class="seat-confirm-ok" id="cancel-confirm-go" style="background:var(--rd)" onclick="executeCancelOrder()">Endgültig stornieren</button>
+    </div>
+  </div>
+</div>
+
 <div class="seat-confirm-ov" id="price-details-ov" onclick="if(event.target===this)closePriceDetails()">
   <div class="seat-confirm" style="text-align:start">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -1349,36 +1364,7 @@ Telefon: [Ihre Telefonnummer]</p>
   </div>
 </div>
 
-<!-- [CANCEL-MODAL-FIX] Branded cancellation flow replacing native confirm()
-     dialogs. Shows the REAL refund status from /cancel-quote BEFORE the
-     user can confirm: a clear green panel if refundable, a clear amber
-     "non-refundable per fare conditions" warning if not — so the user
-     never finds out only afterward via the email that there was no
-     refund. cancelOrderFlow() in app.js drives this. -->
-<div class="seat-confirm-ov" id="cancel-confirm-ov" role="dialog" aria-modal="true" onclick="if(event.target===this)closeCancelConfirm()">
-  <div class="seat-confirm" style="text-align:start">
-    <div style="text-align:center;font-size:2.2rem;margin-bottom:6px">✈️</div>
-    <div class="seat-confirm-q" style="text-align:center" id="cc-title">Buchung stornieren?</div>
-    <div class="seat-confirm-p" style="text-align:center" id="cc-sub">Bitte prüfe die Bedingungen, bevor du fortfährst.</div>
-    <div style="background:var(--bg2);border-radius:12px;padding:14px 16px;margin-bottom:18px">
-      <div style="text-align:center;padding:10px 0;color:var(--tx3);font-size:13px" id="cc-loading">⏳ Stornierungsbedingungen werden geprüft...</div>
-      <div id="cc-refund-row" style="display:none;justify-content:space-between;align-items:center;padding:5px 0">
-        <span style="font-size:13px;color:var(--tx3)">Rückerstattung</span>
-        <span style="font-size:18px;font-weight:800;color:var(--gr)" id="cc-refund-val">—</span>
-      </div>
-      <div id="cc-norefund-row" style="display:none;align-items:center;gap:8px;padding:6px 2px">
-        <span style="font-size:1.1rem">⚠️</span>
-        <span style="font-size:13px;font-weight:700;color:var(--rd)">Gemäß den Tarifbedingungen dieser Buchung ist keine Rückerstattung möglich.</span>
-      </div>
-    </div>
-    <div class="seat-confirm-btns" id="cc-btns" style="display:none">
-      <button class="seat-confirm-cancel" id="cc-cancel-btn" onclick="closeCancelConfirm()">Abbrechen</button>
-      <button class="seat-confirm-ok" id="cc-continue-btn" style="background:var(--rd)" onclick="executeCancelOrder()">Jetzt stornieren</button>
-    </div>
-    <div style="font-size:11px;color:var(--tx3);margin-top:12px;text-align:center;line-height:1.5">Diese Aktion kann nicht rückgängig gemacht werden.</div>
-  </div>
-</div>
-
+<!-- ══ WELCOME REWARDS BANNER ══ -->
 <div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeAuthBanner()">
   <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:22px;padding:30px 24px 26px;max-width:380px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:welcomePop .4s cubic-bezier(.34,1.56,.64,1) both">
     <button onclick="closeAuthBanner()" aria-label="close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
