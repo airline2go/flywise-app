@@ -1,0 +1,56 @@
+name: CI Checks (Frontend)
+
+# [CI-PIPELINE-FIX] Runs on every push/PR to main in the flywise-app
+# (frontend) repo. Checks app.js for syntax errors and every HTML
+# page's inline <script> blocks — the two things most likely to
+# silently break the live site if a typo slips through. Dependency-
+# free: `node --check` and Node's built-in `vm` module only, nothing
+# to install or keep pinned.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check app.js syntax
+        run: node --check app.js
+
+      - name: Check inline <script> blocks in every HTML page
+        run: |
+          node -e "
+          const fs = require('fs');
+          const vm = require('vm');
+
+          const htmlFiles = fs.readdirSync('.').filter(f => f.endsWith('.html'));
+          let failed = false;
+
+          for (const file of htmlFiles) {
+            const html = fs.readFileSync(file, 'utf8');
+            const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+            blocks.forEach((m, i) => {
+              try {
+                new vm.Script(m[1]);
+              } catch (e) {
+                failed = true;
+                console.error(\`❌ \${file} — inline <script> block #\${i}: \${e.message}\`);
+              }
+            });
+          }
+
+          if (failed) {
+            console.error('\\nOne or more inline <script> blocks failed to parse.');
+            process.exit(1);
+          } else {
+            console.log(\`✅ All inline <script> blocks parsed cleanly across \${htmlFiles.length} HTML files.\`);
+          }
+          "
