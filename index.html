@@ -359,7 +359,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="from-in" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acTypeReset('from');acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
+          <input id="from-in" type="search" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acTypeReset('from');acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
           <div class="kfield-sub" id="from-sub">Berlin Brandenburg · BER</div>
         </div>
         <button class="kclear" onclick="clearField('from')">&#x2715;</button>
@@ -381,7 +381,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="to-in" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acTypeReset('to');acS('to',this.value)" onfocus="closeOtherAcDrops('to');acS('to',this.value);scrollFieldIntoView(this)">
+          <input id="to-in" type="search" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acTypeReset('to');acS('to',this.value)" onfocus="closeOtherAcDrops('to');acS('to',this.value);scrollFieldIntoView(this)">
           <div class="kfield-sub" id="to-sub" data-i18n="to_sub_default">Wohin soll es gehen?</div>
         </div>
         <div class="acdrop" id="to-ac" role="listbox" aria-label="Zielflughäfen"></div>
@@ -1197,93 +1197,7 @@ Telefon: [Ihre Telefonnummer]</p>
 </div>
 
 <div class="auth-ov" id="auth-ov" onclick="if(event.target===this)closeAuthModal()">
-  <div class="auth-box">
-    <button class="auth-close" onclick="closeAuthModal()">✕</button>
-    <div class="auth-logo">✈️</div>
-    <div class="auth-title">Airpiv</div>
-    <div class="auth-sub" id="auth-sub">Willkommen zurück</div>
-    <div class="auth-tabs">
-      <button class="auth-tab on" id="auth-tab-login" onclick="switchAuthTab('login')">Anmelden</button>
-      <button class="auth-tab" id="auth-tab-register" onclick="switchAuthTab('register')">Registrieren</button>
-    </div>
-    <div class="auth-err" id="auth-err"></div>
-    <div class="auth-ok" id="auth-ok"></div>
-    <!-- Login form -->
-    <div id="auth-form-login">
-      <div class="auth-field">
-        <label>E-Mail</label>
-        <input type="email" id="login-email" placeholder="ihre@email.de" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Passwort</label>
-        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <div class="auth-forgot-link"><a onclick="showForgotBox()">🔑 Passwort vergessen?</a></div>
-      <!-- Reset Password Box -->
-      <div class="auth-reset-box" id="auth-reset-box">
-        <div class="auth-reset-box-title">🔑 Passwort zurücksetzen</div>
-        <div class="auth-reset-box-sub">Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.</div>
-        <input class="auth-reset-input" id="reset-email" type="email" placeholder="ihre@email.de" autocomplete="email">
-        <div class="auth-reset-btns">
-          <button class="auth-reset-cancel" onclick="hideForgotBox()">Abbrechen</button>
-          <button class="auth-reset-send" id="reset-send-btn" onclick="doResetPassword()">
-            <span id="reset-send-txt">Link senden ✉️</span>
-          </button>
-        </div>
-      </div>
-      <button class="auth-btn" id="login-btn" onclick="doLogin()">
-        <span id="login-btn-txt">Anmelden →</span>
-      </button>
-      <div class="auth-divider">oder</div>
-      <button class="auth-google-btn" onclick="doGoogleLogin()">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Mit Google anmelden
-      </button>
-    </div>
-    <!-- Register form -->
-    <div id="auth-form-register" style="display:none">
-      <div class="auth-field">
-        <label>Name</label>
-        <input type="text" id="reg-name" placeholder="Ihr vollständiger Name" autocomplete="name">
-      </div>
-      <div class="auth-field">
-        <label>E-Mail</label>
-        <input type="email" id="reg-email" placeholder="ihre@email.de" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Passwort</label>
-        <input type="password" id="reg-pass" placeholder="Min. 8 Zeichen" autocomplete="new-password">
-      </div>
-      <div class="auth-field">
-        <label>Kontonummer (optional)</label>
-        <input type="text" id="reg-account-number" placeholder="z.B. 123456789" autocomplete="off">
-      </div>
-      <button class="auth-btn" id="reg-btn" onclick="doRegister()">
-        <span id="reg-btn-txt">Konto erstellen →</span>
-      </button>
-      <div class="auth-divider">oder</div>
-      <button class="auth-google-btn" onclick="doGoogleLogin()">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Mit Google registrieren
-      </button>
-    </div>
-    <!-- New Password Box (shown after returning from the reset-password
-         email link, detected via PASSWORD_RECOVERY) — deliberately OUTSIDE
-         both auth-form-login and auth-form-register as a sibling, since
-         showNewPasswordBox() hides those two forms entirely (display:none)
-         to show this instead; nesting it inside either form would have
-         hidden it along with that form, which was the actual bug. -->
-    <div class="auth-reset-box" id="auth-newpass-box">
-      <div class="auth-reset-box-title">🔑 Neues Passwort festlegen</div>
-      <div class="auth-reset-box-sub">Gib dein neues Passwort ein.</div>
-      <input class="auth-reset-input" id="newpass-input" type="password" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="new-password">
-      <div class="auth-reset-btns">
-        <button class="auth-reset-send" id="newpass-send-btn" onclick="doSetNewPassword()" style="width:100%">
-          <span id="newpass-send-txt">Passwort speichern ✓</span>
-        </button>
-      </div>
-    </div>
-  </div>
+  <div class="auth-box" id="auth-box"></div>
 </div>
 
 <div class="seat-confirm-ov" id="seat-confirm-ov" onclick="if(event.target===this)cancelSeatPick()">
