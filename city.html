@@ -87,7 +87,13 @@ function escHtml(s) {
 }
 
 var params = new URLSearchParams(window.location.search);
-var slug = params.get('slug');
+var cleanMatch = window.location.pathname.match(/^\/city\/([^\/]+)\/?$/);
+var slug = cleanMatch ? decodeURIComponent(cleanMatch[1]) : params.get('slug');
+
+function flightUrl(s) { return '/flights/' + encodeURIComponent(s); }
+function cityUrl(s) { return '/city/' + encodeURIComponent(s); }
+function countryUrl(c) { return '/country/' + encodeURIComponent(c); }
+function airportUrl(c) { return '/airport/' + encodeURIComponent(c); }
 
 if (!slug) {
   renderNotFound();
@@ -132,7 +138,10 @@ function renderCity(city, routes) {
     title = 'Günstige Flüge nach ' + city.name + ' — alle Strecken';
     description = 'Über ' + routes.length + ' Flugverbindungen nach ' + city.name + '. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.';
   }
-  var url = 'https://airpiv.com/city.html?slug=' + encodeURIComponent(city.city_slug);
+  var url = 'https://airpiv.com' + cityUrl(city.city_slug);
+  if (!cleanMatch) {
+    window.history.replaceState(null, '', cityUrl(city.city_slug));
+  }
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
   document.getElementById('page-description').setAttribute('content', description);
@@ -149,7 +158,7 @@ function renderCity(city, routes) {
   // not) rather than showing a broken link.
   var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span>';
   if (city.country_code) {
-    breadcrumbHtml += '<a href="/country.html?code=' + encodeURIComponent(city.country_code) + '">' + escHtml(city.country_code) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="' + countryUrl(city.country_code) + '">' + escHtml(city.country_code) + '</a><span>›</span>';
   }
   breadcrumbHtml += '<span>' + escHtml(city.name) + '</span></nav>';
 
@@ -157,7 +166,7 @@ function renderCity(city, routes) {
   // reveal more airports for the same city (ensureCityExists() appends,
   // never overwrites) — shown as real badges, not a guessed/fixed list.
   var airportsHtml = (city.airport_codes && city.airport_codes.length)
-    ? '<div class="city-hero-airports">' + city.airport_codes.map(function(a) { return '<a href="/airport.html?code=' + encodeURIComponent(a) + '" class="city-airport-badge">' + escHtml(a) + '</a>'; }).join('') + '</div>'
+    ? '<div class="city-hero-airports">' + city.airport_codes.map(function(a) { return '<a href="' + airportUrl(a) + '" class="city-airport-badge">' + escHtml(a) + '</a>'; }).join('') + '</div>'
     : '';
 
   // [CITY-ROUTES] Split into "from" and "to" — a route where the SAME
@@ -168,7 +177,7 @@ function renderCity(city, routes) {
   var toRoutes = routes.filter(function(r) { return r.destination_city_slug === city.city_slug; });
 
   function routeCardHtml(r) {
-    return '<a class="city-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+    return '<a class="city-route-card" href="' + flightUrl(r.slug) + '">' +
       escHtml(r.origin_city) + '<span class="arrow">→</span>' + escHtml(r.destination_city) +
     '</a>';
   }
@@ -197,7 +206,7 @@ function renderCity(city, routes) {
     { "@type": "ListItem", "position": 1, "name": "Startseite", "item": "https://airpiv.com/" },
   ];
   if (city.country_code) {
-    breadcrumbList.push({ "@type": "ListItem", "position": 2, "name": city.country_code, "item": "https://airpiv.com/country.html?code=" + city.country_code });
+    breadcrumbList.push({ "@type": "ListItem", "position": 2, "name": city.country_code, "item": "https://airpiv.com" + countryUrl(city.country_code) });
   }
   breadcrumbList.push({ "@type": "ListItem", "position": breadcrumbList.length + 1, "name": city.name, "item": url });
 

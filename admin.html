@@ -2191,7 +2191,7 @@ function renderRoutePagesList() {
     return '<tr>' +
       '<td>' + escHtml(r.origin_city) + ' (' + escHtml(r.origin_iata) + ') → ' + escHtml(r.destination_city) + ' (' + escHtml(r.destination_iata) + ')</td>' +
       '<td>' + statusBadge + '</td>' +
-      '<td class="mono" style="font-size:11px">flight-route.html?slug=' + escHtml(r.slug) + '</td>' +
+      '<td class="mono" style="font-size:11px">/flights/' + escHtml(r.slug) + '</td>' +
       '<td style="display:flex;gap:6px">' +
         '<button class="btn btn-ghost route-edit-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">تعديل</button>' +
         '<button class="btn btn-ghost route-delete-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">حذف</button>' +
@@ -2285,6 +2285,9 @@ function openRouteEditor(route) {
     document.getElementById('route-distance-preview').textContent = '';
   }
   document.getElementById('route-intro').value = route ? (route.intro_text || '') : '';
+  document.getElementById('route-weekly-flights').value = route && route.weekly_flights != null ? route.weekly_flights : '';
+  document.getElementById('route-best-time').value = route ? (route.best_time_text || '') : '';
+  document.getElementById('route-attractions').value = route ? (route.attractions_text || '') : '';
   document.getElementById('route-custom-title').value = route ? (route.custom_title || '') : '';
   document.getElementById('route-custom-desc').value = route ? (route.custom_meta_description || '') : '';
   clearRouteFaqList();
@@ -2294,16 +2297,87 @@ function openRouteEditor(route) {
   document.getElementById('route-editor-modal').classList.add('open');
 }
 
+// [ROUTE-AIRPORT-SEARCH-POLISH] Same "popular destinations" pattern the
+// main site's booking search bar uses (see POPULAR_DEST_CODES in app.js)
+// — shown immediately on focus, before the admin types anything, so
+// picking a common airport for a new route takes one click instead of a
+// full search. Deliberately a small, curated list (not the full ~80-item
+// airport table from the main site) since this panel already has a live
+// API-backed search for anything else; this is purely a shortcut for the
+// most common cases.
+var ROUTE_POPULAR_AIRPORTS = [
+  { code: 'LHR', city: 'London', name: 'London Heathrow' },
+  { code: 'CDG', city: 'Paris', name: 'Paris Charles de Gaulle' },
+  { code: 'AMS', city: 'Amsterdam', name: 'Amsterdam Schiphol' },
+  { code: 'BCN', city: 'Barcelona', name: 'Barcelona El Prat' },
+  { code: 'FCO', city: 'Rom', name: 'Rom Fiumicino' },
+  { code: 'IST', city: 'Istanbul', name: 'Istanbul Airport' },
+  { code: 'LIS', city: 'Lissabon', name: 'Lissabon Humberto Delgado' },
+  { code: 'DXB', city: 'Dubai', name: 'Dubai Intl' },
+  { code: 'AYT', city: 'Antalya', name: 'Antalya Airport' },
+  { code: 'CAI', city: 'Kairo', name: 'Kairo Intl' },
+];
+
+function routeAirportPopularHtml(which) {
+  return '<div class="route-ac-section-lbl" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--tx3)">⭐ وجهات شائعة</div>' +
+    ROUTE_POPULAR_AIRPORTS.map(function(a) {
+      return '<div class="route-ac-item" onclick=\'routeAirportPickPopular("' + which + '","' + a.code + '")\'>' +
+        escHtml(a.city) + ' — ' + escHtml(a.name) + '<span class="ac-code">' + escHtml(a.code) + '</span>' +
+      '</div>';
+    }).join('');
+}
+
+// Shown on focus when the field is still empty — mirrors the main
+// search bar's behavior of surfacing popular destinations before the
+// admin has typed anything.
+function routeAirportFocus(which) {
+  var input = document.getElementById('route-' + which + '-search');
+  var dropdown = document.getElementById('route-' + which + '-results');
+  if (input && !input.value.trim()) {
+    dropdown.innerHTML = routeAirportPopularHtml(which);
+    dropdown.style.display = 'block';
+  }
+}
+
+// Popular-destination click still goes through the real search endpoint
+// (rather than hardcoding lat/lng here) — the route-distance calculation
+// needs real, server-verified coordinates, never a guessed/duplicated
+// value, exactly the same rule the rest of this form already follows.
+function routeAirportPickPopular(which, code) {
+  var dropdown = document.getElementById('route-' + which + '-results');
+  dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">⏳ wird geladen…</div>';
+  adminFetch('/search/airports?q=' + encodeURIComponent(code))
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      var match = j.ok && j.airports ? j.airports.find(function(a) { return a.type === 'airport' && a.code === code; }) : null;
+      if (match) {
+        selectRouteAirport(which, match);
+      } else {
+        dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ Flughafen nicht gefunden</div>';
+      }
+    })
+    .catch(function() {
+      dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ خطأ في الاتصال</div>';
+    });
+}
+
 // [ROUTE-AIRPORT-SEARCH] Live airport/city search reusing the same public
 // GET /search/airports endpoint the main booking flow's search bar uses —
-// debounced (350ms) so typing quickly doesn't fire a request per
-// keystroke, and requires 2+ characters to match the endpoint's own
-// minimum query length.
+// debounced (300ms, matching the main search bar's own debounce) so
+// typing quickly doesn't fire a request per keystroke, and requires 2+
+// characters to match the endpoint's own minimum query length.
 function routeAirportSearch(which, query) {
   clearTimeout(routeSearchDebounce[which]);
   var dropdown = document.getElementById('route-' + which + '-results');
   if (!query || query.trim().length < 2) {
-    dropdown.style.display = 'none';
+    // Empty field: fall back to the popular-destinations shortcut instead
+    // of just hiding the dropdown, same as focusing an empty field.
+    if (!query || !query.trim()) {
+      dropdown.innerHTML = routeAirportPopularHtml(which);
+      dropdown.style.display = 'block';
+    } else {
+      dropdown.style.display = 'none';
+    }
     return;
   }
   routeSearchDebounce[which] = setTimeout(function() {
@@ -2343,7 +2417,7 @@ function routeAirportSearch(which, query) {
         dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ خطأ في البحث: ' + escHtml(err.message) + '</div>';
         dropdown.style.display = 'block';
       });
-  }, 350);
+  }, 300);
 }
 
 function selectRouteAirport(which, airport) {
@@ -2413,6 +2487,9 @@ async function saveRoutePage(status) {
     origin_country: document.getElementById('route-origin-country').value || null,
     destination_country: document.getElementById('route-dest-country').value || null,
     intro_text: document.getElementById('route-intro').value.trim(),
+    weekly_flights: document.getElementById('route-weekly-flights').value.trim() || null,
+    best_time_text: document.getElementById('route-best-time').value.trim(),
+    attractions_text: document.getElementById('route-attractions').value.trim(),
     custom_title: document.getElementById('route-custom-title').value.trim(),
     custom_meta_description: document.getElementById('route-custom-desc').value.trim(),
     custom_faq: readRouteFaqItems(),
@@ -4364,12 +4441,12 @@ async function downloadBatchSeparate() {
 
       <div class="form-group" style="position:relative">
         <label class="form-label">من (مدينة أو مطار) *</label>
-        <input type="text" class="form-input" id="route-origin-search" placeholder="ابحث: Berlin, BER..." autocomplete="off" oninput="routeAirportSearch('origin', this.value)">
+        <input type="text" class="form-input" id="route-origin-search" placeholder="ابحث: Berlin, BER..." autocomplete="off" oninput="routeAirportSearch('origin', this.value)" onfocus="routeAirportFocus('origin')">
         <div id="route-origin-results" class="route-ac-dropdown" style="display:none"></div>
       </div>
       <div class="form-group" style="position:relative">
         <label class="form-label">إلى (مدينة أو مطار) *</label>
-        <input type="text" class="form-input" id="route-dest-search" placeholder="ابحث: London, LHR..." autocomplete="off" oninput="routeAirportSearch('dest', this.value)">
+        <input type="text" class="form-input" id="route-dest-search" placeholder="ابحث: London, LHR..." autocomplete="off" oninput="routeAirportSearch('dest', this.value)" onfocus="routeAirportFocus('dest')">
         <div id="route-dest-results" class="route-ac-dropdown" style="display:none"></div>
       </div>
       <div id="route-distance-preview" style="font-size:12px;color:var(--tx3);margin:-4px 0 6px"></div>
@@ -4377,6 +4454,21 @@ async function downloadBatchSeparate() {
       <div class="form-group">
         <label class="form-label">نص SEO تعريفي (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
         <textarea class="form-input" id="route-intro" style="min-height:90px;resize:vertical" placeholder="مثال: ابحث عن أرخص رحلات الطيران من برلين إلى لندن..."></textarea>
+      </div>
+
+      <!-- [ROUTE-CONTENT-EXPANSION] Optional per-route content fields —
+           same override-with-fallback pattern as route-intro above. -->
+      <div class="form-group">
+        <label class="form-label">عدد الرحلات الأسبوعية (اختياري — لا يوجد مصدر بيانات تلقائي لهذا الرقم، يُترك مخفياً بالصفحة إذا لم يُملأ)</label>
+        <input type="number" min="1" class="form-input" id="route-weekly-flights" placeholder="مثال: 21">
+      </div>
+      <div class="form-group">
+        <label class="form-label">أفضل وقت للسفر (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
+        <textarea class="form-input" id="route-best-time" style="min-height:70px;resize:vertical" placeholder="مثال: الأشهر من أبريل إلى يونيو هي الأنسب لزيارة..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ماذا يمكن زيارة في الوجهة (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
+        <textarea class="form-input" id="route-attractions" style="min-height:70px;resize:vertical" placeholder="مثال: برج إيفل، متحف اللوفر، الشانزليزيه..."></textarea>
       </div>
 
       <!-- [ROUTE-SEO-OVERRIDES] Optional advanced fields — collapsed by

@@ -90,7 +90,13 @@ function escHtml(s) {
 }
 
 var params = new URLSearchParams(window.location.search);
-var code = params.get('code');
+var cleanMatch = window.location.pathname.match(/^\/airport\/([^\/]+)\/?$/);
+var code = cleanMatch ? decodeURIComponent(cleanMatch[1]) : params.get('code');
+
+function flightUrl(s) { return '/flights/' + encodeURIComponent(s); }
+function cityUrl(s) { return '/city/' + encodeURIComponent(s); }
+function countryUrl(c) { return '/country/' + encodeURIComponent(c); }
+function airportUrl(c) { return '/airport/' + encodeURIComponent(c); }
 
 if (!code) {
   renderNotFound();
@@ -129,7 +135,10 @@ function renderAirport(airport, routes) {
     title = 'Flughafen ' + airport.code + ' (' + airport.city + ') — alle Strecken';
     description = routes.length + ' Flugverbindungen ab und nach ' + airport.city + ' (' + airport.code + '). Vergleiche alle Strecken und Preise mit Airpiv.';
   }
-  var url = 'https://airpiv.com/airport.html?code=' + encodeURIComponent(airport.code);
+  var url = 'https://airpiv.com' + airportUrl(airport.code);
+  if (!cleanMatch) {
+    window.history.replaceState(null, '', airportUrl(airport.code));
+  }
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
   document.getElementById('page-description').setAttribute('content', description);
@@ -146,10 +155,10 @@ function renderAirport(airport, routes) {
   // href.
   var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span>';
   if (airport.country) {
-    breadcrumbHtml += '<a href="/country.html?code=' + encodeURIComponent(airport.country) + '">' + escHtml(airport.country) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="' + countryUrl(airport.country) + '">' + escHtml(airport.country) + '</a><span>›</span>';
   }
   if (airport.city_slug) {
-    breadcrumbHtml += '<a href="/city.html?slug=' + encodeURIComponent(airport.city_slug) + '">' + escHtml(airport.city) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="' + cityUrl(airport.city_slug) + '">' + escHtml(airport.city) + '</a><span>›</span>';
   }
   breadcrumbHtml += '<span>' + escHtml(airport.code) + '</span></nav>';
 
@@ -170,7 +179,7 @@ function renderAirport(airport, routes) {
   }
   function routeCardHtml(r) {
     var hl = haulLabel(r);
-    return '<a class="airport-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+    return '<a class="airport-route-card" href="' + flightUrl(r.slug) + '">' +
       escHtml(r.origin_city) + '<span class="arrow">→</span>' + escHtml(r.destination_city) +
       (hl ? '<span class="haul-tag">' + hl + '</span>' : '') +
     '</a>';
@@ -201,8 +210,8 @@ function renderAirport(airport, routes) {
 
   var breadcrumbList = [{ "@type": "ListItem", "position": 1, "name": "Startseite", "item": "https://airpiv.com/" }];
   var pos = 2;
-  if (airport.country) { breadcrumbList.push({ "@type": "ListItem", "position": pos++, "name": airport.country, "item": "https://airpiv.com/country.html?code=" + airport.country }); }
-  if (airport.city_slug) { breadcrumbList.push({ "@type": "ListItem", "position": pos++, "name": airport.city, "item": "https://airpiv.com/city.html?slug=" + airport.city_slug }); }
+  if (airport.country) { breadcrumbList.push({ "@type": "ListItem", "position": pos++, "name": airport.country, "item": "https://airpiv.com" + countryUrl(airport.country) }); }
+  if (airport.city_slug) { breadcrumbList.push({ "@type": "ListItem", "position": pos++, "name": airport.city, "item": "https://airpiv.com" + cityUrl(airport.city_slug) }); }
   breadcrumbList.push({ "@type": "ListItem", "position": pos, "name": airport.code, "item": url });
 
   document.getElementById('airport-schema').textContent = JSON.stringify({

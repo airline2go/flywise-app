@@ -84,7 +84,13 @@ function escHtml(s) {
 }
 
 var params = new URLSearchParams(window.location.search);
-var code = params.get('code');
+var cleanMatch = window.location.pathname.match(/^\/country\/([^\/]+)\/?$/);
+var code = cleanMatch ? decodeURIComponent(cleanMatch[1]) : params.get('code');
+
+function flightUrl(s) { return '/flights/' + encodeURIComponent(s); }
+function cityUrl(s) { return '/city/' + encodeURIComponent(s); }
+function countryUrl(c) { return '/country/' + encodeURIComponent(c); }
+function airportUrl(c) { return '/airport/' + encodeURIComponent(c); }
 
 if (!code) {
   renderNotFound();
@@ -127,7 +133,10 @@ function renderCountry(country, routes) {
     title = 'Günstige Flüge nach ' + country.name + ' — alle Reiseziele';
     description = 'Über ' + routes.length + ' Flugverbindungen nach ' + country.name + '. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.';
   }
-  var url = 'https://airpiv.com/country.html?code=' + encodeURIComponent(country.code);
+  var url = 'https://airpiv.com' + countryUrl(country.code);
+  if (!cleanMatch) {
+    window.history.replaceState(null, '', countryUrl(country.code));
+  }
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
   document.getElementById('page-description').setAttribute('content', description);
@@ -155,7 +164,7 @@ function renderCountry(country, routes) {
   var toRoutes = routes.filter(function(r) { return r.destination_country === country.code; });
 
   function routeCardHtml(r) {
-    return '<a class="country-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+    return '<a class="country-route-card" href="' + flightUrl(r.slug) + '">' +
       escHtml(r.origin_city) + '<span class="arrow">→</span>' + escHtml(r.destination_city) +
     '</a>';
   }
