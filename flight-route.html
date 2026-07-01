@@ -36,6 +36,12 @@
 .route-price-box{margin-top:18px}
 .route-price-val{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:var(--teal)}
 .route-price-lbl{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.route-price-note{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px}
+.route-facts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.route-fact-item{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:11px 14px}
+.route-fact-lbl{font-size:11px;color:var(--tx3)}
+.route-fact-val{font-size:14px;font-weight:700;color:var(--tx);margin-top:2px}
+@media (max-width:480px){.route-facts-grid{grid-template-columns:1fr}}
 .route-cta{display:inline-flex;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
 .route-faq{margin-top:30px}
 .route-faq-item{border-bottom:1px solid var(--bd);padding:14px 0}
@@ -105,6 +111,32 @@ function escHtml(s) {
   d.textContent = s || '';
   return d.innerHTML;
 }
+
+// [ROUTE-CONTENT-EXPANSION-800] Curated, verifiable real landmarks for a
+// deliberately small set of globally well-known major cities — never
+// invented, and never extended to cities we're not confident about.
+// Matched against destination_city_slug (already computed server-side
+// via slugify(destination_city)). Duffel's /places/suggestions API
+// returns city names in English regardless of site language (verified:
+// "Rome", "Vienna", "Prague", "Cairo", "Athens", "Lisbon" — not the
+// German forms), so the keys below are the English-based slugs that
+// slugify() actually produces from that real data, not a guess.
+var CITY_LANDMARKS = {
+  'paris': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Eiffelturm, der Louvre, die Kathedrale Notre-Dame, der Arc de Triomphe und das Künstlerviertel Montmartre.',
+  'london': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Big Ben, der Tower of London, das London Eye, Buckingham Palace und das British Museum.',
+  'rome': 'Zu den bekanntesten Sehenswürdigkeiten zählen das Kolosseum, der Vatikan mit dem Petersdom, das Pantheon, der Trevi-Brunnen und das Forum Romanum.',
+  'barcelona': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Sagrada Família, der Park Güell, Las Ramblas, das Gotische Viertel und der Park Montjuïc.',
+  'amsterdam': 'Zu den bekanntesten Sehenswürdigkeiten zählen die historischen Grachten, das Rijksmuseum, das Anne-Frank-Haus, der Dam-Platz und das Van-Gogh-Museum.',
+  'madrid': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Königspalast, der Prado, der Retiro-Park, die Plaza Mayor und das Stadion Santiago Bernabéu.',
+  'lisbon': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Turm von Belém, das Kloster Jerónimos, die Altstadt Alfama, die Straßenbahnlinie 28 und der Aussichtspunkt Miradouro da Graça.',
+  'vienna': 'Zu den bekanntesten Sehenswürdigkeiten zählen das Schloss Schönbrunn, der Stephansdom, die Hofburg, das Schloss Belvedere und der Prater.',
+  'istanbul': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Hagia Sophia, die Blaue Moschee, der Topkapi-Palast, der Große Basar und der Bosporus.',
+  'dubai': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Burj Khalifa, die Dubai Mall, der Burj Al Arab, das Viertel Al Fahidi und der Palm Jumeirah.',
+  'new-york': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Freiheitsstatue, der Central Park, der Times Square, das Empire State Building und das Metropolitan Museum of Art.',
+  'athens': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Akropolis, der Parthenon, das Akropolis-Museum, der Syntagma-Platz und der antike Agora-Marktplatz.',
+  'prague': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Karlsbrücke, die Prager Burg, der Altstädter Ring, die Astronomische Uhr und das jüdische Viertel Josefov.',
+  'cairo': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Pyramiden von Gizeh, die Sphinx, das Ägyptische Museum, die Altstadt und die Zitadelle von Saladin.',
+};
 
 var params = new URLSearchParams(window.location.search);
 // [CLEAN-URLS] Reads the slug from the new /flights/{slug} path first —
@@ -196,6 +228,18 @@ function renderRoute(route) {
   }
   breadcrumbHtml += '<span>' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + '</span></nav>';
 
+  // [LAST-UPDATED] Uses the real updated_at timestamp already stored on
+  // every route_pages row (bumped automatically by the PUT handler) —
+  // never a fabricated "freshness" date.
+  var lastUpdatedHtml = '';
+  if (route.updated_at) {
+    var updDate = new Date(route.updated_at);
+    if (!isNaN(updDate.getTime())) {
+      var updStr = updDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+      lastUpdatedHtml = '<div style="font-size:11.5px;color:var(--tx3);margin:-8px 0 12px">Letzte Aktualisierung: ' + escHtml(updStr) + '</div>';
+    }
+  }
+
   // [AIRPORT-INFO] Links to both airport pages.
   var airportInfoHtml = '<section class="airport-info-section"><h2>Flughafeninformationen</h2><div class="airport-info-grid">' +
     '<a class="airport-info-card" href="' + airportUrl(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
@@ -265,11 +309,16 @@ function renderRoute(route) {
   var travelTipsText = checkinSentence + ' ' + docsSentence + ' Achte außerdem auf die Handgepäckbestimmungen deiner Airline, da sich Größe und Gewicht je nach Anbieter unterscheiden können. ' + bookingWindowLine + ' Eine Reiseversicherung kann sinnvoll sein, um dich gegen unvorhergesehene Ereignisse wie Flugausfälle oder Gepäckverlust abzusichern. Es lohnt sich außerdem, dich vorab kurz über die gängige Landeswährung und gebräuchliche Zahlungsmethoden am Zielort zu informieren, damit du bei der Ankunft direkt gut vorbereitet bist. Speichere deine Bordkarte und wichtigen Dokumente idealerweise auch offline auf deinem Smartphone, falls die Internetverbindung am Flughafen einmal schwach sein sollte.';
   var travelTipsHtml = '<section class="route-content-section"><h2>Reisetipps</h2><p>' + escHtml(travelTipsText) + '</p></section>';
 
-  // [ROUTE-CONTENT-EXPANSION] Section #5 — what to visit. Optional admin
-  // override; otherwise a general fallback that never invents specific
-  // landmark names for destinations with no curated content, and links
+  // [ROUTE-CONTENT-EXPANSION] Section #5 — what to visit. Priority order:
+  // (1) admin override, (2) curated real landmarks for known major
+  // cities, (3) generic fallback that never invents specific landmark
+  // names for destinations with no curated content — and always links
   // through to the city page for anyone who wants more detail.
-  var attractionsText = route.attractions_text || (route.destination_city + ' hat für Besucher einiges zu bieten — von historischen Sehenswürdigkeiten über lebendige Stadtviertel bis hin zu vielfältigen kulinarischen Angeboten. Egal, ob du Museen, Architektur, Parks oder das lokale Nachtleben erkunden möchtest: Die Stadt lässt sich sowohl bei einem Kurztrip als auch bei einem längeren Aufenthalt gut erleben. Viele der wichtigsten Ziele liegen nah beieinander und lassen sich bequem zu Fuß, mit dem Fahrrad oder den öffentlichen Verkehrsmitteln erreichen — ideal, um auch bei einem kurzen Zwischenstopp möglichst viel zu sehen. Die Anbindung an den öffentlichen Nahverkehr macht es meist einfach, vom Flughafen aus direkt die wichtigsten Ziele in der Innenstadt zu erreichen.');
+  var cityLandmarksSentence = route.destination_city_slug ? CITY_LANDMARKS[route.destination_city_slug] : null;
+  var attractionsText = route.attractions_text ||
+    (route.destination_city + ' hat für Besucher einiges zu bieten — von historischen Sehenswürdigkeiten über lebendige Stadtviertel bis hin zu vielfältigen kulinarischen Angeboten. ' +
+    (cityLandmarksSentence || 'Egal, ob du Museen, Architektur, Parks oder das lokale Nachtleben erkunden möchtest: Die Stadt lässt sich sowohl bei einem Kurztrip als auch bei einem längeren Aufenthalt gut erleben.') +
+    ' Viele der wichtigsten Ziele liegen nah beieinander und lassen sich bequem zu Fuß, mit dem Fahrrad oder den öffentlichen Verkehrsmitteln erreichen — ideal, um auch bei einem kurzen Zwischenstopp möglichst viel zu sehen. Die Anbindung an den öffentlichen Nahverkehr macht es meist einfach, vom Flughafen aus direkt die wichtigsten Ziele in der Innenstadt zu erreichen.');
   var attractionsMoreLink = route.destination_city_slug ? (' <a href="' + cityUrl(route.destination_city_slug) + '">Mehr über ' + escHtml(route.destination_city) + '</a>') : '';
   var attractionsHtml = '<section class="route-content-section"><h2>Top-Sehenswürdigkeiten in ' + escHtml(route.destination_city) + '</h2><p>' + escHtml(attractionsText) + attractionsMoreLink + '</p></section>';
 
@@ -303,9 +352,23 @@ function renderRoute(route) {
     return '<div class="route-faq-item" id="faq-item-' + i + '"><div class="route-faq-q">' + escHtml(f.question) + '</div><div class="route-faq-a">' + escHtml(f.answer) + '</div></div>';
   }).join('');
 
+  // [ROUTE-CONTENT-EXPANSION-800] Quick-facts summary table ("Auf einen
+  // Blick"). Every value here is either already known synchronously
+  // (distance, airports) or gets filled in once real Duffel data
+  // arrives below (duration, direct-flight availability) — never a
+  // guessed placeholder pretending to be a real number.
+  var quickFactsHtml = '<section class="route-content-section" id="route-quick-facts"><h2>Auf einen Blick</h2><div class="route-facts-grid">' +
+    (route.distance_km != null ? '<div class="route-fact-item"><div class="route-fact-lbl">Entfernung</div><div class="route-fact-val">' + route.distance_km.toLocaleString('de-DE') + ' km</div></div>' : '') +
+    '<div class="route-fact-item" id="qf-duration"><div class="route-fact-lbl">Flugzeit</div><div class="route-fact-val">wird geladen …</div></div>' +
+    '<div class="route-fact-item" id="qf-direct"><div class="route-fact-lbl">Direktflug</div><div class="route-fact-val">wird geladen …</div></div>' +
+    '<div class="route-fact-item"><div class="route-fact-lbl">Abflughafen</div><div class="route-fact-val">' + escHtml(route.origin_iata) + '</div></div>' +
+    '<div class="route-fact-item"><div class="route-fact-lbl">Zielflughafen</div><div class="route-fact-val">' + escHtml(route.destination_iata) + '</div></div>' +
+  '</div></section>';
+
   document.getElementById('route-content').innerHTML =
     breadcrumbHtml +
     '<h1>' + escHtml(title) + '</h1>' +
+    lastUpdatedHtml +
     '<div class="route-hero">' +
       '<div class="route-hero-cities">' +
         '<span>' + escHtml(route.origin_city) + '</span>' +
@@ -319,6 +382,7 @@ function renderRoute(route) {
       '<a href="' + bookingUrl + '" class="route-cta">Jetzt Flüge suchen →</a>' +
     '</div>' +
     '<section><p>' + escHtml(introText) + '</p></section>' +
+    quickFactsHtml +
     destInfoHtml +
     flightInfoHtml +
     bestTimeHtml +
@@ -378,7 +442,7 @@ function renderRoute(route) {
     .then(function(j){
       var box = document.getElementById('route-price-box');
       if (j.ok && j.price != null) {
-        box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div>';
+        box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div><div class="route-price-note">Preise ändern sich laufend — der finale Preis wird beim Buchen bestätigt.</div>';
         // [DATE-MATCH-FIX] Carry the exact date this price was computed
         // for into the search link — clicking "Jetzt Flüge suchen" now
         // lands the customer on a search for that SAME date, instead of
@@ -424,6 +488,14 @@ function renderRoute(route) {
         '</div></section>';
         var insightsTarget = document.getElementById('route-insights-section');
         if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
+
+        // [ROUTE-CONTENT-EXPANSION-800] Fill in the two async cells of
+        // the "Auf einen Blick" quick-facts table with the same real
+        // data — never duplicated logic, just the same ins.* values.
+        var qfDuration = document.querySelector('#qf-duration .route-fact-val');
+        if (qfDuration) qfDuration.textContent = fmtHrsMin(ins.avgDurationMin);
+        var qfDirect = document.querySelector('#qf-direct .route-fact-val');
+        if (qfDirect) qfDirect.textContent = ins.allDirect ? 'Ja, immer' : (ins.directAvailable ? 'Teilweise verfügbar' : 'Nein');
 
         // Section #6 — upgrade FAQ items 0 (duration), 2 (direct flights)
         // and 3 (best airline) in place with real data, and keep the
