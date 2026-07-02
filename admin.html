@@ -1556,6 +1556,7 @@
         <button class="btn btn-primary" onclick="openRouteEditor()">➕ مسار جديد</button>
         <button class="btn btn-ghost" onclick="openBulkRouteCreator()">📦 إنشاء بالجملة</button>
         <button class="btn btn-ghost" onclick="openRouteMatrix()">🗺️ مصفوفة المسارات</button>
+        <button class="btn btn-ghost" onclick="publishAllDrafts()">🚀 نشر كل المسودات</button>
       </div>
     </div>
 
@@ -2262,6 +2263,32 @@ function renderRoutePagesList() {
       '</td>' +
     '</tr>';
   }).join('');
+}
+
+// [BULK-PUBLISH] بيجيب العدد الحقيقي للمسودات الأول (طلب خفيف، limit=1
+// بس محتاجين الـ total)، عشان رسالة التأكيد توري رقم حقيقي — مش
+// تحذير عام غامض قبل عملية مالها رجعة سهلة على آلاف المسارات.
+async function publishAllDrafts() {
+  try {
+    const countRes = await adminFetch('/admin/route-pages?status=draft&limit=1');
+    const countJ = await countRes.json();
+    const total = countJ.ok ? (countJ.total || 0) : 0;
+    if (total === 0) { showToast('مفيش مسودات خالص حالياً', 'info'); return; }
+
+    if (!confirm('هتنشر ' + total.toLocaleString('ar-EG') + ' مسار (كل المسودات الحالية) دفعة واحدة — هيظهروا للزوار فوراً. متأكد؟')) return;
+
+    showToast('⏳ جارٍ نشر ' + total.toLocaleString('ar-EG') + ' مسار...', 'info');
+    const res = await adminFetch('/admin/route-pages/publish-all-drafts', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ تم نشر ' + j.published + ' مسار بنجاح', 'success');
+      rpResetAndLoad();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) {
+    showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
+  }
 }
 
 // ============ [BULK-CREATE] إنشاء مسارات بالجملة ============
