@@ -1557,6 +1557,7 @@
         <button class="btn btn-ghost" onclick="openBulkRouteCreator()">📦 إنشاء بالجملة</button>
         <button class="btn btn-ghost" onclick="openRouteMatrix()">🗺️ مصفوفة المسارات</button>
         <button class="btn btn-ghost" onclick="publishAllDrafts()">🚀 نشر كل المسودات</button>
+        <button class="btn btn-ghost" onclick="runHealthCheck()">🩺 فحص صحة المسارات</button>
       </div>
     </div>
 
@@ -1569,6 +1570,7 @@
         <option value="">كل الحالات</option>
         <option value="published">منشور بس</option>
         <option value="draft">مسودة بس</option>
+        <option value="dead">💀 ميت بس (مفيش رحلات)</option>
       </select>
     </div>
 
@@ -1590,6 +1592,7 @@
 
     <!-- Pagination -->
     <div id="rp-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:13px;color:var(--tx2)"></div>
+    <div id="health-check-progress" style="display:none;margin-top:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--tx2)"></div>
   </div>
 
 
@@ -2252,6 +2255,8 @@ function renderRoutePagesList() {
   tbody.innerHTML = allRoutePages.map(function(r) {
     var statusBadge = r.status === 'published'
       ? '<span class="badge confirmed">✓ منشور</span>'
+      : r.status === 'dead'
+      ? '<span class="badge" style="background:rgba(239,68,68,.15);color:#ef4444">💀 ميت (مفيش رحلات)</span>'
       : '<span class="badge pending">◔ مسودة</span>';
     return '<tr>' +
       '<td>' + escHtml(r.origin_city) + ' (' + escHtml(r.origin_iata) + ') → ' + escHtml(r.destination_city) + ' (' + escHtml(r.destination_iata) + ')</td>' +
@@ -2288,6 +2293,42 @@ async function publishAllDrafts() {
     }
   } catch (e) {
     showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
+  }
+}
+
+// ============ [DEAD-ROUTES-HEALTH-CHECK] فحص صحة المسارات ============
+// بيستدعي endpoint الفحص بشكل متكرر (دفعة كل مرة) لحد ما كل المسارات
+// تتفحص — مش طلب واحد ضخم ممكن يفشل بـ timeout مع 1000 مسار.
+var healthCheckRunning = false;
+async function runHealthCheck() {
+  if (healthCheckRunning) return;
+  if (!confirm('هيتم فحص كل المسارات فعلياً (رحلة حقيقية موجودة ولا لأ) عن طريق Duffel. العملية ممكن تاخد كذا دقيقة حسب عدد المسارات، وأي مسار مفيهوش رحلات هيتحوّل لـ"ميت" ويختفي من الموقع تلقائياً. تكمل؟')) return;
+
+  healthCheckRunning = true;
+  var progressEl = document.getElementById('health-check-progress');
+  progressEl.style.display = 'block';
+  progressEl.textContent = '⏳ جارٍ الفحص...';
+
+  var totalChecked = 0, totalDead = 0;
+  try {
+    while (true) {
+      const res = await adminFetch('/admin/route-pages/health-check-batch', { method: 'POST' });
+      const j = await res.json();
+      if (!j.ok) { showToast(j.error || 'فشل الفحص', 'error'); break; }
+      totalChecked += j.checked;
+      totalDead += j.dead;
+      progressEl.textContent = '🩺 اتفحص ' + totalChecked + ' مسار لحد دلوقتي — ' + totalDead + ' اتلاقوا ميتين (مفيش رحلات حقيقية) — باقي حوالي ' + j.remaining + '...';
+      if (j.checked === 0 || j.remaining === 0) break;
+      await new Promise(function(r) { setTimeout(r, 300); }); // فاصل بسيط بين كل دفعة ودي عشان مانضغطش السيرفر
+    }
+    progressEl.textContent = '✅ خلص الفحص — إجمالي ' + totalChecked + ' مسار اتفحص، ' + totalDead + ' اتلاقوا ميتين وانحطوا في حالة "ميت" تلقائياً (اختفوا من الموقع).';
+    showToast('✅ الفحص خلص: ' + totalDead + ' مسار ميت من أصل ' + totalChecked, totalDead > 0 ? 'info' : 'success');
+    rpResetAndLoad();
+  } catch (e) {
+    progressEl.textContent = '❌ حصل خطأ في الاتصال أثناء الفحص — اللي اتفحص لحد دلوقتي (' + totalChecked + ' مسار) اتحفظ، ممكن تدوس الزرار تاني يكمل من بعده.';
+    showToast('خطأ في الاتصال بالسيرفر أثناء الفحص', 'error');
+  } finally {
+    healthCheckRunning = false;
   }
 }
 
