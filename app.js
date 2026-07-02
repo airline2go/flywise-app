@@ -119,33 +119,67 @@ function popularDestinationsHtmlMC(e,t){for(var n={},a=0;a<AP.length;a++)n[AP[a]
 // Each code is only requested once no matter how many places it appears.
 // On failure or a route with no live offers, the original static price is
 // left in place rather than showing a broken/blank value.
+// [PRICE-MATCH-FIX] The exact departure_date each destination's cached
+// "ab €X" price was actually computed for — /route-price caches for up
+// to 6h, so "today + 21 days" computed independently at click-time (by
+// qs()'s own default) could land on a different calendar date than the
+// one the displayed price used, especially near a day boundary. That
+// mismatch is exactly why the price shown here and the price the search
+// results then showed could disagree — not a rounding issue, a genuinely
+// different date being searched. Populated as each price loads; qsHome()
+// below uses it to force the search onto the SAME date the price came
+// from whenever we have it.
+var DEST_PRICE_DATES = {};
+
+// [THROTTLE-FIX] كانت كل الوجهات الـ12 بتتطلب من Duffel في نفس اللحظة
+// بالظبط — ده سبب تباطؤ ملحوظ (كل طلب كان بياخد من 2.2 لـ3.5 ثانية،
+// بيزيد كل ما الطلبات المتزامنة زادت) خصوصاً أول ما الكاش يُمسح أو
+// ينتهي. دلوقتي بتتبعت على دفعات صغيرة (3 في المرة)، الدفعة الجاية
+// بتتبعت بس بعد ما اللي قبلها يخلص — نفس عدد الطلبات الإجمالي، بس
+// موزّع بدل ما يضرب Duffel كله مرة واحدة.
+function fetchPriceForCode(code) {
+  var group = document.querySelectorAll('.dyn-price[data-code="' + code + '"]');
+  group.forEach(function (t) { t.classList.add('loading'); });
+  return fetch(PROXY + '/route-price?from=' + encodeURIComponent(HOME_ORIGIN.code) + '&to=' + encodeURIComponent(code))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      group.forEach(function (t) { t.classList.remove('loading'); });
+      if (!d || !d.ok || !d.price) return; // keep static fallback price
+      if (d.departure_date) DEST_PRICE_DATES[code] = d.departure_date;
+      var val = fmt(d.price);
+      group.forEach(function (t) {
+        t.textContent = val;
+        t.classList.add('price-updated');
+        t.addEventListener('animationend', function handler() {
+          t.classList.remove('price-updated');
+          t.removeEventListener('animationend', handler);
+        });
+      });
+    })
+    .catch(function () {
+      group.forEach(function (t) { t.classList.remove('loading'); });
+    });
+}
+
 function loadDestinationPrices() {
   var seen = {};
+  var codes = [];
   document.querySelectorAll('.dyn-price[data-code]').forEach(function (el) {
     var code = el.getAttribute('data-code');
     if (!code || seen[code]) return;
     seen[code] = true;
-    var group = document.querySelectorAll('.dyn-price[data-code="' + code + '"]');
-    group.forEach(function (t) { t.classList.add('loading'); });
-    fetch(PROXY + '/route-price?from=' + encodeURIComponent(HOME_ORIGIN.code) + '&to=' + encodeURIComponent(code))
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        group.forEach(function (t) { t.classList.remove('loading'); });
-        if (!d || !d.ok || !d.price) return; // keep static fallback price
-        var val = fmt(d.price);
-        group.forEach(function (t) {
-          t.textContent = val;
-          t.classList.add('price-updated');
-          t.addEventListener('animationend', function handler() {
-            t.classList.remove('price-updated');
-            t.removeEventListener('animationend', handler);
-          });
-        });
-      })
-      .catch(function () {
-        group.forEach(function (t) { t.classList.remove('loading'); });
-      });
+    codes.push(code);
   });
+
+  var BATCH_SIZE = 3;
+  var i = 0;
+  function nextBatch() {
+    if (i >= codes.length) return;
+    var batch = codes.slice(i, i + BATCH_SIZE);
+    i += BATCH_SIZE;
+    Promise.all(batch.map(fetchPriceForCode)).then(nextBatch);
+  }
+  nextBatch();
 }
 document.addEventListener('DOMContentLoaded', loadDestinationPrices);
 
@@ -208,6 +242,19 @@ function detectHomeAirport() {
 // عشان تستخدم أقرب مطار حقيقي للمستخدم مش برلين ثابتة.
 function qsHome(toCode, toCity) {
   qs(HOME_ORIGIN.code, toCode, toCity);
+  // [PRICE-MATCH-FIX] qs() (فوق) بيحط تاريخ افتراضي مستقل (اليوم+21
+  // يوم محسوب دلوقتي). لو عندنا التاريخ الحقيقي اللي السعر المعروض في
+  // الكارت اتحسب عليه فعلاً (ممكن يكون اتخزّن من ساعات فاتت)، نستبدل
+  // بيه — عشان نتيجة البحث تطابق السعر اللي المستخدم شافه بالظبط، مش
+  // سعر تاريخ تاني قريب منه بالصدفة.
+  var exactDate = DEST_PRICE_DATES[toCode];
+  if (exactDate) {
+    calDepDate = exactDate;
+    var depEl = document.getElementById('dep-date');
+    if (depEl) depEl.value = exactDate;
+    var depDisp = document.getElementById('dep-disp');
+    if (depDisp) { depDisp.textContent = fmtDate(exactDate); depDisp.classList.remove('empty'); }
+  }
 }
 
 // [TOP-STRECKEN-EXPAND] كانت 6 مسارات ثابتة في HTML، بسعر ثابت، ومربوطة
