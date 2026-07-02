@@ -2319,7 +2319,7 @@ async function runHealthCheck() {
       totalDead += j.dead;
       progressEl.textContent = '🩺 اتفحص ' + totalChecked + ' مسار لحد دلوقتي — ' + totalDead + ' اتلاقوا ميتين (مفيش رحلات حقيقية) — باقي حوالي ' + j.remaining + '...';
       if (j.checked === 0 || j.remaining === 0) break;
-      await new Promise(function(r) { setTimeout(r, 300); }); // فاصل بسيط بين كل دفعة ودي عشان مانضغطش السيرفر
+      await new Promise(function(r) { setTimeout(r, 800); }); // فاصل بين كل دفعة عشان مانضغطش على Duffel
     }
     progressEl.textContent = '✅ خلص الفحص — إجمالي ' + totalChecked + ' مسار اتفحص، ' + totalDead + ' اتلاقوا ميتين وانحطوا في حالة "ميت" تلقائياً (اختفوا من الموقع).';
     showToast('✅ الفحص خلص: ' + totalDead + ' مسار ميت من أصل ' + totalChecked, totalDead > 0 ? 'info' : 'success');
