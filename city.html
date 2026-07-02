@@ -15,6 +15,9 @@
 <meta name="description" id="page-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" id="page-canonical" href="https://airpiv.com/city.html">
+<link rel="alternate" hreflang="de" id="hreflang-de" href="https://airpiv.com/city/">
+<link rel="alternate" hreflang="en" id="hreflang-en" href="https://airpiv.com/en/city/">
+<link rel="alternate" hreflang="x-default" id="hreflang-default" href="https://airpiv.com/city/">
 
 <meta property="og:type" content="website">
 <meta property="og:title" id="og-title" content="Flüge | Airpiv">
@@ -176,6 +179,10 @@ function renderCity(city, routes) {
   document.getElementById('og-title').setAttribute('content', title);
   document.getElementById('og-description').setAttribute('content', description);
   document.getElementById('og-url').setAttribute('content', url);
+  var enUrl = 'https://airpiv.com/en/city/' + encodeURIComponent(city.city_slug);
+  document.getElementById('hreflang-de').setAttribute('href', url);
+  document.getElementById('hreflang-en').setAttribute('href', enUrl);
+  document.getElementById('hreflang-default').setAttribute('href', url);
 
   var introText = city.intro_text || ('Entdecke alle Flugverbindungen von und nach ' + city.name + '. Airpiv vergleicht in Echtzeit hunderte Airlines und findet den besten Preis für deine Reise.');
 

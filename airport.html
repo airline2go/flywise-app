@@ -15,6 +15,9 @@
 <meta name="description" id="page-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" id="page-canonical" href="https://airpiv.com/airport.html">
+<link rel="alternate" hreflang="de" id="hreflang-de" href="https://airpiv.com/airport/">
+<link rel="alternate" hreflang="en" id="hreflang-en" href="https://airpiv.com/en/airport/">
+<link rel="alternate" hreflang="x-default" id="hreflang-default" href="https://airpiv.com/airport/">
 
 <meta property="og:type" content="website">
 <meta property="og:title" id="og-title" content="Flüge | Airpiv">
@@ -173,6 +176,10 @@ function renderAirport(airport, routes) {
   document.getElementById('og-title').setAttribute('content', title);
   document.getElementById('og-description').setAttribute('content', description);
   document.getElementById('og-url').setAttribute('content', url);
+  var enUrl = 'https://airpiv.com/en/airport/' + encodeURIComponent(airport.code);
+  document.getElementById('hreflang-de').setAttribute('href', url);
+  document.getElementById('hreflang-en').setAttribute('href', enUrl);
+  document.getElementById('hreflang-default').setAttribute('href', url);
 
   var introText = 'Der Flughafen ' + airport.code + ' bedient ' + airport.city + '. Hier findest du alle Flugrouten, die Airpiv für diesen Flughafen anbietet — vergleiche Preise und buche direkt.';
 

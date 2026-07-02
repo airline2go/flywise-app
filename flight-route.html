@@ -16,6 +16,14 @@
 <meta name="robots" content="index, follow">
 <link rel="canonical" id="page-canonical" href="https://airpiv.com/flight-route.html">
 
+<!-- [HREFLANG] Links this German page to its English counterpart —
+     bidirectional with the hreflang tags on flight-route-en.html.
+     Without both directions, Google can't reliably treat them as
+     intentional translations of the same page. -->
+<link rel="alternate" hreflang="de" id="hreflang-de" href="https://airpiv.com/flights/">
+<link rel="alternate" hreflang="en" id="hreflang-en" href="https://airpiv.com/en/flights/">
+<link rel="alternate" hreflang="x-default" id="hreflang-default" href="https://airpiv.com/flights/">
+
 <meta property="og:type" content="website">
 <meta property="og:title" id="og-title" content="Flüge | Airpiv">
 <meta property="og:description" id="og-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
@@ -209,6 +217,10 @@ function renderRoute(route) {
   document.getElementById('og-title').setAttribute('content', title);
   document.getElementById('og-description').setAttribute('content', description);
   document.getElementById('og-url').setAttribute('content', url);
+  var enUrl = 'https://airpiv.com/en/flights/' + encodeURIComponent(route.slug);
+  document.getElementById('hreflang-de').setAttribute('href', url);
+  document.getElementById('hreflang-en').setAttribute('href', enUrl);
+  document.getElementById('hreflang-default').setAttribute('href', url);
 
   // [DYNAMIC-INTRO] Was a single fixed sentence template — only the city
   // names changed, so every route page read almost word-for-word
