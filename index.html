@@ -206,6 +206,15 @@
   </div>
 </nav>
 
+<!-- ══ HOMEPAGE FLOATING SEARCH CTA ══ -->
+<!-- [CTA-VISIBILITY-FIX] الشريط العائم بتاع صفحة النتائج (تحت) بيظهر
+     بس بعد أول بحث فعلي. زائر جديد على الصفحة الرئيسية لسه معندوش
+     حاجة تاخده لزرار البحث لو نزل تحت الفورم من غير ما يوصله — الزرار
+     ده بيظهر بس في الحالة دي بالظبط (نزل تحت + لسه ما بحثش)، وبيختفي
+     تلقائياً لو صفحة نتائج أو أي نافذة تانية مفتوحة.
+-->
+<button id="home-float-cta" onclick="document.querySelector('.gobtn').scrollIntoView({behavior:'smooth',block:'center'})" aria-label="Zur Suche">🔍 Suchen</button>
+
 <!-- ══ STICKY SEARCH BAR ══ -->
 <!-- ══ STICKY FILTER BAR ══ -->
 <div id="sticky-filter-bar">
@@ -654,7 +663,7 @@
 <footer><div class="fi2">
   <div class="fgr">
     <div><div class="flo"><span class="logo-i" style="width:26px;height:26px"><svg width="17" height="17" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="currentColor"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
-    <div class="fcol"><h4>Entdecken</h4><ul><li><a href="#">Flüge</a></li><li><a href="#">Hotels</a></li><li><a href="#">Mietwagen</a></li><li><a href="#">Reisedeals</a></li></ul></div>
+    <div class="fcol"><h4>Entdecken</h4><ul><li><a href="/cheap-flights.html">Günstige Flüge</a></li><li><a href="/last-minute-flights.html">Last Minute Flüge</a></li><li><a href="#">Hotels</a></li><li><a href="#">Mietwagen</a></li></ul></div>
     <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="#" onclick="openPg('about')">Über uns</a></li><li><a href="#">Karriere</a></li><li><a href="#">Presse</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
     <div class="fcol"><h4>Support</h4><ul><li><a href="#" onclick="openPg('faq')">FAQ</a></li>
 <li><a href="#" onclick="openPg('bookings');loadMyBookings()">Buchungen</a></li><li><a href="#" onclick="openPg('contact')">Kontakt</a></li><li><a href="#" onclick="openPg('privacy')">Datenschutz</a></li><li><a href="#" onclick="openPg('terms')">AGB</a></li><li><a href="#" onclick="openPg('impressum')">Impressum</a></li></ul></div>

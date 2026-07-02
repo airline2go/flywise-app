@@ -11,3 +11,6 @@
   .rgrid2.hscroll::-webkit-scrollbar{display:none}
   .rgrid2.hscroll .rchip{width:210px}
 }
+#home-float-cta{position:fixed;bottom:20px;right:16px;z-index:400;background:var(--teal,#0FB5A0);color:#fff;border:none;border-radius:30px;padding:13px 22px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(15,181,160,.4);cursor:pointer;display:none;align-items:center;gap:6px}
+#home-float-cta.visible{display:flex;animation:homeFloatIn .25s ease}
+@keyframes homeFloatIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}

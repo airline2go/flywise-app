@@ -29,11 +29,17 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/shared-layout.css">
 <script type="application/ld+json" id="route-schema">{}</script>
+<script type="application/ld+json" id="breadcrumb-schema">{}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Airpiv","url":"https://airpiv.com","logo":"https://airpiv.com/apple-touch-icon.png"}</script>
 <style>
 .route-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
 .route-hero-cities{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
 .route-hero-arrow{color:var(--teal);font-size:1.3rem}
 .route-price-box{margin-top:18px}
+.route-trust-signal{margin-top:8px;font-size:12px;color:rgba(255,255,255,.55);display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.route-booking-window{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px 16px;margin:12px 0}
+.route-booking-window-lbl{font-size:13px;color:var(--tx3)}
+.route-booking-window-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--teal2)}
 .route-price-val{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:var(--teal)}
 .route-price-lbl{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
 .route-cta{display:inline-flex;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
@@ -138,7 +144,58 @@ function renderNotFound() {
     '<a href="/" class="btn-t" style="display:inline-flex;margin-top:12px">← Flüge suchen</a>';
 }
 
+// [LOCALIZATION-FIX] Was previously whatever free text the admin typed
+// when creating the route (city_pages/route_pages.origin_city etc.) —
+// nothing enforced German spelling, so "Rome" instead of "Rom" or
+// "Vienna" instead of "Wien" could silently end up on a German-language
+// page. This is a lookup by the route's own real IATA code (never
+// guessed from the text itself, which could be spelled any number of
+// ways) against known correct German city names — only overrides when
+// we have a confirmed mapping for that code; any airport not in this
+// list keeps whatever the admin entered, exactly as before.
+var GERMAN_CITY_NAMES = {
+  BER: 'Berlin', MUC: 'München', FRA: 'Frankfurt', HAM: 'Hamburg', DUS: 'Düsseldorf',
+  CGN: 'Köln', STR: 'Stuttgart', HAJ: 'Hannover', LEJ: 'Leipzig', NUE: 'Nürnberg',
+  DTM: 'Dortmund', BRE: 'Bremen', VIE: 'Wien', ZRH: 'Zürich', GVA: 'Genf',
+  LHR: 'London', LGW: 'London', STN: 'London', LTN: 'London', CDG: 'Paris', ORY: 'Paris',
+  FCO: 'Rom', CIA: 'Rom', MXP: 'Mailand', LIN: 'Mailand', VCE: 'Venedig', NAP: 'Neapel',
+  MAD: 'Madrid', BCN: 'Barcelona', VLC: 'Valencia', SVQ: 'Sevilla', AGP: 'Málaga',
+  LIS: 'Lissabon', OPO: 'Porto', AMS: 'Amsterdam', BRU: 'Brüssel', LUX: 'Luxemburg',
+  CPH: 'Kopenhagen', OSL: 'Oslo', ARN: 'Stockholm', HEL: 'Helsinki', DUB: 'Dublin',
+  WAW: 'Warschau', KRK: 'Krakau', PRG: 'Prag', BUD: 'Budapest', ATH: 'Athen',
+  IST: 'Istanbul', SAW: 'Istanbul', CAI: 'Kairo', DXB: 'Dubai', DOH: 'Doha',
+  BKK: 'Bangkok', SIN: 'Singapur', HKG: 'Hongkong', NRT: 'Tokio', HND: 'Tokio',
+  JFK: 'New York', EWR: 'New York', LAX: 'Los Angeles', SFO: 'San Francisco',
+  MIA: 'Miami', YYZ: 'Toronto', GRU: 'São Paulo', CPT: 'Kapstadt', JNB: 'Johannesburg',
+  SYD: 'Sydney', MEL: 'Melbourne', DBV: 'Dubrovnik', SPU: 'Split', ZAG: 'Zagreb',
+};
+function germanizeCity(name, iata) {
+  return GERMAN_CITY_NAMES[iata] || name;
+}
+// [ALTERNATIVE-AIRPORTS] Real groupings derived from the SAME trusted
+// IATA→city map above — cities genuinely served by more than one
+// airport (London: LHR/LGW/STN/LTN, Paris: CDG/ORY, Rome: FCO/CIA,
+// Milan: MXP/LIN) surface their other real airport codes. Never
+// fabricated: built once from data already vetted for correctness, and
+// a city with only one mapped airport simply produces an empty list.
+var CITY_AIRPORTS = {};
+Object.keys(GERMAN_CITY_NAMES).forEach(function (code) {
+  var city = GERMAN_CITY_NAMES[code];
+  if (!CITY_AIRPORTS[city]) CITY_AIRPORTS[city] = [];
+  CITY_AIRPORTS[city].push(code);
+});
+function getAlternativeAirports(cityName, excludeIata) {
+  var list = CITY_AIRPORTS[cityName] || [];
+  return list.filter(function (c) { return c !== excludeIata; });
+}
+
 function renderRoute(route) {
+  // [LOCALIZATION-FIX] يتصحّح مرة واحدة هنا فقط — كل الاستخدامات
+  // الأخرى في الدالة دي (العنوان، الوصف، الأسئلة الشائعة، الروابط...)
+  // بتاخد القيمة المُصححة تلقائياً من غير ما نلمسها واحدة واحدة.
+  route.origin_city = germanizeCity(route.origin_city, route.origin_iata);
+  route.destination_city = germanizeCity(route.destination_city, route.destination_iata);
+
   // [ROUTE-SEO-OVERRIDES] Falls back to the exact same auto-generated
   // text as before when the admin hasn't set a custom override — zero
   // behavior change for any route that doesn't use this field.
@@ -194,6 +251,25 @@ function renderRoute(route) {
   }
   breadcrumbHtml += '<span>' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + '</span></nav>';
 
+  // [SCHEMA-BREADCRUMB] نفس البيانات بالظبط اللي بنت الـ breadcrumb
+  // المرئي فوق — عمداً، عشان الاتنين ميختلفوش أبداً عن بعض. مبني مرة
+  // واحدة هنا (مش بيتلمس تاني)، لأن سلسلة الـ breadcrumb معروفة كاملة
+  // من أول لحظة يوصل فيها الـ route، على عكس الـ FAQ اللي بتتحدث لاحقاً.
+  var breadcrumbItems = [{ "@type": "ListItem", "position": 1, "name": "Startseite", "item": "https://airpiv.com/" }];
+  var bcPos = 2;
+  if (route.destination_country) {
+    breadcrumbItems.push({ "@type": "ListItem", "position": bcPos++, "name": route.destination_country, "item": "https://airpiv.com/country/" + encodeURIComponent(route.destination_country) });
+  }
+  if (route.destination_city_slug) {
+    breadcrumbItems.push({ "@type": "ListItem", "position": bcPos++, "name": route.destination_city, "item": "https://airpiv.com/city/" + encodeURIComponent(route.destination_city_slug) });
+  }
+  breadcrumbItems.push({ "@type": "ListItem", "position": bcPos++, "name": route.origin_city + ' → ' + route.destination_city, "item": url });
+  document.getElementById('breadcrumb-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbItems
+  });
+
   // [AIRPORT-INFO] Links to both airport pages — what the original
   // report's route-page checklist asked for ("معلومات المطارين"). Kept
   // as a separate in-content section rather than extending the
@@ -204,6 +280,18 @@ function renderRoute(route) {
     '<a class="airport-info-card" href="/airport/' + encodeURIComponent(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
     '<a class="airport-info-card" href="/airport/' + encodeURIComponent(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
   '</div></section>';
+
+  // [ALTERNATIVE-AIRPORTS] Real, only shown when the destination city is
+  // genuinely served by more than one mapped airport — never fabricated
+  // for a single-airport city.
+  var altAirports = getAlternativeAirports(route.destination_city, route.destination_iata);
+  var altAirportsHtml = altAirports.length
+    ? '<section class="airport-info-section"><h2>Alternative Flughäfen in ' + escHtml(route.destination_city) + '</h2><div class="airport-info-grid">' +
+      altAirports.map(function (code) {
+        return '<a class="airport-info-card" href="/airport/' + encodeURIComponent(code) + '"><span class="airport-info-code">' + escHtml(code) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>';
+      }).join('') +
+    '</div></section>'
+    : '';
 
   // [ROUTE-PAGES-DISTANCE] Real, server-computed distance — shown only
   // when available (older routes created before this feature, or any
@@ -259,7 +347,14 @@ function renderRoute(route) {
     var bestTimeBody = isLongHaulBT
       ? ('Für Langstreckenflüge wie ' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + ' lohnt es sich meist, 2–3 Monate im Voraus zu buchen — die Preise steigen auf dieser Distanz typischerweise deutlich in den letzten 3–4 Wochen vor Abflug. Reisen außerhalb der Schulferien sowie außerhalb der Weihnachts- und Osterzeit sind auf Langstrecken erfahrungsgemäß günstiger, da die Nachfrage in diesen Zeiträumen spürbar sinkt.')
       : ('Für Kurzstreckenflüge wie ' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + ' sind die sogenannten Nebensaison-Monate (meist April–Mai und September–Oktober) günstiger als Hochsommer oder Weihnachten. Flüge unter der Woche — besonders dienstags und mittwochs — sind auf Kurzstrecken erfahrungsgemäß günstiger als Wochenendflüge, da die Nachfrage von Geschäftsreisenden am Wochenende sinkt.');
-    bestTimeHtml = '<section class="route-besttime-section"><h2>Beste Reisezeit für diese Strecke</h2><p>' + bestTimeBody + '</p></section>';
+    // [BEST-BOOKING-WINDOW] Standard industry-guideline ranges (short-haul
+    // fares tend to trough 3–7 weeks out; long-haul 2–3 months out) —
+    // general, defensible guidance conditioned on real haul_type, not a
+    // per-route unique statistic we don't have real booking data for yet.
+    var bookingWindow = isLongHaulBT ? '60–90 Tage vor Abflug' : '21–45 Tage vor Abflug';
+    bestTimeHtml = '<section class="route-besttime-section"><h2>Beste Reisezeit für diese Strecke</h2>' +
+      '<div class="route-booking-window"><span class="route-booking-window-lbl">Beste Buchungszeit</span><span class="route-booking-window-val">' + bookingWindow + '</span></div>' +
+      '<p>' + bestTimeBody + '</p></section>';
   }
 
   var faqHtml = faqItems.map(function(f) {
@@ -279,11 +374,13 @@ function renderRoute(route) {
       '<div class="route-price-box" id="route-price-box">' +
         '<div style="color:rgba(255,255,255,.5);font-size:13px">Preis wird geladen…</div>' +
       '</div>' +
+      '<div class="route-trust-signal" id="route-trust-signal" style="display:none"></div>' +
       '<a href="' + bookingUrl + '" class="route-cta">Jetzt Flüge suchen →</a>' +
     '</div>' +
     '<section><p>' + escHtml(introText) + '</p></section>' +
     bestTimeHtml +
     airportInfoHtml +
+    altAirportsHtml +
     '<section id="route-insights-section"></section>' +
     '<section class="route-faq">' +
       '<h2>Häufige Fragen</h2>' +
@@ -358,6 +455,14 @@ function renderRoute(route) {
       var box = document.getElementById('route-price-box');
       if (j.ok && j.price != null) {
         box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div>';
+        // [META-PRICE-FIX] بعد ما السعر الحقيقي يوصل، الوصف بيتحدّث
+        // ليشمله فعلياً — بدل وصف عام تقريبي، جوجل بيشوف رقم حقيقي
+        // محدد لكل مسار (مش نفس القالب على كل الصفحات).
+        if (!route.custom_meta_description) {
+          var priceDescription = 'Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') ab ' + j.price.toFixed(0) + ' € — Preise vergleichen und günstig buchen mit Airpiv.';
+          document.getElementById('page-description').setAttribute('content', priceDescription);
+          document.getElementById('og-description').setAttribute('content', priceDescription);
+        }
         // [DATE-MATCH-FIX] Carry the exact date this price was computed
         // for into the search link — clicking "Jetzt Flüge suchen" now
         // lands the customer on a search for that SAME date, instead of
@@ -371,6 +476,18 @@ function renderRoute(route) {
         }
       } else {
         box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
+      }
+
+      // [LIVE-TRUST-SIGNAL] عدّاد حقيقي 100% جاي من السيرفر — بيتحسب من
+      // عدد مرات فحص أسعار حقيقية فعلية النهارده، وتوقيت آخر فحص حقيقي.
+      // لو Redis مش متاح على السيرفر، الاتنين بيرجعوا null والقسم كله
+      // بيتخفي تماماً — أبداً مفيش رقم افتراضي أو مُختلق بديل.
+      var trustEl = document.getElementById('route-trust-signal');
+      if (trustEl && j.ok && j.checksToday != null && j.checkedAt) {
+        var minutesAgo = Math.max(0, Math.round((Date.now() - new Date(j.checkedAt).getTime()) / 60000));
+        var agoText = minutesAgo < 1 ? 'gerade eben' : (minutesAgo === 1 ? 'vor 1 Minute' : 'vor ' + minutesAgo + ' Minuten');
+        trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' Preise heute geprüft</span><span>· Zuletzt aktualisiert ' + agoText + '</span>';
+        trustEl.style.display = '';
       }
       // [ROUTE-INSIGHTS] Real flight facts from the same Duffel offers
       // just fetched for pricing — never invented. Only rendered when
@@ -390,7 +507,7 @@ function renderRoute(route) {
           ? ('Fliegende Airlines: ' + ins.airlines.join(', ') + '.')
           : '';
         var insightsHtml = '<section class="route-insights-section"><h2>Flugdaten für diese Strecke</h2><div class="route-insights-grid">' +
-          '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">Durchschnittliche Flugzeit</div></div>' +
+          '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">Durchschnittliche Gesamtreisezeit (inkl. Umstieg)</div></div>' +
           '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">Kürzeste gefundene Flugzeit</div></div>' +
         '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
         var insightsTarget = document.getElementById('route-insights-section');

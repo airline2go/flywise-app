@@ -110,7 +110,39 @@ function renderNotFound() {
     '<a href="/" class="btn-t" style="display:inline-flex;margin-top:12px">← Flüge suchen</a>';
 }
 
+// [LOCALIZATION-FIX] نفس قائمة التصحيح المستخدمة في flight-route.html
+// بالظبط — بتصحح اسم المدينة بالألماني الصحيح بناءً على كود المطار
+// الحقيقي (IATA)، مش تخمين من النص نفسه. أي كود مش موجود في القائمة
+// بيسيب النص زي ما هو (آمن).
+var GERMAN_CITY_NAMES = {
+  BER: 'Berlin', MUC: 'München', FRA: 'Frankfurt', HAM: 'Hamburg', DUS: 'Düsseldorf',
+  CGN: 'Köln', STR: 'Stuttgart', HAJ: 'Hannover', LEJ: 'Leipzig', NUE: 'Nürnberg',
+  DTM: 'Dortmund', BRE: 'Bremen', VIE: 'Wien', ZRH: 'Zürich', GVA: 'Genf',
+  LHR: 'London', LGW: 'London', STN: 'London', LTN: 'London', CDG: 'Paris', ORY: 'Paris',
+  FCO: 'Rom', CIA: 'Rom', MXP: 'Mailand', LIN: 'Mailand', VCE: 'Venedig', NAP: 'Neapel',
+  MAD: 'Madrid', BCN: 'Barcelona', VLC: 'Valencia', SVQ: 'Sevilla', AGP: 'Málaga',
+  LIS: 'Lissabon', OPO: 'Porto', AMS: 'Amsterdam', BRU: 'Brüssel', LUX: 'Luxemburg',
+  CPH: 'Kopenhagen', OSL: 'Oslo', ARN: 'Stockholm', HEL: 'Helsinki', DUB: 'Dublin',
+  WAW: 'Warschau', KRK: 'Krakau', PRG: 'Prag', BUD: 'Budapest', ATH: 'Athen',
+  IST: 'Istanbul', SAW: 'Istanbul', CAI: 'Kairo', DXB: 'Dubai', DOH: 'Doha',
+  BKK: 'Bangkok', SIN: 'Singapur', HKG: 'Hongkong', NRT: 'Tokio', HND: 'Tokio',
+  JFK: 'New York', EWR: 'New York', LAX: 'Los Angeles', SFO: 'San Francisco',
+  MIA: 'Miami', YYZ: 'Toronto', GRU: 'São Paulo', CPT: 'Kapstadt', JNB: 'Johannesburg',
+  SYD: 'Sydney', MEL: 'Melbourne', DBV: 'Dubrovnik', SPU: 'Split', ZAG: 'Zagreb',
+};
+function germanizeCity(name, iata) {
+  return (iata && GERMAN_CITY_NAMES[iata]) || name;
+}
+
 function renderCountry(country, routes) {
+  // [LOCALIZATION-FIX] اسم الدولة نفسه أصلاً بييجي مُصحح من السيرفر
+  // (قائمة COUNTRY_NAMES_DE)، لكن أسماء المدن في المسارات المرتبطة
+  // (زي "Rome" بدل "Rom") كانت لسه بتيجي زي ما الأدمن كتبها بالظبط.
+  routes.forEach(function (r) {
+    r.origin_city = germanizeCity(r.origin_city, r.origin_iata);
+    r.destination_city = germanizeCity(r.destination_city, r.destination_iata);
+  });
+
   // [CONTENT-VARIATION-FIX] Title/description vary by route count (a
   // real, defensible signal — not arbitrary) rather than one fixed
   // template with only the name substituted. A country with a single
