@@ -1558,6 +1558,7 @@
         <button class="btn btn-ghost" onclick="openRouteMatrix()">🗺️ مصفوفة المسارات</button>
         <button class="btn btn-ghost" onclick="publishAllDrafts()">🚀 نشر كل المسودات</button>
         <button class="btn btn-ghost" onclick="runHealthCheck()">🩺 فحص صحة المسارات</button>
+        <button class="btn btn-ghost" style="color:#f59e0b" onclick="resetHealthChecks()">🔄 إعادة تعيين الفحص (بعد تفعيل Production)</button>
       </div>
     </div>
 
@@ -2302,7 +2303,7 @@ async function publishAllDrafts() {
 var healthCheckRunning = false;
 async function runHealthCheck() {
   if (healthCheckRunning) return;
-  if (!confirm('هيتم فحص كل المسارات فعلياً (رحلة حقيقية موجودة ولا لأ) عن طريق Duffel. العملية ممكن تاخد كذا دقيقة حسب عدد المسارات، وأي مسار مفيهوش رحلات هيتحوّل لـ"ميت" ويختفي من الموقع تلقائياً. تكمل؟')) return;
+  if (!confirm('هيتم فحص كل المسارات فعلياً (رحلة حقيقية موجودة ولا لأ) عن طريق Duffel.\n\n⚠️ لو Duffel لسه في وضع Test، النتيجة مش موثوقة (Test بيرجّع رحلات وهمية لأي مسار تقريباً) — استخدم الفحص ده بجدية بس بعد تفعيل Production، وقتها استخدم زرار "إعادة تعيين الفحص" الأول.\n\nالعملية ممكن تاخد كذا دقيقة حسب عدد المسارات. تكمل؟')) return;
 
   healthCheckRunning = true;
   var progressEl = document.getElementById('health-check-progress');
@@ -2329,6 +2330,28 @@ async function runHealthCheck() {
     showToast('خطأ في الاتصال بالسيرفر أثناء الفحص', 'error');
   } finally {
     healthCheckRunning = false;
+  }
+}
+
+// [RESET-HEALTH-CHECK] Duffel في وضع Test بيرجّع عروض وهمية لأي مسار
+// تقريباً (حتى اللي مفيهوش رحلات حقيقية)، فأي فحص صحة اتعمل قبل
+// تفعيل Production نتيجته مش موثوقة. الدالة دي بتصفّر تاريخ الفحص
+// لكل المسارات (وترجّع أي "ميت" لـ"مسودة") عشان فحص جديد حقيقي
+// يحصل بعد التفعيل — من غيرها الأداة هتفضل واثقة في نتايج الـ Test
+// القديمة للأبد (مصممة عمداً متفحصش نفس المسار مرتين).
+async function resetHealthChecks() {
+  if (!confirm('⚠️ استخدم الزرار ده بس بعد ما تفعّل Duffel في وضع Production الحقيقي.\n\nفي وضع Test، Duffel بيرجّع رحلات وهمية لأي مسار تقريباً، فنتيجة أي فحص سابق مش حقيقية. الزرار ده هيمسح تاريخ كل الفحوصات القديمة (وأي مسار "ميت" هيرجع "مسودة") عشان فحص جديد حقيقي 100% يحصل بعد كده.\n\nمتأكد إنك فعّلت Production بالفعل وعايز تكمل؟')) return;
+  try {
+    const res = await adminFetch('/admin/route-pages/reset-health-checks', { method: 'POST' });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ اتصفّر فحص ' + j.cleared + ' مسار، و' + j.revived + ' مسار "ميت" رجع "مسودة" — جاهزين لفحص حقيقي جديد', 'success');
+      rpResetAndLoad();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) {
+    showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
   }
 }
 
