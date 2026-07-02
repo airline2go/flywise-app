@@ -105,8 +105,19 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
+// [PRETTY-URL-FIX] كان بيقرأ الـ slug من ?slug= بس — أي redirect
+// لرابط "نضيف" زي /flights/berlin-paris (من غير query string خالص)
+// كان بيوصل للصفحة دي، بس من غير أي slug يتقرأ، فيظهر "غير موجود"
+// فوراً حتى لو الـ redirect نفسه شغال 100%. دلوقتي بيدوّر في شكلين:
+// ?slug=X (الأصلي)، أو آخر جزء من المسار لو الرابط شكله
+// /flights/xxx أو /flight-route/xxx (أياً كانت طريقة الـ redirect
+// اللي أوصلت لنفس الملف ده).
 var params = new URLSearchParams(window.location.search);
 var slug = params.get('slug');
+if (!slug) {
+  var pathMatch = window.location.pathname.match(/\/(?:flights|flight-route)\/([^\/]+)\/?$/);
+  if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
+}
 
 if (!slug) {
   renderNotFound();
@@ -133,7 +144,7 @@ function renderRoute(route) {
   // behavior change for any route that doesn't use this field.
   var title = route.custom_title || ('Flüge von ' + route.origin_city + ' nach ' + route.destination_city);
   var description = route.custom_meta_description || ('Günstige Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') finden und buchen — Preise vergleichen mit Airpiv.');
-  var url = 'https://airpiv.com/flight-route.html?slug=' + encodeURIComponent(route.slug);
+  var url = 'https://airpiv.com/flights/' + encodeURIComponent(route.slug);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
   document.getElementById('page-description').setAttribute('content', description);
@@ -176,10 +187,10 @@ function renderRoute(route) {
   // simply skips that segment rather than showing a broken link.
   var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span>';
   if (route.destination_country) {
-    breadcrumbHtml += '<a href="/country.html?code=' + encodeURIComponent(route.destination_country) + '">' + escHtml(route.destination_country) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="/country/' + encodeURIComponent(route.destination_country) + '">' + escHtml(route.destination_country) + '</a><span>›</span>';
   }
   if (route.destination_city_slug) {
-    breadcrumbHtml += '<a href="/city.html?slug=' + encodeURIComponent(route.destination_city_slug) + '">' + escHtml(route.destination_city) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="/city/' + encodeURIComponent(route.destination_city_slug) + '">' + escHtml(route.destination_city) + '</a><span>›</span>';
   }
   breadcrumbHtml += '<span>' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + '</span></nav>';
 
@@ -190,8 +201,8 @@ function renderRoute(route) {
   // the breadcrumb stays at the planned 4 levels (Home → Country → City
   // → Route).
   var airportInfoHtml = '<section class="airport-info-section"><h2>Flughafeninformationen</h2><div class="airport-info-grid">' +
-    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
-    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
+    '<a class="airport-info-card" href="/airport/' + encodeURIComponent(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
+    '<a class="airport-info-card" href="/airport/' + encodeURIComponent(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
   '</div></section>';
 
   // [ROUTE-PAGES-DISTANCE] Real, server-computed distance — shown only
@@ -308,7 +319,7 @@ function renderRoute(route) {
       var section = document.getElementById('related-routes-section');
       section.innerHTML = '<h2>Ähnliche Flugrouten</h2><div class="related-routes-grid">' +
         j.related.map(function(r) {
-          return '<a class="related-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
+          return '<a class="related-route-card" href="/flights/' + encodeURIComponent(r.slug) + '">' +
             escHtml(r.origin_city) + ' → ' + escHtml(r.destination_city) +
           '</a>';
         }).join('') +
