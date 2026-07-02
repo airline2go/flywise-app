@@ -13,7 +13,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">Flüge | Airpiv</title>
 <meta name="description" id="page-description" content="Günstige Flüge mit Airpiv vergleichen und buchen.">
-<meta name="robots" content="index, follow">
+<meta name="robots" id="page-robots" content="index, follow">
 <link rel="canonical" id="page-canonical" href="https://airpiv.com/flight-route.html">
 
 <!-- [HREFLANG] Links this German page to its English counterpart —
@@ -133,6 +133,39 @@ if (!slug) {
   if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
 }
 
+// [CANONICAL-SEO-FIX] كان الـ canonical بياخد قيمته الصح بس بعد ما
+// بيانات المسار توصل من السيرفر (كذا مللي ثانية). لحد وقتها، جوجل
+// كان بيشوف قيمة ثابتة غلط (/flight-route.html) في الـ HTML الخام —
+// نفس القيمة دي على الألف صفحة، وده بالظبط اللي بيخلي جوجل يفتكر
+// إنها كلها نسخ من نفس الصفحة. دلوقتي بيتظبط فوراً من الرابط الحالي
+// نفسه (اللي هو صحيح 100% بالتعريف، مش محتاج ننتظر أي بيانات)، قبل
+// ما نطلب أي حاجة من السيرفر خالص.
+if (slug) {
+  var immediateUrl = 'https://airpiv.com/flights/' + encodeURIComponent(slug);
+  var immediateEnUrl = 'https://airpiv.com/en/flights/' + encodeURIComponent(slug);
+  document.getElementById('page-canonical').setAttribute('href', immediateUrl);
+  document.getElementById('og-url').setAttribute('content', immediateUrl);
+  document.getElementById('hreflang-de').setAttribute('href', immediateUrl);
+  document.getElementById('hreflang-en').setAttribute('href', immediateEnUrl);
+  document.getElementById('hreflang-default').setAttribute('href', immediateUrl);
+
+  // [INITIAL-CONTENT-SEO-FIX] كان أول حاجة في الـ HTML الخام (قبل
+  // تنفيذ الجافاسكريبت) هي نص "Lade Route…" — نفس الجملة بالظبط على
+  // كل الألف صفحة. جوجل بيقرا الـ HTML الخام ده في أول زحف (قبل ما
+  // يستنى تنفيذ أي جافاسكريبت)، فكان بيشوف محتوى متطابق فاضي على كل
+  // الصفحات. دلوقتي بنولّد عنوان وH1 تقديريين من الرابط نفسه فوراً
+  // (مش مثاليين 100%، لكن فريدين وذوي معنى لكل صفحة) — بيتستبدلوا
+  // بالبيانات الحقيقية الدقيقة بمجرد ما الطلب من السيرفر يخلص، فمفيش
+  // أي تعارض؛ ده بس تحسين لأول لحظة قبل وصول البيانات الكاملة.
+  var slugWords = slug.split('-').map(function(w) {
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  });
+  var guessedTitle = 'Flüge: ' + slugWords.join(' – ');
+  document.title = guessedTitle + ' | Airpiv';
+  document.getElementById('page-description').setAttribute('content', 'Günstige Flüge finden und vergleichen mit Airpiv — echte Preise, transparent und ohne versteckte Kosten.');
+  document.getElementById('route-content').innerHTML = '<h1>' + escHtml(guessedTitle) + '</h1><p style="color:var(--tx3)">Lade Route…</p>';
+}
+
 if (!slug) {
   renderNotFound();
 } else {
@@ -146,6 +179,12 @@ if (!slug) {
 }
 
 function renderNotFound() {
+  // [SOFT-404-FIX] الصفحة دي بترجع دايماً 200 OK (ملف ثابت واحد بيخدم
+  // كل روابط /flights/*)، فمفيش طريقة نرجّع 404 حقيقي من غير تدخل
+  // السيرفر. أقل حاجة نعملها: نمنع فهرسة الصفحة دي تحديداً — noindex
+  // ديناميكي بمجرد ما نتأكد إن المسار مش موجود فعلاً، عشان جوجل
+  // مايحطهاش في نتايج البحث كصفحة حقيقية.
+  document.getElementById('page-robots').setAttribute('content', 'noindex, follow');
   document.getElementById('route-content').innerHTML =
     '<h1>Route nicht gefunden</h1>' +
     '<p style="color:var(--tx3)">Diese Flugroute ist nicht verfügbar.</p>' +

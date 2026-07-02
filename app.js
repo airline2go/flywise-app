@@ -314,3 +314,25 @@ document.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('scroll', checkHomeFloatCta, { passive: true });
   document.addEventListener('DOMContentLoaded', checkHomeFloatCta);
 })();
+
+// [INTERNAL-LINKING-SEO-FIX] روابط <a href> حقيقية وقابلة للزحف لأهم
+// المسارات المنشورة فعلياً — بتتحمل مرة واحدة، وبتستخدم بيانات حقيقية
+// (مش أسماء مطارات مُخترعة). لحد 40 مسار عشان القسم مايبقاش ضخم.
+function loadPopularRouteLinks() {
+  fetch(PROXY + '/route-pages')
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (!j.ok || !j.routes || !j.routes.length) return;
+      var section = document.getElementById('popular-routes-links-section');
+      var container = document.getElementById('popular-routes-links');
+      var routes = j.routes.slice(0, 40);
+      container.innerHTML = routes.map(function (r) {
+        return '<a href="/flights/' + encodeURIComponent(r.slug) + '" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--tx2);text-decoration:none">' +
+          r.origin_city + ' → ' + r.destination_city +
+        '</a>';
+      }).join('');
+      section.style.display = 'block';
+    })
+    .catch(function () { /* قسم ثانوي — فشله مايأثرش على باقي الصفحة */ });
+}
+document.addEventListener('DOMContentLoaded', loadPopularRouteLinks);

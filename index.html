@@ -660,6 +660,18 @@
   </div>
 </section>
 
+<!-- [INTERNAL-LINKING-SEO-FIX] كروت "Beliebte Ziele" و"Top Strecken"
+     فوق دي بتستخدم onclick لتشغيل بحث سريع، مش روابط حقيقية — جوجل
+     مش بيتبع onclick زي ما بيتبع <a href>. القسم ده جديد بالكامل،
+     بروابط <a href="/flights/..."> حقيقية وقابلة للزحف لأهم المسارات
+     المنشورة فعلياً — عشان صفحات المسارات تبقى متاحة الاكتشاف من
+     الصفحة الرئيسية نفسها، مش خريطة الموقع بس.
+-->
+<section id="popular-routes-links-section" style="display:none">
+  <h2 class="sec-title">Beliebte Flugstrecken</h2>
+  <div id="popular-routes-links" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+</section>
+
 <footer><div class="fi2">
   <div class="fgr">
     <div><div class="flo"><span class="logo-i" style="width:26px;height:26px"><svg width="17" height="17" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="currentColor"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
