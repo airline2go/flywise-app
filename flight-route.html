@@ -36,12 +36,6 @@
 .route-price-box{margin-top:18px}
 .route-price-val{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:var(--teal)}
 .route-price-lbl{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
-.route-price-note{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px}
-.route-facts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.route-fact-item{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:11px 14px}
-.route-fact-lbl{font-size:11px;color:var(--tx3)}
-.route-fact-val{font-size:14px;font-weight:700;color:var(--tx);margin-top:2px}
-@media (max-width:480px){.route-facts-grid{grid-template-columns:1fr}}
 .route-cta{display:inline-flex;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
 .route-faq{margin-top:30px}
 .route-faq-item{border-bottom:1px solid var(--bd);padding:14px 0}
@@ -63,15 +57,14 @@
 .airport-info-city{font-size:12.5px;color:var(--tx2);margin-top:2px}
 @media (max-width:480px){.airport-info-grid{grid-template-columns:1fr}}
 .route-insights-section{margin-top:24px}
+.route-besttime-section{margin-top:24px}
+.route-besttime-section h2{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--tx);margin-bottom:10px}
 .route-insights-section h2{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--tx);margin-bottom:10px}
 .route-insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .route-insight-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;text-align:center}
 .route-insight-val{font-family:'Syne',sans-serif;font-weight:800;color:var(--teal);font-size:1.15rem}
 .route-insight-lbl{font-size:11.5px;color:var(--tx3);margin-top:4px}
 @media (max-width:480px){.route-insights-grid{grid-template-columns:1fr}}
-.route-content-section{margin-top:24px}
-.route-content-section h2{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--tx);margin-bottom:10px}
-.route-content-section p{font-size:13.5px;color:var(--tx2);line-height:1.7}
 </style>
 </head>
 <body>
@@ -112,44 +105,8 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-// [ROUTE-CONTENT-EXPANSION-800] Curated, verifiable real landmarks for a
-// deliberately small set of globally well-known major cities — never
-// invented, and never extended to cities we're not confident about.
-// Matched against destination_city_slug (already computed server-side
-// via slugify(destination_city)). Duffel's /places/suggestions API
-// returns city names in English regardless of site language (verified:
-// "Rome", "Vienna", "Prague", "Cairo", "Athens", "Lisbon" — not the
-// German forms), so the keys below are the English-based slugs that
-// slugify() actually produces from that real data, not a guess.
-var CITY_LANDMARKS = {
-  'paris': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Eiffelturm, der Louvre, die Kathedrale Notre-Dame, der Arc de Triomphe und das Künstlerviertel Montmartre.',
-  'london': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Big Ben, der Tower of London, das London Eye, Buckingham Palace und das British Museum.',
-  'rome': 'Zu den bekanntesten Sehenswürdigkeiten zählen das Kolosseum, der Vatikan mit dem Petersdom, das Pantheon, der Trevi-Brunnen und das Forum Romanum.',
-  'barcelona': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Sagrada Família, der Park Güell, Las Ramblas, das Gotische Viertel und der Park Montjuïc.',
-  'amsterdam': 'Zu den bekanntesten Sehenswürdigkeiten zählen die historischen Grachten, das Rijksmuseum, das Anne-Frank-Haus, der Dam-Platz und das Van-Gogh-Museum.',
-  'madrid': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Königspalast, der Prado, der Retiro-Park, die Plaza Mayor und das Stadion Santiago Bernabéu.',
-  'lisbon': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Turm von Belém, das Kloster Jerónimos, die Altstadt Alfama, die Straßenbahnlinie 28 und der Aussichtspunkt Miradouro da Graça.',
-  'vienna': 'Zu den bekanntesten Sehenswürdigkeiten zählen das Schloss Schönbrunn, der Stephansdom, die Hofburg, das Schloss Belvedere und der Prater.',
-  'istanbul': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Hagia Sophia, die Blaue Moschee, der Topkapi-Palast, der Große Basar und der Bosporus.',
-  'dubai': 'Zu den bekanntesten Sehenswürdigkeiten zählen der Burj Khalifa, die Dubai Mall, der Burj Al Arab, das Viertel Al Fahidi und der Palm Jumeirah.',
-  'new-york': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Freiheitsstatue, der Central Park, der Times Square, das Empire State Building und das Metropolitan Museum of Art.',
-  'athens': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Akropolis, der Parthenon, das Akropolis-Museum, der Syntagma-Platz und der antike Agora-Marktplatz.',
-  'prague': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Karlsbrücke, die Prager Burg, der Altstädter Ring, die Astronomische Uhr und das jüdische Viertel Josefov.',
-  'cairo': 'Zu den bekanntesten Sehenswürdigkeiten zählen die Pyramiden von Gizeh, die Sphinx, das Ägyptische Museum, die Altstadt und die Zitadelle von Saladin.',
-};
-
 var params = new URLSearchParams(window.location.search);
-// [CLEAN-URLS] Reads the slug from the new /flights/{slug} path first —
-// falls back to the legacy ?slug= query param so any already-shared or
-// indexed old-format link keeps working exactly as before. Nothing here
-// breaks the old URLs; it only prefers the new ones going forward.
-var cleanMatch = window.location.pathname.match(/^\/flights\/([^\/]+)\/?$/);
-var slug = cleanMatch ? decodeURIComponent(cleanMatch[1]) : params.get('slug');
-
-function flightUrl(s) { return '/flights/' + encodeURIComponent(s); }
-function cityUrl(s) { return '/city/' + encodeURIComponent(s); }
-function countryUrl(c) { return '/country/' + encodeURIComponent(c); }
-function airportUrl(c) { return '/airport/' + encodeURIComponent(c); }
+var slug = params.get('slug');
 
 if (!slug) {
   renderNotFound();
@@ -176,15 +133,7 @@ function renderRoute(route) {
   // behavior change for any route that doesn't use this field.
   var title = route.custom_title || ('Flüge von ' + route.origin_city + ' nach ' + route.destination_city);
   var description = route.custom_meta_description || ('Günstige Flüge von ' + route.origin_city + ' (' + route.origin_iata + ') nach ' + route.destination_city + ' (' + route.destination_iata + ') finden und buchen — Preise vergleichen mit Airpiv.');
-  var url = 'https://airpiv.com' + flightUrl(route.slug);
-
-  // [CLEAN-URLS] If this page was reached via the legacy ?slug= link,
-  // silently swap the address bar to the new clean URL (no reload, no
-  // navigation) so the canonical tag and the visible URL always agree,
-  // and anyone bookmarking/sharing from here gets the new format.
-  if (!cleanMatch) {
-    window.history.replaceState(null, '', flightUrl(route.slug));
-  }
+  var url = 'https://airpiv.com/flight-route.html?slug=' + encodeURIComponent(route.slug);
 
   document.getElementById('page-title').textContent = title + ' | Airpiv';
   document.getElementById('page-description').setAttribute('content', description);
@@ -193,23 +142,29 @@ function renderRoute(route) {
   document.getElementById('og-description').setAttribute('content', description);
   document.getElementById('og-url').setAttribute('content', url);
 
-  // [ROUTE-CONTENT-EXPANSION-800] Intro expanded to the requested
-  // 200-300 word range. Genuinely varies per route (not just a
-  // name-swap template) by conditionally including sentences built from
-  // real per-route facts already computed server-side — distance_km and
-  // haul_type — rather than inventing anything new.
-  var distanceSentence = route.distance_km != null ? (', rund ' + route.distance_km.toLocaleString('de-DE') + ' km entfernt') : '';
-  var haulSentence = route.haul_type === 'long-haul'
-    ? ' Damit handelt es sich um eine Langstreckenverbindung, für die sich eine frühzeitige Planung besonders lohnt.'
-    : (route.haul_type === 'short-haul' ? ' Damit handelt es sich um eine Kurz- bis Mittelstreckenverbindung, die sich auch spontan gut buchen lässt.' : '');
-  var introText = route.intro_text || (
-    'Du planst eine Reise von ' + route.origin_city + ' nach ' + route.destination_city + '? Diese Verbindung gehört zu den gefragten Flugstrecken und wird sowohl von Geschäftsreisenden als auch von Urlaubern regelmäßig genutzt, da sie ' + route.origin_city + ' und ' + route.destination_city + ' direkt miteinander verbindet' + distanceSentence + '.' + haulSentence +
-    ' Mit Airpiv vergleichst du in Sekunden hunderte Airlines und findest in Echtzeit den besten Preis für deinen Flug auf dieser Strecke — transparent, ohne versteckte Kosten und mit Bestpreisgarantie.' +
-    ' Egal, ob du kurzfristig buchen musst oder deine Reise frühzeitig planst: Unsere Suche zeigt dir alle verfügbaren Verbindungen zwischen ' + route.origin_city + ' (' + route.origin_iata + ') und ' + route.destination_city + ' (' + route.destination_iata + ') auf einen Blick — inklusive Direktflügen und Flügen mit Zwischenstopp, damit du die für dich passende Option findest.' +
-    ' Mit der flexiblen Datumssuche kannst du außerdem verschiedene Reisetermine direkt vergleichen, und mit dem Preisalarm wirst du automatisch benachrichtigt, sobald der Preis für diese Strecke fällt — so verpasst du kein günstiges Angebot.' +
-    ' Buchungen laufen bei Airpiv komplett online ab: Flug auswählen, Daten eingeben, sicher bezahlen — und du erhältst deine Bestätigung sofort per E-Mail.' +
-    ' Auf dieser Seite findest du außerdem alle wichtigen Informationen für deine Reise: die beste Reisezeit, die wichtigsten Sehenswürdigkeiten in ' + route.destination_city + ', praktische Reisetipps sowie die Airlines, die diese Strecke bedienen — damit du deine gesamte Reise von Anfang an gut planen kannst.'
-  );
+  // [DYNAMIC-INTRO] Was a single fixed sentence template — only the city
+  // names changed, so every route page read almost word-for-word
+  // identical (a real thin/duplicate-content risk across hundreds of
+  // route pages). Now built from the route's own real, already-available
+  // data (distance_km, haul_type) so the wording structurally differs by
+  // route category, not just by which two city names get substituted in.
+  // Still falls back to the admin's custom intro_text override first,
+  // unchanged behavior for any route that already has one set.
+  function buildDynamicIntro(r) {
+    var hasDistance = r.distance_km != null;
+    var isLongHaul = r.haul_type === 'long-haul';
+    var distancePhrase = hasDistance
+      ? (' Die Strecke ist rund ' + r.distance_km.toLocaleString('de-DE') + ' km lang' + (isLongHaul ? ' und zählt damit zu den Langstreckenflügen.' : ' — ein typischer Kurzstreckenflug innerhalb weniger Flugstunden.'))
+      : '';
+    var openings = isLongHaul
+      ? ('Auf der Suche nach einem Flug von ' + r.origin_city + ' nach ' + r.destination_city + '?')
+      : ('Du planst eine Reise von ' + r.origin_city + ' nach ' + r.destination_city + '?');
+    var closing = isLongHaul
+      ? ' Airpiv vergleicht für diese Langstrecke hunderte Airlines in Echtzeit, damit du den besten Gesamtpreis inklusive aller Gebühren siehst — transparent und ohne versteckte Kosten.'
+      : ' Mit Airpiv vergleichst du in Sekunden hunderte Airlines für diese Strecke und findest den besten Preis für deinen Flug — transparent, ohne versteckte Kosten und mit Bestpreisgarantie.';
+    return openings + distancePhrase + closing;
+  }
+  var introText = route.intro_text || buildDynamicIntro(route);
 
   var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
 
@@ -221,54 +176,23 @@ function renderRoute(route) {
   // simply skips that segment rather than showing a broken link.
   var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span>';
   if (route.destination_country) {
-    breadcrumbHtml += '<a href="' + countryUrl(route.destination_country) + '">' + escHtml(route.destination_country) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="/country.html?code=' + encodeURIComponent(route.destination_country) + '">' + escHtml(route.destination_country) + '</a><span>›</span>';
   }
   if (route.destination_city_slug) {
-    breadcrumbHtml += '<a href="' + cityUrl(route.destination_city_slug) + '">' + escHtml(route.destination_city) + '</a><span>›</span>';
+    breadcrumbHtml += '<a href="/city.html?slug=' + encodeURIComponent(route.destination_city_slug) + '">' + escHtml(route.destination_city) + '</a><span>›</span>';
   }
   breadcrumbHtml += '<span>' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + '</span></nav>';
 
-  // [LAST-UPDATED] Uses the real updated_at timestamp already stored on
-  // every route_pages row (bumped automatically by the PUT handler) —
-  // never a fabricated "freshness" date.
-  var lastUpdatedHtml = '';
-  if (route.updated_at) {
-    var updDate = new Date(route.updated_at);
-    if (!isNaN(updDate.getTime())) {
-      var updStr = updDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-      lastUpdatedHtml = '<div style="font-size:11.5px;color:var(--tx3);margin:-8px 0 12px">Letzte Aktualisierung: ' + escHtml(updStr) + '</div>';
-    }
-  }
-
-  // [AIRPORT-INFO] Links to both airport pages.
+  // [AIRPORT-INFO] Links to both airport pages — what the original
+  // report's route-page checklist asked for ("معلومات المطارين"). Kept
+  // as a separate in-content section rather than extending the
+  // breadcrumb to a 5th level (Airport), which would make it unwieldy —
+  // the breadcrumb stays at the planned 4 levels (Home → Country → City
+  // → Route).
   var airportInfoHtml = '<section class="airport-info-section"><h2>Flughafeninformationen</h2><div class="airport-info-grid">' +
-    '<a class="airport-info-card" href="' + airportUrl(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
-    '<a class="airport-info-card" href="' + airportUrl(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
+    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.origin_iata) + '"><span class="airport-info-code">' + escHtml(route.origin_iata) + '</span><span class="airport-info-city">' + escHtml(route.origin_city) + '</span></a>' +
+    '<a class="airport-info-card" href="/airport.html?code=' + encodeURIComponent(route.destination_iata) + '"><span class="airport-info-code">' + escHtml(route.destination_iata) + '</span><span class="airport-info-city">' + escHtml(route.destination_city) + '</span></a>' +
   '</div></section>';
-
-  // [ROUTE-CONTENT-EXPANSION] Internal links section (#7) — city pages
-  // for both endpoints, complementing the airport-info and
-  // related-routes sections already present. Degrades gracefully: a
-  // route missing a city slug simply omits that one link.
-  var cityLinkCards = [];
-  if (route.destination_city_slug) {
-    cityLinkCards.push('<a class="related-route-card" href="' + cityUrl(route.destination_city_slug) + '">Mehr über ' + escHtml(route.destination_city) + '</a>');
-  }
-  if (route.origin_city_slug) {
-    cityLinkCards.push('<a class="related-route-card" href="' + cityUrl(route.origin_city_slug) + '">Mehr über ' + escHtml(route.origin_city) + '</a>');
-  }
-  var cityLinksHtml = cityLinkCards.length
-    ? '<section class="route-content-section"><h2>Weiterführende Links</h2><div class="related-routes-grid">' + cityLinkCards.join('') + '</div></section>'
-    : '';
-
-  // [ROUTE-CONTENT-EXPANSION-800] Section — destination/airport info.
-  // Purely sync (no async dependency), built entirely from real
-  // per-route fields (airport code, distance, optional admin
-  // weekly_flights) — no fabricated city description.
-  var distanceClauseDestInfo = route.distance_km != null ? (' Die Entfernung beträgt rund ' + route.distance_km.toLocaleString('de-DE') + ' km.') : '';
-  var weeklyFlightsSentence = (route.weekly_flights != null) ? (' Es werden durchschnittlich rund ' + route.weekly_flights + ' Flüge pro Woche auf dieser Strecke angeboten.') : '';
-  var destInfoText = route.destination_city + ' wird über den Flughafen ' + route.destination_iata + ' angeflogen. ' + route.origin_city + ' und ' + route.destination_city + ' sind auf dieser Strecke direkt miteinander verbunden.' + distanceClauseDestInfo + weeklyFlightsSentence + ' Der Flughafen ' + route.destination_iata + ' ist in der Regel gut an die Innenstadt von ' + route.destination_city + ' angebunden, sodass du nach der Landung schnell dein Ziel erreichst, egal ob mit Bahn, Bus oder Taxi. Alle weiteren Details zum Flughafen — darunter zusätzliche Strecken und Verbindungen ab und nach ' + route.destination_iata + ' — findest du auf unserer Flughafenseite.';
-  var destInfoHtml = '<section class="route-content-section"><h2>Ziel- und Flughafeninformationen</h2><p>' + escHtml(destInfoText) + '</p></section>';
 
   // [ROUTE-PAGES-DISTANCE] Real, server-computed distance — shown only
   // when available (older routes created before this feature, or any
@@ -280,95 +204,60 @@ function renderRoute(route) {
     distanceHtml = '<div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px">📏 ' + route.distance_km.toLocaleString('de-DE') + ' km · ' + haulLabel + '</div>';
   }
 
-  // [ROUTE-CONTENT-EXPANSION] Section #3 — best time to travel. Optional
-  // admin override; otherwise a general, honest fallback (no fabricated
-  // per-destination seasonal claims, since no real seasonal data source
-  // exists anywhere in this codebase).
-  var bestTimeText = route.best_time_text || ('Der beste Zeitpunkt für eine Reise von ' + route.origin_city + ' nach ' + route.destination_city + ' hängt von deinen persönlichen Vorlieben ab. Wer Menschenmengen meiden und gleichzeitig von günstigeren Preisen profitieren möchte, reist häufig in der Nebensaison — meist im Frühjahr oder Herbst, außerhalb der Sommerferien und der großen Feiertage. In diesen Zeiträumen sind Flüge und Unterkünfte oft günstiger, während das Wetter in vielen Regionen weiterhin angenehm bleibt. Wer hingegen ein bestimmtes Klima oder eine bestimmte Jahreszeit bevorzugt, sollte sich vorab über die saisonalen Bedingungen am Zielort informieren. Mit der flexiblen Datumssuche von Airpiv kannst du verschiedene Reisetermine vergleichen und so den günstigsten sowie passendsten Zeitpunkt für deinen Flug finden.');
-  var bestTimeHtml = '<section class="route-content-section"><h2>Beste Reisezeit</h2><p>' + escHtml(bestTimeText) + '</p></section>';
-
-  // [ROUTE-CONTENT-EXPANSION-800] Section — Reisetipps (traveler tips).
-  // Practical, generic advice — no fabricated destination-specific
-  // claims. Two clauses vary on real per-route data: check-in timing on
-  // haul_type, and document advice on whether origin/destination are in
-  // different countries (both already computed/known server-side).
-  var checkinSentence = route.haul_type === 'long-haul'
-    ? 'Plane für diesen Langstreckenflug ausreichend Zeit ein — in der Regel solltest du etwa 3 Stunden vor Abflug am Flughafen sein.'
-    : (route.haul_type === 'short-haul'
-      ? 'Plane für diese Kurz- bis Mittelstreckenverbindung ausreichend Zeit ein — in der Regel reichen etwa 2 Stunden vor Abflug am Flughafen.'
-      : 'Plane genügend Zeit für den Check-in ein — je nach Fluglänge meist zwischen 2 und 3 Stunden vor Abflug.');
-  var crossBorder = route.origin_country && route.destination_country && route.origin_country !== route.destination_country;
-  var docsSentence = crossBorder
-    ? 'Da diese Strecke ins Ausland führt, solltest du rechtzeitig prüfen, ob dein Reisepass oder Personalausweis noch lange genug gültig ist.'
-    : 'Für diese Verbindung genügt in der Regel ein gültiger Personalausweis — informiere dich aber vorab über die genauen Einreisebestimmungen für dein Reiseziel.';
-  var bookingWindowLine = route.haul_type === 'long-haul'
-    ? 'Bei Langstreckenflügen wie dieser Verbindung empfiehlt es sich in der Regel, etwa 2 bis 4 Monate im Voraus zu buchen.'
-    : (route.haul_type === 'short-haul'
-      ? 'Bei Kurz- und Mittelstreckenflügen wie dieser Verbindung empfiehlt es sich in der Regel, etwa 4 bis 8 Wochen im Voraus zu buchen.'
-      : 'Ein früher Buchungszeitpunkt zahlt sich auf den meisten Strecken aus — je nach Entfernung liegt das ideale Zeitfenster meist zwischen 6 Wochen und 4 Monaten vor Abflug.');
-  var travelTipsText = checkinSentence + ' ' + docsSentence + ' Achte außerdem auf die Handgepäckbestimmungen deiner Airline, da sich Größe und Gewicht je nach Anbieter unterscheiden können. ' + bookingWindowLine + ' Eine Reiseversicherung kann sinnvoll sein, um dich gegen unvorhergesehene Ereignisse wie Flugausfälle oder Gepäckverlust abzusichern. Es lohnt sich außerdem, dich vorab kurz über die gängige Landeswährung und gebräuchliche Zahlungsmethoden am Zielort zu informieren, damit du bei der Ankunft direkt gut vorbereitet bist. Speichere deine Bordkarte und wichtigen Dokumente idealerweise auch offline auf deinem Smartphone, falls die Internetverbindung am Flughafen einmal schwach sein sollte.';
-  var travelTipsHtml = '<section class="route-content-section"><h2>Reisetipps</h2><p>' + escHtml(travelTipsText) + '</p></section>';
-
-  // [ROUTE-CONTENT-EXPANSION] Section #5 — what to visit. Priority order:
-  // (1) admin override, (2) curated real landmarks for known major
-  // cities, (3) generic fallback that never invents specific landmark
-  // names for destinations with no curated content — and always links
-  // through to the city page for anyone who wants more detail.
-  var cityLandmarksSentence = route.destination_city_slug ? CITY_LANDMARKS[route.destination_city_slug] : null;
-  var attractionsText = route.attractions_text ||
-    (route.destination_city + ' hat für Besucher einiges zu bieten — von historischen Sehenswürdigkeiten über lebendige Stadtviertel bis hin zu vielfältigen kulinarischen Angeboten. ' +
-    (cityLandmarksSentence || 'Egal, ob du Museen, Architektur, Parks oder das lokale Nachtleben erkunden möchtest: Die Stadt lässt sich sowohl bei einem Kurztrip als auch bei einem längeren Aufenthalt gut erleben.') +
-    ' Viele der wichtigsten Ziele liegen nah beieinander und lassen sich bequem zu Fuß, mit dem Fahrrad oder den öffentlichen Verkehrsmitteln erreichen — ideal, um auch bei einem kurzen Zwischenstopp möglichst viel zu sehen. Die Anbindung an den öffentlichen Nahverkehr macht es meist einfach, vom Flughafen aus direkt die wichtigsten Ziele in der Innenstadt zu erreichen.');
-  var attractionsMoreLink = route.destination_city_slug ? (' <a href="' + cityUrl(route.destination_city_slug) + '">Mehr über ' + escHtml(route.destination_city) + '</a>') : '';
-  var attractionsHtml = '<section class="route-content-section"><h2>Top-Sehenswürdigkeiten in ' + escHtml(route.destination_city) + '</h2><p>' + escHtml(attractionsText) + attractionsMoreLink + '</p></section>';
-
-  // [ROUTE-CONTENT-EXPANSION-800] Section — Airlines auf dieser Strecke.
-  // The weekly_flights figure moved to the destination-info section
-  // above (it's a connectivity fact about the city, not the airlines);
-  // this section stays focused on carriers, upgraded in place with real
-  // Duffel airline names once the price-check request returns below.
-  var flightInfoIntro = 'Mehrere Airlines bedienen die Strecke von ' + route.origin_city + ' nach ' + route.destination_city + '. Ein Vergleich lohnt sich, da sich Faktoren wie Freigepäck, Sitzabstand und Umbuchungsbedingungen je nach Airline unterscheiden können. Vergleiche Preise und Leistungen direkt in unserer Suche, um die für dich passende Airline zu finden.';
-  var flightInfoHtml = '<section class="route-insights-section" id="route-insights-section"><h2>Airlines auf dieser Strecke</h2><p>' + escHtml(flightInfoIntro) + '</p><p style="color:var(--tx3);font-size:13px">Flugzeit und Airlines werden geladen …</p></section>';
-
-  // [ROUTE-CONTENT-EXPANSION] Section #6 — FAQ, exactly the 4 requested
-  // questions. Admin's custom_faq (if set) still fully overrides this,
-  // same as before. Otherwise these 4 render synchronously with honest
-  // "check the search" fallbacks, then 3 of them (duration, direct
-  // flights, best airline) get upgraded in place with real Duffel data
-  // once it arrives — never a placeholder pretending to be real data,
-  // and never duplicated/appended like the old flow did.
-  var usingCustomFaq = !!(route.custom_faq && route.custom_faq.length);
-  var faqItems = usingCustomFaq ? route.custom_faq : [
-    { question: 'Wie lange dauert der Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?',
-      answer: 'Die genaue Flugzeit hängt vom gewählten Flug ab. Nutze unsere Suche, um die aktuelle Flugdauer für deinen Wunschtermin zu sehen.' },
-    { question: 'Was ist der günstigste Monat für einen Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?',
-      answer: 'Generell sind Flüge außerhalb der Sommerferien (Juni bis August) und der Weihnachtsferien meist günstiger, da die Nachfrage in dieser Zeit geringer ist. Mit der flexiblen Datumssuche von Airpiv kannst du die Preise für verschiedene Monate direkt vergleichen.' },
-    { question: 'Gibt es Direktflüge von ' + route.origin_city + ' nach ' + route.destination_city + '?',
-      answer: 'Das siehst du direkt in unserer Flugsuche — dort werden sowohl Direktflüge als auch Verbindungen mit Zwischenstopp angezeigt.' },
-    { question: 'Welche Airline ist am besten für die Strecke ' + route.origin_city + '–' + route.destination_city + '?',
-      answer: 'Mehrere Airlines bedienen diese Strecke. Vergleiche Preise, Gepäckbedingungen und Bewertungen direkt in der Suche, um die für dich passende Airline zu finden.' },
+  // [ROUTE-FAQ-OVERRIDE] Uses the admin's custom FAQ when set, otherwise
+  // falls back to real per-route data — the haul-type/distance question
+  // replaces the old route-agnostic "Can I change my booking later?"
+  // (flagged in an SEO review as adding no real value since it applies
+  // to literally any route). A 4th question about flight duration/direct
+  // availability is appended separately once real insights data arrives
+  // asynchronously below — never built ahead of time with a placeholder.
+  var haulQuestion = route.distance_km != null
+    ? { question: 'Wie weit ist es von ' + route.origin_city + ' nach ' + route.destination_city + '?',
+        answer: 'Die Entfernung beträgt rund ' + route.distance_km.toLocaleString('de-DE') + ' km — ' + (route.haul_type === 'long-haul' ? 'ein Langstreckenflug.' : 'ein Kurzstreckenflug.') }
+    : { question: 'Welcher Flughafen wird in ' + route.destination_city + ' angeflogen?', answer: 'Die Strecke nutzt den Flughafen ' + route.destination_iata + '. Genaue Flugzeiten und Airlines siehst du in den Suchergebnissen.' };
+  // [ROUTE-FAQ-OVERRIDE] The old first question ("Wie finde ich den
+  // günstigsten Flug...?") was answered with the exact same generic
+  // sentence on every single route page — real duplicate content. Now
+  // ties directly into the route's own Best-Travel-Time data built just
+  // below when available, so the question and its answer are actually
+  // specific to this route's haul type rather than universally
+  // applicable filler. Falls back to the old generic question only for
+  // the rare route still missing distance_km/haul_type.
+  var bestTimeFaqItem = route.distance_km != null
+    ? { question: 'Wann ist die beste Reisezeit von ' + route.origin_city + ' nach ' + route.destination_city + '?',
+        answer: route.haul_type === 'long-haul'
+          ? 'Am günstigsten ist diese Langstrecke meist 2–3 Monate im Voraus gebucht, außerhalb der Schulferien sowie der Weihnachts- und Osterzeit.'
+          : 'Am günstigsten ist diese Kurzstrecke meist in der Nebensaison (April–Mai, September–Oktober) sowie bei Flügen unter der Woche, besonders dienstags und mittwochs.' }
+    : { question: 'Wie finde ich den günstigsten Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?', answer: 'Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis.' };
+  var faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq : [
+    bestTimeFaqItem,
+    haulQuestion,
   ];
-  var faqHtml = faqItems.map(function(f, i) {
-    return '<div class="route-faq-item" id="faq-item-' + i + '"><div class="route-faq-q">' + escHtml(f.question) + '</div><div class="route-faq-a">' + escHtml(f.answer) + '</div></div>';
-  }).join('');
+  // [BEST-TRAVEL-TIME] New section — didn't exist before. Built from the
+  // route's own real haul_type/distance_km rather than one fixed block of
+  // advice repeated on every page: short-haul and long-haul routes get
+  // structurally different guidance (the actual industry-standard advice
+  // genuinely differs between the two), and the specific distance/haul
+  // label is woven into the text itself so two routes in the same
+  // category still don't read as identical boilerplate. Skipped entirely
+  // (rather than shown with a fabricated placeholder) for the rare route
+  // still missing distance_km/haul_type.
+  var bestTimeHtml = '';
+  if (route.distance_km != null) {
+    var isLongHaulBT = route.haul_type === 'long-haul';
+    var bestTimeBody = isLongHaulBT
+      ? ('Für Langstreckenflüge wie ' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + ' lohnt es sich meist, 2–3 Monate im Voraus zu buchen — die Preise steigen auf dieser Distanz typischerweise deutlich in den letzten 3–4 Wochen vor Abflug. Reisen außerhalb der Schulferien sowie außerhalb der Weihnachts- und Osterzeit sind auf Langstrecken erfahrungsgemäß günstiger, da die Nachfrage in diesen Zeiträumen spürbar sinkt.')
+      : ('Für Kurzstreckenflüge wie ' + escHtml(route.origin_city) + ' → ' + escHtml(route.destination_city) + ' sind die sogenannten Nebensaison-Monate (meist April–Mai und September–Oktober) günstiger als Hochsommer oder Weihnachten. Flüge unter der Woche — besonders dienstags und mittwochs — sind auf Kurzstrecken erfahrungsgemäß günstiger als Wochenendflüge, da die Nachfrage von Geschäftsreisenden am Wochenende sinkt.');
+    bestTimeHtml = '<section class="route-besttime-section"><h2>Beste Reisezeit für diese Strecke</h2><p>' + bestTimeBody + '</p></section>';
+  }
 
-  // [ROUTE-CONTENT-EXPANSION-800] Quick-facts summary table ("Auf einen
-  // Blick"). Every value here is either already known synchronously
-  // (distance, airports) or gets filled in once real Duffel data
-  // arrives below (duration, direct-flight availability) — never a
-  // guessed placeholder pretending to be a real number.
-  var quickFactsHtml = '<section class="route-content-section" id="route-quick-facts"><h2>Auf einen Blick</h2><div class="route-facts-grid">' +
-    (route.distance_km != null ? '<div class="route-fact-item"><div class="route-fact-lbl">Entfernung</div><div class="route-fact-val">' + route.distance_km.toLocaleString('de-DE') + ' km</div></div>' : '') +
-    '<div class="route-fact-item" id="qf-duration"><div class="route-fact-lbl">Flugzeit</div><div class="route-fact-val">wird geladen …</div></div>' +
-    '<div class="route-fact-item" id="qf-direct"><div class="route-fact-lbl">Direktflug</div><div class="route-fact-val">wird geladen …</div></div>' +
-    '<div class="route-fact-item"><div class="route-fact-lbl">Abflughafen</div><div class="route-fact-val">' + escHtml(route.origin_iata) + '</div></div>' +
-    '<div class="route-fact-item"><div class="route-fact-lbl">Zielflughafen</div><div class="route-fact-val">' + escHtml(route.destination_iata) + '</div></div>' +
-  '</div></section>';
+  var faqHtml = faqItems.map(function(f) {
+    return '<div class="route-faq-item"><div class="route-faq-q">' + escHtml(f.question) + '</div><div class="route-faq-a">' + escHtml(f.answer) + '</div></div>';
+  }).join('');
 
   document.getElementById('route-content').innerHTML =
     breadcrumbHtml +
     '<h1>' + escHtml(title) + '</h1>' +
-    lastUpdatedHtml +
     '<div class="route-hero">' +
       '<div class="route-hero-cities">' +
         '<span>' + escHtml(route.origin_city) + '</span>' +
@@ -382,14 +271,9 @@ function renderRoute(route) {
       '<a href="' + bookingUrl + '" class="route-cta">Jetzt Flüge suchen →</a>' +
     '</div>' +
     '<section><p>' + escHtml(introText) + '</p></section>' +
-    quickFactsHtml +
-    destInfoHtml +
-    flightInfoHtml +
     bestTimeHtml +
-    attractionsHtml +
-    travelTipsHtml +
     airportInfoHtml +
-    cityLinksHtml +
+    '<section id="route-insights-section"></section>' +
     '<section class="route-faq">' +
       '<h2>Häufige Fragen</h2>' +
       faqHtml +
@@ -405,17 +289,14 @@ function renderRoute(route) {
     };
   }
 
-  function refreshSchema() {
-    document.getElementById('route-schema').textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": title,
-      "description": description,
-      "url": url,
-      "mainEntity": buildFaqSchema(faqItems)
-    });
-  }
-  refreshSchema();
+  document.getElementById('route-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description,
+    "url": url,
+    "mainEntity": buildFaqSchema(faqItems)
+  });
 
   // [RELATED-ROUTES] Fetched separately — never blocks the rest of the
   // page from rendering, and the section simply doesn't appear if there
@@ -427,13 +308,36 @@ function renderRoute(route) {
       var section = document.getElementById('related-routes-section');
       section.innerHTML = '<h2>Ähnliche Flugrouten</h2><div class="related-routes-grid">' +
         j.related.map(function(r) {
-          return '<a class="related-route-card" href="' + flightUrl(r.slug) + '">' +
+          return '<a class="related-route-card" href="/flight-route.html?slug=' + encodeURIComponent(r.slug) + '">' +
             escHtml(r.origin_city) + ' → ' + escHtml(r.destination_city) +
           '</a>';
         }).join('') +
       '</div>';
     })
     .catch(function(){ /* related routes are a bonus, not critical — fail silently */ });
+
+  document.getElementById('route-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": title,
+    "description": description,
+    "url": url,
+    "mainEntity": {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Wie finde ich den günstigsten Flug von " + route.origin_city + " nach " + route.destination_city + "?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Airpiv vergleicht in Echtzeit hunderte Airlines für diese Strecke. Je flexibler dein Reisedatum, desto größer die Chance auf einen Spitzenpreis." }
+        },
+        {
+          "@type": "Question",
+          "name": "Welcher Flughafen wird in " + route.destination_city + " angeflogen?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Die Strecke nutzt den Flughafen " + route.destination_iata + "." }
+        }
+      ]
+    }
+  });
 
   // Fetch the live indicative price separately — never blocks the rest of
   // the page from rendering if Duffel is briefly slow/unavailable.
@@ -442,7 +346,7 @@ function renderRoute(route) {
     .then(function(j){
       var box = document.getElementById('route-price-box');
       if (j.ok && j.price != null) {
-        box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div><div class="route-price-note">Preise ändern sich laufend — der finale Preis wird beim Buchen bestätigt.</div>';
+        box.innerHTML = '<div class="route-price-val">ab ' + j.price.toFixed(0) + ' €</div><div class="route-price-lbl">Indikativer Preis · Economy · 1 Erwachsener</div>';
         // [DATE-MATCH-FIX] Carry the exact date this price was computed
         // for into the search link — clicking "Jetzt Flüge suchen" now
         // lands the customer on a search for that SAME date, instead of
@@ -470,52 +374,40 @@ function renderRoute(route) {
         }
         var directLine = ins.allDirect
           ? 'Alle gefundenen Flüge sind Direktflüge.'
-          : (ins.directAvailable ? 'Direktflüge sind auf dieser Strecke verfügbar.' : 'Auf dieser Strecke gibt es aktuell keine Direktflüge — nur Verbindungen mit Zwischenstopp.');
+          : (ins.directAvailable ? 'Direktflüge sind auf dieser Strecke verfügbar.' : 'Auf dieser Strecke gibt es aktuell keine Direktflüge — mit Zwischenstopp.');
         var airlinesLine = ins.airlines.length
-          ? ('Zu den Airlines, die diese Strecke bedienen, zählen unter anderem ' + ins.airlines.join(', ') + '.')
+          ? ('Fliegende Airlines: ' + ins.airlines.join(', ') + '.')
           : '';
-
-        // Section — upgrade the Airlines placeholder with the real
-        // carrier names plus duration/direct-flight facts. Everything is
-        // assembled as plain text first, then escHtml'd once at the end —
-        // avoids double-escaping the airline names pulled from Duffel.
-        var airlinesBodyText = (airlinesLine ? airlinesLine + ' ' : '') + flightInfoIntro + ' Die durchschnittliche Flugzeit auf dieser Strecke beträgt ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine;
-        var insightsHtml = '<section class="route-insights-section" id="route-insights-section"><h2>Airlines auf dieser Strecke</h2><p>' +
-          escHtml(airlinesBodyText) +
-          '</p><div class="route-insights-grid">' +
+        var insightsHtml = '<section class="route-insights-section"><h2>Flugdaten für diese Strecke</h2><div class="route-insights-grid">' +
           '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">Durchschnittliche Flugzeit</div></div>' +
           '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">Kürzeste gefundene Flugzeit</div></div>' +
-        '</div></section>';
+        '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
         var insightsTarget = document.getElementById('route-insights-section');
         if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
 
-        // [ROUTE-CONTENT-EXPANSION-800] Fill in the two async cells of
-        // the "Auf einen Blick" quick-facts table with the same real
-        // data — never duplicated logic, just the same ins.* values.
-        var qfDuration = document.querySelector('#qf-duration .route-fact-val');
-        if (qfDuration) qfDuration.textContent = fmtHrsMin(ins.avgDurationMin);
-        var qfDirect = document.querySelector('#qf-direct .route-fact-val');
-        if (qfDirect) qfDirect.textContent = ins.allDirect ? 'Ja, immer' : (ins.directAvailable ? 'Teilweise verfügbar' : 'Nein');
+        // [ROUTE-FAQ-OVERRIDE] Append a 4th, real-data FAQ question about
+        // duration/direct-flight availability — exactly the route-specific
+        // question type asked for ("Gibt es Direktflüge?"), built from
+        // real Duffel data for THIS route rather than invented at
+        // page-build time. Appended, not replacing the synchronous
+        // distance-based questions already shown.
+        if (!route.custom_faq || !route.custom_faq.length) {
+          var durationFaqHtml = '<div class="route-faq-item"><div class="route-faq-q">Wie lange dauert der Flug von ' + escHtml(route.origin_city) + ' nach ' + escHtml(route.destination_city) + '?</div><div class="route-faq-a">Die durchschnittliche Flugzeit liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine + '</div></div>';
+          var faqSection = document.querySelector('.route-faq');
+          if (faqSection) faqSection.insertAdjacentHTML('beforeend', durationFaqHtml);
 
-        // Section #6 — upgrade FAQ items 0 (duration), 2 (direct flights)
-        // and 3 (best airline) in place with real data, and keep the
-        // JSON-LD schema in sync. Skipped entirely when the admin set a
-        // custom FAQ — that content is hand-written and never
-        // auto-modified.
-        if (!usingCustomFaq) {
-          faqItems[0].answer = 'Die durchschnittliche Flugzeit auf dieser Strecke liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '.';
-          faqItems[2].answer = directLine;
-          if (ins.airlines.length) {
-            faqItems[3].answer = airlinesLine + ' Vergleiche Preise und Leistungen direkt in der Suche, um die für dich passende Airline zu finden.';
-          }
-          [0, 2, 3].forEach(function(i) {
-            var el = document.getElementById('faq-item-' + i);
-            if (el) {
-              var a = el.querySelector('.route-faq-a');
-              if (a) a.textContent = faqItems[i].answer;
-            }
+          // [ROUTE-FAQ-OVERRIDE] Keep structured data in sync with what's
+          // now visible — without this, the schema would still claim
+          // only 2 questions while the page visibly shows 3.
+          var durationFaqItem = { question: 'Wie lange dauert der Flug von ' + route.origin_city + ' nach ' + route.destination_city + '?', answer: 'Die durchschnittliche Flugzeit liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine };
+          document.getElementById('route-schema').textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": title,
+            "description": description,
+            "url": url,
+            "mainEntity": buildFaqSchema(faqItems.concat([durationFaqItem]))
           });
-          refreshSchema();
         }
       }
     })
@@ -523,7 +415,6 @@ function renderRoute(route) {
       document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
     });
 }
-
 </script>
 
 </body>
