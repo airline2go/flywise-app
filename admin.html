@@ -1554,7 +1554,21 @@
         <button class="btn btn-ghost" onclick="runRouteBackfill()">🔧 إصلاح المسارات القديمة</button>
         <button class="btn btn-ghost" onclick="clearRoutePriceCache()">🔄 تحديث كل الأسعار</button>
         <button class="btn btn-primary" onclick="openRouteEditor()">➕ مسار جديد</button>
+        <button class="btn btn-ghost" onclick="openBulkRouteCreator()">📦 إنشاء بالجملة</button>
+        <button class="btn btn-ghost" onclick="openRouteMatrix()">🗺️ مصفوفة المسارات</button>
       </div>
+    </div>
+
+    <!-- [ADMIN-SCALE-FIX] بحث وفلترة حقيقيين من قاعدة البيانات مباشرة —
+         ضروري مع آلاف المسارات، عشان تلاقي أي مسار في ثانية بدل ما
+         تسكرول وسط آلاف الصفوف. -->
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <input type="text" id="rp-search-input" placeholder="🔍 دوّر باسم مدينة أو كود مطار (زي Berlin أو FRA)..." style="flex:1;min-width:220px;padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px" oninput="rpSearchDebounced()">
+      <select id="rp-status-filter" onchange="rpResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+        <option value="">كل الحالات</option>
+        <option value="published">منشور بس</option>
+        <option value="draft">مسودة بس</option>
+      </select>
     </div>
 
     <div class="table-card">
@@ -1572,7 +1586,11 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <div id="rp-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:13px;color:var(--tx2)"></div>
   </div>
+
 
   <!-- ==================== ERROR LOGS ==================== -->
   <div class="page" id="page-errorlogs">
@@ -2133,6 +2151,25 @@ async function deleteBlogPost(id) {
 
 // ============ [ROUTE-PAGES] Route landing pages admin ============
 var allRoutePages = [];
+var rpCurrentPage = 1;
+var rpTotalPages = 1;
+var rpSearchTimer = null;
+
+// [ADMIN-SCALE-FIX] البحث بيستنى المستخدم يوقف عن الكتابة 400ms قبل ما
+// يبعت الطلب فعلياً — بدون ده، كل حرف بيكتبه هيبعت طلب منفصل للسيرفر.
+function rpSearchDebounced() {
+  clearTimeout(rpSearchTimer);
+  rpSearchTimer = setTimeout(rpResetAndLoad, 400);
+}
+function rpResetAndLoad() {
+  rpCurrentPage = 1;
+  loadRoutePages();
+}
+function rpGoToPage(p) {
+  if (p < 1 || p > rpTotalPages) return;
+  rpCurrentPage = p;
+  loadRoutePages();
+}
 
 async function runRouteBackfill() {
   if (!confirm('سيتم فحص كل المسارات القديمة وإضافة بيانات الدولة/المدينة الناقصة لها (يستخدم بيانات حقيقية من Duffel). قد يستغرق دقيقة أو أكثر حسب عدد المسارات. هل تريد المتابعة؟')) return;
@@ -2170,18 +2207,45 @@ async function clearRoutePriceCache() {
   } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
 
+// [ADMIN-SCALE-FIX] كانت بتجيب كل المسارات دفعة واحدة من غير أي حد —
+// دلوقتي بتبعت البحث والفلترة ورقم الصفحة، والسيرفر هو اللي بيرجّع
+// بس 50 مسار في المرة (مش كل شيء ثم قص من الفرونت إند، ده كان هيفضل
+// بيحمّل آلاف الصفوف كل مرة حتى لو مش هيتعرضوا كلهم).
 async function loadRoutePages() {
   try {
-    const res = await adminFetch('/admin/route-pages');
+    var q = encodeURIComponent(document.getElementById('rp-search-input').value.trim());
+    var status = document.getElementById('rp-status-filter').value;
+    var url = '/admin/route-pages?page=' + rpCurrentPage + '&limit=50';
+    if (q) url += '&q=' + q;
+    if (status) url += '&status=' + status;
+    const res = await adminFetch(url);
     const j = await res.json();
-    if (j.ok) { allRoutePages = j.routes; renderRoutePagesList(); }
+    if (j.ok) {
+      allRoutePages = j.routes;
+      rpTotalPages = j.totalPages || 1;
+      renderRoutePagesList();
+      renderRoutePagesPagination(j.total || 0);
+    }
   } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderRoutePagesPagination(total) {
+  var el = document.getElementById('rp-pagination');
+  if (!el) return;
+  if (total === 0) { el.innerHTML = ''; return; }
+  var html = '<span>' + total.toLocaleString('ar-EG') + ' مسار إجمالاً — صفحة ' + rpCurrentPage + ' من ' + rpTotalPages + '</span>';
+  html += '<button class="btn btn-ghost" style="padding:5px 12px" ' + (rpCurrentPage <= 1 ? 'disabled' : '') + ' onclick="rpGoToPage(' + (rpCurrentPage - 1) + ')">‹ السابق</button>';
+  html += '<button class="btn btn-ghost" style="padding:5px 12px" ' + (rpCurrentPage >= rpTotalPages ? 'disabled' : '') + ' onclick="rpGoToPage(' + (rpCurrentPage + 1) + ')">التالي ›</button>';
+  el.innerHTML = html;
 }
 
 function renderRoutePagesList() {
   var tbody = document.getElementById('route-pages-list');
   if (!allRoutePages.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
+    var q = document.getElementById('rp-search-input').value.trim();
+    tbody.innerHTML = q
+      ? '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">مفيش نتايج لـ "' + escHtml(q) + '"</td></tr>'
+      : '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
     return;
   }
   tbody.innerHTML = allRoutePages.map(function(r) {
@@ -2198,6 +2262,288 @@ function renderRoutePagesList() {
       '</td>' +
     '</tr>';
   }).join('');
+}
+
+// ============ [BULK-CREATE] إنشاء مسارات بالجملة ============
+var bulkSelectedAirports = []; // [{code, city, country, lat, lng}]
+var bulkSearchDebounce = null;
+
+function openBulkRouteCreator() {
+  bulkSelectedAirports = [];
+  renderBulkSelectedAirports();
+  document.getElementById('bulk-airport-search').value = '';
+  document.getElementById('bulk-preview-box').style.display = 'none';
+  document.getElementById('bulk-route-modal').classList.add('open');
+}
+
+function bulkAirportSearch(query) {
+  clearTimeout(bulkSearchDebounce);
+  var dropdown = document.getElementById('bulk-airport-results');
+  if (!query || query.trim().length < 2) { dropdown.style.display = 'none'; return; }
+  bulkSearchDebounce = setTimeout(function() {
+    adminFetch('/search/airports?q=' + encodeURIComponent(query.trim()))
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (!j.ok || !j.airports || !j.airports.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد نتائج</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        var airportsOnly = j.airports.filter(function(a) { return a.type === 'airport'; });
+        if (!airportsOnly.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد مطارات مطابقة</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        dropdown.innerHTML = airportsOnly.map(function(a) {
+          var already = bulkSelectedAirports.some(function(x) { return x.code === a.code; });
+          return '<div class="route-ac-item" style="' + (already ? 'opacity:.4' : '') + '" onclick=\'' + (already ? '' : 'bulkAddAirport(' + escJsonAttr(a) + ')') + '\'>' +
+            escHtml(a.city) + ' — ' + escHtml(a.name) + '<span class="ac-code">' + escHtml(a.code) + (already ? ' ✓ مضاف' : '') + '</span>' +
+          '</div>';
+        }).join('');
+        dropdown.style.display = 'block';
+      })
+      .catch(function() {
+        dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ خطأ في البحث</div>';
+        dropdown.style.display = 'block';
+      });
+  }, 350);
+}
+
+function bulkAddAirport(airport) {
+  if (bulkSelectedAirports.some(function(a) { return a.code === airport.code; })) return;
+  bulkSelectedAirports.push({ code: airport.code, city: airport.city, country: airport.country || null, lat: airport.lat, lng: airport.lng });
+  renderBulkSelectedAirports();
+  document.getElementById('bulk-airport-search').value = '';
+  document.getElementById('bulk-airport-results').style.display = 'none';
+  document.getElementById('bulk-preview-box').style.display = 'none';
+}
+
+function bulkRemoveAirport(code) {
+  bulkSelectedAirports = bulkSelectedAirports.filter(function(a) { return a.code !== code; });
+  renderBulkSelectedAirports();
+  document.getElementById('bulk-preview-box').style.display = 'none';
+}
+
+function renderBulkSelectedAirports() {
+  var el = document.getElementById('bulk-selected-airports');
+  if (!bulkSelectedAirports.length) {
+    el.innerHTML = '<span style="color:var(--tx3);font-size:12px">لسه ما اخترتش أي مطار</span>';
+    updateBulkPreview();
+    return;
+  }
+  el.innerHTML = bulkSelectedAirports.map(function(a) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--teal-lt,rgba(15,181,160,.12));color:var(--teal2,#0FB5A0);border-radius:20px;padding:5px 6px 5px 12px;font-size:12px;font-weight:600">' +
+      escHtml(a.city) + ' (' + escHtml(a.code) + ')' +
+      '<button onclick="bulkRemoveAirport(\'' + escHtml(a.code) + '\')" style="background:rgba(0,0,0,.1);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;color:inherit;font-size:11px;line-height:1">✕</button>' +
+    '</span>';
+  }).join('');
+  updateBulkPreview();
+}
+
+// [PREVIEW] معاينة عدد المسارات اللي هتتعمل قبل الإرسال الفعلي —
+// حساب محلي بسيط (مفيش استعلام سيرفر)، عشان الأدمن يتأكد قبل ما يبعت.
+function updateBulkPreview() {
+  var box = document.getElementById('bulk-preview-box');
+  var n = bulkSelectedAirports.length;
+  if (n < 2) { box.style.display = 'none'; return; }
+  var both = document.getElementById('bulk-both-directions').checked;
+  var count = both ? n * (n - 1) : (n * (n - 1)) / 2;
+  box.style.display = 'block';
+  box.textContent = '📊 ' + n + ' مطار مختار → هيتولد لحد ' + count + ' مسار (أي مسار موجود فعلاً هيتجاهل تلقائياً)';
+}
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'bulk-both-directions') updateBulkPreview();
+});
+
+async function submitBulkRoutes() {
+  if (bulkSelectedAirports.length < 2) {
+    showToast('اختار مطارين على الأقل', 'error');
+    return;
+  }
+  var btn = document.getElementById('bulk-submit-btn');
+  var originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ جارٍ الإنشاء...';
+  try {
+    const res = await adminFetch('/admin/route-pages/bulk-create', {
+      method: 'POST',
+      body: JSON.stringify({
+        airports: bulkSelectedAirports,
+        bothDirections: document.getElementById('bulk-both-directions').checked,
+      }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ اتعمل ' + j.created + ' مسار جديد (كمسودة) — ' + j.skippedExisting + ' كانوا موجودين بالفعل واتجاهلوا', 'success');
+      closeModal('bulk-route-modal');
+      rpResetAndLoad();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) {
+    showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ============ [MISSING-ROUTES-MATRIX] مصفوفة المسارات الناقصة ============
+var matrixSelectedAirports = []; // [{code, city, country, lat, lng}]
+var matrixSearchDebounce = null;
+
+function openRouteMatrix() {
+  matrixSelectedAirports = [];
+  renderMatrixSelectedAirports();
+  document.getElementById('matrix-airport-search').value = '';
+  document.getElementById('matrix-picker-step').style.display = 'block';
+  document.getElementById('matrix-grid-step').style.display = 'none';
+  document.getElementById('matrix-modal').classList.add('open');
+}
+
+function matrixBackToPicker() {
+  document.getElementById('matrix-picker-step').style.display = 'block';
+  document.getElementById('matrix-grid-step').style.display = 'none';
+}
+
+// [DRY] نفس منطق بحث المطارات بالظبط بتاع الإنشاء بالجملة، بس بيضيف
+// لقائمة اختيار المصفوفة بدل قائمة الإنشاء.
+function matrixAirportSearch(query) {
+  clearTimeout(matrixSearchDebounce);
+  var dropdown = document.getElementById('matrix-airport-results');
+  if (!query || query.trim().length < 2) { dropdown.style.display = 'none'; return; }
+  matrixSearchDebounce = setTimeout(function() {
+    adminFetch('/search/airports?q=' + encodeURIComponent(query.trim()))
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (!j.ok || !j.airports || !j.airports.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد نتائج</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        var airportsOnly = j.airports.filter(function(a) { return a.type === 'airport'; });
+        if (!airportsOnly.length) {
+          dropdown.innerHTML = '<div class="route-ac-item" style="color:var(--tx3);cursor:default">لا توجد مطارات مطابقة</div>';
+          dropdown.style.display = 'block';
+          return;
+        }
+        dropdown.innerHTML = airportsOnly.map(function(a) {
+          var already = matrixSelectedAirports.some(function(x) { return x.code === a.code; });
+          return '<div class="route-ac-item" style="' + (already ? 'opacity:.4' : '') + '" onclick=\'' + (already ? '' : 'matrixAddAirport(' + escJsonAttr(a) + ')') + '\'>' +
+            escHtml(a.city) + ' — ' + escHtml(a.name) + '<span class="ac-code">' + escHtml(a.code) + (already ? ' ✓ مضاف' : '') + '</span>' +
+          '</div>';
+        }).join('');
+        dropdown.style.display = 'block';
+      })
+      .catch(function() {
+        dropdown.innerHTML = '<div class="route-ac-item" style="color:#f87171;cursor:default">⚠️ خطأ في البحث</div>';
+        dropdown.style.display = 'block';
+      });
+  }, 350);
+}
+
+function matrixAddAirport(airport) {
+  if (matrixSelectedAirports.length >= 40) { showToast('الحد الأقصى 40 مطار للمصفوفة الواحدة', 'error'); return; }
+  if (matrixSelectedAirports.some(function(a) { return a.code === airport.code; })) return;
+  matrixSelectedAirports.push({ code: airport.code, city: airport.city, country: airport.country || null, lat: airport.lat, lng: airport.lng });
+  renderMatrixSelectedAirports();
+  document.getElementById('matrix-airport-search').value = '';
+  document.getElementById('matrix-airport-results').style.display = 'none';
+}
+
+function matrixRemoveAirport(code) {
+  matrixSelectedAirports = matrixSelectedAirports.filter(function(a) { return a.code !== code; });
+  renderMatrixSelectedAirports();
+}
+
+function renderMatrixSelectedAirports() {
+  var el = document.getElementById('matrix-selected-airports');
+  if (!matrixSelectedAirports.length) {
+    el.innerHTML = '<span style="color:var(--tx3);font-size:12px">لسه ما اخترتش أي مطار</span>';
+    return;
+  }
+  el.innerHTML = matrixSelectedAirports.map(function(a) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--teal-lt,rgba(15,181,160,.12));color:var(--teal2,#0FB5A0);border-radius:20px;padding:5px 6px 5px 12px;font-size:12px;font-weight:600">' +
+      escHtml(a.city) + ' (' + escHtml(a.code) + ')' +
+      '<button onclick="matrixRemoveAirport(\'' + escHtml(a.code) + '\')" style="background:rgba(0,0,0,.1);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;color:inherit;font-size:11px;line-height:1">✕</button>' +
+    '</span>';
+  }).join('');
+}
+
+// [MATRIX-BUILD] بتجيب بس المسارات الموجودة فعلاً ضمن المطارات
+// المختارة، وبتقارنها محلياً مع كل التوليفات الممكنة نظرياً — الفرق
+// بينهم هو "المسارات الناقصة".
+async function loadRouteMatrix() {
+  if (matrixSelectedAirports.length < 2) {
+    showToast('اختار مطارين على الأقل', 'error');
+    return;
+  }
+  try {
+    var codes = matrixSelectedAirports.map(function(a) { return a.code; }).join(',');
+    const res = await adminFetch('/admin/route-pages/matrix?codes=' + encodeURIComponent(codes));
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل تحميل المصفوفة', 'error'); return; }
+
+    var existingMap = {}; // "ORG_DST" -> status
+    (j.existing || []).forEach(function(r) { existingMap[r.origin_iata + '_' + r.destination_iata] = r.status; });
+
+    var table = document.getElementById('matrix-table');
+    var html = '<tr><th style="padding:6px 8px;background:var(--bg2)"></th>';
+    matrixSelectedAirports.forEach(function(d) {
+      html += '<th style="padding:6px 8px;background:var(--bg2);font-weight:700;white-space:nowrap">' + escHtml(d.code) + '</th>';
+    });
+    html += '</tr>';
+
+    matrixSelectedAirports.forEach(function(o) {
+      html += '<tr><th style="padding:6px 8px;background:var(--bg2);text-align:right;white-space:nowrap">' + escHtml(o.code) + '</th>';
+      matrixSelectedAirports.forEach(function(d) {
+        if (o.code === d.code) {
+          html += '<td style="padding:6px 8px;background:var(--bd);text-align:center">—</td>';
+          return;
+        }
+        var status = existingMap[o.code + '_' + d.code];
+        if (status === 'published') {
+          html += '<td style="padding:6px 8px;background:rgba(34,197,94,.25);text-align:center" title="منشور">🟩</td>';
+        } else if (status === 'draft') {
+          html += '<td style="padding:6px 8px;background:rgba(234,179,8,.25);text-align:center" title="مسودة">🟨</td>';
+        } else {
+          html += '<td style="padding:6px 8px;background:var(--bg2);text-align:center;cursor:pointer" title="ناقص — دوس للإنشاء" onclick="matrixQuickCreate(\'' + escHtml(o.code) + '\',\'' + escHtml(d.code) + '\')">➕</td>';
+        }
+      });
+      html += '</tr>';
+    });
+    table.innerHTML = html;
+
+    document.getElementById('matrix-picker-step').style.display = 'none';
+    document.getElementById('matrix-grid-step').style.display = 'block';
+  } catch (e) {
+    showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
+  }
+}
+
+// [QUICK-CREATE] الدوس على خانة ناقصة بيفتح فورم المسار الفردي
+// بالبيانات الحقيقية (المدينة، الدولة، الإحداثيات) متعبّية تلقائياً —
+// بس محتاج تأكيد الحفظ اليدوي، مفيش أي إنشاء تلقائي بدون مراجعة.
+function matrixQuickCreate(originCode, destCode) {
+  var o = matrixSelectedAirports.find(function(a) { return a.code === originCode; });
+  var d = matrixSelectedAirports.find(function(a) { return a.code === destCode; });
+  if (!o || !d) return;
+  closeModal('matrix-modal');
+  openRouteEditor();
+  document.getElementById('route-origin-search').value = o.city + ' (' + o.code + ')';
+  document.getElementById('route-origin-iata').value = o.code;
+  document.getElementById('route-origin-lat').value = o.lat != null ? o.lat : '';
+  document.getElementById('route-origin-lng').value = o.lng != null ? o.lng : '';
+  document.getElementById('route-origin-country').value = o.country || '';
+  document.getElementById('route-dest-search').value = d.city + ' (' + d.code + ')';
+  document.getElementById('route-dest-iata').value = d.code;
+  document.getElementById('route-dest-lat').value = d.lat != null ? d.lat : '';
+  document.getElementById('route-dest-lng').value = d.lng != null ? d.lng : '';
+  document.getElementById('route-dest-country').value = d.country || '';
+  routeSelectedOriginCity = o.city;
+  routeSelectedDestCity = d.city;
+  updateRouteDistancePreview();
 }
 
 // [ROUTE-DELETE-FIX] Same delegated-click fix as the blog posts list —
@@ -4402,6 +4748,79 @@ async function downloadBatchSeparate() {
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveRoutePage('draft')">💾 حفظ كمسودة</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveRoutePage('published')">🚀 نشر الآن</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- [BULK-CREATE] بتستخدم نفس دالة بحث المطارات الحقيقية (routeAirportSearch)
+     المستخدمة في نافذة المسار الفردي بالظبط — نفس البيانات الحقيقية
+     (المدينة، الدولة، الإحداثيات)، بس بتضيف لقائمة بدل ما تختار واحد
+     بس. كل التوليفات الممكنة بين المطارات المختارة بتتولد وترسل
+     للسيرفر دفعة واحدة، واللي موجود فعلاً بيتجاهل تلقائياً. -->
+<div class="modal-overlay" id="bulk-route-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <div class="modal-title">📦 إنشاء مسارات بالجملة</div>
+      <button class="modal-close" onclick="closeModal('bulk-route-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:var(--tx2);margin:0 0 14px;line-height:1.6">
+        دوّر وأضف كل المطارات اللي عايز تربطها ببعض — هيتعمل مسار لكل توليفة ممكنة بينهم، وأي مسار موجود فعلاً هيتجاهل تلقائياً. المسارات الجديدة بتتعمل كـ"مسودة" — مش هتظهر للزوار غير لما تنشرها يدوياً.
+      </p>
+
+      <div class="form-group" style="position:relative">
+        <label class="form-label">أضف مطار</label>
+        <input type="text" class="form-input" id="bulk-airport-search" placeholder="ابحث: Berlin, BER..." autocomplete="off" oninput="bulkAirportSearch(this.value)">
+        <div id="bulk-airport-results" class="route-ac-dropdown" style="display:none"></div>
+      </div>
+
+      <div id="bulk-selected-airports" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px;min-height:20px"></div>
+
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);margin-bottom:16px;cursor:pointer">
+        <input type="checkbox" id="bulk-both-directions" checked style="width:16px;height:16px">
+        كل الاتجاهين (برلين→لندن ولندن→برلين كمسارين منفصلين)
+      </label>
+
+      <div id="bulk-preview-box" style="background:var(--bg2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--tx2);display:none"></div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="submitBulkRoutes()" id="bulk-submit-btn">إنشاء كل المسارات</button>
+    </div>
+  </div>
+</div>
+
+<!-- [MISSING-ROUTES-MATRIX] بتوري شبكة مطارات×مطارات — كل خانة بتقول
+     هل المسار ده موجود (منشور/مسودة) ولا لسه ناقص. الدوس على خانة
+     ناقصة بيفتح نافذة إنشاء مسار واحد بالبيانات متعبّية مسبقاً. -->
+<div class="modal-overlay" id="matrix-modal">
+  <div class="modal" style="max-width:min(94vw,900px)">
+    <div class="modal-head">
+      <div class="modal-title">🗺️ مصفوفة المسارات الناقصة</div>
+      <button class="modal-close" onclick="closeModal('matrix-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="matrix-picker-step">
+        <p style="font-size:12.5px;color:var(--tx2);margin:0 0 14px;line-height:1.6">
+          اختار المطارات اللي عايز تشوف تغطيتها — هتظهرلك شبكة توريك أي توليفة موجودة (أخضر)، مسودة (أصفر)، أو ناقصة تماماً (فاضية، قابلة للدوس عليها للإنشاء الفوري).
+        </p>
+        <div class="form-group" style="position:relative">
+          <label class="form-label">أضف مطار</label>
+          <input type="text" class="form-input" id="matrix-airport-search" placeholder="ابحث: Berlin, BER..." autocomplete="off" oninput="matrixAirportSearch(this.value)">
+          <div id="matrix-airport-results" class="route-ac-dropdown" style="display:none"></div>
+        </div>
+        <div id="matrix-selected-airports" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px;min-height:20px"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="loadRouteMatrix()">عرض المصفوفة</button>
+      </div>
+      <div id="matrix-grid-step" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="display:flex;gap:14px;font-size:11px;color:var(--tx2)">
+            <span>🟩 منشور</span><span>🟨 مسودة</span><span>⬜ ناقص (دوس للإنشاء)</span>
+          </div>
+          <button class="btn btn-ghost" style="padding:5px 12px;font-size:12px" onclick="matrixBackToPicker()">← تعديل الاختيار</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="matrix-table" style="border-collapse:collapse;font-size:11px"></table>
+        </div>
       </div>
     </div>
   </div>
