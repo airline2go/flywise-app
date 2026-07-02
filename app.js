@@ -127,7 +127,7 @@ function loadDestinationPrices() {
     seen[code] = true;
     var group = document.querySelectorAll('.dyn-price[data-code="' + code + '"]');
     group.forEach(function (t) { t.classList.add('loading'); });
-    fetch(PROXY + '/route-price?from=BER&to=' + encodeURIComponent(code))
+    fetch(PROXY + '/route-price?from=' + encodeURIComponent(HOME_ORIGIN.code) + '&to=' + encodeURIComponent(code))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         group.forEach(function (t) { t.classList.remove('loading'); });
@@ -148,3 +148,96 @@ function loadDestinationPrices() {
   });
 }
 document.addEventListener('DOMContentLoaded', loadDestinationPrices);
+
+// [NEAREST-AIRPORT] Every "quick pick" card/chip (Beliebte Ziele, Top
+// Strecken) used to hardcode Berlin as the departure airport for every
+// visitor, everywhere — someone in Munich or Vienna tapping "Lissabon"
+// got a Berlin→Lisbon search, not a search from wherever they actually
+// are. HOME_ORIGIN now defaults to Berlin (safe fallback for denied/
+// unavailable location, or a visitor far outside this airport list) and
+// is only ever upgraded to something more relevant once geolocation
+// actually resolves — never blocks page render, never prompts twice.
+// Deliberately a short, hand-picked list of major DACH-region hubs
+// (this is a German-market site) rather than all ~80 airports in AP,
+// since nearest-of-80 would need real coordinates for every one of them
+// (AP only carries names/codes, not lat/lng) — nearest-of-9 major hubs
+// is what actually matters for "which airport is realistically closest
+// to this visitor" in practice.
+var NEARBY_AIRPORTS = [
+  { code: 'BER', city: 'Berlin', lat: 52.3667, lng: 13.5033 },
+  { code: 'MUC', city: 'München', lat: 48.3538, lng: 11.7861 },
+  { code: 'FRA', city: 'Frankfurt', lat: 50.0379, lng: 8.5622 },
+  { code: 'HAM', city: 'Hamburg', lat: 53.6304, lng: 9.9882 },
+  { code: 'DUS', city: 'Düsseldorf', lat: 51.2895, lng: 6.7668 },
+  { code: 'CGN', city: 'Köln', lat: 50.8659, lng: 7.1427 },
+  { code: 'STR', city: 'Stuttgart', lat: 48.6899, lng: 9.2220 },
+  { code: 'VIE', city: 'Wien', lat: 48.1103, lng: 16.5697 },
+  { code: 'ZRH', city: 'Zürich', lat: 47.4647, lng: 8.5492 },
+];
+var HOME_ORIGIN = { code: 'BER', city: 'Berlin' }; // آمن افتراضياً لحد ما GPS يرجع نتيجة (لو رجع أصلاً)
+
+function haversineKmClient(lat1, lon1, lat2, lon2) {
+  var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function detectHomeAirport() {
+  if (!('geolocation' in navigator)) return; // المتصفح مش بيدعم الموقع الجغرافي — نفضل على برلين
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      var nearest = null, nearestDist = Infinity;
+      NEARBY_AIRPORTS.forEach(function (ap) {
+        var d = haversineKmClient(lat, lng, ap.lat, ap.lng);
+        if (d < nearestDist) { nearestDist = d; nearest = ap; }
+      });
+      if (nearest && nearest.code !== HOME_ORIGIN.code) {
+        HOME_ORIGIN = { code: nearest.code, city: nearest.city };
+        renderTopStrecken();     // إعادة رسم المسارات بالمدينة الصح
+        loadDestinationPrices(); // إعادة تحميل الأسعار من المطار الصح
+      }
+    },
+    function () { /* المستخدم رفض الإذن أو حصل خطأ — نفضل على برلين بهدوء، من غير ما نزعجه بأي رسالة */ },
+    { timeout: 5000, maximumAge: 600000 }
+  );
+}
+
+// كل الكروت اللي كانت بتنده qs('BER', code, name) بقت بتنده qsHome بدلها،
+// عشان تستخدم أقرب مطار حقيقي للمستخدم مش برلين ثابتة.
+function qsHome(toCode, toCity) {
+  qs(HOME_ORIGIN.code, toCode, toCity);
+}
+
+// [TOP-STRECKEN-EXPAND] كانت 6 مسارات ثابتة في HTML، بسعر ثابت، ومربوطة
+// ببرلين دايماً. بقت 30 مسار، من غير سعر (السعر مش موجود هنا أصلاً كان
+// تقديري ثابت وغير دقيق)، وبتترسم ديناميكياً بأقرب مدينة حقيقية
+// للمستخدم كنقطة انطلاق.
+var TOP_ROUTES = [
+  ['LHR', 'London', 14], ['PMI', 'Mallorca', 8], ['AMS', 'Amsterdam', 10],
+  ['FCO', 'Rom', 6], ['VIE', 'Wien', 5], ['MAD', 'Madrid', 7],
+  ['BCN', 'Barcelona', 9], ['LIS', 'Lissabon', 4], ['IST', 'Istanbul', 6],
+  ['CDG', 'Paris', 11], ['ATH', 'Athen', 3], ['PRG', 'Prag', 5],
+  ['BUD', 'Budapest', 4], ['WAW', 'Warschau', 4], ['CPH', 'Kopenhagen', 5],
+  ['OSL', 'Oslo', 3], ['ARN', 'Stockholm', 3], ['HEL', 'Helsinki', 2],
+  ['DUB', 'Dublin', 4], ['ZRH', 'Zürich', 6], ['MXP', 'Mailand', 5],
+  ['NCE', 'Nizza', 3], ['LYS', 'Lyon', 2], ['BRU', 'Brüssel', 5],
+  ['LUX', 'Luxemburg', 2], ['SVQ', 'Sevilla', 2], ['VLC', 'Valencia', 3],
+  ['NAP', 'Neapel', 3], ['SPU', 'Split', 2], ['DBV', 'Dubrovnik', 2],
+];
+
+function renderTopStrecken() {
+  var el = document.getElementById('top-strecken-grid');
+  if (!el) return;
+  el.innerHTML = TOP_ROUTES.map(function (r) {
+    var code = r[0], city = r[1], freq = r[2];
+    return '<div class="rchip" onclick="qsHome(\'' + code + '\',\'' + city + '\')"><div><div class="rname">' +
+      HOME_ORIGIN.city + ' → ' + city + '</div><div class="rfreq">' + freq + ' Flüge/Tag</div></div></div>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  renderTopStrecken();
+  detectHomeAirport();
+});

@@ -4,10 +4,10 @@
 .dyn-price.price-updated{animation:priceFlash .7s ease}
 @keyframes priceFlash{0%{color:var(--teal2);transform:scale(1.1)}60%{color:var(--teal2);transform:scale(1.1)}100%{color:inherit;transform:scale(1)}}
 @media(max-width:899px){
-  .dgrid.hscroll{display:flex!important;grid-template-columns:none!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:12px;padding-bottom:6px;margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad)}
+  .dgrid.hscroll{display:grid!important;grid-auto-flow:column;grid-template-rows:repeat(2,1fr)!important;grid-template-columns:none!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:12px;padding-bottom:6px;margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad)}
   .dgrid.hscroll::-webkit-scrollbar{display:none}
-  .dgrid.hscroll .dcard{flex:0 0 150px}
-  .rgrid2.hscroll{display:flex!important;grid-template-columns:none!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:8px;padding-bottom:6px;margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad)}
+  .dgrid.hscroll .dcard{width:150px}
+  .rgrid2.hscroll{display:grid!important;grid-auto-flow:column;grid-template-rows:repeat(2,1fr)!important;grid-template-columns:none!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:8px;padding-bottom:6px;margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad)}
   .rgrid2.hscroll::-webkit-scrollbar{display:none}
-  .rgrid2.hscroll .rchip{flex:0 0 210px}
+  .rgrid2.hscroll .rchip{width:210px}
 }
