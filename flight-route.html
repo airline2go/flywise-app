@@ -237,6 +237,7 @@ function getAlternativeAirports(cityName, excludeIata) {
 }
 
 function renderRoute(route) {
+  try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: route.origin_iata, destination: route.destination_iata, slug: route.slug }); } catch (e) {}
   // [LOCALIZATION-FIX] يتصحّح مرة واحدة هنا فقط — كل الاستخدامات
   // الأخرى في الدالة دي (العنوان، الوصف، الأسئلة الشائعة، الروابط...)
   // بتاخد القيمة المُصححة تلقائياً من غير ما نلمسها واحدة واحدة.

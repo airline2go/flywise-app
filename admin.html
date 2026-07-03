@@ -2112,17 +2112,28 @@ function parseSingleBlogInput(raw) {
   var lines = String(raw || '').replace(/\r\n/g, '\n').split('\n');
   var i = 0;
   while (i < lines.length && !lines[i].trim()) i++;
-  var title = (lines[i] || '').trim();
+  // [TITLE-TAG-FIX] Defensively strips any HTML tags from the title
+  // line — the exact bug that shipped a literal "<h2>...</h2>" as a
+  // post's visible title: someone wrapped the first line in tags out of
+  // habit from formatting the body. The title is always plain text, no
+  // matter what's typed here; headings belong in the body below.
+  var title = (lines[i] || '').replace(/<[^>]+>/g, '').trim();
   i++;
 
+  // [COVER-URL-FIX] Only the line RIGHT AFTER the title counts as the
+  // cover image — previously any bare URL found ANYWHERE in the article
+  // was silently grabbed as the cover image and stripped from the text,
+  // which meant a route link recommended later in the article could
+  // vanish from the body without warning. Any other bare URL just stays
+  // in the content, where the server now turns it into a real link.
+  while (i < lines.length && !lines[i].trim()) i++;
   var coverUrl = '';
-  var bodyLines = [];
-  for (; i < lines.length; i++) {
-    var t = lines[i].trim();
-    if (!coverUrl && /^https?:\/\/\S+$/i.test(t)) { coverUrl = t; continue; }
-    bodyLines.push(lines[i]);
+  if (i < lines.length && /^https?:\/\/\S+$/i.test(lines[i].trim())) {
+    coverUrl = lines[i].trim();
+    i++;
   }
-  var content = bodyLines.join('\n').replace(/^\s*\n+/, '').trim();
+
+  var content = lines.slice(i).join('\n').replace(/^\s*\n+/, '').trim();
 
   var firstParagraph = (content.split(/\n\s*\n/)[0] || content).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   var excerpt = truncateAtWordBoundary(firstParagraph, 155);
@@ -4788,9 +4799,9 @@ async function downloadBatchSeparate() {
       <input type="hidden" id="blog-edit-id">
       <div class="form-group">
         <label class="form-label">المقال *</label>
-        <textarea class="form-input" id="blog-single" style="min-height:380px;resize:vertical;font-size:13.5px" oninput="updateBlogSlugPreview()" placeholder="السطر الأول = العنوان.&#10;&#10;بعد كده اكتب المقال بشكل طبيعي — فقرة، سطر فاضي، فقرة تانية...&#10;&#10;لو حابب تحط صورة غلاف، حط رابطها في سطر لوحده في أي مكان (مثلاً https://airpiv.com/blog-images/xyz.jpg) — هيتعرف عليه تلقائياً وهيتشال من نص المقال.&#10;&#10;الوصف المختصر ووصف SEO بيتولدوا تلقائياً من أول فقرة — مفيش حاجة تانية تحتاج تملاها."></textarea>
+        <textarea class="form-input" id="blog-single" style="min-height:380px;resize:vertical;font-size:13.5px" oninput="updateBlogSlugPreview()" placeholder="السطر الأول = العنوان (نص عادي بس، من غير أي HTML أو رموز).&#10;&#10;لو حابب صورة غلاف، حط رابطها في السطر اللي بعد العنوان مباشرة (مثلاً https://airpiv.com/blog-images/xyz.jpg).&#10;&#10;بعد كده اكتب المقال بشكل طبيعي — فقرة، سطر فاضي، فقرة تانية. أي رابط تحطه جوه المقال (زي رابط مسار طيران) هيتحول تلقائياً لرابط قابل للدوس عليه.&#10;&#10;الوصف المختصر ووصف SEO بيتولدوا تلقائياً — لو طلعوا ضعاف، النظام بيقوّيهم بالذكاء الاصطناعي أوتوماتيك."></textarea>
         <div style="font-size:11px;color:var(--tx3);margin-top:4px" id="blog-slug-preview"></div>
-        <div style="font-size:11px;color:var(--tx3);margin-top:6px">✨ السطر الأول = العنوان · أي رابط لوحده في سطر = صورة الغلاف · الباقي = المحتوى (فقرة، سطر فاضي، فقرة — أو HTML مباشرة). المقتطف ووصف SEO بيتولدوا أوتوماتيك من أول فقرة، مفيش حد لطول المقال.</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:6px">✨ السطر الأول = العنوان (نص عادي) · السطر اللي بعده مباشرة، لو رابط، = صورة الغلاف · الباقي = المحتوى، وأي رابط جواه بيتحول لرابط شغال تلقائياً. المقتطف ووصف SEO بيتولدوا أوتوماتيك ويتقووا بالذكاء الاصطناعي لو ضعاف. مفيش حد لطول المقال.</div>
       </div>
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveBlogPost('draft')">💾 حفظ كمسودة</button>

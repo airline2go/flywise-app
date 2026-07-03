@@ -96,7 +96,7 @@
 <footer><div class="fi2">
   <div class="fgr">
     <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Find flights no one else can find. 600+ airlines, best prices, full guarantee.</p></div>
-    <div class="fcol"><h4>Company</h4><ul><li><a href="/about.html">About us</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Company</h4><ul><li><a href="/">About us</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
     <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Contact</a></li><li><a href="/privacy.html">Privacy</a></li><li><a href="/terms.html">Terms</a></li></ul></div>
   </div>
   <div class="fbot"><p>© 2026 Airpiv · All rights reserved</p></div>
@@ -168,6 +168,7 @@ function getAlternativeAirports(cityName, excludeIata) {
 }
 
 function renderRoute(route) {
+  try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: route.origin_iata, destination: route.destination_iata, slug: route.slug }); } catch (e) {}
   route.origin_city = anglicizeCity(route.origin_city, route.origin_iata);
   route.destination_city = anglicizeCity(route.destination_city, route.destination_iata);
 
