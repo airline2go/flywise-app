@@ -1087,6 +1087,15 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Inline edit dropdown -->
     <div class="rp-edit-drop" id="rp-edit-drop">
+      <div class="rp-edit-row" style="grid-template-columns:1fr;margin-bottom:8px">
+        <div class="ksel-wrap">
+          <select class="ksel" id="rpe-trip-sel" onchange="rpSetTripSel(this.value)">
+            <option value="rr">&#8644; Hin- und Rückreise</option>
+            <option value="ow">&#8594; Einfache Fahrt</option>
+          </select>
+          <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
       <div class="rp-edit-row">
         <div class="rp-edit-field" style="position:relative" id="rpe-from-field" onclick="rpEditLoc('from')">
           <div class="rp-edit-lbl">Von</div>
@@ -1104,7 +1113,7 @@ Telefon: [Ihre Telefonnummer]</p>
           <div class="rp-edit-lbl">Abflug</div>
           <div class="rp-edit-val" id="rpe-dep">—</div>
         </div>
-        <div class="rp-edit-field" onclick="openDatePicker('ret')">
+        <div class="rp-edit-field" id="rpe-ret-field" onclick="openDatePicker('ret')">
           <div class="rp-edit-lbl">Rückkehr</div>
           <div class="rp-edit-val" id="rpe-ret">—</div>
         </div>
