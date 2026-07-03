@@ -2086,14 +2086,55 @@ document.addEventListener('click', function(e) {
 function openBlogEditor(post) {
   document.getElementById('blog-editor-title').textContent = post ? 'تعديل المقال' : 'مقال جديد';
   document.getElementById('blog-edit-id').value = post ? post.id : '';
-  document.getElementById('blog-title').value = post ? post.title : '';
-  document.getElementById('blog-meta-desc').value = post ? (post.meta_description || '') : '';
-  document.getElementById('blog-meta-count').textContent = (post && post.meta_description) ? post.meta_description.length : 0;
-  document.getElementById('blog-excerpt').value = post ? (post.excerpt || '') : '';
-  document.getElementById('blog-cover').value = post ? (post.cover_image_url || '') : '';
-  document.getElementById('blog-content').value = post ? post.content : '';
+  // [BLOG-SINGLE-FIELD] Reconstruct the one-box view from the post's
+  // separately-stored columns: title on line 1, the cover image URL (if
+  // any) on its own line right after, then the content. Saving always
+  // re-derives everything from this same box — see parseSingleBlogInput.
+  var single = '';
+  if (post) {
+    single = post.title || '';
+    if (post.cover_image_url) single += '\n' + post.cover_image_url;
+    single += '\n\n' + (post.content || '');
+  }
+  document.getElementById('blog-single').value = single;
   updateBlogSlugPreview();
   document.getElementById('blog-editor-modal').classList.add('open');
+}
+
+// [BLOG-SINGLE-FIELD] One box in, four database columns out. Convention:
+// first non-empty line = title. Any later line that's nothing but a bare
+// URL = the cover image (removed from the body wherever it appears, so
+// it never shows up as stray text in the published article). Everything
+// else = content. The excerpt and SEO meta description are no longer
+// filled in by hand at all — both are derived from the plain text of the
+// first paragraph of the body, trimmed to a clean word boundary.
+function parseSingleBlogInput(raw) {
+  var lines = String(raw || '').replace(/\r\n/g, '\n').split('\n');
+  var i = 0;
+  while (i < lines.length && !lines[i].trim()) i++;
+  var title = (lines[i] || '').trim();
+  i++;
+
+  var coverUrl = '';
+  var bodyLines = [];
+  for (; i < lines.length; i++) {
+    var t = lines[i].trim();
+    if (!coverUrl && /^https?:\/\/\S+$/i.test(t)) { coverUrl = t; continue; }
+    bodyLines.push(lines[i]);
+  }
+  var content = bodyLines.join('\n').replace(/^\s*\n+/, '').trim();
+
+  var firstParagraph = (content.split(/\n\s*\n/)[0] || content).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  var excerpt = truncateAtWordBoundary(firstParagraph, 155);
+
+  return { title: title, content: content, cover_image_url: coverUrl, excerpt: excerpt, meta_description: excerpt };
+}
+function truncateAtWordBoundary(s, max) {
+  if (s.length <= max) return s;
+  var cut = s.slice(0, max);
+  var lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > 40) cut = cut.slice(0, lastSpace); // don't chop a very short first word off
+  return cut.trim() + '…';
 }
 
 // [BLOG-SYSTEM] Mirrors the server's slugify() closely enough for a live
@@ -2101,7 +2142,7 @@ function openBlogEditor(post) {
 // slug (and handles collisions), this is just so the admin can see roughly
 // what URL their post will get before saving.
 function updateBlogSlugPreview() {
-  var title = document.getElementById('blog-title').value;
+  var title = parseSingleBlogInput(document.getElementById('blog-single').value).title;
   var umlauts = {'ä':'ae','ö':'oe','ü':'ue','Ä':'Ae','Ö':'Oe','Ü':'Ue','ß':'ss'};
   var slug = title.replace(/[äöüÄÖÜß]/g, function(c){ return umlauts[c] || c; })
     .toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
@@ -2110,16 +2151,15 @@ function updateBlogSlugPreview() {
 
 async function saveBlogPost(status) {
   var id = document.getElementById('blog-edit-id').value;
-  var title = document.getElementById('blog-title').value.trim();
-  var content = document.getElementById('blog-content').value.trim();
-  if (!title || !content) { showToast('⚠️ العنوان والمحتوى مطلوبان', 'error'); return; }
+  var parsed = parseSingleBlogInput(document.getElementById('blog-single').value);
+  if (!parsed.title || !parsed.content) { showToast('⚠️ لازم تكتب عنوان (السطر الأول) ومحتوى', 'error'); return; }
 
   var payload = {
-    title: title,
-    meta_description: document.getElementById('blog-meta-desc').value.trim(),
-    excerpt: document.getElementById('blog-excerpt').value.trim(),
-    cover_image_url: document.getElementById('blog-cover').value.trim(),
-    content: content,
+    title: parsed.title,
+    meta_description: parsed.meta_description,
+    excerpt: parsed.excerpt,
+    cover_image_url: parsed.cover_image_url,
+    content: parsed.content,
     status: status,
   };
 
@@ -4747,27 +4787,10 @@ async function downloadBatchSeparate() {
     <div class="modal-body">
       <input type="hidden" id="blog-edit-id">
       <div class="form-group">
-        <label class="form-label">العنوان *</label>
-        <input type="text" class="form-input" id="blog-title" placeholder="Günstige Flüge buchen: 7 Tricks für bessere Preise" oninput="updateBlogSlugPreview()">
+        <label class="form-label">المقال *</label>
+        <textarea class="form-input" id="blog-single" style="min-height:380px;resize:vertical;font-size:13.5px" oninput="updateBlogSlugPreview()" placeholder="السطر الأول = العنوان.&#10;&#10;بعد كده اكتب المقال بشكل طبيعي — فقرة، سطر فاضي، فقرة تانية...&#10;&#10;لو حابب تحط صورة غلاف، حط رابطها في سطر لوحده في أي مكان (مثلاً https://airpiv.com/blog-images/xyz.jpg) — هيتعرف عليه تلقائياً وهيتشال من نص المقال.&#10;&#10;الوصف المختصر ووصف SEO بيتولدوا تلقائياً من أول فقرة — مفيش حاجة تانية تحتاج تملاها."></textarea>
         <div style="font-size:11px;color:var(--tx3);margin-top:4px" id="blog-slug-preview"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">وصف SEO (Meta Description)</label>
-        <textarea class="form-input" id="blog-meta-desc" style="min-height:60px;resize:vertical" maxlength="160" oninput="document.getElementById('blog-meta-count').textContent=this.value.length"></textarea>
-        <div style="font-size:11px;color:var(--tx3);margin-top:4px"><span id="blog-meta-count">0</span>/160 حرف — يظهر بنتائج البحث على Google</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">مقتطف قصير (يظهر بصفحة فهرس المدونة)</label>
-        <textarea class="form-input" id="blog-excerpt" style="min-height:60px;resize:vertical"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">رابط صورة الغلاف (اختياري)</label>
-        <input type="text" class="form-input" id="blog-cover" placeholder="https://airpiv.com/blog-images/...">
-      </div>
-      <div class="form-group">
-        <label class="form-label">المحتوى *</label>
-        <textarea class="form-input" id="blog-content" style="min-height:280px;resize:vertical;font-size:13.5px" placeholder="اكتب المقال بشكل طبيعي — فقرة، ثم سطر فاضي، ثم الفقرة التالية...&#10;&#10;مثل ما تكتب رسالة واتساب أو إيميل عادي. التنسيق يصير تلقائياً."></textarea>
-        <div style="font-size:11px;color:var(--tx3);margin-top:4px">✨ اكتب بشكل طبيعي (فقرة، سطر فاضي، فقرة) — يتنسق تلقائياً. أو استخدم HTML مباشرة (&lt;h2&gt; &lt;strong&gt; وغيرها) للتحكم الكامل.</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:6px">✨ السطر الأول = العنوان · أي رابط لوحده في سطر = صورة الغلاف · الباقي = المحتوى (فقرة، سطر فاضي، فقرة — أو HTML مباشرة). المقتطف ووصف SEO بيتولدوا أوتوماتيك من أول فقرة، مفيش حد لطول المقال.</div>
       </div>
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveBlogPost('draft')">💾 حفظ كمسودة</button>
