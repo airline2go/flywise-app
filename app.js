@@ -13,6 +13,30 @@ var AIRLINE_LOGOS={},AIRLINE_COLORS={LH:"#003366",FR:"#073590",U2:"#ff6600",EW:"
 // /confirm-payment call, which by then returns instantly (the original
 // request has released its lock either way) and reuses the existing,
 // already-tested success/failure rendering path unchanged.
+// [PROCESSING-BANNER] A fixed banner at the top of the page, visible for
+// the entire post-payment wait (which can genuinely take up to ~40
+// seconds while the real airline confirms the booking) — before this,
+// the customer only ever saw one initial toast that disappeared after a
+// couple of seconds, then nothing, with no visible sign anything was
+// still happening until either the confirmation screen or a final
+// error/timeout message showed up.
+function showBookingProcessingBanner(){
+  var b=document.getElementById("booking-processing-banner");
+  if(!b){
+    b=document.createElement("div");
+    b.id="booking-processing-banner";
+    b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:999998;background:var(--teal,#00a991);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.15)";
+    b.innerHTML='<span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite"></span><span id="booking-processing-banner-txt"></span>';
+    document.body.appendChild(b);
+  }
+  var txt=document.getElementById("booking-processing-banner-txt");
+  if(txt)txt.textContent=tL("Deine Buchung wird bestätigt …","Confirming your booking …","جارٍ تأكيد حجزك …");
+  b.style.display="flex";
+}
+function hideBookingProcessingBanner(){
+  var b=document.getElementById("booking-processing-banner");
+  if(b)b.style.display="none";
+}
 function pollBookingStatus(sessionId,attempt){
   var maxAttempts=20; // ~40s of polling — generous enough for the slow periods seen in production, and cheap since no external APIs are touched
   fetch(PROXY+"/booking-status/"+encodeURIComponent(sessionId)).then(function(r){return r.json()}).then(function(s){
@@ -25,6 +49,7 @@ function pollBookingStatus(sessionId,attempt){
       // checkStripeReturn() directly — see [TIGHT-LOOP-FIX] there for why.
       checkStripeReturnAfterBooked(sessionId,0);
     }else if(s.ok&&s.status==="failed"){
+      hideBookingProcessingBanner();
       // [SAFETY] Rendered directly from this lightweight status response
       // — deliberately NOT re-calling /confirm-payment here, since a
       // failed booking (e.g. price drift, already refunded) retrying the
@@ -38,6 +63,7 @@ function pollBookingStatus(sessionId,attempt){
     }else if(attempt<maxAttempts){
       setTimeout(function(){pollBookingStatus(sessionId,attempt+1)},2000);
     }else{
+      hideBookingProcessingBanner();
       // Payment via Stripe definitely succeeded (that's how we got here) —
       // this is reassurance, not a failure, since we simply ran out of
       // patience waiting for our own backend to finish under load.
@@ -47,7 +73,27 @@ function pollBookingStatus(sessionId,attempt){
     if(attempt<maxAttempts)setTimeout(function(){pollBookingStatus(sessionId,attempt+1)},2000);
   });
 }
-function checkStripeReturn(e){var n=e;if(!n){var a=new URLSearchParams(window.location.search);n=a.get("session_id")}if(n){try{window.history.replaceState({},document.title,window.location.origin+window.location.pathname)}catch(e){}var o=null;try{o=JSON.parse(sessionStorage.getItem("fw_pending_booking")||"null")}catch(e){}showToast("⏳ "+t("pay_verifying"),"info"),fetch(PROXY+"/confirm-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:n})}).then(function(e){return e.json()}).then(function(e){if(e.ok){try{sessionStorage.removeItem("fw_pending_booking")}catch(e){}trackEvent("purchase",{transaction_id:n,value:o?o.customerTotal:0,currency:"EUR"}),loyaltySyncFromServer(function(){if(o&&!e.already){var t=Math.max(0,Math.round((loyaltyData.points||0)-(o.pointsBeforeBooking||loyaltyData.points||0)));t>0&&setTimeout(function(){showToast("🏆 +"+t+" Treuepunkte verdient!","success")},2e3)}}),fetch(PROXY+"/booking-confirmation?session_id="+encodeURIComponent(n)).then(function(e){return e.json()}).then(function(t){if(t.ok&&t.order)showConfirmation(orderToBookingData(t.order,t.booking));else{var n=o?{orig:o.orig,dest:o.dest,price:o.basePrice}:{};showConfirmation({reference:e.booking_reference||e.order_id,orderId:e.order_id,offer:n,passengers:o?o.paxList:[],basePrice:o?o.basePrice:0,extrasPrice:o?o.extrasPrice:0,totalPrice:o?o.customerTotal:e.total_amount||0})}}).catch(function(){var t=o?{orig:o.orig,dest:o.dest,price:o.basePrice}:{};showConfirmation({reference:e.booking_reference||e.order_id,orderId:e.order_id,offer:t,passengers:o?o.paxList:[],basePrice:o?o.basePrice:0,extrasPrice:o?o.extrasPrice:0,totalPrice:o?o.customerTotal:e.total_amount||0})})}else if(e.booking_failed_after_payment){var a="";try{e.duffel_errors&&e.duffel_errors.length?a=e.duffel_errors.map(function(e){return e.message||e.title||""}).join(" | "):e.details&&e.details.length&&(a=e.details.map(function(e){return e.message||e.title||""}).join(" | "))}catch(e){}fwLog("error",{msg:"booking_failed_after_payment: "+a,refunded:e.refunded});var r=e.refunded?"Der Flugpreis hat sich kurzfristig geändert oder das Angebot ist nicht mehr verfügbar. Deine Zahlung wurde vollständig zurückerstattet — du kannst sofort erneut suchen und buchen.":"Die Buchung konnte leider nicht abgeschlossen werden. Bitte kontaktiere unseren Support — wir kümmern uns sofort um deine Zahlung.";alert((e.refunded?"↩️ ":"⚠️ ")+r),showToast((e.refunded?"↩️ ":"⚠️ ")+r,"error")}else if(e.processing){pollBookingStatus(n,0)}else showToast("❌ "+(e.error||t("pay_not_confirmed")),"error")}).catch(function(){showToast("❌ "+t("pay_not_confirmed"),"error")})}}
+function checkStripeReturn(e){var n=e;if(!n){var a=new URLSearchParams(window.location.search);n=a.get("session_id")}if(n){try{window.history.replaceState({},document.title,window.location.origin+window.location.pathname)}catch(e){}showBookingProcessingBanner();var o=null;try{o=JSON.parse(sessionStorage.getItem("fw_pending_booking")||"null")}catch(e){}showToast("⏳ "+t("pay_verifying"),"info"),fetch(PROXY+"/confirm-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:n})}).then(function(e){return e.json()}).then(function(e){if(e.ok){hideBookingProcessingBanner();try{sessionStorage.removeItem("fw_pending_booking")}catch(e){}trackEvent("purchase",{transaction_id:n,value:o?o.customerTotal:0,currency:"EUR"}),loyaltySyncFromServer(function(){if(o&&!e.already){var t=Math.max(0,Math.round((loyaltyData.points||0)-(o.pointsBeforeBooking||loyaltyData.points||0)));t>0&&setTimeout(function(){showToast("🏆 +"+t+" Treuepunkte verdient!","success")},2e3)}}),fetch(PROXY+"/booking-confirmation?session_id="+encodeURIComponent(n)).then(function(e){return e.json()}).then(function(t){if(t.ok&&t.order)showConfirmation(orderToBookingData(t.order,t.booking));else{var n=o?{orig:o.orig,dest:o.dest,price:o.basePrice}:{};showConfirmation({reference:e.booking_reference||e.order_id,orderId:e.order_id,offer:n,passengers:o?o.paxList:[],basePrice:o?o.basePrice:0,extrasPrice:o?o.extrasPrice:0,totalPrice:o?o.customerTotal:e.total_amount||0})}}).catch(function(){var t=o?{orig:o.orig,dest:o.dest,price:o.basePrice}:{};showConfirmation({reference:e.booking_reference||e.order_id,orderId:e.order_id,offer:t,passengers:o?o.paxList:[],basePrice:o?o.basePrice:0,extrasPrice:o?o.extrasPrice:0,totalPrice:o?o.customerTotal:e.total_amount||0})})}else if(e.booking_failed_after_payment){hideBookingProcessingBanner();var a="";try{e.duffel_errors&&e.duffel_errors.length?a=e.duffel_errors.map(function(e){return e.message||e.title||""}).join(" | "):e.details&&e.details.length&&(a=e.details.map(function(e){return e.message||e.title||""}).join(" | "))}catch(e){}fwLog("error",{msg:"booking_failed_after_payment: "+a,refunded:e.refunded});
+  // [STALE-OFFER-REQUEST-FIX] Duffel rejects booking a SECOND offer from
+  // an offer_request that already produced one successful booking — even
+  // a different fare/tariff card, since they all share the same
+  // offer_request under the hood. This happens when a customer revisits
+  // an old results page/tab (or hits Back) after already booking once,
+  // and picks another offer from that same, now-"spent" search — the
+  // page still looks perfectly clickable, so nothing warned them. The
+  // generic "contact support" message was actively misleading here since
+  // the refund already succeeded and there's nothing support needs to
+  // fix — the one and only thing needed is a fresh search.
+  var isStaleOfferRequest=false;
+  try{
+    var errsArr=(e.duffel_errors&&e.duffel_errors.length)?e.duffel_errors:(e.details||[]);
+    isStaleOfferRequest=errsArr.some(function(d){return d&&"offer_request_already_booked"===d.code});
+  }catch(e){}
+  var r;
+  if(isStaleOfferRequest)r=tL("Diese Suchergebnisse wurden bereits für eine andere Buchung verwendet. Deine Zahlung wurde vollständig zurückerstattet — wir starten jetzt automatisch eine neue Suche für dich.","These search results were already used for another booking. Your payment was fully refunded — we're starting a fresh search for you now.","نتائج البحث دي كانت مستخدمة في حجز تاني بالفعل. تم استرداد المبلغ بالكامل — جارٍ البحث من جديد تلقائياً.");else r=e.refunded?"Der Flugpreis hat sich kurzfristig geändert oder das Angebot ist nicht mehr verfügbar. Deine Zahlung wurde vollständig zurückerstattet — du kannst sofort erneut suchen und buchen.":"Die Buchung konnte leider nicht abgeschlossen werden. Bitte kontaktiere unseren Support — wir kümmern uns sofort um deine Zahlung.";
+  alert((e.refunded?"↩️ ":"⚠️ ")+r),showToast((e.refunded?"↩️ ":"⚠️ ")+r,"error");
+  if(isStaleOfferRequest){closeBflow();setTimeout(function(){doSearch()},400)}
+}else if(e.processing){pollBookingStatus(n,0)}else{hideBookingProcessingBanner();showToast("❌ "+(e.error||t("pay_not_confirmed")),"error")}}).catch(function(){hideBookingProcessingBanner();showToast("❌ "+t("pay_not_confirmed"),"error")})}}
 // [TIGHT-LOOP-FIX] checkStripeReturn(sessionId) is also called directly by
 // pollBookingStatus's "booked" branch, once /booking-status already
 // confirmed the booking is done. If /confirm-payment STILL answers
