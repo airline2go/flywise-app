@@ -446,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // (getBoundingClientRect بسيط، من غير أي حسابات تقيلة).
 (function () {
   var floatBtn = null;
+  var rafPending = false;
   function checkHomeFloatCta() {
     if (!floatBtn) floatBtn = document.getElementById('home-float-cta');
     if (!floatBtn) return;
@@ -460,7 +461,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var scrolledPast = rect.bottom < 0;
     floatBtn.classList.toggle('visible', scrolledPast);
   }
-  window.addEventListener('scroll', checkHomeFloatCta, { passive: true });
+  // [FORCED-REFLOW-FIX] كانت الفانكشن دي بتتنفذ مباشرة مع كل حدث سكرول
+  // (وده ممكن يبقى عشرات المرات في الثانية أثناء تمرير سريع)، وكل مرة
+  // بتعمل getBoundingClientRect() — ده بيجبر المتصفح يحسب التخطيط
+  // (layout) فورًا وبشكل متزامن، حتى لو التغيير الفعلي في الصفحة بسيط
+  // جدًا. دلوقتي بنجمع كل أحداث السكرول المتلاحقة ونشغّل الفحص مرة واحدة
+  // بس قبل كل رسم فريم فعلي (requestAnimationFrame) — نفس النتيجة
+  // البصرية بالظبط، لكن بدل عشرات عمليات إعادة الحساب في الثانية،
+  // بيبقى فيه عملية واحدة بس لكل فريم.
+  function onScroll() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () { rafPending = false; checkHomeFloatCta(); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
   document.addEventListener('DOMContentLoaded', checkHomeFloatCta);
 })();
 
