@@ -129,8 +129,13 @@ function escHtml(s) {
 var params = new URLSearchParams(window.location.search);
 var slug = params.get('slug');
 if (!slug) {
-  var pathMatch = window.location.pathname.match(/\/(?:flights|flight-route)\/([^\/]+)\/?$/);
-  if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
+  // [ROBUST-SLUG-FIX] آخر جزء غير فاضي في المسار، أياً كان الجزء اللي
+  // قبله بالظبط — مش مربوط بنمط محدد حرفياً زي "/flights/" فقط، عشان
+  // يفضل شغال حتى لو شكل التوجيه من الاستضافة اتغيّر أو فيه تفصيلة
+  // مش متوقعة في المسار قبل اسم المسار نفسه.
+  var segments = window.location.pathname.split('/').filter(Boolean);
+  var last = segments[segments.length - 1] || '';
+  if (last && !/\.html?$/i.test(last)) slug = decodeURIComponent(last);
 }
 
 // [CANONICAL-SEO-FIX] كان الـ canonical بياخد قيمته الصح بس بعد ما

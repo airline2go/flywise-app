@@ -114,8 +114,16 @@ function escHtml(s) {
 var params = new URLSearchParams(window.location.search);
 var slug = params.get('slug');
 if (!slug) {
-  var pathMatch = window.location.pathname.match(/\/en\/(?:flights|flight-route)\/([^\/]+)\/?$/);
-  if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
+  // [ROBUST-SLUG-FIX] Deliberately not tied to one exact prefix pattern
+  // (like requiring the path to literally start with "/en/flights/") —
+  // that made this fragile to how the host's rewrite rule actually
+  // presents the path to the browser. Instead: take the last non-empty
+  // path segment, whatever came before it. Works the same whether the
+  // real path is "/en/flights/x", "/flight-route-en.html" with the slug
+  // still in the visible URL, or any other prefix shape.
+  var segments = window.location.pathname.split('/').filter(Boolean);
+  var last = segments[segments.length - 1] || '';
+  if (last && !/\.html?$/i.test(last)) slug = decodeURIComponent(last);
 }
 
 if (!slug) {
