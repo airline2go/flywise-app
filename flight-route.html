@@ -579,7 +579,13 @@ function renderRoute(route) {
         if (!route.custom_faq || !route.custom_faq.length) {
           var durationFaqHtml = '<div class="route-faq-item"><div class="route-faq-q">Wie lange dauert der Flug von ' + escHtml(route.origin_city) + ' nach ' + escHtml(route.destination_city) + '?</div><div class="route-faq-a">Die durchschnittliche Flugzeit liegt bei ' + fmtHrsMin(ins.avgDurationMin) + '. ' + directLine + '</div></div>';
           var faqSection = document.querySelector('.route-faq');
-          if (faqSection) faqSection.insertAdjacentHTML('beforeend', durationFaqHtml);
+          // [DUPLICATE-FAQ-FIX] Same guard as the English page — makes a
+          // second insertion attempt for this exact item a no-op instead
+          // of a visible duplicate question.
+          if (faqSection && !faqSection.dataset.durationFaqAdded) {
+            faqSection.insertAdjacentHTML('beforeend', durationFaqHtml);
+            faqSection.dataset.durationFaqAdded = '1';
+          }
 
           // [ROUTE-FAQ-OVERRIDE] Keep structured data in sync with what's
           // now visible — without this, the schema would still claim
