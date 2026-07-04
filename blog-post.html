@@ -496,23 +496,29 @@ function copyPostLink(btn) {
 
 function loadPopularRoutes(post) {
   var detectedCities = detectCitiesInText((post.title || '') + ' ' + (post.content || '').replace(/<[^>]+>/g, ' '));
-  fetch(PROXY + '/route-pages?limit=200')
+  fetch(PROXY + '/route-pages')
     .then(function(r){ return r.json(); })
     .then(function(j) {
       if (!j.ok || !j.routes || !j.routes.length) return;
       var routes = j.routes;
       var heading = '\u2708 Beliebte Flugverbindungen';
-      var matched = [];
+      var chosen = routes.slice(0, 4);
       if (detectedCities.length) {
-        matched = routes.filter(function(r) {
-          return detectedCities.some(function(c) {
-            return (r.origin_city && r.origin_city.toLowerCase() === c.toLowerCase()) ||
-                   (r.destination_city && r.destination_city.toLowerCase() === c.toLowerCase());
-          });
-        });
-        if (matched.length) heading = '\u2708 Passende Flugverbindungen';
+        // [ROUTE-PRIORITY-FIX] بيقيّم كل مسار: نقطتين لو الاتنين
+        // (المصدر والوجهة) مطابقين لمدن المقال — يعني ده المسار الأساسي
+        // اللي المقال نفسه بيتكلم عنه، ولازم يظهر أول واحد دايمًا.
+        // نقطة واحدة لو جزء واحد بس مطابق (مسار تاني لنفس مدينة واحدة).
+        var scored = routes.map(function(r) {
+          var oMatch = detectedCities.some(function(c) { return r.origin_city && r.origin_city.toLowerCase() === c.toLowerCase(); });
+          var dMatch = detectedCities.some(function(c) { return r.destination_city && r.destination_city.toLowerCase() === c.toLowerCase(); });
+          return { route: r, score: (oMatch ? 1 : 0) + (dMatch ? 1 : 0) };
+        }).filter(function(s) { return s.score > 0; });
+        if (scored.length) {
+          scored.sort(function(a, b) { return b.score - a.score; });
+          chosen = scored.map(function(s) { return s.route; }).slice(0, 4);
+          heading = '\u2708 Passende Flugverbindungen';
+        }
       }
-      var chosen = (matched.length ? matched : routes).slice(0, 4);
       if (!chosen.length) return;
       var html = '<div class="post-routes"><h2>' + heading + '</h2><div class="post-routes-grid">' +
         chosen.map(function(r) {
