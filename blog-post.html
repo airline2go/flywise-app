@@ -33,21 +33,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="/shared-layout.css">
-<script type="application/ld+json" id="article-schema">
-{}
-</script>
+<script type="application/ld+json" id="article-schema">{}</script>
+<script type="application/ld+json" id="breadcrumb-schema">{}</script>
+<script type="application/ld+json" id="faq-schema">{}</script>
 <style>
-/* ============================================================
-   Airpiv Journal — article page. Signature element: the header
-   is rendered as an actual boarding pass, "FROM Airpiv Journal
-   TO <post title>" — the same ticket vernacular as the listing
-   page, carried through to the reading experience.
-   ============================================================ */
 body{background:var(--bg2)}
-main#post-main{max-width:700px;margin:0 auto;padding:34px var(--pad) 80px}
+main#post-main{max-width:700px;margin:0 auto;padding:14px var(--pad) 80px}
 .back-link{color:var(--tx2)}
 
-/* ── Boarding-pass header ── */
+#reading-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--teal2));width:0%;z-index:9999;transition:width .1s linear}
+
+.post-breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;color:var(--tx3);margin:14px 0 12px}
+.post-breadcrumb a{color:var(--teal2);text-decoration:none}
+.post-breadcrumb a:hover{text-decoration:underline}
+.post-breadcrumb span.sep{opacity:.5}
+.post-breadcrumb span.cur{color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+
 .pass{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(10,24,34,.06);border:1px solid var(--bd);margin-bottom:8px}
 .pass-strip{background:linear-gradient(135deg,var(--navy) 0,var(--navy2) 100%);padding:8px 18px;display:flex;align-items:center;justify-content:space-between}
 .pass-strip-brand{display:flex;align-items:center;gap:6px;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.01em}
@@ -70,21 +71,71 @@ main#post-main{max-width:700px;margin:0 auto;padding:34px var(--pad) 80px}
 
 .post-cover{width:100%;max-height:380px;object-fit:cover;border-radius:16px;margin:22px 0 8px;display:block}
 
-/* ── Article body — editorial pass ── */
-.post-body{font-size:16px;line-height:1.85;color:var(--tx2);margin-top:18px}
+.post-share{display:flex;align-items:center;gap:8px;margin:16px 0;flex-wrap:wrap}
+.post-share-lbl{font-size:11.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;margin-right:2px}
+.post-share-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);text-decoration:none;transition:.15s;cursor:pointer}
+.post-share-btn:hover{background:var(--teal-lt);border-color:var(--teal);color:var(--teal2)}
+.post-share-btn svg{width:15px;height:15px}
+.post-copy-btn{position:relative}
+.post-copy-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:11px;padding:4px 9px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.post-copy-toast.show{opacity:1}
+
+.post-toc{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin:22px 0}
+.post-toc-title{font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--tx);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.post-toc ol{margin:0;padding-right:20px;list-style:decimal}
+.post-toc li{margin-bottom:6px;font-size:13.5px}
+.post-toc li.toc-h3{margin-right:16px;font-size:13px;color:var(--tx2)}
+.post-toc a{color:var(--teal2);text-decoration:none}
+.post-toc a:hover{text-decoration:underline}
+
+.post-body{font-size:16px;line-height:1.85;color:var(--tx2);margin-top:18px;scroll-margin-top:20px}
 .post-body>p:first-of-type::first-letter{font-family:'Syne',sans-serif;font-weight:800;font-size:3.4em;line-height:.82;float:left;padding:6px 8px 0 0;color:var(--teal2)}
-.post-body h2{font-family:'Syne',sans-serif;font-size:1.45rem;color:var(--tx);margin:36px 0 14px;letter-spacing:-.01em}
-.post-body h3{font-family:'Syne',sans-serif;font-size:1.18rem;color:var(--tx);margin:26px 0 11px}
+.post-body h2{font-family:'Syne',sans-serif;font-size:1.45rem;color:var(--tx);margin:38px 0 16px;letter-spacing:-.01em;scroll-margin-top:20px}
+.post-body h3{font-family:'Syne',sans-serif;font-size:1.18rem;color:var(--tx);margin:28px 0 12px;scroll-margin-top:20px}
 .post-body p{margin:0 0 18px}
-.post-body ul,.post-body ol{margin:0 0 18px;padding-right:22px}
-.post-body li{margin-bottom:7px}
+.post-body ul,.post-body ol{margin:0 0 20px;padding-right:22px}
+.post-body li{margin-bottom:9px}
 .post-body a{color:var(--teal2);text-decoration:underline;text-underline-offset:2px}
 .post-body strong{color:var(--tx)}
-.post-body img{max-width:100%;border-radius:12px;margin:8px 0}
-.post-body blockquote{margin:22px 0;padding:4px 0 4px 20px;border-right:none;border-left:3px solid var(--teal);color:var(--tx);font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;line-height:1.5}
+.post-body img{max-width:100%;height:auto;border-radius:12px;margin:8px 0;display:block}
+.post-body blockquote{margin:24px 0;padding:6px 0 6px 20px;border-right:none;border-left:3px solid var(--teal);color:var(--tx);font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;line-height:1.5}
+
+.post-routes{margin:34px 0;padding:20px;background:var(--bg2);border-radius:14px}
+.post-routes h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin:0 0 12px}
+.post-routes-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:520px){.post-routes-grid{grid-template-columns:1fr}}
+.post-route-link{display:block;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
+.post-route-link:hover{border-color:var(--teal)}
+
+.post-faq{margin:34px 0}
+.post-faq h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin:0 0 6px}
+.post-faq-item{border-bottom:1px solid var(--bd)}
+.post-faq-q{width:100%;text-align:right;background:none;border:none;padding:15px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14.5px;color:var(--tx);cursor:pointer}
+.post-faq-q .chev{flex-shrink:0;transition:transform .2s;color:var(--teal2)}
+.post-faq-item.open .post-faq-q .chev{transform:rotate(180deg)}
+.post-faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.post-faq-a-in{font-size:13.5px;color:var(--tx2);line-height:1.7;padding-bottom:15px}
+
+.post-similar{margin:34px 0}
+.post-similar h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin:0 0 12px}
+.post-similar-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:560px){.post-similar-grid{grid-template-columns:1fr 1fr}}
+.post-similar-card{display:block;background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px 16px;text-decoration:none;transition:.15s}
+.post-similar-card:hover{border-color:var(--teal)}
+.post-similar-card-title{font-family:'Syne',sans-serif;font-weight:800;font-size:13.5px;color:var(--tx);line-height:1.3}
+
+.post-author{display:flex;gap:14px;align-items:flex-start;background:var(--bg2);border-radius:14px;padding:18px 20px;margin:34px 0}
+.post-author-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;flex-shrink:0}
+.post-author-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--tx)}
+.post-author-role{font-size:11.5px;color:var(--tx3);margin-top:1px;margin-bottom:6px}
+.post-author-bio{font-size:13px;color:var(--tx2);line-height:1.6}
 
 .post-notfound{text-align:center;padding:60px 20px}
 .post-notfound h1{font-family:'Syne',sans-serif;font-size:1.5rem;color:var(--tx);margin-bottom:8px}
+
+#back-to-top{position:fixed;bottom:22px;left:22px;width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(10,24,34,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:999}
+#back-to-top.show{opacity:1;pointer-events:auto}
+#back-to-top:hover{transform:translateY(-2px)}
 
 @media(max-width:520px){
   .pass-route{grid-template-columns:1fr;gap:6px}
@@ -93,14 +144,17 @@ main#post-main{max-width:700px;margin:0 auto;padding:34px var(--pad) 80px}
 }
 
 [data-theme=dark] body{background:#0d1420}
-[data-theme=dark] .pass{background:var(--navy2);border-color:rgba(255,255,255,.08)}
+[data-theme=dark] .pass,[data-theme=dark] .post-toc,[data-theme=dark] .post-routes,[data-theme=dark] .post-author,[data-theme=dark] .post-route-link,[data-theme=dark] .post-similar-card{background:var(--navy2);border-color:rgba(255,255,255,.08)}
 [data-theme=dark] .pass-perf::before,[data-theme=dark] .pass-perf::after{background:#0d1420}
-[data-theme=dark] .pass-route-title,[data-theme=dark] .pass-meta-val{color:#eef3f7}
+[data-theme=dark] .pass-route-title,[data-theme=dark] .pass-meta-val,[data-theme=dark] .post-toc-title,[data-theme=dark] .post-routes h2,[data-theme=dark] .post-faq h2,[data-theme=dark] .post-similar h2,[data-theme=dark] .post-author-name,[data-theme=dark] .post-faq-q,[data-theme=dark] .post-similar-card-title{color:#eef3f7}
 [data-theme=dark] .post-body{color:#aebcc9}
 [data-theme=dark] .post-body h2,[data-theme=dark] .post-body h3,[data-theme=dark] .post-body strong{color:#eef3f7}
+[data-theme=dark] .post-share-btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#aebcc9}
 </style>
 </head>
 <body>
+
+<div id="reading-progress"></div>
 
 <nav class="topnav">
   <div class="navi">
@@ -115,11 +169,14 @@ main#post-main{max-width:700px;margin:0 auto;padding:34px var(--pad) 80px}
 </nav>
 
 <main id="post-main">
-  <a href="/blog.html" class="back-link">← Zurück zum Blog</a>
   <div id="post-content">
     <div class="jrn-empty" style="text-align:center;padding:50px 20px;color:var(--tx3)">Lade Beitrag…</div>
   </div>
 </main>
+
+<button id="back-to-top" aria-label="Nach oben">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
 
 <footer><div class="fi2">
   <div class="fgr">
@@ -156,6 +213,7 @@ if (!slug) {
 
 function renderNotFound() {
   document.getElementById('post-content').innerHTML =
+    '<a href="/blog.html" class="back-link">← Zurück zum Blog</a>' +
     '<div class="post-notfound">' +
       '<h1>Beitrag nicht gefunden</h1>' +
       '<p style="color:var(--tx3)">Dieser Blog-Beitrag existiert nicht oder wurde entfernt.</p>' +
@@ -163,14 +221,107 @@ function renderNotFound() {
     '</div>';
 }
 
+function computeReadingTime(html) {
+  var text = html.replace(/<[^>]+>/g, ' ');
+  var words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+function buildTocAndIds(containerEl) {
+  var headings = containerEl.querySelectorAll('h2, h3');
+  var items = [];
+  var seen = {};
+  headings.forEach(function(h) {
+    var base = h.textContent.trim().toLowerCase()
+      .replace(/[äöüß]/g, function(c){ return {'ä':'ae','ö':'oe','ü':'ue','ß':'ss'}[c]; })
+      .replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-') || 'abschnitt';
+    var id = base, n = 2;
+    while (seen[id]) { id = base + '-' + (n++); }
+    seen[id] = true;
+    h.id = id;
+    items.push({ level: h.tagName.toLowerCase(), text: h.textContent.trim(), id: id });
+  });
+  return items;
+}
+
+// [CONTEXT-DETECTION] قائمة مدن حقيقية معروفة (نفس المدن اللي فعليًا
+// موجودة كمسارات في الموقع). بندوّر في نص المقال (العنوان + المحتوى)
+// عن أي اسم منهم كـ"كلمة كاملة" — لو لقينا تطابق، بنستخدمه فعليًا
+// لربط المقال بمسارات ومقالات بنفس الوجهة. لو مفيش أي مدينة مذكورة
+// في المقال، بنرجع لعرض عام (مقالات حديثة / مسارات شائعة) — صريح
+// وواضح، مفيش تخمين أو "مطابقة ذكية" غير موجودة فعليًا.
+var KNOWN_CITIES = ['Berlin','München','Munich','Frankfurt','Hamburg','Düsseldorf','Cologne','Köln','Stuttgart','Hannover','Leipzig','Nürnberg','Nuremberg','Dortmund','Bremen','Wien','Vienna','Zürich','Zurich','Genf','Geneva','London','Paris','Rom','Rome','Mailand','Milan','Venedig','Venice','Neapel','Naples','Madrid','Barcelona','Valencia','Sevilla','Seville','Malaga','Lissabon','Lisbon','Porto','Amsterdam','Brüssel','Brussels','Luxemburg','Luxembourg','Kopenhagen','Copenhagen','Oslo','Stockholm','Helsinki','Dublin','Warschau','Warsaw','Krakau','Krakow','Prag','Prague','Budapest','Athen','Athens','Istanbul','Kairo','Cairo','Dubai','Doha','Bangkok','Singapur','Singapore','Hongkong','Hong Kong','Tokio','Tokyo','New York','Los Angeles','San Francisco','Miami','Toronto','São Paulo','Kapstadt','Cape Town','Johannesburg','Sydney','Melbourne','Dubrovnik','Split','Zagreb'];
+
+// [COUNTRY-MAPPING] كل مدينة معروفة مربوطة ببلدها الحقيقي — ده اللي
+// بيسمح بمطابقة "نفس الدولة" لما مفيش تطابق مباشر في اسم المدينة
+// (مقال عن ميلانو ومقال عن روما، الاتنين إيطاليا — لسه مرتبطين).
+var CITY_COUNTRY = {
+  'Berlin':'Deutschland','München':'Deutschland','Munich':'Deutschland','Frankfurt':'Deutschland','Hamburg':'Deutschland','Düsseldorf':'Deutschland','Cologne':'Deutschland','Köln':'Deutschland','Stuttgart':'Deutschland','Hannover':'Deutschland','Leipzig':'Deutschland','Nürnberg':'Deutschland','Nuremberg':'Deutschland','Dortmund':'Deutschland','Bremen':'Deutschland',
+  'Wien':'Österreich','Vienna':'Österreich',
+  'Zürich':'Schweiz','Zurich':'Schweiz','Genf':'Schweiz','Geneva':'Schweiz',
+  'London':'Vereinigtes Königreich',
+  'Paris':'Frankreich',
+  'Rom':'Italien','Rome':'Italien','Mailand':'Italien','Milan':'Italien','Venedig':'Italien','Venice':'Italien','Neapel':'Italien','Naples':'Italien',
+  'Madrid':'Spanien','Barcelona':'Spanien','Valencia':'Spanien','Sevilla':'Spanien','Seville':'Spanien','Malaga':'Spanien',
+  'Lissabon':'Portugal','Lisbon':'Portugal','Porto':'Portugal',
+  'Amsterdam':'Niederlande',
+  'Brüssel':'Belgien','Brussels':'Belgien',
+  'Luxemburg':'Luxemburg','Luxembourg':'Luxemburg',
+  'Kopenhagen':'Dänemark','Copenhagen':'Dänemark',
+  'Oslo':'Norwegen','Stockholm':'Schweden','Helsinki':'Finnland','Dublin':'Irland',
+  'Warschau':'Polen','Warsaw':'Polen','Krakau':'Polen','Krakow':'Polen',
+  'Prag':'Tschechien','Prague':'Tschechien','Budapest':'Ungarn','Athen':'Griechenland','Athens':'Griechenland',
+  'Istanbul':'Türkei','Kairo':'Ägypten','Cairo':'Ägypten','Dubai':'VAE','Doha':'Katar',
+  'Bangkok':'Thailand','Singapur':'Singapur','Singapore':'Singapur','Hongkong':'Hongkong','Hong Kong':'Hongkong','Tokio':'Japan','Tokyo':'Japan',
+  'New York':'USA','Los Angeles':'USA','San Francisco':'USA','Miami':'USA',
+  'Toronto':'Kanada','São Paulo':'Brasilien','Kapstadt':'Südafrika','Cape Town':'Südafrika','Johannesburg':'Südafrika',
+  'Sydney':'Australien','Melbourne':'Australien','Dubrovnik':'Kroatien','Split':'Kroatien','Zagreb':'Kroatien'
+};
+function citiesToCountries(cities) {
+  var set = {};
+  cities.forEach(function(c) { var co = CITY_COUNTRY[c]; if (co) set[co] = true; });
+  return Object.keys(set);
+}
+
+function detectCitiesInText(text) {
+  var found = [];
+  KNOWN_CITIES.forEach(function(city) {
+    var re = new RegExp('(^|[^a-zA-ZäöüÄÖÜ])' + city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-zA-ZäöüÄÖÜ]|$)', 'i');
+    if (re.test(text)) found.push(city);
+  });
+  return found;
+}
+
+
+function extractFaq(containerEl) {
+  var headings = Array.prototype.slice.call(containerEl.querySelectorAll('h2'));
+  var faqHeading = headings.find(function(h) {
+    var t = h.textContent.trim().replace(/^[^\wäöüÄÖÜ]+/, ''); // strip a leading emoji/symbol like "❓ FAQ"
+    return /^(FAQ|FAQs|Häufig gestellte Fragen|Oft gestellte Fragen|Fragen und Antworten|Wichtige Fragen|Frequently Asked Questions|Questions and Answers)$/i.test(t);
+  });
+  if (!faqHeading) return { items: [] };
+
+  var items = [];
+  var node = faqHeading.nextElementSibling;
+  var toRemove = [faqHeading];
+  var curQ = null, curA = [];
+  function flush() { if (curQ && curA.length) items.push({ question: curQ, answer: curA.join(' ') }); curQ = null; curA = []; }
+  while (node && node.tagName !== 'H2') {
+    toRemove.push(node);
+    if (node.tagName === 'H3') { flush(); curQ = node.textContent.trim(); }
+    else if (node.tagName === 'P' && curQ) { curA.push(node.textContent.trim()); }
+    node = node.nextElementSibling;
+  }
+  flush();
+  toRemove.forEach(function(n) { n.remove(); });
+  return { items: items };
+}
+
 function renderPost(post) {
   var url = 'https://airpiv.com/blog-post.html?slug=' + encodeURIComponent(post.slug);
   var description = post.meta_description || post.excerpt || (post.title + ' — Airpiv Blog');
   var image = post.cover_image_url || 'https://airpiv.com/og-image.png';
 
-  // [BLOG-SYSTEM] Dynamically rewrite the per-post SEO tags now that the
-  // real post data has arrived — this is what makes every post distinct
-  // to Google/social previews despite all posts sharing this one file.
   document.getElementById('page-title').textContent = post.title + ' | Airpiv Blog';
   document.getElementById('page-description').setAttribute('content', description);
   document.getElementById('page-canonical').setAttribute('href', url);
@@ -180,11 +331,25 @@ function renderPost(post) {
   document.getElementById('og-image').setAttribute('content', image);
   document.getElementById('twitter-image').setAttribute('content', image);
 
-  // Word count from the rendered text content (strip HTML tags first) —
-  // a real signal of article depth, computed from whatever the post
-  // actually contains rather than hardcoded.
   var plainText = post.content.replace(/<[^>]+>/g, ' ');
   var wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
+  var readingMin = computeReadingTime(post.content);
+
+  var pubDate = post.published_at ? new Date(post.published_at) : null;
+  var updDate = post.updated_at ? new Date(post.updated_at) : null;
+  var dateStr = pubDate ? pubDate.toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : '—';
+  var showUpdated = updDate && pubDate && (updDate.getTime() - pubDate.getTime() > 24 * 60 * 60 * 1000);
+  var updatedStr = showUpdated ? updDate.toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : null;
+
+  document.getElementById('breadcrumb-schema').textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Startseite", "item": "https://airpiv.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://airpiv.com/blog.html" },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": url }
+    ]
+  });
 
   document.getElementById('article-schema').textContent = JSON.stringify({
     "@context": "https://schema.org",
@@ -192,15 +357,8 @@ function renderPost(post) {
     "headline": post.title,
     "description": description,
     "image": image,
-    // [BLOG-SCHEMA-FIX] Self-contained publisher object (name + logo)
-    // instead of an @id reference to index.html's organization schema —
-    // this page's structured data is now valid on its own even if a
-    // crawler reads it in isolation, never depending on another page's
-    // markup resolving correctly.
     "publisher": {
-      "@type": "Organization",
-      "name": "Airpiv",
-      "url": "https://airpiv.com",
+      "@type": "Organization", "name": "Airpiv", "url": "https://airpiv.com",
       "logo": { "@type": "ImageObject", "url": "https://airpiv.com/airpiv-logo.png" }
     },
     "author": { "@type": "Organization", "name": post.author || "Airpiv Team" },
@@ -212,10 +370,12 @@ function renderPost(post) {
     "inLanguage": "de-DE"
   });
 
-  var dateStr = post.published_at ? new Date(post.published_at).toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : '—';
-  var cover = post.cover_image_url ? '<img class="post-cover" src="' + escHtml(post.cover_image_url) + '" alt="' + escHtml(post.title) + '">' : '';
+  var cover = post.cover_image_url ? '<img class="post-cover" src="' + escHtml(post.cover_image_url) + '" alt="' + escHtml(post.title) + '" loading="lazy">' : '';
+  var authorName = post.author || 'Airpiv Team';
+  var authorInitial = authorName.trim().charAt(0).toUpperCase();
 
   document.getElementById('post-content').innerHTML =
+    '<nav class="post-breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span class="sep">\u203a</span><a href="/blog.html">Blog</a><span class="sep">\u203a</span><span class="cur">' + escHtml(post.title) + '</span></nav>' +
     '<div class="pass">' +
       '<div class="pass-strip">' +
         '<div class="pass-strip-brand"><svg width="15" height="15" viewBox="0 0 64 64" fill="none"><path d="M32 10 L48 46 L32 37 L16 46 Z" fill="#0FB5A0"/></svg>Airpiv</div>' +
@@ -226,7 +386,7 @@ function renderPost(post) {
           '<div class="pass-route-eyebrow">Von</div>' +
           '<div class="pass-route-from">Airpiv Journal</div>' +
         '</div>' +
-        '<div class="pass-route-plane">✈</div>' +
+        '<div class="pass-route-plane">\u2708</div>' +
         '<div class="pass-route-col">' +
           '<div class="pass-route-eyebrow">Zu</div>' +
           '<h1 class="pass-route-title">' + escHtml(post.title) + '</h1>' +
@@ -234,13 +394,189 @@ function renderPost(post) {
       '</div>' +
       '<div class="pass-perf" aria-hidden="true"></div>' +
       '<div class="pass-meta">' +
-        '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Autor</div><div class="pass-meta-val">' + escHtml(post.author || 'Airpiv Team') + '</div></div>' +
-        '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Datum</div><div class="pass-meta-val">' + dateStr + '</div></div>' +
+        '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Autor</div><div class="pass-meta-val">' + escHtml(authorName) + '</div></div>' +
+        '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Veröffentlicht</div><div class="pass-meta-val">' + dateStr + '</div></div>' +
+        (updatedStr ? '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Aktualisiert</div><div class="pass-meta-val">' + updatedStr + '</div></div>' : '') +
+        '<div class="pass-meta-item"><div class="pass-meta-eyebrow">Lesezeit</div><div class="pass-meta-val">' + readingMin + ' Min.</div></div>' +
       '</div>' +
     '</div>' +
     cover +
-    '<div class="post-body">' + post.content + '</div>';
+    '<div class="post-share" id="post-share"></div>' +
+    '<div id="post-toc-slot"></div>' +
+    '<div class="post-body" id="post-body">' + post.content + '</div>' +
+    '<div id="post-routes-slot"></div>' +
+    '<div id="post-faq-slot"></div>' +
+    '<div class="post-author">' +
+      '<div class="post-author-av">' + escHtml(authorInitial) + '</div>' +
+      '<div>' +
+        '<div class="post-author-name">' + escHtml(authorName) + '</div>' +
+        '<div class="post-author-role">Airpiv Redaktion</div>' +
+        '<div class="post-author-bio">Schreibt für Airpiv über günstige Flüge, Reiseplanung und alles, was das Fliegen einfacher macht.</div>' +
+      '</div>' +
+    '</div>' +
+    '<div id="post-similar-slot"></div>';
+
+  var bodyEl = document.getElementById('post-body');
+
+  bodyEl.querySelectorAll('img').forEach(function(img) {
+    if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+    if (!img.hasAttribute('alt')) img.setAttribute('alt', post.title);
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+  });
+
+  var tocItems = buildTocAndIds(bodyEl);
+  if (tocItems.length >= 2) {
+    var tocHtml = '<div class="post-toc"><div class="post-toc-title">\ud83d\udcd1 Inhaltsverzeichnis</div><ol>' +
+      tocItems.map(function(t) {
+        return '<li class="' + (t.level === 'h3' ? 'toc-h3' : '') + '"><a href="#' + t.id + '">' + escHtml(t.text) + '</a></li>';
+      }).join('') + '</ol></div>';
+    document.getElementById('post-toc-slot').innerHTML = tocHtml;
+  }
+
+  var faq = extractFaq(bodyEl);
+  if (faq.items.length) {
+    var faqHtml = '<div class="post-faq"><h2>Häufig gestellte Fragen</h2>' +
+      faq.items.map(function(f, i) {
+        return '<div class="post-faq-item" data-idx="' + i + '">' +
+          '<button class="post-faq-q" onclick="toggleFaq(this)">' + escHtml(f.question) +
+            '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '</button>' +
+          '<div class="post-faq-a"><div class="post-faq-a-in">' + escHtml(f.answer) + '</div></div>' +
+        '</div>';
+      }).join('') + '</div>';
+    document.getElementById('post-faq-slot').innerHTML = faqHtml;
+
+    document.getElementById('faq-schema').textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faq.items.map(function(f) {
+        return { "@type": "Question", "name": f.question, "acceptedAnswer": { "@type": "Answer", "text": f.answer } };
+      })
+    });
+  }
+
+  var shareText = encodeURIComponent(post.title);
+  var shareUrl = encodeURIComponent(url);
+  document.getElementById('post-share').innerHTML =
+    '<span class="post-share-lbl">Teilen</span>' +
+    '<a class="post-share-btn" target="_blank" rel="noopener" href="https://wa.me/?text=' + shareText + '%20' + shareUrl + '" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.42-1.36c1.38.72 2.94 1.13 4.62 1.13 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 1.67c4.55 0 8.24 3.69 8.24 8.24s-3.69 8.24-8.24 8.24c-1.5 0-2.9-.4-4.11-1.1l-.29-.17-3.06.77.8-2.98-.19-.31a8.18 8.18 0 0 1-1.24-4.37c0-4.63 3.69-8.32 8.24-8.32Z"/></svg></a>' +
+    '<a class="post-share-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text=' + shareText + '&url=' + shareUrl + '" aria-label="X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.2 8.2L22.5 22h-6.6l-5.2-6.8L4.6 22H1.5l7.7-8.8L1 2h6.7l4.7 6.2Z"/></svg></a>' +
+    '<a class="post-share-btn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=' + shareUrl + '" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.87v-6.99H7.9V12h2.5V9.8c0-2.47 1.47-3.83 3.72-3.83 1.08 0 2.21.19 2.21.19v2.43h-1.24c-1.23 0-1.61.76-1.61 1.55V12h2.75l-.44 2.88h-2.31v6.99A10 10 0 0 0 22 12"/></svg></a>' +
+    '<a class="post-share-btn" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=' + shareUrl + '" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13M7.12 20.45H3.56V9h3.56z"/></svg></a>' +
+    '<a class="post-share-btn" href="mailto:?subject=' + shareText + '&body=' + shareUrl + '" aria-label="E-Mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg></a>' +
+    '<button class="post-share-btn post-copy-btn" onclick="copyPostLink(this)" aria-label="Link kopieren"><span class="post-copy-toast">Kopiert!</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+
+  loadPopularRoutes(post);
+  loadSimilarPosts(post);
 }
+
+function toggleFaq(btn) {
+  var item = btn.closest('.post-faq-item');
+  var answer = item.querySelector('.post-faq-a');
+  var isOpen = item.classList.contains('open');
+  document.querySelectorAll('.post-faq-item.open').forEach(function(el) {
+    el.classList.remove('open');
+    el.querySelector('.post-faq-a').style.maxHeight = null;
+  });
+  if (!isOpen) {
+    item.classList.add('open');
+    answer.style.maxHeight = answer.scrollHeight + 'px';
+  }
+}
+
+function copyPostLink(btn) {
+  var url = 'https://airpiv.com/blog-post.html?slug=' + encodeURIComponent(new URLSearchParams(window.location.search).get('slug') || '');
+  navigator.clipboard.writeText(url).then(function() {
+    var toast = btn.querySelector('.post-copy-toast');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 1600);
+  }).catch(function() {});
+}
+
+function loadPopularRoutes(post) {
+  var detectedCities = detectCitiesInText((post.title || '') + ' ' + (post.content || '').replace(/<[^>]+>/g, ' '));
+  fetch(PROXY + '/route-pages?limit=200')
+    .then(function(r){ return r.json(); })
+    .then(function(j) {
+      if (!j.ok || !j.routes || !j.routes.length) return;
+      var routes = j.routes;
+      var heading = '\u2708 Beliebte Flugverbindungen';
+      var matched = [];
+      if (detectedCities.length) {
+        matched = routes.filter(function(r) {
+          return detectedCities.some(function(c) {
+            return (r.origin_city && r.origin_city.toLowerCase() === c.toLowerCase()) ||
+                   (r.destination_city && r.destination_city.toLowerCase() === c.toLowerCase());
+          });
+        });
+        if (matched.length) heading = '\u2708 Passende Flugverbindungen';
+      }
+      var chosen = (matched.length ? matched : routes).slice(0, 4);
+      if (!chosen.length) return;
+      var html = '<div class="post-routes"><h2>' + heading + '</h2><div class="post-routes-grid">' +
+        chosen.map(function(r) {
+          return '<a class="post-route-link" href="/flights/' + encodeURIComponent(r.slug) + '">' + escHtml(r.origin_city) + ' \u2192 ' + escHtml(r.destination_city) + '</a>';
+        }).join('') + '</div></div>';
+      document.getElementById('post-routes-slot').innerHTML = html;
+    })
+    .catch(function(){});
+}
+
+function loadSimilarPosts(post) {
+  var currentCities = detectCitiesInText((post.title || '') + ' ' + (post.content || '').replace(/<[^>]+>/g, ' '));
+  var currentCountries = citiesToCountries(currentCities);
+  fetch(PROXY + '/blog-posts')
+    .then(function(r){ return r.json(); })
+    .then(function(j) {
+      if (!j.ok || !j.posts) return;
+      var others = j.posts.filter(function(p) { return p.slug !== post.slug; });
+      var heading = '\ud83d\udcda Ähnliche Artikel';
+      if (currentCities.length) {
+        var withMeta = others.map(function(p) {
+          var pCities = detectCitiesInText((p.title || '') + ' ' + (p.excerpt || ''));
+          var pCountries = citiesToCountries(pCities);
+          var cityOverlap = pCities.filter(function(c) { return currentCities.indexOf(c) !== -1; }).length;
+          var countryOverlap = pCountries.filter(function(c) { return currentCountries.indexOf(c) !== -1; }).length;
+          return { post: p, cityOverlap: cityOverlap, countryOverlap: countryOverlap };
+        });
+        // مستوى 1: نفس المدينة بالضبط. مستوى 2 (لو مفيش نتيجة): نفس
+        // الدولة على الأقل. مستوى 3 (لو لسه مفيش): الترتيب الافتراضي
+        // (الأحدث) — صريح إن ده fallback، مش تطابق حقيقي.
+        var byCity = withMeta.filter(function(s) { return s.cityOverlap > 0; }).sort(function(a, b) { return b.cityOverlap - a.cityOverlap; });
+        var byCountry = withMeta.filter(function(s) { return s.cityOverlap === 0 && s.countryOverlap > 0; }).sort(function(a, b) { return b.countryOverlap - a.countryOverlap; });
+        if (byCity.length) { others = byCity.map(function(s) { return s.post; }); heading = '\ud83d\udcda Passende Artikel zum gleichen Reiseziel'; }
+        else if (byCountry.length) { others = byCountry.map(function(s) { return s.post; }); heading = '\ud83d\udcda Weitere Artikel aus ' + currentCountries[0]; }
+      }
+      others = others.slice(0, 4);
+      if (!others.length) return;
+      var html = '<div class="post-similar"><h2>' + heading + '</h2><div class="post-similar-grid">' +
+        others.map(function(p) {
+          return '<a class="post-similar-card" href="/blog-post.html?slug=' + encodeURIComponent(p.slug) + '"><div class="post-similar-card-title">' + escHtml(p.title) + '</div></a>';
+        }).join('') + '</div></div>';
+      document.getElementById('post-similar-slot').innerHTML = html;
+    })
+    .catch(function(){});
+}
+
+(function() {
+  var rafPending = false;
+  var progressEl = document.getElementById('reading-progress');
+  var backBtn = document.getElementById('back-to-top');
+  function update() {
+    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+    progressEl.style.width = pct + '%';
+    backBtn.classList.toggle('show', scrollTop > 500);
+  }
+  window.addEventListener('scroll', function() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function() { rafPending = false; update(); });
+  }, { passive: true });
+  backBtn.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+})();
 </script>
 
 </body>
