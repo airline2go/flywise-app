@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2K257GSWEM');
+</script>
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="data:application/json,{%22name%22:%22Airpiv%22,%22short_name%22:%22Airpiv%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23101d2c%22,%22theme_color%22:%22%2300a991%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%2300a991'/%3E%3Ctext x='96' y='120' font-size='72' font-family='sans-serif' font-weight='800' fill='%23fff' text-anchor='middle'%3EFW%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Airpiv">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Airpiv | Günstige Flüge buchen & Flugtickets vergleichen</title>
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<script>try{if(localStorage.getItem('ck'))document.documentElement.classList.add('fw-ck-hidden');if(localStorage.getItem('dm')==='1')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<!-- SEO Meta Tags -->
+<meta name="description" content="Suchen und buchen Sie günstige Flüge auf Airpiv. Vergleichen Sie Flugtickets weltweit, finden Sie Last-Minute-Angebote und sichern Sie sich die besten Preise ohne versteckte Kosten!">
+<meta name="keywords" content="günstige Flüge buchen, Flugtickets vergleichen, Last-Minute Flüge, Billigflüge, Flug suchen, Flüge buchen günstig, Flugpreise vergleichen, Airpiv">
+<meta name="author" content="Airpiv">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#00a991">
+<!-- Canonical URL -->
+<link rel="canonical" href="https://airpiv.com/" id="canonical-url">
+<link rel="alternate" hreflang="de" href="https://airpiv.com/?lang=de">
+<link rel="alternate" hreflang="en" href="https://airpiv.com/?lang=en">
+<link rel="alternate" hreflang="ar" href="https://airpiv.com/?lang=ar">
+<link rel="alternate" hreflang="x-default" href="https://airpiv.com/">
+<script>
+(function(){
+  var base='https://airpiv.com';
+  var path=window.location.pathname.replace(/\/+$/,'')||'/';
+  var canonical=base+(path==='/'?'/':path+'/');
+  // [HREFLANG-CANONICAL-FIX] Each language's URL must be canonical to
+  // ITSELF, not silently collapsed back to the bare URL — otherwise the
+  // hreflang tags above (which claim ?lang=de/en/ar are distinct,
+  // self-referencing indexable pages) directly contradict the canonical
+  // tag (which previously always pointed to the param-less URL no matter
+  // what), telling Google "ignore the language-specific URL, this is
+  // really just the default page" — exactly defeating the purpose of
+  // having hreflang tags at all.
+  var langParam = new URLSearchParams(window.location.search).get('lang');
+  if (langParam && ['de','en','ar'].indexOf(langParam) !== -1) {
+    canonical += '?lang=' + langParam;
+  }
+  document.getElementById('canonical-url').setAttribute('href',canonical);
+})();
+</script>
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Airpiv | Günstige Flüge buchen & Flugtickets vergleichen">
+<meta property="og:description" content="Günstige Flüge suchen und buchen auf Airpiv. Last-Minute-Angebote, Bestpreisgarantie, keine versteckten Kosten.">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="https://airpiv.com">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Airpiv – Flüge vergleichen & buchen">
+<meta name="twitter:description" content="Günstige Flüge suchen und buchen auf Airpiv. Bestpreisgarantie!">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:url" content="https://airpiv.com">
+
+<!-- Structured Data / JSON-LD -->
+<script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": ["Organization", "TravelAgency"],
+    "@id": "https://airpiv.com/#organization",
+    "name": "Airpiv",
+    "url": "https://airpiv.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://airpiv.com/og-image.png",
+      "width": 1200,
+      "height": 630
+    },
+    "image": "https://airpiv.com/og-image.png",
+    "description": "Airpiv ist eine Flugbuchungsplattform, auf der Sie günstige Flüge weltweit suchen, vergleichen und buchen können.",
+    "sameAs": [],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "email": "support@airpiv.com",
+      "availableLanguage": ["German", "English"]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://airpiv.com/#website",
+    "url": "https://airpiv.com",
+    "name": "Airpiv",
+    "description": "Günstige Flüge buchen & Flugtickets vergleichen",
+    "publisher": {
+      "@id": "https://airpiv.com/#organization"
+    },
+    "inLanguage": "de-DE",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://airpiv.com/?from={departure}&to={destination}&date={date}"
+      },
+      "query-input": [
+        "required name=departure",
+        "required name=destination",
+        "required name=date"
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://airpiv.com/#webpage",
+    "url": "https://airpiv.com",
+    "name": "Airpiv | Günstige Flüge buchen & Flugtickets vergleichen",
+    "isPartOf": { "@id": "https://airpiv.com/#website" },
+    "about": { "@id": "https://airpiv.com/#organization" },
+    "description": "Suchen und buchen Sie günstige Flüge auf Airpiv. Vergleichen Sie Flugtickets weltweit, finden Sie Last-Minute-Angebote und sichern Sie sich die besten Preise ohne versteckte Kosten!",
+    "inLanguage": "de-DE"
+  }
+]
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<noscript>
+  <div style="position:fixed;inset:0;background:#101d2c;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:99999;font-family:system-ui,sans-serif">
+    <div>
+      <div style="font-size:2.5rem;margin-bottom:12px">✈</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">Airpiv benötigt JavaScript</div>
+      <div style="font-size:14px;opacity:.7">Bitte aktivieren Sie JavaScript in Ihrem Browser, um fortzufahren.</div>
+    </div>
+  </div>
+</noscript>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Airpiv",
+  "description": "Flüge vergleichen und buchen – Echtzeit-Preise von hunderten Airlines",
+  "url": "https://airpiv.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://airpiv.com/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="#" class="logo"><picture><source srcset="/airpiv-logo.webp" type="image/webp"><img src="/airpiv-logo.png" alt="Airpiv" width="118" height="38" style="height:38px;width:auto;display:block"></picture></a>
+    <ul class="navls">
+      <li><a href="#" class="act" data-i18n="nav_flights">✈ Flüge</a></li>
+      <li><a href="#" data-i18n="nav_hotels">🏨 Hotels</a></li>
+      <li><a href="#" data-i18n="nav_cars">🚗 Mietwagen</a></li>
+      <li><a href="#" data-i18n="nav_deals">🏷 Deals</a></li>
+      <li><a href="#" data-i18n="nav_help">❓ Hilfe</a></li>
+    </ul>
+    <div class="navr">
+      <div class="lang-sw" style="display:flex;gap:0">
+        <button class="lang-btn active" id="lang-de" onclick="setLang('de')">DE</button>
+        <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="lang-ar" onclick="setLang('ar')">AR</button>
+      </div>
+      <button class="dm-btn" onclick="toggleDark()" title="Dark Mode" aria-label="Dunkelmodus umschalten" style="margin:0"><span id="dm-ico">🌙</span></button>
+      <button class="btn-t" id="nav-auth-btn" onclick="openAuthModal('register')" style="margin:0 0 0 6px">Registrieren</button>
+      <div class="user-menu" id="user-menu" style="display:none;position:relative;margin:0">
+        <div style="display:flex;align-items:center;gap:0;cursor:pointer" onclick="toggleUserMenu()">
+          <span id="loyalty-nav-badge" class="loyalty-nav-badge" style="display:none"></span>
+          <button class="dm-btn" id="user-avatar-btn" style="font-size:18px;margin:0">👤</button>
+        </div>
+        <div class="user-dropdown" id="user-dropdown">
+          <div class="user-dropdown-name" id="user-dropdown-name">—</div>
+          <div class="user-dropdown-email" id="user-dropdown-email">—</div>
+          <hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">
+          <div id="dd-loyalty-section"></div>
+          <button onclick="openReferralPanel();toggleUserMenu()" class="user-dd-item">🎁 Freunde einladen</button>
+          <button onclick="openPg('bookings');loadMyBookings();toggleUserMenu()" class="user-dd-item">🎫 Buchungen</button>
+          <button onclick="logoutUser()" class="user-dd-item" style="color:var(--rd)">🚪 Abmelden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HOMEPAGE FLOATING SEARCH CTA ══ -->
+<!-- [CTA-VISIBILITY-FIX] الشريط العائم بتاع صفحة النتائج (تحت) بيظهر
+     بس بعد أول بحث فعلي. زائر جديد على الصفحة الرئيسية لسه معندوش
+     حاجة تاخده لزرار البحث لو نزل تحت الفورم من غير ما يوصله — الزرار
+     ده بيظهر بس في الحالة دي بالظبط (نزل تحت + لسه ما بحثش)، وبيختفي
+     تلقائياً لو صفحة نتائج أو أي نافذة تانية مفتوحة.
+-->
+<button id="home-float-cta" onclick="document.querySelector('.gobtn').scrollIntoView({behavior:'smooth',block:'center'})" aria-label="Zur Suche">🔍 Suchen</button>
+
+<!-- ══ STICKY SEARCH BAR ══ -->
+<!-- ══ STICKY FILTER BAR ══ -->
+<div id="sticky-filter-bar">
+  <!-- Row 1: Search summary -->
+  <div class="sfb-top">
+    <div class="sfb-info" onclick="openMiniSearch()">
+      <div class="sfb-route" id="sfb-route">Berlin → Barcelona</div>
+      <div class="sfb-sub" id="sfb-sub">Hin & Zurück · 1 Erw. · Economy</div>
+    </div>
+    <button class="sfb-edit" onclick="openMiniSearch()" data-i18n="sfb_change">✏️ Ändern</button>
+  </div>
+  <!-- Row 2: Quick filters + Sort -->
+  <div class="sfb-chips">
+    <div class="sfb-sort">
+      <button class="sfb-sort-btn active" id="sfb-best" onclick="sfbSort('best')" data-i18n="sfb_best">⭐ Beste</button>
+      <button class="sfb-sort-btn" id="sfb-price" onclick="sfbSort('price')">💰</button>
+      <button class="sfb-sort-btn" id="sfb-dur" onclick="sfbSort('dur')">⚡</button>
+    </div>
+    <div class="sfb-chip" id="sfb-direct" onclick="sfbToggle('direct')" data-i18n="sfb_direct">
+      ✈ Direktflug
+    </div>
+    <div class="sfb-chip" id="sfb-bag" onclick="sfbToggle('bag')" data-i18n="sfb_bag">
+      🎒 Mit Gepäck
+    </div>
+    <div class="sfb-chip" id="sfb-s0" onclick="sfbToggle('s0')" data-i18n="sfb_0stop">
+      0 Stopps
+    </div>
+    <div class="sfb-chip" id="sfb-s1" onclick="sfbToggle('s1')" data-i18n="sfb_1stop">
+      1 Stopp
+    </div>
+    <div class="sfb-chip" id="sfb-filter" onclick="openMiniSearch()" data-i18n="sfb_morefilter">
+      ⚙️ Mehr Filter
+    </div>
+  </div>
+</div>
+
+<!-- Mini Search Modal -->
+<div class="ov" id="baginfo-ov" role="dialog" aria-modal="true" aria-label="Gepäcksübersicht" onclick="if(event.target===this)closeBagInfo()" style="align-items:flex-end;padding:0">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -8px 30px rgba(0,0,0,.15)">
+    <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
+    <div id="baginfo-title" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--tx);margin-bottom:14px">Gepäcksübersicht</div>
+    <div id="baginfo-rows"></div>
+    <button id="baginfo-close-btn" onclick="closeBagInfo()" style="margin-top:16px;width:100%;background:var(--bg2);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--tx);cursor:pointer">Schließen</button>
+  </div>
+</div>
+
+<div class="ov" id="mini-search-ov" onclick="if(event.target===this)closeMiniSearch()" style="align-items:flex-end;padding:0">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -8px 30px rgba(0,0,0,.15)">
+
+    <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--tx)">Suche anpassen</div>
+      <button onclick="closeMiniSearch()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2);display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Von / Nach -->
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px">
+      <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer" onclick="closeMiniSearch();setTimeout(function(){window.scrollTo({top:0,behavior:'smooth'});setTimeout(function(){var el=document.getElementById('from-in');if(el){el.focus();el.select();}},600)},100)">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">VON</div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ms-from-lbl">—</div>
+      </div>
+      <button onclick="closeMiniSearch();setTimeout(function(){swapC();doSearch();},300)" aria-label="Abflug- und Zielort tauschen" style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--tx2);flex-shrink:0">⇄</button>
+      <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer" onclick="closeMiniSearch();setTimeout(function(){window.scrollTo({top:0,behavior:'smooth'});setTimeout(function(){var el=document.getElementById('to-in');if(el){el.focus();el.select();}},600)},100)">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">NACH</div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ms-to-lbl">—</div>
+      </div>
+    </div>
+    <!-- Dates -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;position:relative">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">ABFLUG</div>
+        <input type="date" id="ms-dep" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" onchange="syncMiniDate('dep')">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)" id="ms-dep-lbl">—</div>
+      </div>
+      <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;position:relative">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">RÜCKKEHR</div>
+        <input type="date" id="ms-ret" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" onchange="syncMiniDate('ret')">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)" id="ms-ret-lbl">—</div>
+      </div>
+    </div>
+    <!-- Search Button -->
+    <button onclick="closeMiniSearch();doSearch()" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer">
+      🔍 Jetzt suchen
+    </button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-wrap">
+    <div class="hero-pill"><span class="dot"></span><span data-i18n="hero_pill">Echte Preise · Live-Verfügbarkeit</span></div>
+    <h1><span data-i18n="hero_title1">Günstige Flüge suchen</span><br><span data-i18n="hero_title2">und weltweit</span> <span data-i18n="hero_title_span">vergleichen</span></h1>
+    
+    <p class="hero-sub" data-i18n="hero_sub">Vergleiche hunderte Airlines, finde Verbindungen die sonst niemand findet — zum besten Preis.</p>
+    <div id="recent-searches"></div>
+    <!-- Service Tabs -->
+    <div class="svc-tabs">
+      <button class="svc-tab active" id="svc-flights" onclick="switchSvcTab('flights')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z"/></svg>
+        <span data-i18n="tab_flights">طيران</span>
+      </button>
+      <button class="svc-tab" id="svc-hotels" onclick="switchSvcTab('hotels')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span data-i18n="tab_hotels">فنادق</span>
+      </button>
+      <button class="svc-tab" id="svc-cars" onclick="switchSvcTab('cars')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v4a1 1 0 0 1-1 1h-1v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1H3v-4z"/><circle cx="7.5" cy="14.5" r="1.3"/><circle cx="16.5" cy="14.5" r="1.3"/></svg>
+        <span data-i18n="tab_cars">سيارات</span>
+      </button>
+      <button class="svc-tab" id="svc-insurance" onclick="switchSvcTab('insurance')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span data-i18n="tab_insurance">تأمين</span>
+      </button>
+    </div>
+    <div class="scard">
+      <!-- Hidden elements for JS compatibility -->
+      <span id="pax-lbl" style="display:none">1 Erw. · Economy</span>
+      <button id="tab-rr" style="display:none"></button>
+      <button id="tab-ow" style="display:none"></button>
+
+      <!-- Coming Soon Message (for hotels/cars) -->
+      <div class="coming-soon-msg" id="coming-soon-msg">
+        <div class="coming-soon-icon" id="coming-soon-icon">🏨</div>
+        <div class="coming-soon-title" id="coming-soon-title">Demnächst</div>
+        <div class="coming-soon-sub" id="coming-soon-sub">Hotelbuchung kommt bald. Bleib dran!</div>
+      </div>
+
+      <!-- Insurance Promo Card -->
+      <!-- Flight Search Content -->
+      <div id="flights-content">
+      <!-- Row 1: Trip type + Pax/Bags -->
+      <div class="krow">
+        <div class="ksel-wrap">
+          <select class="ksel" id="trip-sel" onchange="setTripSel(this.value)">
+            <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
+            <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
+            <option value="mc">&#43; Mehrere Städte</option>
+          </select>
+          <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <button class="kpax-btn" onclick="document.getElementById('pov').classList.add('open')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="pax-num">1</span>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:5px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          <span id="bag-num">0</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:3px"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- From field -->
+      <div class="kfield" id="main-from-field" style="position:relative">
+        <div class="kfield-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z"/></svg>
+        </div>
+        <div class="kfield-in">
+          <input id="from-in" type="search" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acTypeReset('from');acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
+          <div class="kfield-sub" id="from-sub">Berlin Brandenburg · BER</div>
+        </div>
+        <button class="kclear" onclick="clearField('from')">&#x2715;</button>
+        <div class="acdrop" id="from-ac" role="listbox" aria-label="Abflughäfen"></div>
+      </div>
+
+      <!-- Swap -->
+      <div class="kswap-row" id="main-swap-row">
+        <div class="kline"></div>
+        <button class="kswap" onclick="swapC()" aria-label="Abflug- und Zielort tauschen">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+        </button>
+        <div class="kline"></div>
+      </div>
+
+      <!-- To field -->
+      <div class="kfield" id="main-to-field" style="position:relative">
+        <div class="kfield-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="kfield-in">
+          <input id="to-in" type="search" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acTypeReset('to');acS('to',this.value)" onfocus="closeOtherAcDrops('to');acS('to',this.value);scrollFieldIntoView(this)">
+          <div class="kfield-sub" id="to-sub" data-i18n="to_sub_default">Wohin soll es gehen?</div>
+        </div>
+        <div class="acdrop" id="to-ac" role="listbox" aria-label="Zielflughäfen"></div>
+      </div>
+
+      <!-- Multi-city extra legs -->
+      <div id="mc-legs" style="display:none"></div>
+      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" onclick="mcAddLeg()">+ Weiteren Stopp hinzufügen</button>
+
+      <!-- Dates combined field — tap to open calendar -->
+      <div class="kfield kdates-field" id="dates-field">
+        <div class="kfield-in kdates-in">
+          <div class="kdate-half" onclick="openDatePicker('dep')">
+            <div class="kdate-lbl" data-i18n="depart_lbl">Abflug</div>
+            <div class="kdate-val" id="dep-disp" data-i18n="date_pick">Datum wählen</div>
+          </div>
+          <div class="kdates-sep" id="ret-sep"></div>
+          <div class="kdate-half" id="ret-sf" onclick="openDatePicker('ret')">
+            <div class="kdate-lbl" data-i18n="return_lbl">Rückkehr</div>
+            <div class="kdate-val" id="ret-disp" data-i18n="date_pick">Datum wählen</div>
+          </div>
+        </div>
+        <input type="date" id="dep-date" autocomplete="off" style="display:none" onchange="onDateChange('dep',this.value)">
+        <input type="date" id="ret-date" autocomplete="off" style="display:none" onchange="onDateChange('ret',this.value)">
+      </div>
+
+      <!-- Search button -->
+      <button class="gobtn" onclick="doSearch()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span data-i18n="search_btn">Suchen</span>
+      </button>
+
+      <!-- Extras -->
+      <div class="kextras">
+        <button class="xch" id="ch-dir" onclick="toggleF('dir')" data-i18n="direct_chip">&#9992; Direktflüge</button>
+        <button class="xch" id="ch-bag" onclick="toggleF('bag')" data-i18n="baggage_chip">&#127968; Mit Gepäck</button>
+        <span class="xtax" data-i18n="tax_note">Alle Preise inkl. Steuern</span>
+      </div>
+      </div><!-- /flights-content -->
+</div>
+  </div>
+</div>
+
+    <div id="flex-hint" data-i18n="flex_hint">
+      💡 Tipp: Flexible Daten? Probiere ±3 Tage für günstigere Preise!
+      <button onclick="document.getElementById('flex-hint').style.display='none'" style="background:none;border:none;color:var(--teal2);cursor:pointer;font-weight:700;margin-left:auto">✕</button>
+    </div>
+
+<div class="trust">
+  <div class="trust-in">
+    <div class="ti-badge" title="256-bit SSL Verschlüsselung">🔒 SSL Sicher</div>
+    <div class="ti-badge" title="Datenschutz nach EU-Standard">🇪🇺 Datenschutzfreundlich gemäß EU-Richtlinien</div>
+    <div class="tdiv"></div>
+    <div class="ti">⚡ Sofort-Bestätigung</div><div class="tdiv"></div>
+    <div class="ti">💰 Bestpreisgarantie</div><div class="tdiv"></div>
+    <div class="ti">🛡 Airpiv Garantie</div><div class="tdiv"></div>
+    <div class="ti">🌐 600+ Airlines</div>
+  </div>
+</div>
+
+<div aria-live="polite" aria-atomic="true" id="search-announce" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap"></div>
+<div class="loader" id="loader"><div class="lplane">✈️</div><div class="ltxt">Suche die besten Verbindungen...</div><div class="lsub" id="lsub">600+ Airlines werden durchsucht</div><div class="pbar"><div class="pfill" id="pfill"></div></div></div>
+<div class="ebox" id="ebox"><div class="ein">⚠️ <span id="emsg"></span></div></div>
+
+<div class="rw" id="rw">
+  <div class="rw-header">
+    <div><div class="rtitle" id="rtitle">Ergebnisse</div><div class="rcount" id="rcount"></div></div>
+    <button id="mfbtn" onclick="var sb=document.getElementById('sidebar');if(sb.style.display==='block'){sb.style.display='none';this.textContent='⚙️ Filter';}else{sb.style.display='block';this.textContent='✕ Filter schließen';}">⚙️ Filter</button>
+  </div>
+  <div class="quick-filters" id="quick-filters" style="display:none">
+    <button class="qf-chip" id="qfc-direct" onclick="quickFilterToggle('direct')">
+      ✈ Direktflug
+    </button>
+    <button class="qf-chip" id="qfc-bag" onclick="quickFilterToggle('bag')">
+      🎒 Mit Gepäck
+    </button>
+    <button class="qf-chip" id="qfc-cheap" onclick="sortBy('price');this.classList.add('active')">
+      💰 Günstigste
+    </button>
+    <button class="qf-chip" id="qfc-fast" onclick="sortBy('dur');this.classList.add('active')">
+      ⚡ Schnellste
+    </button>
+    <button class="qf-chip" id="qfc-filter" onclick="var sb=document.getElementById('sidebar');if(sb.style.display==='block'){sb.style.display='none';this.classList.remove('active');}else{sb.style.display='block';this.classList.add('active');}">
+      ⚙️ Alle Filter
+    </button>
+  </div>
+  <div class="alert-box"><div><div class="alert-t">🔔 Preisalarm aktivieren</div><div class="alert-s">Benachrichtigung wenn der Preis fällt</div></div><button class="alert-btn" id="alert-btn" onclick="setAlert(this)">Alarm einrichten</button></div>
+  <div class="pgph" id="pgph" style="display:none"><div class="pgph-t"><span>📊 Preisverlauf — nächste 7 Tage</span><span id="pgmin" style="color:var(--teal2)"></span></div><div class="pgph-bars" id="pgbars"></div><div class="pgph-lbls" id="pglbls"></div></div>
+  <div class="stabs">
+    <button class="stb on" id="st-best" onclick="sortBy('best')"><div class="stb-t">⭐ Beste</div><div class="stb-p" id="sp-best">—</div><div class="stb-d" id="sd-best"></div></button>
+    <button class="stb" id="st-price" onclick="sortBy('price')"><div class="stb-t">💰 Günstigste</div><div class="stb-p" id="sp-price">—</div><div class="stb-d" id="sd-price"></div></button>
+    <button class="stb" id="st-dur" onclick="sortBy('dur')"><div class="stb-t">⚡ Schnellste</div><div class="stb-p" id="sp-dur">—</div><div class="stb-d" id="sd-dur"></div></button>
+  </div>
+  <div class="rgrid">
+    
+    <div class="filter-bar" id="sidebar">
+      <h3>⚙️ Filter</h3>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Stopps</div>
+        <div class="filter-check" id="fc-s0" onclick="toggleFilterCheck('s0')">
+          <div class="filter-check-left">
+            <div class="filter-check-box" id="fcb-s0"></div>
+            <span class="filter-check-label">Direktflug</span>
+          </div>
+          <span class="filter-check-count" id="c-s0"></span>
+        </div>
+        <div class="filter-check" id="fc-s1" onclick="toggleFilterCheck('s1')">
+          <div class="filter-check-left">
+            <div class="filter-check-box" id="fcb-s1"></div>
+            <span class="filter-check-label">1 Stopp</span>
+          </div>
+          <span class="filter-check-count" id="c-s1"></span>
+        </div>
+        <div class="filter-check" id="fc-s2" onclick="toggleFilterCheck('s2')">
+          <div class="filter-check-left">
+            <div class="filter-check-box" id="fcb-s2"></div>
+            <span class="filter-check-label">2+ Stopps</span>
+          </div>
+          <span class="filter-check-count" id="c-s2"></span>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Max. Preis</div>
+        <div class="filter-price-row">
+          <span>€0</span><span id="pval">€9999</span>
+        </div>
+        <input type="range" id="f-price" min="0" max="9999" value="9999"
+          aria-label="Maximaler Preis" aria-valuemin="0" aria-valuemax="9999" aria-valuenow="9999"
+          oninput="document.getElementById('pval').textContent='€'+this.value;this.setAttribute('aria-valuenow',this.value);applyF()">
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Abflugzeit</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="tcc" data-t="early" onclick="toggleTime(this)"><div>🌅</div>00–06h</button>
+          <button class="tcc" data-t="morning" onclick="toggleTime(this)"><div>☀️</div>06–12h</button>
+          <button class="tcc" data-t="afternoon" onclick="toggleTime(this)"><div>🌤</div>12–18h</button>
+          <button class="tcc" data-t="evening" onclick="toggleTime(this)"><div>🌙</div>18–24h</button>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Airlines</div>
+        <div id="f-airlines"></div>
+      </div>
+
+      <button class="filter-reset" onclick="resetF()">↺ Filter zurücksetzen</button>
+    </div>
+    <div class="rmain">
+      <div id="offers-list"></div>
+      <div class="lm-wrap" id="lmw"><button class="lm-btn" onclick="loadMore()">Mehr Flüge anzeigen ↓</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-top"><h2 class="sec-title">Beliebte Ziele <em>✨</em></h2><button class="sec-link" onclick="openPg('destinations')">Alle →</button></div>
+  <div class="dgrid hscroll">
+    <div class="dcard" onclick="qsHome('LIS','Lissabon')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity">Lissabon</div><div class="dco">Portugal · LIS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div>
+    <div class="dcard" onclick="qsHome('BCN','Barcelona')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Barcelona</div><div class="dco">Spanien · BCN</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div>
+    <div class="dcard" onclick="qsHome('DXB','Dubai')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity">Dubai</div><div class="dco">VAE · DXB</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div>
+    <div class="dcard" onclick="qsHome('JFK','New York')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity">New York</div><div class="dco">USA · JFK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div>
+    <div class="dcard" onclick="qsHome('FCO','Rom')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Rom</div><div class="dco">Italien · FCO</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div>
+    <div class="dcard" onclick="qsHome('IST','Istanbul')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity">Istanbul</div><div class="dco">Türkei · IST</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div>
+    <div class="dcard" onclick="qsHome('CAI','Kairo')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity">Kairo</div><div class="dco">Ägypten · CAI</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div>
+    <div class="dcard" onclick="qsHome('AMS','Amsterdam')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity">Amsterdam</div><div class="dco">Niederlande · AMS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div>
+    <div class="dcard" onclick="qsHome('PRG','Prag')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity">Prag</div><div class="dco">Tschechien · PRG</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div>
+    <div class="dcard" onclick="qsHome('ATH','Athen')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity">Athen</div><div class="dco">Griechenland · ATH</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div>
+    <div class="dcard" onclick="qsHome('CPT','Kapstadt')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity">Kapstadt</div><div class="dco">Südafrika · CPT</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div>
+    <div class="dcard" onclick="qsHome('BKK','Bangkok')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity">Bangkok</div><div class="dco">Thailand · BKK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div>
+  </div>
+
+  <div class="sec-top"><h2 class="sec-title">Top Strecken <em>→</em></h2></div>
+  <div class="rgrid2 hscroll" id="top-strecken-grid"></div>
+</div></div>
+
+<div class="pts"><div style="max-width:1240px;margin:0 auto"><h4>Airline-Partner</h4><div class="ptl"><div class="pl">Hunderte Airlines weltweit</div><div class="pl">Echtzeitpreise</div><div class="pl">Live-Verfügbarkeit</div></div></div></div>
+
+
+<!-- FAQ Section -->
+<section class="faq-main" aria-label="Häufig gestellte Fragen">
+  <div class="faq-wrap">
+    <div class="faq-head">
+      <h2 class="faq-title">Häufig gestellte Fragen</h2>
+      <p class="faq-sub">Alles was du über Airpiv wissen musst</p>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Wie kann ich meine Buchung stornieren?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Du kannst deine Buchung über unseren Kundenservice stornieren oder direkt gemäß den Tarifbestimmungen deiner Fluggesellschaft. Flexible Tarife ermöglichen eine kostenlose Stornierung bis zu 24 Stunden vor Abflug. Kontaktiere uns unter support@airpiv.com für schnelle Hilfe.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Welche Zahlungsmethoden werden unterstützt?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Airpiv unterstützt alle gängigen Zahlungsmethoden: Visa, Mastercard, American Express, PayPal sowie Sofortüberweisung. Alle Transaktionen sind SSL-verschlüsselt und DSGVO-konform gesichert.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Gibt es versteckte Gebühren bei Airpiv?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Nein — bei Airpiv gibt es keine versteckten Gebühren. Alle angezeigten Preise enthalten bereits sämtliche Steuern und obligatorischen Gebühren. Was du siehst, ist der Endpreis.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Wie finde ich die günstigsten Flüge?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Airpiv vergleicht in Echtzeit hunderte Airlines gleichzeitig. Für die günstigsten Preise empfehlen wir: frühzeitig buchen (6–8 Wochen vor Abflug), flexible Reisedaten nutzen und den Preisalarm aktivieren.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Ist meine Buchung sofort bestätigt?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Ja! Nach erfolgreicher Buchung erhältst du sofort eine Bestätigungs-E-Mail mit deiner Buchungsreferenz. Die Buchung wird direkt bei der Airline bestätigt — keine Wartezeit.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          <span>Kann ich für mehrere Personen gleichzeitig buchen?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Ja, du kannst Flüge für bis zu 9 Personen gleichzeitig buchen — Erwachsene, Kinder und Kleinkinder. Wähle einfach die Anzahl der Reisenden im Suchformular aus.</p>
+        </div>
+      </div>
+
+    <!-- ── Live Chat Support Banner ── -->
+    <div class="support-chat-banner" id="support-chat-banner">
+      <div class="scb-glow"></div>
+      <div class="scb-content">
+        <div class="scb-left">
+          <div class="scb-avatars">
+            <div class="scb-avatar">👩‍💼</div>
+            <div class="scb-avatar">👨‍💼</div>
+            <div class="scb-avatar scb-avatar-dot">👩</div>
+          </div>
+          <div class="scb-text">
+            <div class="scb-title">Noch Fragen? Wir sind für dich da! 💬</div>
+            <div class="scb-sub"><span class="scb-online-dot"></span> Support-Team ist gerade online</div>
+          </div>
+        </div>
+        <button class="scb-btn brevo-chat-trigger" onclick="openBrevoChat()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Live-Chat starten
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- [INTERNAL-LINKING-SEO-FIX] كروت "Beliebte Ziele" و"Top Strecken"
+     فوق دي بتستخدم onclick لتشغيل بحث سريع، مش روابط حقيقية — جوجل
+     مش بيتبع onclick زي ما بيتبع <a href>. القسم ده جديد بالكامل،
+     بروابط <a href="/flights/..."> حقيقية وقابلة للزحف لأهم المسارات
+     المنشورة فعلياً — عشان صفحات المسارات تبقى متاحة الاكتشاف من
+     الصفحة الرئيسية نفسها، مش خريطة الموقع بس.
+-->
+<section id="popular-routes-links-section" style="display:none">
+  <h2 class="sec-title">Beliebte Flugstrecken</h2>
+  <div id="popular-routes-links" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+</section>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span class="logo-i" style="width:26px;height:26px"><svg width="17" height="17" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="currentColor"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
+    <div class="fcol"><h4>Entdecken</h4><ul><li><a href="/cheap-flights.html">Günstige Flüge</a></li><li><a href="/last-minute-flights.html">Last Minute Flüge</a></li><li><a href="#">Hotels</a></li><li><a href="#">Mietwagen</a></li></ul></div>
+    <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="#" onclick="openPg('about')">Über uns</a></li><li><a href="#">Karriere</a></li><li><a href="#">Presse</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="#" onclick="openPg('faq')">FAQ</a></li>
+<li><a href="#" onclick="openPg('bookings');loadMyBookings()">Buchungen</a></li><li><a href="#" onclick="openPg('contact')">Kontakt</a></li><li><a href="#" onclick="openPg('privacy')">Datenschutz</a></li><li><a href="#" onclick="openPg('terms')">AGB</a></li><li><a href="#" onclick="openPg('impressum')">Impressum</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv GmbH · Alle Rechte vorbehalten</p><p style="color:rgba(255,255,255,.18);font-size:10px;margin-top:5px;max-width:600px;line-height:1.6">Airpiv ist ein unabhängiger Vermittler von Reisedienstleistungen. Der Beförderungsvertrag kommt direkt zwischen dem Reisenden und der jeweiligen Fluggesellschaft zustande.</p><div class="socs"><div class="soc">𝕏</div><div class="soc">f</div><div class="soc">in</div></div></div>
+</div></footer>
+
+<!-- 404 Section (shown when needed) -->
+<div id="page-404" style="display:none;text-align:center;padding:60px 20px;min-height:50vh;display:none;flex-direction:column;align-items:center;justify-content:center">
+  <div style="font-size:4rem;margin-bottom:16px">✈️</div>
+  <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;color:var(--tx);margin-bottom:8px">Seite nicht gefunden</h2>
+  <p style="color:var(--tx3);margin-bottom:24px">Die gesuchte Seite existiert nicht.</p>
+  <button onclick="window.scrollTo({top:0,behavior:'smooth'})" style="background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">← Zur Startseite</button>
+</div>
+
+<!-- PAX MODAL -->
+<div class="ov" id="pov" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="pm">
+    <div class="mhd"><h3>Reisende & Gepäck</h3><button class="mx" onclick="document.getElementById('pov').classList.remove('open')">✕</button></div>
+    <div class="prow"><div><div class="plbl">Erwachsene</div><div class="psub">ab 12 Jahre</div></div><div class="pctrl"><button class="pcb" onclick="chp('a',-1)">−</button><span class="pnum" id="pa">1</span><button class="pcb" onclick="chp('a',1)">+</button></div></div>
+    <div class="prow"><div><div class="plbl">Kinder</div><div class="psub">2–11 Jahre</div></div><div class="pctrl"><button class="pcb" onclick="chp('c',-1)">−</button><span class="pnum" id="pc">0</span><button class="pcb" onclick="chp('c',1)">+</button></div></div>
+    <div class="prow"><div><div class="plbl">Kleinkinder</div><div class="psub">unter 2 Jahre</div></div><div class="pctrl"><button class="pcb" onclick="chp('i',-1)">−</button><span class="pnum" id="pi">0</span><button class="pcb" onclick="chp('i',1)">+</button></div></div>
+    <div class="prow" style="border-top:2px solid var(--bg2);margin-top:4px;padding-top:14px"><div><div class="plbl">🧳 Aufgabegepäck</div><div class="psub">Pro Person</div></div><div class="pctrl"><button class="pcb" onclick="chp('b',-1)">−</button><span class="pnum" id="pb">0</span><button class="pcb" onclick="chp('b',1)">+</button></div></div>
+    <div class="prow"><div><div class="plbl">🎒 Handgepäck</div><div class="psub">bis 10kg · Kabine</div></div><div class="pctrl"><button class="pcb" onclick="chp('h',-1)">−</button><span class="pnum" id="ph">1</span><button class="pcb" onclick="chp('h',1)">+</button></div></div>
+    <div class="prow" style="border:none"><div class="plbl">Klasse</div><select class="pmsel" id="cabin"><option value="economy">Economy</option><option value="premium_economy">Premium Economy</option><option value="business">Business</option><option value="first">First Class</option></select></div>
+    <button class="pmdone" onclick="savePax()">Fertig ✓</button>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="ov" id="sov"><div class="sbox2"><span class="sico">🎉</span><h2>Buchung erfolgreich!</h2><p>Deine Buchungsreferenz:</p><div class="sref" id="sref">—</div><div id="sov-details" style="margin:10px 0"></div><p style="font-size:11px;color:var(--tx3)">Bestätigung an deine E-Mail gesendet.</p><br><button class="sclose" onclick="document.getElementById('sov').classList.remove('open');closeBov();loadMyBookings()">Fertig ✓</button></div></div>
+
+
+
+
+
+<!-- COOKIE -->
+<div class="ck" id="ck">
+  <div class="ck-t">🍪 Wir verwenden <strong>technisch notwendige Cookies</strong> für den Betrieb der Website. Keine Tracking- oder Marketing-Cookies. <a href="#" onclick="openPg('privacy');return false">Datenschutz</a></div>
+  <div class="ck-bs">
+    <button class="ck-no" onclick="closeCk(0)">Nur notwendige</button>
+    <button class="ck-ok" onclick="closeCk(1)">Alle akzeptieren ✓</button>
+  </div>
+</div>
+<!-- BOTTOM NAV -->
+<nav class="bnav"><div class="bn-wrap">
+<button class="bni on" onclick="bni(this,'flights')"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.84 1.12 2 2 0 012.83 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006.29 6.29l.97-.97a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg><span data-i18n="bnav_flights">✈ Flüge</span></button>
+<button class="bni" onclick="bni(this,'about')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="bnav_about">Über uns</span></button>
+<button class="bni" onclick="bni(this,'bookings');loadMyBookings()"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span data-i18n="bnav_bookings">Buchungen</span></button>
+<button class="bni" onclick="bni(this,'faq')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg><span data-i18n="bnav_help">Hilfe</span></button>
+<button class="bni" onclick="bni(this,'contact')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span data-i18n="bnav_contact">Kontakt</span></button>
+</div></nav>
+<!-- FAB -->
+<button class="fab" id="main-fab" onclick="openMiniSearch()" style="display:none!important">
+  ✏️
+</button>
+<!-- ABOUT -->
+<div class="pg" id="pg-about"><div class="pg-hd"><button class="pg-bk" onclick="closePg('about')">←</button><h2>Über Airpiv</h2></div><div class="pg-b"><div class="ps"><h3>✈️ Wer wir sind</h3><p>Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse.</p></div><div class="ps"><h3>📊 Unsere Zahlen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">600+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">Airlines</div></div><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">150+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">Länder</div></div></div></div><div class="ps"><h3>💬 Kundenbewertungen</h3><div style="background:var(--bg2);border-radius:12px;padding:20px;text-align:center;color:var(--tx3)">
+<div style="font-size:2rem;margin-bottom:8px">⭐</div>
+<div style="font-size:13px;font-weight:600;color:var(--tx)">Sei der Erste, der uns bewertet!</div>
+<div style="font-size:12px;margin-top:6px">Nach deiner Buchung kannst du deine Erfahrung teilen.</div>
+</div></div></div></div>
+<!-- FAQ -->
+<div class="pg" id="pg-faq"><div class="pg-hd"><button class="pg-bk" onclick="closePg('faq')">←</button><h2>Häufige Fragen</h2></div><div class="pg-b"><div class="fqi" onclick="tFq(this)"><div class="fqq">Wie finde ich den günstigsten Flug? <span class="fqi-ico">+</span></div><div class="fqa">Nutze flexible Datumsoptionen und den Preisalarm. Flüge unter der Woche sind oft günstiger.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Sind Preise inklusive Steuern? <span class="fqi-ico">+</span></div><div class="fqa">Ja! Alle Preise inkl. aller Steuern und Gebühren. Keine versteckten Kosten.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Wie funktioniert die Buchung? <span class="fqi-ico">+</span></div><div class="fqa">Flug wählen → Daten eingeben → sicher bezahlen. Sofort Bestätigung per E-Mail.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Kann ich stornieren? <span class="fqi-ico">+</span></div><div class="fqa">Hängt von der Airline ab. Flexible Tickets meist kostenlos änderbar.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Wie viel Gepäck darf ich mitnehmen? <span class="fqi-ico">+</span></div><div class="fqa">Handgepäck (~10kg) meist inklusive, Aufgabegepäck oft extra je nach Tarif.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Ist meine Zahlung sicher? <span class="fqi-ico">+</span></div><div class="fqa">Ja! SSL-verschlüsselt mit modernsten Sicherheitsstandards.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Was ist der Preisalarm? <span class="fqi-ico">+</span></div><div class="fqa">Benachrichtigt dich per E-Mail wenn der Preis für deine Strecke sinkt.</div></div><div class="fqi" onclick="tFq(this)"><div class="fqq">Wie erreiche ich den Support? <span class="fqi-ico">+</span></div><div class="fqa">support@airpiv.com oder Live-Chat täglich 8–22 Uhr.</div></div></div></div>
+<!-- CONTACT -->
+<div class="pg" id="pg-contact">
+  <div class="pg-hd"><button class="pg-bk" onclick="closePg('contact')">←</button><h2>Kontakt</h2></div>
+  <div class="pg-b">
+
+    <!-- Live Chat Banner -->
+    <div style="background:linear-gradient(135deg,#0A1822 0%,#16283a 60%,#0A1822 100%);border-radius:20px;padding:22px 20px 18px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(15,181,160,.25)">
+      <!-- Decorative plane SVG background -->
+      <svg style="position:absolute;right:-18px;bottom:-14px;opacity:.07;pointer-events:none" width="140" height="100" viewBox="0 0 24 24" fill="#0FB5A0"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      <!-- Glow top left -->
+      <div style="position:absolute;top:-40px;left:-40px;width:130px;height:130px;background:radial-gradient(circle,rgba(15,181,160,.18),transparent 70%);pointer-events:none"></div>
+
+      <!-- Avatars + title -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <!-- SVG avatars with teal theme -->
+        <div style="display:flex;flex-shrink:0">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0FB5A0,#0A9384);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px rgba(15,181,160,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#14304d,#1a3f62);border:2px solid rgba(15,181,160,.3);display:flex;align-items:center;justify-content:center;margin-left:-12px;box-shadow:0 0 0 3px rgba(15,181,160,.1)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0FB5A0" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0FB5A0,#0A9384);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-left:-12px;position:relative;box-shadow:0 0 0 3px rgba(15,181,160,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span style="position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:#4ade80;border-radius:50%;border:2px solid #0A1822"></span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;letter-spacing:-.01em">Sofort-Support per Live-Chat</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;display:flex;align-items:center;gap:5px">
+            <span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block;box-shadow:0 0 6px #4ade80"></span>
+            Team ist gerade online · Antwort in &lt;2 Min.
+          </div>
+        </div>
+      </div>
+
+      <button class="brevo-chat-trigger" onclick="openBrevoChat()" style="width:100%;background:linear-gradient(135deg,#0FB5A0,#0A9384);color:#fff;border:none;border-radius:13px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 20px rgba(15,181,160,.35);position:relative;z-index:1;letter-spacing:.01em;font-family:'Syne',sans-serif">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Live-Chat jetzt starten
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- Contact Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <a href="mailto:support@airpiv.com" style="background:linear-gradient(135deg,#0A1822,#16283a);border-radius:14px;padding:16px 12px;text-align:center;border:1px solid rgba(15,181,160,.18);position:relative;overflow:hidden;text-decoration:none;display:block;cursor:pointer">
+        <div style="position:absolute;top:-20px;right:-20px;width:60px;height:60px;background:radial-gradient(circle,rgba(15,181,160,.12),transparent 70%);pointer-events:none"></div>
+        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(15,181,160,.2),rgba(15,181,160,.08));border:1px solid rgba(15,181,160,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0FB5A0" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#fff">E-Mail</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">support@airpiv.com</div>
+      </a>
+      <div style="background:linear-gradient(135deg,#0A1822,#16283a);border-radius:14px;padding:16px 12px;text-align:center;border:1px solid rgba(15,181,160,.18);position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:60px;height:60px;background:radial-gradient(circle,rgba(15,181,160,.12),transparent 70%);pointer-events:none"></div>
+        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(15,181,160,.2),rgba(15,181,160,.08));border:1px solid rgba(15,181,160,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0FB5A0" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#fff">Erreichbar</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">Täglich 8–22 Uhr</div>
+      </div>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="ps"><h3>📬 Nachricht schreiben</h3>
+      <div class="ctf">
+        <div class="fgrid">
+          <div class="fg"><label>Name</label><input class="fi" id="ct-name" placeholder="Max Mustermann"></div>
+          <div class="fg"><label>E-Mail</label><input class="fi" id="ct-email" type="email" placeholder="max@mail.de"></div>
+        </div>
+        <div class="fg" style="margin-bottom:8px"><label>Betreff</label><input class="fi" id="ct-sub2" placeholder="Womit können wir helfen?"></div>
+        <div class="fg" style="margin-bottom:8px"><label>Nachricht</label><textarea class="fi" id="ct-msg" style="min-height:100px;resize:vertical" placeholder="Deine Nachricht..."></textarea></div>
+        <button id="ct-send-btn" onclick="sendCt()" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">Senden ✉️</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- PRIVACY -->
+<div class="pg" id="pg-destinations"><div class="pg-hd"><button class="pg-bk" onclick="closePg('destinations')">←</button><h2>Alle Ziele</h2></div><div class="pg-b"><div class="dgrid" style="grid-template-columns:repeat(2,1fr);gap:12px"><div class="dcard" onclick="closePg('destinations');qsHome('LIS','Lissabon')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity">Lissabon</div><div class="dco">Portugal · LIS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('BCN','Barcelona')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Barcelona</div><div class="dco">Spanien · BCN</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('DXB','Dubai')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity">Dubai</div><div class="dco">VAE · DXB</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('JFK','New York')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity">New York</div><div class="dco">USA · JFK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('FCO','Rom')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Rom</div><div class="dco">Italien · FCO</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('IST','Istanbul')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity">Istanbul</div><div class="dco">Türkei · IST</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('CAI','Kairo')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity">Kairo</div><div class="dco">Ägypten · CAI</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('AMS','Amsterdam')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity">Amsterdam</div><div class="dco">Niederlande · AMS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('PRG','Prag')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity">Prag</div><div class="dco">Tschechien · PRG</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('ATH','Athen')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity">Athen</div><div class="dco">Griechenland · ATH</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('CPT','Kapstadt')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity">Kapstadt</div><div class="dco">Südafrika · CPT</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div><div class="dcard" onclick="closePg('destinations');qsHome('BKK','Bangkok')"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity">Bangkok</div><div class="dco">Thailand · BKK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div></div></div></div>
+<div class="pg" id="pg-privacy"><div class="pg-hd"><button class="pg-bk" onclick="closePg('privacy')">←</button><h2>Datenschutz</h2></div><div class="pg-b"><div class="ps"><h3>1. Datenschutzerklärung</h3><p>Bei Airpiv legen wir größten Wert auf den Schutz deiner persönlichen Daten. Diese Erklärung informiert dich über Art, Umfang und Zweck der Verarbeitung personenbezogener Daten auf Airpiv.</p></div>
+<div class="ps"><h3>2. Welche Daten wir erheben</h3><p>Wir erheben ausschließlich die Daten, die für die Durchführung deiner Buchung notwendig sind:</p>
+<ul><li>Vollständiger Name</li><li>Geburtsdatum</li><li>Reisepassnummer (falls von der Airline gefordert)</li><li>E-Mail-Adresse</li><li>Telefonnummer</li></ul></div>
+<div class="ps"><h3>3. Zweck der Verarbeitung</h3><p>Wir verwenden deine Daten ausschließlich, um über unseren technischen Partner Duffel Tickets auszustellen und dir Buchungsbestätigungen sowie Updates zu deiner Reise zu senden.</p></div>
+<div class="ps"><h3>4. Datenweitergabe</h3><p>Wir verkaufen deine Daten nicht an Dritte. Wir geben Daten ausschließlich weiter an:</p>
+<ul><li><strong>Duffel Technologies Ltd.</strong> — zur technischen Abwicklung der Buchung</li><li><strong>Die jeweilige Airline</strong> — zur Ausstellung des Tickets und Bestätigung der Sitzplatzbuchung</li></ul></div>
+<div class="ps"><h3>5. Zahlungsdaten</h3><p>Wir speichern keine Kreditkartennummern. Zahlungen werden direkt über die verschlüsselte Zahlungsplattform Stripe gemäß PCI-DSS-Standard abgewickelt.</p></div>
+<div class="ps"><h3>6. Cookies und Analyse-Tools</h3><p>Wir verwenden technisch notwendige Cookies (Dark Mode, Cookie-Einstellungen). Zusätzlich nutzen wir Google Analytics 4, um zu verstehen, wie Besucher unsere Website nutzen und sie kontinuierlich zu verbessern. Dabei werden anonymisierte Nutzungsdaten (z. B. besuchte Seiten, Verweildauer) erhoben. Es werden keine Daten zu Werbezwecken an Dritte verkauft.</p></div>
+<div class="ps"><h3>7. Deine Rechte</h3><p>Du hast jederzeit das Recht, Auskunft über deine gespeicherten Daten zu verlangen, sie zu berichtigen oder ihre Löschung zu verlangen ("Recht auf Vergessenwerden"). Kontaktiere uns dazu unter <a href="mailto:privacy@airpiv.com">privacy@airpiv.com</a>.</p></div></div></div>
+
+<!-- TERMS & CONDITIONS -->
+<div class="pg" id="pg-terms"><div class="pg-hd"><button class="pg-bk" onclick="closePg('terms')">←</button><h2>AGB</h2></div><div class="pg-b">
+<div class="ps"><p style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px;font-size:13px;color:#92400e">Diese Allgemeinen Geschäftsbedingungen müssen vom Kunden vor Abschluss der Zahlung akzeptiert werden.</p></div>
+<div class="ps"><h3>1. Art der Dienstleistung</h3><p>Airpiv ist ein Online-Reisevermittler (OTA). Der Beförderungsvertrag besteht direkt zwischen dir und der jeweiligen Fluggesellschaft.</p></div>
+<div class="ps"><h3>2. Preise und Steuern</h3><p>Alle angezeigten Preise sind Endpreise und enthalten alle Steuern. Für optionale Leistungen (z. B. Zusatzgepäck oder Sitzplatzwahl) können Airlines zusätzliche Gebühren erheben.</p></div>
+<div class="ps"><h3>3. Stornierung und Erstattung</h3><p>Die Stornierungsbedingungen richten sich nach den Bestimmungen der gewählten Fluggesellschaft. Wir unterstützen dich bei der Einreichung von Erstattungsanträgen — die endgültige Entscheidung liegt jedoch beim jeweiligen Carrier.</p></div>
+<div class="ps"><h3>4. Richtigkeit der Angaben</h3><p>Du bist allein verantwortlich für die Richtigkeit der Passagierdaten (Namen exakt wie im Reisepass). Fehlerhafte Eingaben können zur Verweigerung des Bordings führen.</p></div>
+<div class="ps"><h3>5. Haftung</h3><p>Airpiv haftet nicht für Annullierungen oder Verspätungen durch die Fluggesellschaften. Wir verpflichten uns, dich als Vermittler umfassend zu informieren und über Änderungen auf dem Laufenden zu halten.</p></div>
+</div></div>
+
+<!-- MY BOOKINGS -->
+<div class="pg" id="pg-bookings">
+  <div class="pg-hd"><button class="pg-bk" onclick="closePg('bookings')">←</button><h2>Meine Buchungen</h2></div>
+  <div class="pg-b">
+    <div id="bookings-list">
+      <div style="text-align:center;padding:48px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🎫</div>
+        <div style="font-size:15px;font-weight:700;color:var(--tx)">Noch keine Buchungen</div>
+        <div style="font-size:13px;color:var(--tx3);margin-top:6px">Deine gebuchten Flüge erscheinen hier</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERRAL PROGRAM -->
+<div class="pg" id="pg-referral">
+  <div class="pg-hd"><button class="pg-bk" onclick="closePg('referral')">←</button><h2>🎁 Freunde einladen</h2></div>
+  <div class="pg-b">
+    <div id="referral-body" style="max-width:520px;margin:0 auto;padding:4px"></div>
+  </div>
+</div>
+
+<!-- IMPRESSUM -->
+<div class="pg" id="pg-impressum"><div class="pg-hd"><button class="pg-bk" onclick="closePg('impressum')">←</button><h2>Impressum</h2></div><div class="pg-b"><div class="ps"><h3>Angaben gemäß § 5 TMG</h3>
+<p style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px;font-size:13px;color:#92400e"><strong>⚠️ TODO:</strong> Vor Veröffentlichung müssen die folgenden Pflichtangaben gemäß § 5 TMG durch die echten Betreiberdaten ersetzt werden.</p>
+<p><strong>Airpiv</strong><br>
+[Ihr vollständiger Name oder Firmenname]<br>
+[Straße und Hausnummer]<br>
+[PLZ und Stadt]<br>
+[Land]</p>
+<p><strong>Kontakt:</strong><br>
+E-Mail: info@airpiv.com<br>
+Telefon: [Ihre Telefonnummer]</p>
+</div>
+<div class="ps"><h3>Verantwortlich für den Inhalt</h3>
+<p>[Vor- und Nachname]<br>[Adresse wie oben]</p>
+</div>
+<div class="ps"><h3>Haftungsausschluss</h3>
+<p>Airpiv ist eine Flugsuchmaschine und vermittelt Buchungen über die Duffel API. Für die Richtigkeit der Flugdaten sind die jeweiligen Airlines verantwortlich. Preisangaben sind unverbindlich und können sich ändern.</p>
+</div>
+<div class="ps"><h3>Streitschlichtung</h3>
+<p>Die EU-Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr" target="_blank">https://ec.europa.eu/consumers/odr</a></p>
+</div></div></div>
+
+
+<!-- CALENDAR MODAL -->
+<div class="ov" id="cal-ov" role="dialog" aria-modal="true" aria-label="Datum auswählen" onclick="if(event.target===this)closeCal()" style="align-items:flex-end;padding:0">
+  <div class="cal-box" id="cal-box">
+    <!-- Header -->
+    <div class="cal-hd">
+      <div class="cal-sel-row">
+        <div class="cal-sel-btn" id="cal-dep-btn" onclick="calSetMode('dep')">
+          <div class="cal-sel-lbl">Hinreise</div>
+          <div class="cal-sel-val" id="cal-dep-val">Datum wählen</div>
+        </div>
+        <div class="cal-sel-btn" id="cal-ret-btn" onclick="calSetMode('ret')">
+          <div class="cal-sel-lbl">Rückreise</div>
+          <div class="cal-sel-val" id="cal-ret-val">Datum wählen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month navigation -->
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrevMonth()">&#8249;</button>
+      <span class="cal-month-lbl" id="cal-month-lbl"></span>
+      <button class="cal-nav-btn" onclick="calNextMonth()">&#8250;</button>
+    </div>
+
+    <!-- Weekday headers -->
+    <div class="cal-weekdays">
+      <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="cal-grid" id="cal-grid"></div>
+
+    <!-- Action buttons -->
+    <div class="cal-foot">
+      <button class="cal-cancel" onclick="closeCal()">Abbrechen</button>
+      <button class="cal-confirm" id="cal-confirm" onclick="confirmCal()">Daten festlegen</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- HELPER MODAL -->
+<div class="help-ov" id="help-ov" onclick="if(event.target===this)closeHelper()">
+  <div class="help-box" style="position:relative">
+    <button class="help-close" onclick="closeHelper()">✕</button>
+    <div class="help-title" id="help-title">Fast geschafft! ✈️</div>
+    <div class="help-sub" id="help-sub">Noch ein paar Angaben fehlen</div>
+    <div class="help-cards" id="help-cards"></div>
+  </div>
+</div>
+
+
+<!-- ══ BOOKING FLOW BOTTOM SHEET ══ -->
+<div class="bflow-ov" id="bflow-ov" role="dialog" aria-modal="true" aria-label="Flugbuchung" onclick="if(event.target===this)closeBflow()">
+  <div class="bflow-sheet" id="bflow-sheet" dir="ltr">
+    <div class="bflow-handle"></div>
+
+    <!-- Header -->
+    <div class="bflow-hd">
+      <button class="bflow-back" id="bflow-back" onclick="bflowBack()">←</button>
+      <div style="flex:1;text-align:center">
+        <div class="bflow-title" id="bflow-title">Flugdetails</div>
+        <div class="bflow-route" id="bflow-route"></div>
+      </div>
+      <button class="bflow-back" onclick="closeBflow()">✕</button>
+    </div>
+
+    <!-- Progress Steps -->
+    <div style="display:flex;align-items:center;justify-content:center;padding:8px 16px 6px;gap:0;direction:ltr" id="bflow-steps">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bflow-step-dot active" id="bstep-1">1</div>
+        <div class="bflow-step-label">Details</div>
+      </div>
+      <div class="bflow-step-line" id="bline-1"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bflow-step-dot" id="bstep-2">2</div>
+        <div class="bflow-step-label">Tarif</div>
+      </div>
+      <div class="bflow-step-line" id="bline-2"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bflow-step-dot" id="bstep-3">3</div>
+        <div class="bflow-step-label">Gepäck</div>
+      </div>
+      <div class="bflow-step-line" id="bline-3"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bflow-step-dot" id="bstep-4">4</div>
+        <div class="bflow-step-label" id="blabel-4">Sitzplatz</div>
+      </div>
+      <div class="bflow-step-line" id="bline-4"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bflow-step-dot" id="bstep-5">5</div>
+        <div class="bflow-step-label" id="blabel-5">Zahlung</div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="bflow-body" id="bflow-body"></div>
+
+    <!-- Footer -->
+    <div class="bflow-foot">
+      <div id="bflow-pricelink-wrap" style="display:none;text-align:center;margin-bottom:8px"><button onclick="openPriceDetails()" style="background:none;border:none;color:var(--teal2);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline" id="bflow-pricelink">Preisdetails anzeigen</button></div>
+      <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" onchange="this.closest('.compliance-wrap').classList.remove('required-err')"><span class="compliance-text">Ich bestätige die <a href="#" onclick="openPg('terms');return false">AGB</a> und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></label></div>
+    <button class="bflow-btn" id="bflow-btn" onclick="bflowNext()">
+        <span id="bflow-btn-txt">Weiter</span>
+        <span class="bflow-price" id="bflow-btn-price"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ RESULTS FULL-SCREEN PAGE ══ -->
+<div id="results-page">
+
+  <!-- Filter Bottom Sheet -->
+  <div class="rp-filter-ov" id="rp-filter-ov" onclick="if(event.target===this)closeRpFilter()">
+    <div class="rp-filter-sheet">
+      <div class="rp-filter-handle"></div>
+      <div class="rp-filter-hd">
+        <h3>⚙️ Filter</h3>
+        <button class="rp-filter-close" onclick="closeRpFilter()">✕</button>
+      </div>
+      <div class="rp-filter-body">
+
+        <div class="filter-section">
+          <div class="filter-section-title">Stopps</div>
+          <div class="filter-check" onclick="toggleFilterCheck('s0')">
+            <div class="filter-check-left">
+              <div class="filter-check-box" id="fcb2-s0"></div>
+              <span class="filter-check-label">Direktflug</span>
+            </div>
+            <span class="filter-check-count" id="c2-s0"></span>
+          </div>
+          <div class="filter-check" onclick="toggleFilterCheck('s1')">
+            <div class="filter-check-left">
+              <div class="filter-check-box" id="fcb2-s1"></div>
+              <span class="filter-check-label">1 Stopp</span>
+            </div>
+            <span class="filter-check-count" id="c2-s1"></span>
+          </div>
+          <div class="filter-check" onclick="toggleFilterCheck('s2')">
+            <div class="filter-check-left">
+              <div class="filter-check-box" id="fcb2-s2"></div>
+              <span class="filter-check-label">2+ Stopps</span>
+            </div>
+            <span class="filter-check-count" id="c2-s2"></span>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Max. Preis</div>
+          <div class="filter-price-row">
+            <span>€0</span><span id="pval2">€9999</span>
+          </div>
+          <input type="range" id="f-price2" min="0" max="9999" value="9999"
+            aria-label="Maximaler Preis" aria-valuemin="0" aria-valuemax="9999" aria-valuenow="9999"
+            style="width:100%;height:6px;border-radius:6px;accent-color:#00a991;cursor:pointer;margin:8px 0"
+            oninput="document.getElementById('pval2').textContent='€'+this.value;document.getElementById('f-price').value=this.value;this.setAttribute('aria-valuenow',this.value);applyRpF()">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#8fa4b4;margin-top:2px">
+            <span>Min</span><span>Max</span>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Abflugzeit</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="tcc" data-t="early" onclick="toggleTime(this);applyRpF()"><div>🌅</div>00–06h</button>
+            <button class="tcc" data-t="morning" onclick="toggleTime(this);applyRpF()"><div>☀️</div>06–12h</button>
+            <button class="tcc" data-t="afternoon" onclick="toggleTime(this);applyRpF()"><div>🌤</div>12–18h</button>
+            <button class="tcc" data-t="evening" onclick="toggleTime(this);applyRpF()"><div>🌙</div>18–24h</button>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Airlines</div>
+          <div id="f-airlines2"></div>
+        </div>
+
+      </div>
+      <div class="rp-filter-foot">
+        <button class="rp-filter-reset" onclick="resetRpF()">↺ Reset</button>
+        <button class="rp-filter-apply" onclick="closeRpFilter()">✓ Anwenden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="rp-header">
+    <div class="rp-header-top">
+      <button class="rp-back" onclick="closeResultsPage()">←</button>
+      <div class="rp-title-wrap" onclick="toggleRpEdit()">
+        <div class="rp-route" id="rp-route">—</div>
+        <div class="rp-meta" id="rp-meta">—</div>
+      </div>
+      <button class="rp-filter-btn" id="rp-filter-btn" onclick="toggleRpFilter()">
+        ⚙️
+        <div class="rp-filter-dot" id="rp-filter-dot"></div>
+      </button>
+    </div>
+
+    <!-- Inline edit dropdown -->
+    <div class="rp-edit-drop" id="rp-edit-drop">
+      <div class="rp-edit-row" style="grid-template-columns:1fr;margin-bottom:8px">
+        <div class="ksel-wrap">
+          <select class="ksel" id="rpe-trip-sel" onchange="rpSetTripSel(this.value)">
+            <option value="rr">&#8644; Hin- und Rückreise</option>
+            <option value="ow">&#8594; Einfache Fahrt</option>
+          </select>
+          <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+      <div class="rp-edit-row">
+        <div class="rp-edit-field" style="position:relative" id="rpe-from-field" onclick="rpEditLoc('from')">
+          <div class="rp-edit-lbl">Von</div>
+          <div class="rp-edit-val" id="rpe-from">—</div>
+          <div class="acdrop" id="rpe-from-ac" role="listbox" aria-label="Flughäfen" style="position:absolute;top:100%;left:0;right:0"></div>
+        </div>
+        <div class="rp-edit-field" style="position:relative" id="rpe-to-field" onclick="rpEditLoc('to')">
+          <div class="rp-edit-lbl">Nach</div>
+          <div class="rp-edit-val" id="rpe-to">—</div>
+          <div class="acdrop" id="rpe-to-ac" role="listbox" aria-label="Flughäfen" style="position:absolute;top:100%;left:0;right:0"></div>
+        </div>
+      </div>
+      <div class="rp-edit-row">
+        <div class="rp-edit-field" onclick="openDatePicker('dep')">
+          <div class="rp-edit-lbl">Abflug</div>
+          <div class="rp-edit-val" id="rpe-dep">—</div>
+        </div>
+        <div class="rp-edit-field" id="rpe-ret-field" onclick="openDatePicker('ret')">
+          <div class="rp-edit-lbl">Rückkehr</div>
+          <div class="rp-edit-val" id="rpe-ret">—</div>
+        </div>
+      </div>
+      <div class="rp-edit-row" style="grid-template-columns:1fr">
+        <div class="rp-edit-field" onclick="document.getElementById('pov').classList.add('open')">
+          <div class="rp-edit-lbl">Reisende</div>
+          <div class="rp-edit-val" id="rpe-pax">1 Erw.</div>
+        </div>
+      </div>
+      <button class="rp-edit-search" onclick="doRpSearch()">🔍 Erneut suchen</button>
+    </div>
+
+
+    <!-- Sort tabs -->
+    <div class="rp-tabs">
+      <div class="rp-tab on" id="rpt-best" onclick="rpSort('best')">
+        <div class="rp-tab-label">⭐ Beste</div>
+        <div class="rp-tab-price" id="rpt-best-p">—</div>
+      </div>
+      <div class="rp-tab" id="rpt-price" onclick="rpSort('price')">
+        <div class="rp-tab-label">💰 Günstigste</div>
+        <div class="rp-tab-price" id="rpt-price-p">—</div>
+      </div>
+      <div class="rp-tab" id="rpt-dur" onclick="rpSort('dur')">
+        <div class="rp-tab-label">⚡ Schnellste</div>
+        <div class="rp-tab-price" id="rpt-dur-p">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="rp-body" id="rp-body">
+    <div class="rp-count-bar">
+      <span class="rp-count-txt" id="rp-count"></span>
+    </div>
+    <div id="rp-offers-list"></div>
+    <div style="text-align:center;padding:14px 0;display:none" id="rp-lmw">
+      <button class="lm-btn" onclick="rpLoadMore()">Mehr Flüge anzeigen ↓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOOKING CONFIRMATION PAGE ══ -->
+<div class="confirm-page" id="confirm-page">
+  <div class="confirm-hd">
+    <div class="conf-confetti" id="conf-confetti"></div>
+    <div class="confirm-hd-top">
+      <button onclick="closeConfirm()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
+      <button onclick="window.print()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🖨 Drucken</button>
+    </div>
+    <div class="confirm-tick">✓</div>
+    <h1>Buchung bestätigt!</h1>
+    <div class="confirm-hd-sub">Ihre Buchungsbestätigung</div>
+    <div style="text-align:center">
+      <div class="confirm-ref" id="conf-ref">—</div>
+    </div>
+  </div>
+  <div class="confirm-body" id="confirm-body"></div>
+</div>
+
+
+<!-- ══ DSGVO DATENSCHUTZ MODAL ══ -->
+<div class="dsgvo-ov" id="dsgvo-ov" role="dialog" aria-modal="true" aria-label="Datenschutz und Datensicherheit" onclick="if(event.target===this)closeDsgvo()">
+  <div class="dsgvo-box">
+    <div class="dsgvo-hd">
+      <h3>🔒 Datenschutz & Datensicherheit</h3>
+      <button onclick="closeDsgvo()" style="background:var(--bg2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--tx2)">✕</button>
+    </div>
+    <div class="dsgvo-body">
+      <div class="dsgvo-badge">✓ DSGVO-konform &nbsp;|&nbsp; ✓ PCI-DSS gesichert &nbsp;|&nbsp; ✓ SSL-verschlüsselt</div>
+
+      <div class="dsgvo-section">
+        <h4>🛡 Wie wir Ihre Daten schützen</h4>
+        <p>Alle sensiblen Daten (Name, Geburtsdatum, Reisepass, Kreditkartendaten) werden ausschließlich verschlüsselt übertragen. Wir verwenden SSL/TLS-Verschlüsselung nach Industriestandard.</p>
+      </div>
+
+      <div class="dsgvo-section">
+        <h4>✈ Weitergabe an Airlines & Duffel</h4>
+        <p>Ihre Passagierdaten werden ausschließlich zur Ticket-Ausstellung an Duffel (unseren Technologiepartner) und die jeweilige Fluggesellschaft weitergegeben. Eine Weitergabe an Dritte erfolgt nicht.</p>
+      </div>
+
+      <div class="dsgvo-section">
+        <h4>💳 Kreditkartendaten</h4>
+        <p>Kreditkartendaten werden nach PCI-DSS-Standard verarbeitet. Wir speichern keine vollständigen Kartendaten auf unseren Servern. Die Zahlungsabwicklung erfolgt ausschließlich über verschlüsselte, zertifizierte Kanäle.</p>
+      </div>
+
+      <div class="dsgvo-section">
+        <h4>📋 Ihre Rechte (DSGVO)</h4>
+        <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten. Kontaktieren Sie uns unter: <a href="mailto:privacy@airpiv.com">privacy@airpiv.com</a></p>
+      </div>
+    </div>
+    <div class="dsgvo-foot">
+      <button class="dsgvo-close-btn" onclick="closeDsgvo()">Verstanden ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AUTH MODAL ══ -->
+<!-- FLIGHT DETAIL BOTTOM SHEET -->
+<div class="fsheet-ov" id="fsheet-ov" onclick="closeFlightSheet()"></div>
+<div class="fsheet" id="fsheet">
+  <div class="fsheet-grip"></div>
+  <div class="fsheet-hd">
+    <div class="fsheet-hd-t" id="fsheet-title">Flugdetails</div>
+    <button class="fsheet-hd-x" onclick="closeFlightSheet()">✕</button>
+  </div>
+  <div class="fsheet-body" id="fsheet-body"></div>
+  <div class="fsheet-foot">
+    <div class="fsheet-price"><div class="fp-amt" id="fsheet-price">—</div><div class="fp-sub" id="fsheet-price-sub">pro Person</div></div>
+    <button class="fsheet-book" id="fsheet-book">Buchen →</button>
+  </div>
+</div>
+
+<div class="auth-ov" id="auth-ov" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-box" id="auth-box"></div>
+</div>
+
+<div class="seat-confirm-ov" id="seat-confirm-ov" onclick="if(event.target===this)cancelSeatPick()">
+  <div class="seat-confirm">
+    <div class="seat-confirm-q" id="seat-confirm-q"></div>
+    <div class="seat-confirm-p" id="seat-confirm-p"></div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" id="seat-confirm-cancel" onclick="cancelSeatPick()">Abbrechen</button>
+      <button class="seat-confirm-ok" id="seat-confirm-ok" onclick="confirmSeatPick()">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- [ADD-PAX-CONFIRM-FIX] Real confirm/cancel sheet for "+ Add passenger"
+     on the payment step — previously the button fired a toast and
+     immediately re-searched with no way to back out. Same visual pattern
+     as seat-confirm-ov above for consistency. -->
+<div class="seat-confirm-ov" id="addpax-confirm-ov" onclick="if(event.target===this)cancelAddPassenger()">
+  <div class="seat-confirm">
+    <div class="seat-confirm-q" id="addpax-confirm-q"></div>
+    <div class="seat-confirm-p" id="addpax-confirm-p"></div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" id="addpax-confirm-cancel" onclick="cancelAddPassenger()"></button>
+      <button class="seat-confirm-ok" id="addpax-confirm-ok" onclick="confirmAddPassenger()"></button>
+    </div>
+  </div>
+</div>
+<!-- [CANCEL-FLOW-BRAND-FIX] Replaces the browser's native confirm() dialog
+     (which showed Chrome chrome, not Airpiv branding) for the booking
+     cancellation flow. Same seat-confirm-ov visual pattern, with a
+     refund-amount summary and explicit non-refundable warning. -->
+<div class="seat-confirm-ov" id="cancel-confirm-ov" onclick="if(event.target===this)closeCancelConfirm()">
+  <div class="seat-confirm" style="text-align:start">
+    <div class="seat-confirm-q" id="cancel-confirm-title">Buchung stornieren?</div>
+    <div id="cancel-confirm-body" style="margin:10px 0 14px"></div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" id="cancel-confirm-back" onclick="closeCancelConfirm()">Abbrechen</button>
+      <button class="seat-confirm-ok" id="cancel-confirm-go" style="background:var(--rd)" onclick="executeCancelOrder()">Endgültig stornieren</button>
+    </div>
+  </div>
+</div>
+
+<div class="seat-confirm-ov" id="price-details-ov" onclick="if(event.target===this)closePriceDetails()">
+  <div class="seat-confirm" style="text-align:start">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx)" id="pd-title">Preisdetails</div>
+      <button onclick="closePriceDetails()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">✕</button>
+    </div>
+    <div id="pd-rows"></div>
+    <div style="border-top:1px solid var(--bd);margin:14px 0 0;padding-top:14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:15px;font-weight:800;color:var(--tx)" id="pd-total-lbl">Gesamtbetrag</div>
+      <div style="font-size:18px;font-weight:800;color:var(--tx)" id="pd-total-val">—</div>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px;line-height:1.5" id="pd-note"></div>
+    <button onclick="closePriceDetails()" style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn">Schließen</button>
+  </div>
+</div>
+<div class="seat-confirm-ov" id="price-changed-ov" role="dialog" aria-modal="true" onclick="if(event.target===this)closePriceChanged()">
+  <div class="seat-confirm" style="text-align:start">
+    <div style="text-align:center;font-size:2.2rem;margin-bottom:6px" id="pc-icon">📊</div>
+    <div class="seat-confirm-q" style="text-align:center" data-i18n="pc_title">Der Preis hat sich geändert</div>
+    <div class="seat-confirm-p" style="text-align:center" id="pc-msg-el"></div>
+    <div style="background:var(--bg2);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0">
+        <span style="font-size:13px;color:var(--tx3)" data-i18n="pc_old">Vorheriger Preis</span>
+        <span style="font-size:14px;color:var(--tx3);text-decoration:line-through" id="pc-old-val">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0">
+        <span style="font-size:13px;font-weight:700;color:var(--tx)" data-i18n="pc_new">Neuer Preis</span>
+        <span style="font-size:19px;font-weight:800;color:var(--tx)" id="pc-new-val">—</span>
+      </div>
+    </div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" id="pc-cancel-btn" onclick="closePriceChanged()" data-i18n="pc_cancel">Abbrechen</button>
+      <button class="seat-confirm-ok" id="pc-continue-btn" onclick="confirmPriceChanged()" data-i18n="pc_continue">Mit neuem Preis fortfahren</button>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:12px;text-align:center;line-height:1.5" data-i18n="pc_note">Flugpreise ändern sich laufend.</div>
+  </div>
+</div>
+
+<!-- ══ WELCOME REWARDS BANNER ══ -->
+<div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeAuthBanner()">
+  <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:22px;padding:30px 24px 26px;max-width:380px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:welcomePop .4s cubic-bezier(.34,1.56,.64,1) both">
+    <button onclick="closeAuthBanner()" aria-label="close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
+    <div style="position:relative;width:78px;height:78px;margin:0 auto 14px">
+      <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#0fb5a055,transparent 70%);animation:welcomeGlow 2.2s ease-in-out infinite"></div>
+      <div style="position:relative;font-size:3.1rem;line-height:78px;text-align:center">🎁</div>
+    </div>
+    <div style="text-align:center">
+      <div style="color:#fff;font-weight:800;font-size:17px;line-height:1.35;font-family:'Syne',sans-serif" data-i18n="auth_banner_title">Jetzt registrieren & 10€ Willkommensguthaben sichern</div>
+      <div style="color:rgba(255,255,255,.6);font-size:12.5px;margin-top:8px;line-height:1.5" data-i18n="auth_banner_sub">Werde Mitglied im Treueprogramm und sammle bei jeder Buchung Punkte</div>
+    </div>
+    <button onclick="openAuthModal('register')" style="width:100%;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(15,181,160,.35)" data-i18n="auth_banner_cta">Jetzt registrieren</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ DOB CUSTOM CALENDAR ══ -->
+<div class="dob-cal-ov" id="dob-cal-ov">
+  <div class="dob-cal-box" style="position:relative">
+    <!-- Year/Month picker overlay -->
+    <div class="dob-ym-pick" id="dob-ym-pick">
+      <div class="dob-ym-hd">
+        <button onclick="closeDobYmPick()" style="background:var(--bg2);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">←</button>
+        <span id="dob-ym-title">Jahr wählen</span>
+      </div>
+      <div class="dob-ym-grid" id="dob-ym-grid"></div>
+    </div>
+    <!-- Header -->
+    <div class="dob-cal-hd">
+      <div class="dob-cal-hd-top">
+        <span class="dob-cal-hd-lbl">Geburtsdatum</span>
+        <button class="dob-cal-close" onclick="closeDobCal()">✕</button>
+      </div>
+      <div class="dob-cal-selected" id="dob-cal-selected">— — ——</div>
+      <div class="dob-cal-year" id="dob-cal-year-lbl"></div>
+    </div>
+    <!-- Nav -->
+    <div class="dob-cal-nav">
+      <button class="dob-cal-nav-btn" onclick="dobCalPrev()">‹</button>
+      <span class="dob-cal-month-lbl" id="dob-cal-month-lbl" onclick="openDobYmPick()"></span><span class="dob-cal-ym-arrow" onclick="openDobYmPick()">▾</span>
+      <button class="dob-cal-nav-btn" onclick="dobCalNext()">›</button>
+    </div>
+    <!-- Weekdays -->
+    <div class="dob-cal-weekdays">
+      <div class="dob-cal-wd">Mo</div><div class="dob-cal-wd">Di</div><div class="dob-cal-wd">Mi</div>
+      <div class="dob-cal-wd">Do</div><div class="dob-cal-wd">Fr</div><div class="dob-cal-wd">Sa</div><div class="dob-cal-wd">So</div>
+    </div>
+    <!-- Grid -->
+    <div class="dob-cal-grid" id="dob-cal-grid"></div>
+    <!-- Footer -->
+    <div class="dob-cal-foot">
+      <button class="dob-cal-cancel" onclick="closeDobCal()">Abbrechen</button>
+      <button class="dob-cal-confirm" id="dob-cal-confirm" onclick="confirmDobCal()" disabled>Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Brevo Conversations -->
+<script src="/app.js" charset="utf-8" defer></script>
+<!-- /Brevo Conversations -->
+</body>
+</html>
