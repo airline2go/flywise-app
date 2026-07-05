@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-2K257GSWEM");
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog | Airpiv</title>
+<meta name="description" content="Tips and tricks for cheap flights, travel inspiration, and everything worth knowing about flying — from the Airpiv team.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://airpiv.com/en/blog">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Blog | Airpiv">
+<meta property="og:description" content="Tips and tricks for cheap flights, travel inspiration, and everything worth knowing about flying.">
+<meta property="og:url" content="https://airpiv.com/en/blog">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/shared-layout.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "@id": "https://airpiv.com/en/blog",
+  "url": "https://airpiv.com/en/blog",
+  "name": "Airpiv Blog",
+  "isPartOf": { "@id": "https://airpiv.com/#website" },
+  "publisher": { "@id": "https://airpiv.com/#organization" },
+  "inLanguage": "en"
+}
+</script>
+<style>
+/* ============================================================
+   Airpiv Journal — boarding-pass-inspired blog listing.
+   Signature element: each post renders as a stylised boarding
+   pass — a torn/perforated ticket stub — reusing the airline's
+   own vernacular instead of a generic card grid.
+   ============================================================ */
+body{background:var(--bg2)}
+
+/* ── Hero ── */
+.jrn-hero{background:linear-gradient(160deg,#0c1926 0,#14304d 55%,#0a1e30 100%);position:relative;overflow:hidden;padding:54px var(--pad) 64px}
+.jrn-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 65% 30%,rgba(15,181,160,.16),transparent 70%);pointer-events:none}
+.jrn-hero-in{max-width:760px;margin:0 auto;position:relative;z-index:2}
+.jrn-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(15,181,160,.14);border:1px solid rgba(15,181,160,.35);color:#5eead4;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:20px;margin-bottom:18px}
+.jrn-hero h1{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.08;margin:0 0 14px}
+.jrn-hero h1 em{font-style:normal;color:var(--teal)}
+.jrn-hero .sub{color:rgba(255,255,255,.55);font-size:15px;line-height:1.65;max-width:480px;margin:0}
+
+/* Flight-path motion — one deliberate signature moment. A dashed
+   route with a plane easing along it, looping slowly. Purely
+   ambient/decorative; respects reduced-motion. */
+.jrn-route{position:relative;height:26px;margin-top:34px;max-width:420px}
+.jrn-route-line{position:absolute;top:50%;left:0;right:0;height:0;border-top:1.5px dashed rgba(255,255,255,.22)}
+.jrn-route-plane{position:absolute;top:50%;left:0;transform:translateY(-50%);font-size:15px;color:var(--teal);animation:jrnFly 7s ease-in-out infinite}
+@keyframes jrnFly{0%{left:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:calc(100% - 16px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.jrn-route-plane{animation:none;left:calc(50% - 8px);opacity:1}}
+
+/* ── Ticket grid ── */
+.jrn-main{max-width:900px;margin:0 auto;padding:44px var(--pad) 80px}
+.blog-grid{display:grid;grid-template-columns:1fr;gap:26px}
+@media(min-width:680px){.blog-grid{grid-template-columns:1fr 1fr}}
+
+.post-ticket{display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:visible;box-shadow:0 2px 14px rgba(10,24,34,.07);border:1px solid var(--bd);transition:transform .18s,box-shadow .18s}
+.post-ticket:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(10,24,34,.12)}
+
+.post-ticket-cover{width:100%;height:168px;object-fit:cover;display:block;background:var(--navy2);border-radius:16px 16px 0 0}
+.post-ticket-noimg{width:100%;height:96px;border-radius:16px 16px 0 0;background:linear-gradient(135deg,var(--navy) 0,var(--navy2) 100%);display:flex;align-items:center;justify-content:center}
+.post-ticket-noimg svg{opacity:.5}
+
+/* Perforation — dashed tear line with punched circular notches on
+   both edges, colour-matched to the page background so they read
+   as real die-cut holes. */
+.post-ticket-perf{position:relative;height:0;border-top:2px dashed var(--bd2);margin:0 0}
+.post-ticket-perf::before,.post-ticket-perf::after{content:'';position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--bg2);transform:translateY(-50%)}
+.post-ticket-perf::before{left:-10px}
+.post-ticket-perf::after{right:-10px}
+
+.post-ticket-body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
+.post-ticket-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--teal2);background:var(--teal-lt);display:inline-flex;padding:3px 9px;border-radius:6px;margin-bottom:11px;align-self:flex-start}
+.post-ticket-title{font-family:'Syne',sans-serif;font-size:1.14rem;font-weight:800;color:var(--tx);line-height:1.28;margin:0 0 9px}
+.post-ticket-excerpt{font-size:13.5px;color:var(--tx2);line-height:1.65;margin:0 0 16px;flex:1}
+.post-ticket-meta{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);padding-top:13px;border-top:1px dashed var(--bd)}
+.post-ticket-meta .dot{opacity:.5}
+
+.jrn-empty,.jrn-error{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--tx3);font-size:14px}
+
+[data-theme=dark] body{background:#0d1420}
+[data-theme=dark] .post-ticket{background:var(--navy2);border-color:rgba(255,255,255,.08)}
+[data-theme=dark] .post-ticket-perf::before,[data-theme=dark] .post-ticket-perf::after{background:#0d1420}
+[data-theme=dark] .post-ticket-title{color:#eef3f7}
+[data-theme=dark] .post-ticket-excerpt{color:#aebcc9}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="/" class="logo"><picture>
+      <source srcset="/airpiv-logo.webp" type="image/webp">
+      <img src="/airpiv-logo.png" alt="Airpiv">
+    </picture></a>
+    <div class="navr">
+      <a href="/en/" class="btn-t">Search flights</a>
+    </div>
+  </div>
+</nav>
+
+<header class="jrn-hero">
+  <div class="jrn-hero-in">
+    <a href="/en/" class="back-link" style="color:rgba(255,255,255,.6)">← Back to homepage</a>
+    <div class="jrn-eyebrow">✈ Airpiv Journal</div>
+    <h1>Stories that <em>keep</em> flying.</h1>
+    <p class="sub">Travel tips, price comparisons, and inspiration from people who are constantly on the move themselves.</p>
+    <div class="jrn-route" aria-hidden="true">
+      <div class="jrn-route-line"></div>
+      <div class="jrn-route-plane">✈</div>
+    </div>
+  </div>
+</header>
+
+<main class="jrn-main">
+  <div class="blog-grid" id="blog-grid">
+    <div class="jrn-empty">Loading posts…</div>
+  </div>
+</main>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Find flights no one else can find. 600+ airlines, best prices, full guarantee.</p></div>
+    <div class="fcol"><h4>Company</h4><ul><li><a href="/about.html">About us</a></li><li><a href="/en/blog">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Contact</a></li><li><a href="/privacy.html">Privacy</a></li><li><a href="/terms.html">Terms</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv · All rights reserved</p></div>
+</div></footer>
+
+<script>
+var PROXY = 'https://api.airpiv.com';
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+var NOIMG_SVG = '<div class="post-ticket-noimg"><svg width="34" height="34" viewBox="0 0 64 64" fill="none"><path d="M32 10 L48 46 L32 37 L16 46 Z" fill="#0FB5A0" opacity="0.85"/></svg></div>';
+
+fetch(PROXY + '/blog-posts-en')
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    var grid = document.getElementById('blog-grid');
+    if (!j.ok || !j.posts || !j.posts.length) {
+      grid.innerHTML = '<div class="jrn-empty">No posts yet — check back soon!</div>';
+      return;
+    }
+    grid.innerHTML = j.posts.map(function(p) {
+      var dateStr = p.published_at ? new Date(p.published_at).toLocaleDateString('en-GB', {year:'numeric',month:'long',day:'numeric'}) : '';
+      var cover = p.cover_image_url
+        ? '<img class="post-ticket-cover" src="' + escHtml(p.cover_image_url) + '" loading="lazy" alt="' + escHtml(p.title) + '">'
+        : NOIMG_SVG;
+      return '<a class="post-ticket" href="/en/blog/' + encodeURIComponent(p.slug) + '">' +
+        cover +
+        '<div class="post-ticket-perf" aria-hidden="true"></div>' +
+        '<div class="post-ticket-body">' +
+          '<span class="post-ticket-eyebrow">Airpiv Journal</span>' +
+          '<h2 class="post-ticket-title">' + escHtml(p.title) + '</h2>' +
+          (p.excerpt ? '<p class="post-ticket-excerpt">' + escHtml(p.excerpt) + '</p>' : '<span style="flex:1"></span>') +
+          '<div class="post-ticket-meta"><span>' + escHtml(p.author || 'Airpiv Team') + '</span><span class="dot">·</span><span>' + dateStr + '</span></div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+  })
+  .catch(function(){
+    document.getElementById('blog-grid').innerHTML = '<div class="jrn-error">Posts could not be loaded. Please try again later.</div>';
+  });
+</script>
+
+</body>
+</html>
