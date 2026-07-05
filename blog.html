@@ -174,7 +174,7 @@ fetch(PROXY + '/blog-posts')
       var cover = p.cover_image_url
         ? '<img class="post-ticket-cover" src="' + escHtml(p.cover_image_url) + '" loading="lazy" alt="' + escHtml(p.title) + '">'
         : NOIMG_SVG;
-      return '<a class="post-ticket" href="/blog-post.html?slug=' + encodeURIComponent(p.slug) + '">' +
+      return '<a class="post-ticket" href="/blog/' + encodeURIComponent(p.slug) + '">' +
         cover +
         '<div class="post-ticket-perf" aria-hidden="true"></div>' +
         '<div class="post-ticket-body">' +

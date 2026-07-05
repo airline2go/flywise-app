@@ -198,6 +198,15 @@ function escHtml(s) {
 
 var params = new URLSearchParams(window.location.search);
 var slug = params.get('slug');
+if (!slug) {
+  // [CLEAN-BLOG-URL] يدعم الرابط النظيف الجديد /blog/<slug> — بياخد
+  // آخر جزء غير فاضي من المسار، أياً كان الجزء اللي قبله بالظبط، بنفس
+  // المنطق اللي أصلح مشكلة صفحات المسارات. لسه بيدعم ?slug= القديم
+  // كمان (أعلى) لأي روابط قديمة اتفهرست في جوجل أو محفوظة عند الناس.
+  var segments = window.location.pathname.split('/').filter(Boolean);
+  var last = segments[segments.length - 1] || '';
+  if (last && !/\.html?$/i.test(last)) slug = decodeURIComponent(last);
+}
 
 if (!slug) {
   renderNotFound();
@@ -318,7 +327,7 @@ function extractFaq(containerEl) {
 }
 
 function renderPost(post) {
-  var url = 'https://airpiv.com/blog-post.html?slug=' + encodeURIComponent(post.slug);
+  var url = 'https://airpiv.com/blog/' + encodeURIComponent(post.slug);
   var description = post.meta_description || post.excerpt || (post.title + ' — Airpiv Blog');
   var image = post.cover_image_url || 'https://airpiv.com/og-image.png';
 
@@ -486,7 +495,10 @@ function toggleFaq(btn) {
 }
 
 function copyPostLink(btn) {
-  var url = 'https://airpiv.com/blog-post.html?slug=' + encodeURIComponent(new URLSearchParams(window.location.search).get('slug') || '');
+  var segments = window.location.pathname.split('/').filter(Boolean);
+  var pathSlug = segments.length ? segments[segments.length - 1] : '';
+  var slugForLink = new URLSearchParams(window.location.search).get('slug') || (!/\.html?$/i.test(pathSlug) ? pathSlug : '');
+  var url = 'https://airpiv.com/blog/' + encodeURIComponent(slugForLink);
   navigator.clipboard.writeText(url).then(function() {
     var toast = btn.querySelector('.post-copy-toast');
     toast.classList.add('show');
@@ -558,7 +570,7 @@ function loadSimilarPosts(post) {
       if (!others.length) return;
       var html = '<div class="post-similar"><h2>' + heading + '</h2><div class="post-similar-grid">' +
         others.map(function(p) {
-          return '<a class="post-similar-card" href="/blog-post.html?slug=' + encodeURIComponent(p.slug) + '"><div class="post-similar-card-title">' + escHtml(p.title) + '</div></a>';
+          return '<a class="post-similar-card" href="/blog/' + encodeURIComponent(p.slug) + '"><div class="post-similar-card-title">' + escHtml(p.title) + '</div></a>';
         }).join('') + '</div></div>';
       document.getElementById('post-similar-slot').innerHTML = html;
     })
