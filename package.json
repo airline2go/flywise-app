@@ -2,11 +2,13 @@
   "name": "airpiv-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Airpiv static frontend (no build step — served as plain HTML/CSS/JS)",
+  "description": "Airpiv static frontend, served as plain HTML/CSS/JS. The one build step (npm run build) pre-renders SEO-critical entity pages (city/country/airport/flights/blog) — see build/generate-pages.js.",
   "scripts": {
-    "format": "prettier --write \"*.css\""
+    "format": "prettier --write \"*.css\"",
+    "build": "node build/generate-pages.js"
   },
   "devDependencies": {
+    "node-html-parser": "^9.0.0",
     "prettier": "^3.4.2"
   }
 }
