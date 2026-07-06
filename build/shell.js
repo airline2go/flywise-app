@@ -22,6 +22,8 @@ function renderShell({
   return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
+<link rel="preconnect" href="https://api.airpiv.com">
+<link rel="dns-prefetch" href="https://api.airpiv.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
 <script src="/analytics.js" defer></script>
 <meta charset="UTF-8">
@@ -50,7 +52,7 @@ ${bodyPrefix}
   <div class="navi">
     <a href="${s.homeHref}" class="logo"><picture>
       <source srcset="/airpiv-logo.webp" type="image/webp">
-      <img src="/airpiv-logo.png" alt="Airpiv">
+      <img src="/airpiv-logo.png" alt="Airpiv" width="118" height="38">
     </picture></a>
     <div class="navr">
       <a href="/" class="btn-t">${s.searchLabel}</a>
