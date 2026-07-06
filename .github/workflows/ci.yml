@@ -1,11 +1,11 @@
 name: CI Checks (Frontend)
 
 # [CI-PIPELINE-FIX] Runs on every push/PR to main in the flywise-app
-# (frontend) repo. Checks app.js for syntax errors and every HTML
-# page's inline <script> blocks — the two things most likely to
-# silently break the live site if a typo slips through. Dependency-
-# free: `node --check` and Node's built-in `vm` module only, nothing
-# to install or keep pinned.
+# (frontend) repo. Checks app.js/admin.js/config.js for syntax errors
+# and every HTML page's inline <script> blocks — the two things most
+# likely to silently break the live site if a typo slips through.
+# Dependency-free: `node --check` and Node's built-in `vm` module
+# only, nothing to install or keep pinned.
 on:
   push:
     branches: [main]
@@ -24,6 +24,12 @@ jobs:
 
       - name: Check app.js syntax
         run: node --check app.js
+
+      - name: Check admin.js syntax
+        run: node --check admin.js
+
+      - name: Check config.js syntax
+        run: node --check config.js
 
       - name: Check inline <script> blocks in every HTML page
         run: |
