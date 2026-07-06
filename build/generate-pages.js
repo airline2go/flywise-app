@@ -27,9 +27,9 @@ const summary = {
 };
 
 function writePage(relPath, html) {
-  const dir = path.join(ROOT, relPath);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  const filePath = path.join(ROOT, `${relPath}.html`);
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, html, 'utf8');
 }
 
 function saveSnapshot(name, data) {
