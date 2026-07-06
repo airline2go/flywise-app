@@ -23,7 +23,7 @@ function renderShell({
 <html lang="${lang}">
 <head>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
-<script src="/analytics.js"></script>
+<script src="/analytics.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escHtml(title)}</title>
