@@ -3,12 +3,7 @@
 <head>
 <!-- Google Analytics 4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag("js", new Date());
-  gtag("config", "G-2K257GSWEM");
-</script>
+<script src="/analytics.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blog | Airpiv</title>
@@ -45,68 +40,7 @@
   "inLanguage": "en"
 }
 </script>
-<style>
-/* ============================================================
-   Airpiv Journal — boarding-pass-inspired blog listing.
-   Signature element: each post renders as a stylised boarding
-   pass — a torn/perforated ticket stub — reusing the airline's
-   own vernacular instead of a generic card grid.
-   ============================================================ */
-body{background:var(--bg2)}
-
-/* ── Hero ── */
-.jrn-hero{background:linear-gradient(160deg,#0c1926 0,#14304d 55%,#0a1e30 100%);position:relative;overflow:hidden;padding:54px var(--pad) 64px}
-.jrn-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 65% 30%,rgba(15,181,160,.16),transparent 70%);pointer-events:none}
-.jrn-hero-in{max-width:760px;margin:0 auto;position:relative;z-index:2}
-.jrn-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(15,181,160,.14);border:1px solid rgba(15,181,160,.35);color:#5eead4;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:20px;margin-bottom:18px}
-.jrn-hero h1{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.08;margin:0 0 14px}
-.jrn-hero h1 em{font-style:normal;color:var(--teal)}
-.jrn-hero .sub{color:rgba(255,255,255,.55);font-size:15px;line-height:1.65;max-width:480px;margin:0}
-
-/* Flight-path motion — one deliberate signature moment. A dashed
-   route with a plane easing along it, looping slowly. Purely
-   ambient/decorative; respects reduced-motion. */
-.jrn-route{position:relative;height:26px;margin-top:34px;max-width:420px}
-.jrn-route-line{position:absolute;top:50%;left:0;right:0;height:0;border-top:1.5px dashed rgba(255,255,255,.22)}
-.jrn-route-plane{position:absolute;top:50%;left:0;transform:translateY(-50%);font-size:15px;color:var(--teal);animation:jrnFly 7s ease-in-out infinite}
-@keyframes jrnFly{0%{left:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:calc(100% - 16px);opacity:0}}
-@media (prefers-reduced-motion:reduce){.jrn-route-plane{animation:none;left:calc(50% - 8px);opacity:1}}
-
-/* ── Ticket grid ── */
-.jrn-main{max-width:900px;margin:0 auto;padding:44px var(--pad) 80px}
-.blog-grid{display:grid;grid-template-columns:1fr;gap:26px}
-@media(min-width:680px){.blog-grid{grid-template-columns:1fr 1fr}}
-
-.post-ticket{display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:visible;box-shadow:0 2px 14px rgba(10,24,34,.07);border:1px solid var(--bd);transition:transform .18s,box-shadow .18s}
-.post-ticket:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(10,24,34,.12)}
-
-.post-ticket-cover{width:100%;height:168px;object-fit:cover;display:block;background:var(--navy2);border-radius:16px 16px 0 0}
-.post-ticket-noimg{width:100%;height:96px;border-radius:16px 16px 0 0;background:linear-gradient(135deg,var(--navy) 0,var(--navy2) 100%);display:flex;align-items:center;justify-content:center}
-.post-ticket-noimg svg{opacity:.5}
-
-/* Perforation — dashed tear line with punched circular notches on
-   both edges, colour-matched to the page background so they read
-   as real die-cut holes. */
-.post-ticket-perf{position:relative;height:0;border-top:2px dashed var(--bd2);margin:0 0}
-.post-ticket-perf::before,.post-ticket-perf::after{content:'';position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--bg2);transform:translateY(-50%)}
-.post-ticket-perf::before{left:-10px}
-.post-ticket-perf::after{right:-10px}
-
-.post-ticket-body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
-.post-ticket-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--teal2);background:var(--teal-lt);display:inline-flex;padding:3px 9px;border-radius:6px;margin-bottom:11px;align-self:flex-start}
-.post-ticket-title{font-family:'Syne',sans-serif;font-size:1.14rem;font-weight:800;color:var(--tx);line-height:1.28;margin:0 0 9px}
-.post-ticket-excerpt{font-size:13.5px;color:var(--tx2);line-height:1.65;margin:0 0 16px;flex:1}
-.post-ticket-meta{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);padding-top:13px;border-top:1px dashed var(--bd)}
-.post-ticket-meta .dot{opacity:.5}
-
-.jrn-empty,.jrn-error{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--tx3);font-size:14px}
-
-[data-theme=dark] body{background:#0d1420}
-[data-theme=dark] .post-ticket{background:var(--navy2);border-color:rgba(255,255,255,.08)}
-[data-theme=dark] .post-ticket-perf::before,[data-theme=dark] .post-ticket-perf::after{background:#0d1420}
-[data-theme=dark] .post-ticket-title{color:#eef3f7}
-[data-theme=dark] .post-ticket-excerpt{color:#aebcc9}
-</style>
+<link rel="stylesheet" href="/blog.css">
 </head>
 <body>
 
