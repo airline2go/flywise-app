@@ -248,7 +248,7 @@ function renderRoute(route) {
   }
   var introText = route.intro_text || buildDynamicIntro(route);
 
-  var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
+  var bookingUrl = '/search/' + encodeURIComponent(route.origin_iata) + '-' + encodeURIComponent(route.destination_iata);
 
   // [BREADCRUMB] Home → Country → City → Route — the full chain via the
   // destination side (the more relevant classification for "which

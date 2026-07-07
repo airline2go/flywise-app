@@ -31,27 +31,24 @@
 <meta name="theme-color" content="#00a991">
 <!-- Canonical URL -->
 <link rel="canonical" href="https://airpiv.com/" id="canonical-url">
-<link rel="alternate" hreflang="de" href="https://airpiv.com/?lang=de">
-<link rel="alternate" hreflang="en" href="https://airpiv.com/?lang=en">
-<link rel="alternate" hreflang="ar" href="https://airpiv.com/?lang=ar">
+<link rel="alternate" hreflang="de" href="https://airpiv.com/">
+<link rel="alternate" hreflang="en" href="https://airpiv.com/en">
+<link rel="alternate" hreflang="ar" href="https://airpiv.com/ar">
 <link rel="alternate" hreflang="x-default" href="https://airpiv.com/">
 <script>
 (function(){
   var base='https://airpiv.com';
-  var path=window.location.pathname.replace(/\/+$/,'')||'/';
-  var canonical=base+(path==='/'?'/':path+'/');
   // [HREFLANG-CANONICAL-FIX] Each language's URL must be canonical to
   // ITSELF, not silently collapsed back to the bare URL — otherwise the
-  // hreflang tags above (which claim ?lang=de/en/ar are distinct,
+  // hreflang tags above (which claim /en and /ar are distinct,
   // self-referencing indexable pages) directly contradict the canonical
-  // tag (which previously always pointed to the param-less URL no matter
-  // what), telling Google "ignore the language-specific URL, this is
+  // tag, telling Google "ignore the language-specific URL, this is
   // really just the default page" — exactly defeating the purpose of
-  // having hreflang tags at all.
-  var langParam = new URLSearchParams(window.location.search).get('lang');
-  if (langParam && ['de','en','ar'].indexOf(langParam) !== -1) {
-    canonical += '?lang=' + langParam;
-  }
+  // having hreflang tags at all. Canonical is derived from the clean
+  // pathname only (never a query string) — matches the no-trailing-slash
+  // convention used by every other clean URL on the site (e.g. /city/berlin).
+  var path=window.location.pathname;
+  var canonical=(path==='/en'||path==='/ar')?base+path:base+'/';
   document.getElementById('canonical-url').setAttribute('href',canonical);
 })();
 </script>
