@@ -1,4 +1,4 @@
-const { escHtml, renderShell } = require('./shell');
+const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { localizeCity } = require('./data');
 
 const AIRPORT_CSS = `<style>
@@ -123,7 +123,7 @@ ${toSectionHtml}
     breadcrumb: { '@type': 'BreadcrumbList', itemListElement: breadcrumbList },
   };
 
-  const headExtra = `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n${AIRPORT_CSS}`;
+  const headExtra = `${jsonLdScript(schema)}\n${AIRPORT_CSS}`;
 
   const html = renderShell({
     lang: de ? 'de' : 'en',

@@ -1,4 +1,4 @@
-const { escHtml, renderShell } = require('./shell');
+const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { localizeCity, getAlternativeAirports } = require('./data');
 
 const CITY_CSS = `<style>
@@ -114,7 +114,7 @@ ${toSectionHtml}
   };
   if (!de) schema.inLanguage = 'en';
 
-  const headExtra = `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n${CITY_CSS}`;
+  const headExtra = `${jsonLdScript(schema)}\n${CITY_CSS}`;
 
   const html = renderShell({
     lang: de ? 'de' : 'en',

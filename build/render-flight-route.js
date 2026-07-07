@@ -1,4 +1,4 @@
-const { escHtml, renderShell } = require('./shell');
+const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { germanizeCity, anglicizeCity, getAlternativeAirports } = require('./data');
 
 // [BUG-FIX] The original flight-route.html wrote its JSON-LD schema TWICE —
@@ -269,9 +269,7 @@ ${altAirportsHtml}
 
   const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbItems };
 
-  const headExtra = `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n` +
-    `<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>\n` +
-    `${ROUTE_HEAD_EXTRA_STATIC}`;
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${ROUTE_HEAD_EXTRA_STATIC}`;
 
   const html = renderShell({
     lang: de ? 'de' : 'en',
