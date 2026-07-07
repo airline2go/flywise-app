@@ -197,7 +197,7 @@
           <div id="dd-loyalty-section"></div>
           <button onclick="openReferralPanel();toggleUserMenu()" class="user-dd-item">🎁 Freunde einladen</button>
           <button onclick="openPg('bookings');loadMyBookings();toggleUserMenu()" class="user-dd-item">🎫 Buchungen</button>
-          <button onclick="logoutUser()" class="user-dd-item" style="color:var(--rd)">🚪 Abmelden</button>
+          <button data-fn="logoutUser" class="user-dd-item" style="color:var(--rd)">🚪 Abmelden</button>
         </div>
       </div>
     </div>
@@ -255,7 +255,7 @@
     <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
     <div id="baginfo-title" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--tx);margin-bottom:14px">Gepäcksübersicht</div>
     <div id="baginfo-rows"></div>
-    <button id="baginfo-close-btn" onclick="closeBagInfo()" style="margin-top:16px;width:100%;background:var(--bg2);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--tx);cursor:pointer">Schließen</button>
+    <button id="baginfo-close-btn" data-fn="closeBagInfo" style="margin-top:16px;width:100%;background:var(--bg2);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--tx);cursor:pointer">Schließen</button>
   </div>
 </div>
 
@@ -265,7 +265,7 @@
     <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--tx)">Suche anpassen</div>
-      <button onclick="closeMiniSearch()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2);display:flex;align-items:center;justify-content:center">✕</button>
+      <button data-fn="closeMiniSearch" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2);display:flex;align-items:center;justify-content:center">✕</button>
     </div>
     <!-- Von / Nach -->
     <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px">
@@ -369,7 +369,7 @@
           <input id="from-in" type="search" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acTypeReset('from');acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
           <div class="kfield-sub" id="from-sub">Berlin Brandenburg · BER</div>
         </div>
-        <button class="kclear" onclick="clearField('from')">&#x2715;</button>
+        <button class="kclear" data-fn="clearField" data-fn-arg="from">&#x2715;</button>
         <div class="acdrop" id="from-ac" role="listbox" aria-label="Abflughäfen"></div>
       </div>
 
@@ -396,7 +396,7 @@
 
       <!-- Multi-city extra legs -->
       <div id="mc-legs" style="display:none"></div>
-      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" onclick="mcAddLeg()">+ Weiteren Stopp hinzufügen</button>
+      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" data-fn="mcAddLeg">+ Weiteren Stopp hinzufügen</button>
 
       <!-- Dates combined field — tap to open calendar -->
       <div class="kfield kdates-field" id="dates-field">
@@ -416,7 +416,7 @@
       </div>
 
       <!-- Search button -->
-      <button class="gobtn" onclick="doSearch()">
+      <button class="gobtn" data-fn="doSearch">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span data-i18n="search_btn">Suchen</span>
       </button>
@@ -541,7 +541,7 @@
     </div>
     <div class="rmain">
       <div id="offers-list"></div>
-      <div class="lm-wrap" id="lmw"><button class="lm-btn" onclick="loadMore()">Mehr Flüge anzeigen ↓</button></div>
+      <div class="lm-wrap" id="lmw"><button class="lm-btn" data-fn="loadMore">Mehr Flüge anzeigen ↓</button></div>
     </div>
   </div>
 </div>
@@ -935,9 +935,9 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Month navigation -->
     <div class="cal-nav">
-      <button class="cal-nav-btn" onclick="calPrevMonth()">&#8249;</button>
+      <button class="cal-nav-btn" data-fn="calPrevMonth">&#8249;</button>
       <span class="cal-month-lbl" id="cal-month-lbl"></span>
-      <button class="cal-nav-btn" onclick="calNextMonth()">&#8250;</button>
+      <button class="cal-nav-btn" data-fn="calNextMonth">&#8250;</button>
     </div>
 
     <!-- Weekday headers -->
@@ -950,8 +950,8 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Action buttons -->
     <div class="cal-foot">
-      <button class="cal-cancel" onclick="closeCal()">Abbrechen</button>
-      <button class="cal-confirm" id="cal-confirm" onclick="confirmCal()">Daten festlegen</button>
+      <button class="cal-cancel" data-fn="closeCal">Abbrechen</button>
+      <button class="cal-confirm" id="cal-confirm" data-fn="confirmCal">Daten festlegen</button>
     </div>
   </div>
 </div>
@@ -960,7 +960,7 @@ Telefon: [Ihre Telefonnummer]</p>
 <!-- HELPER MODAL -->
 <div class="help-ov" id="help-ov">
   <div class="help-box" style="position:relative">
-    <button class="help-close" onclick="closeHelper()">✕</button>
+    <button class="help-close" data-fn="closeHelper">✕</button>
     <div class="help-title" id="help-title">Fast geschafft! ✈️</div>
     <div class="help-sub" id="help-sub">Noch ein paar Angaben fehlen</div>
     <div class="help-cards" id="help-cards"></div>
@@ -975,12 +975,12 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Header -->
     <div class="bflow-hd">
-      <button class="bflow-back" id="bflow-back" onclick="bflowBack()">←</button>
+      <button class="bflow-back" id="bflow-back" data-fn="bflowBack">←</button>
       <div style="flex:1;text-align:center">
         <div class="bflow-title" id="bflow-title">Flugdetails</div>
         <div class="bflow-route" id="bflow-route"></div>
       </div>
-      <button class="bflow-back" onclick="closeBflow()">✕</button>
+      <button class="bflow-back" data-fn="closeBflow">✕</button>
     </div>
 
     <!-- Progress Steps -->
@@ -1016,9 +1016,9 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Footer -->
     <div class="bflow-foot">
-      <div id="bflow-pricelink-wrap" style="display:none;text-align:center;margin-bottom:8px"><button onclick="openPriceDetails()" style="background:none;border:none;color:var(--teal2);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline" id="bflow-pricelink">Preisdetails anzeigen</button></div>
+      <div id="bflow-pricelink-wrap" style="display:none;text-align:center;margin-bottom:8px"><button data-fn="openPriceDetails" style="background:none;border:none;color:var(--teal2);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline" id="bflow-pricelink">Preisdetails anzeigen</button></div>
       <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" onchange="this.closest('.compliance-wrap').classList.remove('required-err')"><span class="compliance-text">Ich bestätige die <a href="#" onclick="openPg('terms');return false">AGB</a> und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></label></div>
-    <button class="bflow-btn" id="bflow-btn" onclick="bflowNext()">
+    <button class="bflow-btn" id="bflow-btn" data-fn="bflowNext">
         <span id="bflow-btn-txt">Weiter</span>
         <span class="bflow-price" id="bflow-btn-price"></span>
       </button>
@@ -1105,7 +1105,7 @@ Telefon: [Ihre Telefonnummer]</p>
   <!-- Header -->
   <div class="rp-header">
     <div class="rp-header-top">
-      <button class="rp-back" onclick="closeResultsPage()">←</button>
+      <button class="rp-back" data-fn="closeResultsPage">←</button>
       <div class="rp-title-wrap" data-tre>
         <div class="rp-route" id="rp-route">—</div>
         <div class="rp-meta" id="rp-meta">—</div>
@@ -1155,7 +1155,7 @@ Telefon: [Ihre Telefonnummer]</p>
           <div class="rp-edit-val" id="rpe-pax">1 Erw.</div>
         </div>
       </div>
-      <button class="rp-edit-search" onclick="doRpSearch()">🔍 Erneut suchen</button>
+      <button class="rp-edit-search" data-fn="doRpSearch">🔍 Erneut suchen</button>
     </div>
 
 
@@ -1193,7 +1193,7 @@ Telefon: [Ihre Telefonnummer]</p>
   <div class="confirm-hd">
     <div class="conf-confetti" id="conf-confetti"></div>
     <div class="confirm-hd-top">
-      <button onclick="closeConfirm()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
+      <button data-fn="closeConfirm" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
       <button data-print style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🖨 Drucken</button>
     </div>
     <div class="confirm-tick">✓</div>
@@ -1268,8 +1268,8 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="seat-confirm-q" id="seat-confirm-q"></div>
     <div class="seat-confirm-p" id="seat-confirm-p"></div>
     <div class="seat-confirm-btns">
-      <button class="seat-confirm-cancel" id="seat-confirm-cancel" onclick="cancelSeatPick()">Abbrechen</button>
-      <button class="seat-confirm-ok" id="seat-confirm-ok" onclick="confirmSeatPick()">Bestätigen</button>
+      <button class="seat-confirm-cancel" id="seat-confirm-cancel" data-fn="cancelSeatPick">Abbrechen</button>
+      <button class="seat-confirm-ok" id="seat-confirm-ok" data-fn="confirmSeatPick">Bestätigen</button>
     </div>
   </div>
 </div>
@@ -1283,8 +1283,8 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="seat-confirm-q" id="addpax-confirm-q"></div>
     <div class="seat-confirm-p" id="addpax-confirm-p"></div>
     <div class="seat-confirm-btns">
-      <button class="seat-confirm-cancel" id="addpax-confirm-cancel" onclick="cancelAddPassenger()"></button>
-      <button class="seat-confirm-ok" id="addpax-confirm-ok" onclick="confirmAddPassenger()"></button>
+      <button class="seat-confirm-cancel" id="addpax-confirm-cancel" data-fn="cancelAddPassenger"></button>
+      <button class="seat-confirm-ok" id="addpax-confirm-ok" data-fn="confirmAddPassenger"></button>
     </div>
   </div>
 </div>
@@ -1297,8 +1297,8 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="seat-confirm-q" id="cancel-confirm-title">Buchung stornieren?</div>
     <div id="cancel-confirm-body" style="margin:10px 0 14px"></div>
     <div class="seat-confirm-btns">
-      <button class="seat-confirm-cancel" id="cancel-confirm-back" onclick="closeCancelConfirm()">Abbrechen</button>
-      <button class="seat-confirm-ok" id="cancel-confirm-go" style="background:var(--rd)" onclick="executeCancelOrder()">Endgültig stornieren</button>
+      <button class="seat-confirm-cancel" id="cancel-confirm-back" data-fn="closeCancelConfirm">Abbrechen</button>
+      <button class="seat-confirm-ok" id="cancel-confirm-go" style="background:var(--rd)" data-fn="executeCancelOrder">Endgültig stornieren</button>
     </div>
   </div>
 </div>
@@ -1334,8 +1334,8 @@ Telefon: [Ihre Telefonnummer]</p>
       </div>
     </div>
     <div class="seat-confirm-btns">
-      <button class="seat-confirm-cancel" id="pc-cancel-btn" onclick="closePriceChanged()" data-i18n="pc_cancel">Abbrechen</button>
-      <button class="seat-confirm-ok" id="pc-continue-btn" onclick="confirmPriceChanged()" data-i18n="pc_continue">Mit neuem Preis fortfahren</button>
+      <button class="seat-confirm-cancel" id="pc-cancel-btn" data-fn="closePriceChanged" data-i18n="pc_cancel">Abbrechen</button>
+      <button class="seat-confirm-ok" id="pc-continue-btn" data-fn="confirmPriceChanged" data-i18n="pc_continue">Mit neuem Preis fortfahren</button>
     </div>
     <div style="font-size:11px;color:var(--tx3);margin-top:12px;text-align:center;line-height:1.5" data-i18n="pc_note">Flugpreise ändern sich laufend.</div>
   </div>
@@ -1344,7 +1344,7 @@ Telefon: [Ihre Telefonnummer]</p>
 <!-- ══ WELCOME REWARDS BANNER ══ -->
 <div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)">
   <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:22px;padding:30px 24px 26px;max-width:380px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:welcomePop .4s cubic-bezier(.34,1.56,.64,1) both">
-    <button onclick="closeAuthBanner()" aria-label="close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
+    <button data-fn="closeAuthBanner" aria-label="close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
     <div style="position:relative;width:78px;height:78px;margin:0 auto 14px">
       <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#0fb5a055,transparent 70%);animation:welcomeGlow 2.2s ease-in-out infinite"></div>
       <div style="position:relative;font-size:3.1rem;line-height:78px;text-align:center">🎁</div>
@@ -1364,7 +1364,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <!-- Year/Month picker overlay -->
     <div class="dob-ym-pick" id="dob-ym-pick">
       <div class="dob-ym-hd">
-        <button onclick="closeDobYmPick()" style="background:var(--bg2);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">←</button>
+        <button data-fn="closeDobYmPick" style="background:var(--bg2);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">←</button>
         <span id="dob-ym-title">Jahr wählen</span>
       </div>
       <div class="dob-ym-grid" id="dob-ym-grid"></div>
@@ -1380,9 +1380,9 @@ Telefon: [Ihre Telefonnummer]</p>
     </div>
     <!-- Nav -->
     <div class="dob-cal-nav">
-      <button class="dob-cal-nav-btn" onclick="dobCalPrev()">‹</button>
+      <button class="dob-cal-nav-btn" data-fn="dobCalPrev">‹</button>
       <span class="dob-cal-month-lbl" id="dob-cal-month-lbl" data-odyp></span><span class="dob-cal-ym-arrow" data-odyp>▾</span>
-      <button class="dob-cal-nav-btn" onclick="dobCalNext()">›</button>
+      <button class="dob-cal-nav-btn" data-fn="dobCalNext">›</button>
     </div>
     <!-- Weekdays -->
     <div class="dob-cal-weekdays">
@@ -1394,7 +1394,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <!-- Footer -->
     <div class="dob-cal-foot">
       <button class="dob-cal-cancel" data-cdc>Abbrechen</button>
-      <button class="dob-cal-confirm" id="dob-cal-confirm" onclick="confirmDobCal()" disabled>Bestätigen</button>
+      <button class="dob-cal-confirm" id="dob-cal-confirm" data-fn="confirmDobCal" disabled>Bestätigen</button>
     </div>
   </div>
 </div>
