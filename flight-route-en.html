@@ -168,7 +168,7 @@ function renderRoute(route) {
   }
   var introText = buildDynamicIntro(route);
 
-  var bookingUrl = '/?from=' + encodeURIComponent(route.origin_iata) + '&to=' + encodeURIComponent(route.destination_iata);
+  var bookingUrl = '/search/' + encodeURIComponent(route.origin_iata) + '-' + encodeURIComponent(route.destination_iata);
 
   var breadcrumbHtml = '<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/en/">Home</a><span>›</span>';
   if (route.destination_country) {

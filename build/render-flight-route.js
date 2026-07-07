@@ -186,7 +186,7 @@ function renderFlightRoutePage(routeRaw, lang) {
   const enUrl = `https://airpiv.com/en/flights/${encodeURIComponent(route.slug)}`;
   const url = de ? deUrl : enUrl;
   const introText = de ? (route.intro_text || buildDynamicIntro(route, true)) : buildDynamicIntro(route, false);
-  const bookingUrl = `/?from=${encodeURIComponent(route.origin_iata)}&to=${encodeURIComponent(route.destination_iata)}`;
+  const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
   const countryHrefBase = de ? '/country/' : '/en/country/';
   const cityHrefBase = de ? '/city/' : '/en/city/';
