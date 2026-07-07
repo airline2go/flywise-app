@@ -22,7 +22,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Airpiv | Günstige Flüge buchen & Flugtickets vergleichen</title>
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
-<script>try{if(localStorage.getItem('ck'))document.documentElement.classList.add('fw-ck-hidden');if(localStorage.getItem('dm')==='1')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<script src="/theme-init.js"></script>
 <!-- SEO Meta Tags -->
 <meta name="description" content="Suchen und buchen Sie günstige Flüge auf Airpiv. Vergleichen Sie Flugtickets weltweit, finden Sie Last-Minute-Angebote und sichern Sie sich die besten Preise ohne versteckte Kosten!">
 <meta name="keywords" content="günstige Flüge buchen, Flugtickets vergleichen, Last-Minute Flüge, Billigflüge, Flug suchen, Flüge buchen günstig, Flugpreise vergleichen, Airpiv">
@@ -35,23 +35,7 @@
 <link rel="alternate" hreflang="en" href="https://airpiv.com/en">
 <link rel="alternate" hreflang="ar" href="https://airpiv.com/ar">
 <link rel="alternate" hreflang="x-default" href="https://airpiv.com/">
-<script>
-(function(){
-  var base='https://airpiv.com';
-  // [HREFLANG-CANONICAL-FIX] Each language's URL must be canonical to
-  // ITSELF, not silently collapsed back to the bare URL — otherwise the
-  // hreflang tags above (which claim /en and /ar are distinct,
-  // self-referencing indexable pages) directly contradict the canonical
-  // tag, telling Google "ignore the language-specific URL, this is
-  // really just the default page" — exactly defeating the purpose of
-  // having hreflang tags at all. Canonical is derived from the clean
-  // pathname only (never a query string) — matches the no-trailing-slash
-  // convention used by every other clean URL on the site (e.g. /city/berlin).
-  var path=window.location.pathname;
-  var canonical=(path==='/en'||path==='/ar')?base+path:base+'/';
-  document.getElementById('canonical-url').setAttribute('href',canonical);
-})();
-</script>
+<script src="/canonical-fix.js"></script>
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -670,38 +654,7 @@
   <div id="popular-routes-links" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
 </section>
 
-<script>
-// [INTERNAL-LINKING-SEO-FIX] الجزء اللي كان ناقص من التنفيذ السابق —
-// القسم كان موجود بس فاضي ومخفي (display:none) من غير أي جافاسكريبت
-// يملاه. هنا بيجيب مسارات حقيقية منشورة فعلياً ويعرضها كروابط
-// <a href="/flights/..."> قابلة للزحف، بعدين يظهر القسم. عمداً
-// PROXY محلي هنا (مش المتغير العام في app.js) لأن app.js متحمّل
-// بـdefer، يعني بيتنفذ بعد أي <script> عادي زي ده — الاعتماد على
-// متغيره العام هنا كان هيبقى خطأ ترتيب تنفيذ.
-(function() {
-  var PROXY_LOCAL = 'https://api.airpiv.com';
-  function escHtmlLocal(s) {
-    var d = document.createElement('div');
-    d.textContent = s || '';
-    return d.innerHTML;
-  }
-  fetch(PROXY_LOCAL + '/route-pages?limit=24')
-    .then(function(r) { return r.json(); })
-    .then(function(j) {
-      if (!j.ok || !j.routes || !j.routes.length) return;
-      var routes = j.routes.slice(0, 24);
-      var html = routes.map(function(r) {
-        return '<a href="/flights/' + encodeURIComponent(r.slug) + '" ' +
-          'style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">' +
-          escHtmlLocal(r.origin_city) + ' → ' + escHtmlLocal(r.destination_city) +
-        '</a>';
-      }).join('');
-      document.getElementById('popular-routes-links').innerHTML = html;
-      document.getElementById('popular-routes-links-section').style.display = '';
-    })
-    .catch(function() { /* القسم يفضل مخفي بأمان لو الطلب فشل */ });
-})();
-</script>
+<script src="/popular-routes.js"></script>
 
 <footer><div class="fi2">
   <div class="fgr">
