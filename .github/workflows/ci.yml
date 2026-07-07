@@ -34,6 +34,15 @@ jobs:
       - name: Check analytics.js syntax
         run: node --check analytics.js
 
+      - name: Check theme-init.js syntax
+        run: node --check theme-init.js
+
+      - name: Check canonical-fix.js syntax
+        run: node --check canonical-fix.js
+
+      - name: Check popular-routes.js syntax
+        run: node --check popular-routes.js
+
       - name: Check build/*.js syntax
         run: for f in build/*.js; do node --check "$f"; done
 
