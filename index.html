@@ -267,12 +267,12 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;position:relative">
         <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">ABFLUG</div>
-        <input type="date" id="ms-dep" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" onchange="syncMiniDate('dep')">
+        <input type="date" id="ms-dep" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" data-chg-fn="syncMiniDate" data-chg-arg="dep">
         <div style="font-size:13px;font-weight:700;color:var(--tx)" id="ms-dep-lbl">—</div>
       </div>
       <div style="background:var(--bg2);border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;position:relative">
         <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:3px">RÜCKKEHR</div>
-        <input type="date" id="ms-ret" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" onchange="syncMiniDate('ret')">
+        <input type="date" id="ms-ret" style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer" data-chg-fn="syncMiniDate" data-chg-arg="ret">
         <div style="font-size:13px;font-weight:700;color:var(--tx)" id="ms-ret-lbl">—</div>
       </div>
     </div>
@@ -328,7 +328,7 @@
       <!-- Row 1: Trip type + Pax/Bags -->
       <div class="krow">
         <div class="ksel-wrap">
-          <select class="ksel" id="trip-sel" onchange="setTripSel(this.value)">
+          <select class="ksel" id="trip-sel" data-chg-fn="setTripSel">
             <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
             <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
             <option value="mc">&#43; Mehrere Städte</option>
@@ -350,7 +350,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="from-in" type="search" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" oninput="acTypeReset('from');acS('from',this.value)" onfocus="closeOtherAcDrops('from');acS('from',this.value);scrollFieldIntoView(this)">
+          <input id="from-in" type="search" class="kinput" placeholder="Von — Stadt oder Flughafen" data-i18n-placeholder="from_placeholder" autocomplete="off" value="Berlin" data-inp-fn="handleFromInput" data-foc-fn="handleFromFocus">
           <div class="kfield-sub" id="from-sub">Berlin Brandenburg · BER</div>
         </div>
         <button class="kclear" data-fn="clearField" data-fn-arg="from">&#x2715;</button>
@@ -372,7 +372,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
         <div class="kfield-in">
-          <input id="to-in" type="search" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" oninput="acTypeReset('to');acS('to',this.value)" onfocus="closeOtherAcDrops('to');acS('to',this.value);scrollFieldIntoView(this)">
+          <input id="to-in" type="search" class="kinput" placeholder="Nach — Stadt oder Flughafen" data-i18n-placeholder="to_placeholder" autocomplete="off" data-inp-fn="handleToInput" data-foc-fn="handleToFocus">
           <div class="kfield-sub" id="to-sub" data-i18n="to_sub_default">Wohin soll es gehen?</div>
         </div>
         <div class="acdrop" id="to-ac" role="listbox" aria-label="Zielflughäfen"></div>
@@ -395,8 +395,8 @@
             <div class="kdate-val" id="ret-disp" data-i18n="date_pick">Datum wählen</div>
           </div>
         </div>
-        <input type="date" id="dep-date" autocomplete="off" style="display:none" onchange="onDateChange('dep',this.value)">
-        <input type="date" id="ret-date" autocomplete="off" style="display:none" onchange="onDateChange('ret',this.value)">
+        <input type="date" id="dep-date" autocomplete="off" style="display:none" data-onchange-date="dep">
+        <input type="date" id="ret-date" autocomplete="off" style="display:none" data-onchange-date="ret">
       </div>
 
       <!-- Search button -->
@@ -502,8 +502,7 @@
           <span>€0</span><span id="pval">€9999</span>
         </div>
         <input type="range" id="f-price" min="0" max="9999" value="9999"
-          aria-label="Maximaler Preis" aria-valuemin="0" aria-valuemax="9999" aria-valuenow="9999"
-          oninput="document.getElementById('pval').textContent='€'+this.value;this.setAttribute('aria-valuenow',this.value);applyF()">
+          aria-label="Maximaler Preis" aria-valuemin="0" aria-valuemax="9999" aria-valuenow="9999">
       </div>
 
       <div class="filter-section">
@@ -970,7 +969,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <!-- Footer -->
     <div class="bflow-foot">
       <div id="bflow-pricelink-wrap" style="display:none;text-align:center;margin-bottom:8px"><button data-fn="openPriceDetails" style="background:none;border:none;color:var(--teal2);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline" id="bflow-pricelink">Preisdetails anzeigen</button></div>
-      <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" onchange="this.closest('.compliance-wrap').classList.remove('required-err')"><span class="compliance-text">Ich bestätige die <a href="#" data-fn="openPg" data-fn-arg="terms" data-pd>AGB</a> und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></label></div>
+      <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" data-clear-compliance-err><span class="compliance-text">Ich bestätige die <a href="#" data-fn="openPg" data-fn-arg="terms" data-pd>AGB</a> und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></label></div>
     <button class="bflow-btn" id="bflow-btn" data-fn="bflowNext">
         <span id="bflow-btn-txt">Weiter</span>
         <span class="bflow-price" id="bflow-btn-price"></span>
@@ -1025,8 +1024,7 @@ Telefon: [Ihre Telefonnummer]</p>
           </div>
           <input type="range" id="f-price2" min="0" max="9999" value="9999"
             aria-label="Maximaler Preis" aria-valuemin="0" aria-valuemax="9999" aria-valuenow="9999"
-            style="width:100%;height:6px;border-radius:6px;accent-color:#00a991;cursor:pointer;margin:8px 0"
-            oninput="document.getElementById('pval2').textContent='€'+this.value;document.getElementById('f-price').value=this.value;this.setAttribute('aria-valuenow',this.value);applyRpF()">
+            style="width:100%;height:6px;border-radius:6px;accent-color:#00a991;cursor:pointer;margin:8px 0">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:#8fa4b4;margin-top:2px">
             <span>Min</span><span>Max</span>
           </div>
@@ -1073,7 +1071,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="rp-edit-drop" id="rp-edit-drop">
       <div class="rp-edit-row" style="grid-template-columns:1fr;margin-bottom:8px">
         <div class="ksel-wrap">
-          <select class="ksel" id="rpe-trip-sel" onchange="rpSetTripSel(this.value)">
+          <select class="ksel" id="rpe-trip-sel" data-chg-fn="rpSetTripSel">
             <option value="rr">&#8644; Hin- und Rückreise</option>
             <option value="ow">&#8594; Einfache Fahrt</option>
           </select>
