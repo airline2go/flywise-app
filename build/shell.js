@@ -4,6 +4,26 @@ function escHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// [JSONLD-XSS-FIX] JSON.stringify(schema) can legitimately contain "</",
+// "<!--" or "<script" if any field feeding the schema (title, intro text,
+// FAQ question/answer, etc. — several of which are admin-editable, with no
+// tag-stripping on the admin side) happens to contain those substrings.
+// Since these are embedded as literal text inside a real <script> tag
+// (not through the DOM), the HTML parser itself would end the script
+// element early on a literal "</script" appearing anywhere in the JSON
+// string, letting an attacker who controls one of those fields inject
+// markup that runs as real HTML on the public page it appears on. The
+// standard fix (same one used for inline JSON on any server-rendered
+// page): replace every literal "<" character with its JSON unicode
+// escape sequence (backslash, u, 0, 0, 3, c). JSON.parse decodes that
+// escape back to the exact original "<" character, so the schema
+// round-trips byte-for-byte — but the raw "<" byte, and so "</script>"
+// or "<!--", can never appear in the document itself.
+function jsonLdScript(schema) {
+  const json = JSON.stringify(schema).replace(/</g, '\\u003c');
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 // [PAGE-SHELL] The header/nav/footer boilerplate shared by every entity
 // page, parameterized by language — replaces 10 files' worth of duplicated
 // <head>/<nav>/<footer> markup with one function.
@@ -77,4 +97,4 @@ ${scripts}
 `;
 }
 
-module.exports = { renderShell, escHtml };
+module.exports = { renderShell, escHtml, jsonLdScript };

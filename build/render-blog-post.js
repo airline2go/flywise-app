@@ -1,5 +1,5 @@
 const { parse } = require('node-html-parser');
-const { escHtml, renderShell } = require('./shell');
+const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
 
@@ -252,10 +252,10 @@ ${similarPostsHtml}
 </main>`;
 
   const headExtraParts = [
-    `<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>`,
-    `<script type="application/ld+json">${JSON.stringify(articleSchema)}</script>`,
+    jsonLdScript(breadcrumbSchema),
+    jsonLdScript(articleSchema),
   ];
-  if (faqSchema) headExtraParts.push(`<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`);
+  if (faqSchema) headExtraParts.push(jsonLdScript(faqSchema));
   headExtraParts.push(BLOG_POST_HEAD_EXTRA);
 
   const html = renderShell({
