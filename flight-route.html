@@ -486,7 +486,7 @@ function renderRoute(route) {
         // avoiding). Only added when a real date actually came back.
         if (j.departure_date) {
           var ctaLink = document.querySelector('.route-cta');
-          if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '&depart=' + encodeURIComponent(j.departure_date);
+          if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
         }
       } else {
         box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">Aktuelle Preise direkt in der Suche verfügbar</div>';
