@@ -218,11 +218,11 @@
 <div id="sticky-filter-bar">
   <!-- Row 1: Search summary -->
   <div class="sfb-top">
-    <div class="sfb-info" onclick="openMiniSearch()">
+    <div class="sfb-info" data-oms>
       <div class="sfb-route" id="sfb-route">Berlin → Barcelona</div>
       <div class="sfb-sub" id="sfb-sub">Hin & Zurück · 1 Erw. · Economy</div>
     </div>
-    <button class="sfb-edit" onclick="openMiniSearch()" data-i18n="sfb_change">✏️ Ändern</button>
+    <button class="sfb-edit" data-oms data-i18n="sfb_change">✏️ Ändern</button>
   </div>
   <!-- Row 2: Quick filters + Sort -->
   <div class="sfb-chips">
@@ -243,7 +243,7 @@
     <div class="sfb-chip" id="sfb-s1" onclick="sfbToggle('s1')" data-i18n="sfb_1stop">
       1 Stopp
     </div>
-    <div class="sfb-chip" id="sfb-filter" onclick="openMiniSearch()" data-i18n="sfb_morefilter">
+    <div class="sfb-chip" id="sfb-filter" data-oms data-i18n="sfb_morefilter">
       ⚙️ Mehr Filter
     </div>
   </div>
@@ -760,7 +760,7 @@
 <button class="bni" onclick="bni(this,'contact')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span data-i18n="bnav_contact">Kontakt</span></button>
 </div></nav>
 <!-- FAB -->
-<button class="fab" id="main-fab" onclick="openMiniSearch()" style="display:none!important">
+<button class="fab" id="main-fab" data-oms style="display:none!important">
   ✏️
 </button>
 <!-- ABOUT -->
