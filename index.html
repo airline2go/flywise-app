@@ -184,7 +184,7 @@
         <button class="lang-btn" id="lang-ar" data-lang="ar">AR</button>
       </div>
       <button class="dm-btn" onclick="toggleDark()" title="Dark Mode" aria-label="Dunkelmodus umschalten" style="margin:0"><span id="dm-ico">🌙</span></button>
-      <button class="btn-t" id="nav-auth-btn" onclick="openAuthModal('register')" style="margin:0 0 0 6px">Registrieren</button>
+      <button class="btn-t" id="nav-auth-btn" data-oam="register" style="margin:0 0 0 6px">Registrieren</button>
       <div class="user-menu" id="user-menu" style="display:none;position:relative;margin:0">
         <div style="display:flex;align-items:center;gap:0;cursor:pointer" onclick="toggleUserMenu()">
           <span id="loyalty-nav-badge" class="loyalty-nav-badge" style="display:none"></span>
@@ -423,8 +423,8 @@
 
       <!-- Extras -->
       <div class="kextras">
-        <button class="xch" id="ch-dir" onclick="toggleF('dir')" data-i18n="direct_chip">&#9992; Direktflüge</button>
-        <button class="xch" id="ch-bag" onclick="toggleF('bag')" data-i18n="baggage_chip">&#127968; Mit Gepäck</button>
+        <button class="xch" id="ch-dir" data-tf="dir" data-i18n="direct_chip">&#9992; Direktflüge</button>
+        <button class="xch" id="ch-bag" data-tf="bag" data-i18n="baggage_chip">&#127968; Mit Gepäck</button>
         <span class="xtax" data-i18n="tax_note">Alle Preise inkl. Steuern</span>
       </div>
       </div><!-- /flights-content -->
@@ -648,7 +648,7 @@
             <div class="scb-sub"><span class="scb-online-dot"></span> Support-Team ist gerade online</div>
           </div>
         </div>
-        <button class="scb-btn brevo-chat-trigger" onclick="openBrevoChat()">
+        <button class="scb-btn brevo-chat-trigger" data-obc>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Live-Chat starten
         </button>
@@ -807,7 +807,7 @@
         </div>
       </div>
 
-      <button class="brevo-chat-trigger" onclick="openBrevoChat()" style="width:100%;background:linear-gradient(135deg,#0FB5A0,#0A9384);color:#fff;border:none;border-radius:13px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 20px rgba(15,181,160,.35);position:relative;z-index:1;letter-spacing:.01em;font-family:'Syne',sans-serif">
+      <button class="brevo-chat-trigger" data-obc style="width:100%;background:linear-gradient(135deg,#0FB5A0,#0A9384);color:#fff;border:none;border-radius:13px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 20px rgba(15,181,160,.35);position:relative;z-index:1;letter-spacing:.01em;font-family:'Syne',sans-serif">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Live-Chat jetzt starten
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -922,11 +922,11 @@ Telefon: [Ihre Telefonnummer]</p>
     <!-- Header -->
     <div class="cal-hd">
       <div class="cal-sel-row">
-        <div class="cal-sel-btn" id="cal-dep-btn" onclick="calSetMode('dep')">
+        <div class="cal-sel-btn" id="cal-dep-btn" data-cal-mode="dep">
           <div class="cal-sel-lbl">Hinreise</div>
           <div class="cal-sel-val" id="cal-dep-val">Datum wählen</div>
         </div>
-        <div class="cal-sel-btn" id="cal-ret-btn" onclick="calSetMode('ret')">
+        <div class="cal-sel-btn" id="cal-ret-btn" data-cal-mode="ret">
           <div class="cal-sel-lbl">Rückreise</div>
           <div class="cal-sel-val" id="cal-ret-val">Datum wählen</div>
         </div>
@@ -1036,7 +1036,7 @@ Telefon: [Ihre Telefonnummer]</p>
       <div class="rp-filter-handle"></div>
       <div class="rp-filter-hd">
         <h3>⚙️ Filter</h3>
-        <button class="rp-filter-close" onclick="closeRpFilter()">✕</button>
+        <button class="rp-filter-close" data-crpf>✕</button>
       </div>
       <div class="rp-filter-body">
 
@@ -1097,7 +1097,7 @@ Telefon: [Ihre Telefonnummer]</p>
       </div>
       <div class="rp-filter-foot">
         <button class="rp-filter-reset" onclick="resetRpF()">↺ Reset</button>
-        <button class="rp-filter-apply" onclick="closeRpFilter()">✓ Anwenden</button>
+        <button class="rp-filter-apply" data-crpf>✓ Anwenden</button>
       </div>
     </div>
   </div>
@@ -1128,12 +1128,12 @@ Telefon: [Ihre Telefonnummer]</p>
         </div>
       </div>
       <div class="rp-edit-row">
-        <div class="rp-edit-field" style="position:relative" id="rpe-from-field" onclick="rpEditLoc('from')">
+        <div class="rp-edit-field" style="position:relative" id="rpe-from-field" data-rel="from">
           <div class="rp-edit-lbl">Von</div>
           <div class="rp-edit-val" id="rpe-from">—</div>
           <div class="acdrop" id="rpe-from-ac" role="listbox" aria-label="Flughäfen" style="position:absolute;top:100%;left:0;right:0"></div>
         </div>
-        <div class="rp-edit-field" style="position:relative" id="rpe-to-field" onclick="rpEditLoc('to')">
+        <div class="rp-edit-field" style="position:relative" id="rpe-to-field" data-rel="to">
           <div class="rp-edit-lbl">Nach</div>
           <div class="rp-edit-val" id="rpe-to">—</div>
           <div class="acdrop" id="rpe-to-ac" role="listbox" aria-label="Flughäfen" style="position:absolute;top:100%;left:0;right:0"></div>
@@ -1212,7 +1212,7 @@ Telefon: [Ihre Telefonnummer]</p>
   <div class="dsgvo-box">
     <div class="dsgvo-hd">
       <h3>🔒 Datenschutz & Datensicherheit</h3>
-      <button onclick="closeDsgvo()" style="background:var(--bg2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--tx2)">✕</button>
+      <button data-cdsg style="background:var(--bg2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--tx2)">✕</button>
     </div>
     <div class="dsgvo-body">
       <div class="dsgvo-badge">✓ DSGVO-konform &nbsp;|&nbsp; ✓ PCI-DSS gesichert &nbsp;|&nbsp; ✓ SSL-verschlüsselt</div>
@@ -1238,19 +1238,19 @@ Telefon: [Ihre Telefonnummer]</p>
       </div>
     </div>
     <div class="dsgvo-foot">
-      <button class="dsgvo-close-btn" onclick="closeDsgvo()">Verstanden ✓</button>
+      <button class="dsgvo-close-btn" data-cdsg>Verstanden ✓</button>
     </div>
   </div>
 </div>
 
 <!-- ══ AUTH MODAL ══ -->
 <!-- FLIGHT DETAIL BOTTOM SHEET -->
-<div class="fsheet-ov" id="fsheet-ov" onclick="closeFlightSheet()"></div>
+<div class="fsheet-ov" id="fsheet-ov" data-cfs></div>
 <div class="fsheet" id="fsheet">
   <div class="fsheet-grip"></div>
   <div class="fsheet-hd">
     <div class="fsheet-hd-t" id="fsheet-title">Flugdetails</div>
-    <button class="fsheet-hd-x" onclick="closeFlightSheet()">✕</button>
+    <button class="fsheet-hd-x" data-cfs>✕</button>
   </div>
   <div class="fsheet-body" id="fsheet-body"></div>
   <div class="fsheet-foot">
@@ -1307,7 +1307,7 @@ Telefon: [Ihre Telefonnummer]</p>
   <div class="seat-confirm" style="text-align:start">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx)" id="pd-title">Preisdetails</div>
-      <button onclick="closePriceDetails()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">✕</button>
+      <button data-cpd style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">✕</button>
     </div>
     <div id="pd-rows"></div>
     <div style="border-top:1px solid var(--bd);margin:14px 0 0;padding-top:14px;display:flex;justify-content:space-between;align-items:center">
@@ -1315,7 +1315,7 @@ Telefon: [Ihre Telefonnummer]</p>
       <div style="font-size:18px;font-weight:800;color:var(--tx)" id="pd-total-val">—</div>
     </div>
     <div style="font-size:11px;color:var(--tx3);margin-top:8px;line-height:1.5" id="pd-note"></div>
-    <button onclick="closePriceDetails()" style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn">Schließen</button>
+    <button data-cpd style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn">Schließen</button>
   </div>
 </div>
 <div class="seat-confirm-ov" id="price-changed-ov" role="dialog" aria-modal="true">
@@ -1353,7 +1353,7 @@ Telefon: [Ihre Telefonnummer]</p>
       <div style="color:#fff;font-weight:800;font-size:17px;line-height:1.35;font-family:'Syne',sans-serif" data-i18n="auth_banner_title">Jetzt registrieren & 10€ Willkommensguthaben sichern</div>
       <div style="color:rgba(255,255,255,.6);font-size:12.5px;margin-top:8px;line-height:1.5" data-i18n="auth_banner_sub">Werde Mitglied im Treueprogramm und sammle bei jeder Buchung Punkte</div>
     </div>
-    <button onclick="openAuthModal('register')" style="width:100%;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(15,181,160,.35)" data-i18n="auth_banner_cta">Jetzt registrieren</button>
+    <button data-oam="register" style="width:100%;margin-top:18px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(15,181,160,.35)" data-i18n="auth_banner_cta">Jetzt registrieren</button>
   </div>
 </div>
 </div>
@@ -1373,7 +1373,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="dob-cal-hd">
       <div class="dob-cal-hd-top">
         <span class="dob-cal-hd-lbl">Geburtsdatum</span>
-        <button class="dob-cal-close" onclick="closeDobCal()">✕</button>
+        <button class="dob-cal-close" data-cdc>✕</button>
       </div>
       <div class="dob-cal-selected" id="dob-cal-selected">— — ——</div>
       <div class="dob-cal-year" id="dob-cal-year-lbl"></div>
@@ -1381,7 +1381,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <!-- Nav -->
     <div class="dob-cal-nav">
       <button class="dob-cal-nav-btn" onclick="dobCalPrev()">‹</button>
-      <span class="dob-cal-month-lbl" id="dob-cal-month-lbl" onclick="openDobYmPick()"></span><span class="dob-cal-ym-arrow" onclick="openDobYmPick()">▾</span>
+      <span class="dob-cal-month-lbl" id="dob-cal-month-lbl" data-odyp></span><span class="dob-cal-ym-arrow" data-odyp>▾</span>
       <button class="dob-cal-nav-btn" onclick="dobCalNext()">›</button>
     </div>
     <!-- Weekdays -->
@@ -1393,7 +1393,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <div class="dob-cal-grid" id="dob-cal-grid"></div>
     <!-- Footer -->
     <div class="dob-cal-foot">
-      <button class="dob-cal-cancel" onclick="closeDobCal()">Abbrechen</button>
+      <button class="dob-cal-cancel" data-cdc>Abbrechen</button>
       <button class="dob-cal-confirm" id="dob-cal-confirm" onclick="confirmDobCal()" disabled>Bestätigen</button>
     </div>
   </div>
