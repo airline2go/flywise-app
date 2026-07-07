@@ -399,11 +399,21 @@ document.addEventListener("DOMContentLoaded",function(){
     el.addEventListener("click",function(){window.print()});
   });
   document.querySelectorAll("[data-fn]").forEach(function(el){
-    el.addEventListener("click",function(){
+    el.addEventListener("click",function(e){
+      if(el.hasAttribute("data-pd"))e.preventDefault();
+      var closePgId=el.getAttribute("data-close-pg");
+      if(closePgId)closePg(closePgId);
       var fn=window[el.getAttribute("data-fn")];
-      if(typeof fn!=="function")return;
-      var arg=el.getAttribute("data-fn-arg");
-      arg===null?fn():fn(arg);
+      if(typeof fn==="function"){
+        var arg=el.getAttribute("data-fn-arg");
+        var arg2=el.getAttribute("data-fn-arg2");
+        if(arg===null)fn();else if(arg2===null)fn(arg);else fn(arg,arg2);
+      }
+      var then=el.getAttribute("data-then");
+      if(then)then.split(",").forEach(function(name){
+        var f=window[name];
+        if(typeof f==="function")f();
+      });
     });
   });
 });
