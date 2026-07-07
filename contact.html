@@ -89,7 +89,7 @@
     </div>
     <div class="fg"><label>Betreff</label><input class="fi" id="ct-sub2" placeholder="Womit können wir helfen?"></div>
     <div class="fg"><label>Nachricht</label><textarea class="fi" id="ct-msg" style="min-height:120px;resize:vertical" placeholder="Deine Nachricht..."></textarea></div>
-    <button id="ct-send-btn" onclick="sendCt()" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">Senden ✉️</button>
+    <button id="ct-send-btn" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">Senden ✉️</button>
   </section>
 </main>
 
@@ -144,6 +144,8 @@ function sendCt() {
     showToast('❌ Verbindungsfehler. Bitte später erneut versuchen.', 'error');
   });
 }
+
+document.getElementById('ct-send-btn').addEventListener('click', sendCt);
 </script>
 
 </body>
