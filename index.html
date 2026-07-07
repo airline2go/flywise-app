@@ -179,9 +179,9 @@
     </ul>
     <div class="navr">
       <div class="lang-sw" style="display:flex;gap:0">
-        <button class="lang-btn active" id="lang-de" onclick="setLang('de')">DE</button>
-        <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" id="lang-ar" onclick="setLang('ar')">AR</button>
+        <button class="lang-btn active" id="lang-de" data-lang="de">DE</button>
+        <button class="lang-btn" id="lang-en" data-lang="en">EN</button>
+        <button class="lang-btn" id="lang-ar" data-lang="ar">AR</button>
       </div>
       <button class="dm-btn" onclick="toggleDark()" title="Dark Mode" aria-label="Dunkelmodus umschalten" style="margin:0"><span id="dm-ico">🌙</span></button>
       <button class="btn-t" id="nav-auth-btn" onclick="openAuthModal('register')" style="margin:0 0 0 6px">Registrieren</button>
@@ -227,20 +227,20 @@
   <!-- Row 2: Quick filters + Sort -->
   <div class="sfb-chips">
     <div class="sfb-sort">
-      <button class="sfb-sort-btn active" id="sfb-best" onclick="sfbSort('best')" data-i18n="sfb_best">⭐ Beste</button>
-      <button class="sfb-sort-btn" id="sfb-price" onclick="sfbSort('price')">💰</button>
-      <button class="sfb-sort-btn" id="sfb-dur" onclick="sfbSort('dur')">⚡</button>
+      <button class="sfb-sort-btn active" id="sfb-best" data-sfbs="best" data-i18n="sfb_best">⭐ Beste</button>
+      <button class="sfb-sort-btn" id="sfb-price" data-sfbs="price">💰</button>
+      <button class="sfb-sort-btn" id="sfb-dur" data-sfbs="dur">⚡</button>
     </div>
-    <div class="sfb-chip" id="sfb-direct" onclick="sfbToggle('direct')" data-i18n="sfb_direct">
+    <div class="sfb-chip" id="sfb-direct" data-sfbt="direct" data-i18n="sfb_direct">
       ✈ Direktflug
     </div>
-    <div class="sfb-chip" id="sfb-bag" onclick="sfbToggle('bag')" data-i18n="sfb_bag">
+    <div class="sfb-chip" id="sfb-bag" data-sfbt="bag" data-i18n="sfb_bag">
       🎒 Mit Gepäck
     </div>
-    <div class="sfb-chip" id="sfb-s0" onclick="sfbToggle('s0')" data-i18n="sfb_0stop">
+    <div class="sfb-chip" id="sfb-s0" data-sfbt="s0" data-i18n="sfb_0stop">
       0 Stopps
     </div>
-    <div class="sfb-chip" id="sfb-s1" onclick="sfbToggle('s1')" data-i18n="sfb_1stop">
+    <div class="sfb-chip" id="sfb-s1" data-sfbt="s1" data-i18n="sfb_1stop">
       1 Stopp
     </div>
     <div class="sfb-chip" id="sfb-filter" data-oms data-i18n="sfb_morefilter">
@@ -478,9 +478,9 @@
   <div class="alert-box"><div><div class="alert-t">🔔 Preisalarm aktivieren</div><div class="alert-s">Benachrichtigung wenn der Preis fällt</div></div><button class="alert-btn" id="alert-btn" onclick="setAlert(this)">Alarm einrichten</button></div>
   <div class="pgph" id="pgph" style="display:none"><div class="pgph-t"><span>📊 Preisverlauf — nächste 7 Tage</span><span id="pgmin" style="color:var(--teal2)"></span></div><div class="pgph-bars" id="pgbars"></div><div class="pgph-lbls" id="pglbls"></div></div>
   <div class="stabs">
-    <button class="stb on" id="st-best" onclick="sortBy('best')"><div class="stb-t">⭐ Beste</div><div class="stb-p" id="sp-best">—</div><div class="stb-d" id="sd-best"></div></button>
-    <button class="stb" id="st-price" onclick="sortBy('price')"><div class="stb-t">💰 Günstigste</div><div class="stb-p" id="sp-price">—</div><div class="stb-d" id="sd-price"></div></button>
-    <button class="stb" id="st-dur" onclick="sortBy('dur')"><div class="stb-t">⚡ Schnellste</div><div class="stb-p" id="sp-dur">—</div><div class="stb-d" id="sd-dur"></div></button>
+    <button class="stb on" id="st-best" data-sortby="best"><div class="stb-t">⭐ Beste</div><div class="stb-p" id="sp-best">—</div><div class="stb-d" id="sd-best"></div></button>
+    <button class="stb" id="st-price" data-sortby="price"><div class="stb-t">💰 Günstigste</div><div class="stb-p" id="sp-price">—</div><div class="stb-d" id="sd-price"></div></button>
+    <button class="stb" id="st-dur" data-sortby="dur"><div class="stb-t">⚡ Schnellste</div><div class="stb-p" id="sp-dur">—</div><div class="stb-d" id="sd-dur"></div></button>
   </div>
   <div class="rgrid">
     
@@ -1161,15 +1161,15 @@ Telefon: [Ihre Telefonnummer]</p>
 
     <!-- Sort tabs -->
     <div class="rp-tabs">
-      <div class="rp-tab on" id="rpt-best" onclick="rpSort('best')">
+      <div class="rp-tab on" id="rpt-best" data-rps="best">
         <div class="rp-tab-label">⭐ Beste</div>
         <div class="rp-tab-price" id="rpt-best-p">—</div>
       </div>
-      <div class="rp-tab" id="rpt-price" onclick="rpSort('price')">
+      <div class="rp-tab" id="rpt-price" data-rps="price">
         <div class="rp-tab-label">💰 Günstigste</div>
         <div class="rp-tab-price" id="rpt-price-p">—</div>
       </div>
-      <div class="rp-tab" id="rpt-dur" onclick="rpSort('dur')">
+      <div class="rp-tab" id="rpt-dur" data-rps="dur">
         <div class="rp-tab-label">⚡ Schnellste</div>
         <div class="rp-tab-price" id="rpt-dur-p">—</div>
       </div>
