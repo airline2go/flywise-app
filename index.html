@@ -459,10 +459,10 @@
     <button id="mfbtn" onclick="var sb=document.getElementById('sidebar');if(sb.style.display==='block'){sb.style.display='none';this.textContent='⚙️ Filter';}else{sb.style.display='block';this.textContent='✕ Filter schließen';}">⚙️ Filter</button>
   </div>
   <div class="quick-filters" id="quick-filters" style="display:none">
-    <button class="qf-chip" id="qfc-direct" onclick="quickFilterToggle('direct')">
+    <button class="qf-chip" id="qfc-direct" data-qft="direct">
       ✈ Direktflug
     </button>
-    <button class="qf-chip" id="qfc-bag" onclick="quickFilterToggle('bag')">
+    <button class="qf-chip" id="qfc-bag" data-qft="bag">
       🎒 Mit Gepäck
     </button>
     <button class="qf-chip" id="qfc-cheap" onclick="sortBy('price');this.classList.add('active')">
@@ -525,10 +525,10 @@
       <div class="filter-section">
         <div class="filter-section-title">Abflugzeit</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button class="tcc" data-t="early" onclick="toggleTime(this)"><div>🌅</div>00–06h</button>
-          <button class="tcc" data-t="morning" onclick="toggleTime(this)"><div>☀️</div>06–12h</button>
-          <button class="tcc" data-t="afternoon" onclick="toggleTime(this)"><div>🌤</div>12–18h</button>
-          <button class="tcc" data-t="evening" onclick="toggleTime(this)"><div>🌙</div>18–24h</button>
+          <button class="tcc" data-t="early"><div>🌅</div>00–06h</button>
+          <button class="tcc" data-t="morning"><div>☀️</div>06–12h</button>
+          <button class="tcc" data-t="afternoon"><div>🌤</div>12–18h</button>
+          <button class="tcc" data-t="evening"><div>🌙</div>18–24h</button>
         </div>
       </div>
 
@@ -753,11 +753,11 @@
 </div>
 <!-- BOTTOM NAV -->
 <nav class="bnav"><div class="bn-wrap">
-<button class="bni on" onclick="bni(this,'flights')"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.84 1.12 2 2 0 012.83 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006.29 6.29l.97-.97a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg><span data-i18n="bnav_flights">✈ Flüge</span></button>
-<button class="bni" onclick="bni(this,'about')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="bnav_about">Über uns</span></button>
-<button class="bni" onclick="bni(this,'bookings');loadMyBookings()"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span data-i18n="bnav_bookings">Buchungen</span></button>
-<button class="bni" onclick="bni(this,'faq')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg><span data-i18n="bnav_help">Hilfe</span></button>
-<button class="bni" onclick="bni(this,'contact')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span data-i18n="bnav_contact">Kontakt</span></button>
+<button class="bni on" data-bni="flights"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.84 1.12 2 2 0 012.83 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006.29 6.29l.97-.97a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg><span data-i18n="bnav_flights">✈ Flüge</span></button>
+<button class="bni" data-bni="about"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="bnav_about">Über uns</span></button>
+<button class="bni" data-bni="bookings" data-bni-load><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span data-i18n="bnav_bookings">Buchungen</span></button>
+<button class="bni" data-bni="faq"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg><span data-i18n="bnav_help">Hilfe</span></button>
+<button class="bni" data-bni="contact"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span data-i18n="bnav_contact">Kontakt</span></button>
 </div></nav>
 <!-- FAB -->
 <button class="fab" id="main-fab" data-oms style="display:none!important">
@@ -1082,10 +1082,10 @@ Telefon: [Ihre Telefonnummer]</p>
         <div class="filter-section">
           <div class="filter-section-title">Abflugzeit</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="tcc" data-t="early" onclick="toggleTime(this);applyRpF()"><div>🌅</div>00–06h</button>
-            <button class="tcc" data-t="morning" onclick="toggleTime(this);applyRpF()"><div>☀️</div>06–12h</button>
-            <button class="tcc" data-t="afternoon" onclick="toggleTime(this);applyRpF()"><div>🌤</div>12–18h</button>
-            <button class="tcc" data-t="evening" onclick="toggleTime(this);applyRpF()"><div>🌙</div>18–24h</button>
+            <button class="tcc" data-t="early" data-rpf><div>🌅</div>00–06h</button>
+            <button class="tcc" data-t="morning" data-rpf><div>☀️</div>06–12h</button>
+            <button class="tcc" data-t="afternoon" data-rpf><div>🌤</div>12–18h</button>
+            <button class="tcc" data-t="evening" data-rpf><div>🌙</div>18–24h</button>
           </div>
         </div>
 
