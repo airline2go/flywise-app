@@ -2,7 +2,11 @@
 <html lang="de" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+<!-- script-src hashes: the plain sha256 hash covers the inline script tag below (theme/dark-mode
+     init, kept inline on purpose so it runs before first paint); 'unsafe-hashes' + its sha256 covers
+     an inline onload= attribute elsewhere on the page. Both must be recomputed if their script content
+     changes (e.g. `openssl dgst -sha256 -binary file | openssl base64 -A`). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-C2wLziX0E0bk22I0fJfLEFWSu2KWcmSQh+n+AjG7XrE=' 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
 
 <link rel="preconnect" href="https://api.airpiv.com">
 <link rel="dns-prefetch" href="https://api.airpiv.com">
@@ -22,7 +26,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Airpiv | Günstige Flüge buchen & Flugtickets vergleichen</title>
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
-<script src="/theme-init.js"></script>
+<script>try{if(localStorage.getItem('ck'))document.documentElement.classList.add('fw-ck-hidden');if(localStorage.getItem('dm')==='1')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <!-- SEO Meta Tags -->
 <meta name="description" content="Suchen und buchen Sie günstige Flüge auf Airpiv. Vergleichen Sie Flugtickets weltweit, finden Sie Last-Minute-Angebote und sichern Sie sich die besten Preise ohne versteckte Kosten!">
 <meta name="keywords" content="günstige Flüge buchen, Flugtickets vergleichen, Last-Minute Flüge, Billigflüge, Flug suchen, Flüge buchen günstig, Flugpreise vergleichen, Airpiv">
@@ -35,7 +39,7 @@
 <link rel="alternate" hreflang="en" href="https://airpiv.com/en">
 <link rel="alternate" hreflang="ar" href="https://airpiv.com/ar">
 <link rel="alternate" hreflang="x-default" href="https://airpiv.com/">
-<script src="/canonical-fix.js"></script>
+<script src="/canonical-fix.js" defer></script>
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -653,7 +657,7 @@
   <div id="popular-routes-links" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
 </section>
 
-<script src="/popular-routes.js"></script>
+<script src="/popular-routes.js" defer></script>
 
 <footer><div class="fi2">
   <div class="fgr">
