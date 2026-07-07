@@ -329,6 +329,39 @@ document.addEventListener("DOMContentLoaded",function(){
   document.querySelectorAll("[data-qft]").forEach(function(el){
     el.addEventListener("click",function(){quickFilterToggle(el.getAttribute("data-qft"))});
   });
+  document.querySelectorAll("[data-tf]").forEach(function(el){
+    el.addEventListener("click",function(){toggleF(el.getAttribute("data-tf"))});
+  });
+  document.querySelectorAll("[data-rel]").forEach(function(el){
+    el.addEventListener("click",function(){rpEditLoc(el.getAttribute("data-rel"))});
+  });
+  document.querySelectorAll("[data-cal-mode]").forEach(function(el){
+    el.addEventListener("click",function(){calSetMode(el.getAttribute("data-cal-mode"))});
+  });
+  document.querySelectorAll("[data-oam]").forEach(function(el){
+    el.addEventListener("click",function(){openAuthModal(el.getAttribute("data-oam"))});
+  });
+  document.querySelectorAll("[data-odyp]").forEach(function(el){
+    el.addEventListener("click",openDobYmPick);
+  });
+  document.querySelectorAll("[data-obc]").forEach(function(el){
+    el.addEventListener("click",openBrevoChat);
+  });
+  document.querySelectorAll("[data-crpf]").forEach(function(el){
+    el.addEventListener("click",closeRpFilter);
+  });
+  document.querySelectorAll("[data-cpd]").forEach(function(el){
+    el.addEventListener("click",closePriceDetails);
+  });
+  document.querySelectorAll("[data-cfs]").forEach(function(el){
+    el.addEventListener("click",closeFlightSheet);
+  });
+  document.querySelectorAll("[data-cdsg]").forEach(function(el){
+    el.addEventListener("click",closeDsgvo);
+  });
+  document.querySelectorAll("[data-cdc]").forEach(function(el){
+    el.addEventListener("click",closeDobCal);
+  });
 });
 var rpShownN=0,rpFiltered=[],rpSortMode="best";function openResultsPage(){var e=document.getElementById("results-page");e&&(e.classList.add("open"),document.body.style.overflow="hidden",rpUpdateHeader(),rpRenderOffers())}function closeResultsPage(){var e=document.getElementById("rw");e&&(e.classList.remove("show"),e.classList.remove("sfb-on"));var t=document.getElementById("offers-list");t&&(t.innerHTML=""),allOffers=[],filtered=[],shownN=0;var n=document.getElementById("mfbtn");n&&(n.style.display="none");var a=document.getElementById("quick-filters");a&&(a.style.display="none");var o=document.getElementById("results-page");if(o){o.classList.remove("open"),document.body.style.overflow="";var r=document.getElementById("rp-edit-drop");r&&r.classList.remove("open")}window.scrollTo(0,0)}function rpUpdateHeader(){var e=document.getElementById("rp-route"),t=document.getElementById("rp-meta");if("mc"===trip&&mcLegsData&&mcLegsData.length){var n=mcLegsData.map(function(e){return e.fromC||e.from||""}),a=mcLegsData[mcLegsData.length-1];(a.toC||a.to)&&n.push(a.toC||a.to),e&&(e.textContent=n.filter(Boolean).join(" → "));var o=(PAX.a||1)+(PAX.c||0)+(PAX.i||0),r=mcLegsData.map(function(e){return e.date?fmtDate(e.date):null}).filter(Boolean);t&&(t.textContent=(r.length?r[0]+(r.length>1?" – "+r[r.length-1]:"")+" · ":"")+o+" Reisende")}else{var i=fromC||(fromI||""),s=toC||(toI||"");e&&(e.textContent=i+" ⇌ "+s);var l=document.getElementById("dep-date"),d=document.getElementById("ret-date"),c=l?l.value:"",u=d?d.value:"",f=(o=(PAX.a||1)+(PAX.c||0)+(PAX.i||0),"");c&&(f+=fmtDate(c)),u&&(f+=" – "+fmtDate(u)),f+=" · "+o+" Reisende",t&&(t.textContent=f);var p=document.getElementById("rpe-from"),g=document.getElementById("rpe-to"),m=document.getElementById("rpe-dep"),v=document.getElementById("rpe-ret"),h=document.getElementById("rpe-pax");p&&(p.textContent=i||"—"),g&&(g.textContent=s||"—"),m&&(m.textContent=c?fmtDate(c):"—"),v&&(v.textContent=u?fmtDate(u):"—"),h&&(h.textContent=o+" Reisende · "+(PAX.cabin||"economy"))}}function fmtDate(e){if(!e)return"—";try{var t=e.split("-");return t[2]+"."+t[1]+"."+t[0]}catch(t){return e}}function rpSyncTripUI(){var e=document.getElementById("rpe-trip-sel");e&&(e.value="rr"===trip?"rr":"ow");var t=document.getElementById("rpe-ret-field");t&&(t.style.display="ow"===trip?"none":"")}
 function rpSetTripSel(e){trip=e;var t=document.getElementById("trip-sel");t&&(t.value=e);rpSyncTripUI()}
