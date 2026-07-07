@@ -126,7 +126,7 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
       box.innerHTML = '<div class="route-price-val">${de ? 'ab' : 'from €'} ' + j.price.toFixed(0) + '${de ? ' €' : ''}</div><div class="route-price-lbl">${de ? 'Indikativer Preis · Economy · 1 Erwachsener' : 'Indicative price · Economy · 1 adult'}</div>';
       if (j.departure_date) {
         var ctaLink = document.querySelector('.route-cta');
-        if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '&depart=' + encodeURIComponent(j.departure_date);
+        if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
       }
     } else {
       box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">${de ? 'Aktuelle Preise direkt in der Suche verfügbar' : 'Current prices available directly in search'}</div>';
