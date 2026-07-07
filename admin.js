@@ -2212,8 +2212,8 @@ function renderCustomersTable() {
     var vipBadge = c.isVip ? '<span class="badge confirmed">⭐ VIP</span>' : '<span class="badge">عادي</span>';
     return `<tr>
       <td>
-        <div style="font-weight:600">${c.name || 'بدون اسم'}</div>
-        <div style="font-size:11px;color:var(--tx3)" class="mono">${c.email}</div>
+        <div style="font-weight:600">${escHtml(c.name) || 'بدون اسم'}</div>
+        <div style="font-size:11px;color:var(--tx3)" class="mono">${escHtml(c.email)}</div>
       </td>
       <td class="mono">${c.bookingCount}</td>
       <td class="mono" style="color:var(--blue)">€${c.totalSpent.toFixed(2)}</td>
@@ -2252,9 +2252,9 @@ function showCustomerDetail(idx) {
     var paid = b.customer_paid || b.total_amount || 0;
     var date = b.created_at ? new Date(b.created_at).toLocaleDateString('ar') : '—';
     return `<tr>
-      <td class="mono">${b.booking_ref||'—'}</td>
+      <td class="mono">${escHtml(b.booking_ref)||'—'}</td>
       <td>${date}</td>
-      <td>${(b.origin||'?') + ' → ' + (b.destination||'?')}</td>
+      <td>${escHtml(b.origin||'?') + ' → ' + escHtml(b.destination||'?')}</td>
       <td class="mono" style="color:var(--blue)">€${paid.toFixed(2)}</td>
       <td>${status}</td>
     </tr>`;
@@ -2264,7 +2264,7 @@ function showCustomerDetail(idx) {
     <div class="detail-section">
       <div class="detail-section-title">معلومات العميل</div>
       <div class="detail-grid">
-        <div class="detail-item"><div class="detail-key">الإيميل</div><div class="detail-val mono">${c.email}</div></div>
+        <div class="detail-item"><div class="detail-key">الإيميل</div><div class="detail-val mono">${escHtml(c.email)}</div></div>
         <div class="detail-item"><div class="detail-key">عدد الحجوزات</div><div class="detail-val">${c.bookingCount}</div></div>
         <div class="detail-item"><div class="detail-key">إجمالي الإنفاق</div><div class="detail-val">€${c.totalSpent.toFixed(2)}</div></div>
         <div class="detail-item"><div class="detail-key">صافي ربحنا منه</div><div class="detail-val">€${c.totalProfit.toFixed(2)}</div></div>
@@ -2284,16 +2284,16 @@ function showCustomerDetail(idx) {
       </table>
     </div>
     <div class="detail-section">
-      <button class="btn btn-primary" style="width:100%" onclick="emailCustomer('${c.email}', '${(c.name||'').replace(/'/g,"")}')">✉️ إرسال إيميل للعميل</button>
+      <button class="btn btn-primary" style="width:100%" onclick='emailCustomer(${escJsonAttr({ email: c.email, name: c.name })})'>✉️ إرسال إيميل للعميل</button>
     </div>
   `;
   document.getElementById('customer-modal').classList.add('open');
 }
 
-function emailCustomer(email, name) {
+function emailCustomer(c) {
   var subject = encodeURIComponent('Airpiv — بخصوص حجوزاتك');
-  var body = encodeURIComponent('مرحباً ' + (name || '') + ',\n\n');
-  window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+  var body = encodeURIComponent('مرحباً ' + (c.name || '') + ',\n\n');
+  window.location.href = 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + subject + '&body=' + body;
 }
 
 // ============ [ADMIN-MARGIN] INVOICE CONFIG — server only ============
