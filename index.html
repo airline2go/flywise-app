@@ -250,7 +250,7 @@
 </div>
 
 <!-- Mini Search Modal -->
-<div class="ov" id="baginfo-ov" role="dialog" aria-modal="true" aria-label="Gepäcksübersicht" onclick="if(event.target===this)closeBagInfo()" style="align-items:flex-end;padding:0">
+<div class="ov" id="baginfo-ov" role="dialog" aria-modal="true" aria-label="Gepäcksübersicht" style="align-items:flex-end;padding:0">
   <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -8px 30px rgba(0,0,0,.15)">
     <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
     <div id="baginfo-title" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--tx);margin-bottom:14px">Gepäcksübersicht</div>
@@ -259,7 +259,7 @@
   </div>
 </div>
 
-<div class="ov" id="mini-search-ov" onclick="if(event.target===this)closeMiniSearch()" style="align-items:flex-end;padding:0">
+<div class="ov" id="mini-search-ov" style="align-items:flex-end;padding:0">
   <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -8px 30px rgba(0,0,0,.15)">
 
     <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
@@ -723,7 +723,7 @@
 </div>
 
 <!-- PAX MODAL -->
-<div class="ov" id="pov" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="ov" id="pov">
   <div class="pm">
     <div class="mhd"><h3>Reisende & Gepäck</h3><button class="mx" onclick="document.getElementById('pov').classList.remove('open')">✕</button></div>
     <div class="prow"><div><div class="plbl">Erwachsene</div><div class="psub">ab 12 Jahre</div></div><div class="pctrl"><button class="pcb" onclick="chp('a',-1)">−</button><span class="pnum" id="pa">1</span><button class="pcb" onclick="chp('a',1)">+</button></div></div>
@@ -917,7 +917,7 @@ Telefon: [Ihre Telefonnummer]</p>
 
 
 <!-- CALENDAR MODAL -->
-<div class="ov" id="cal-ov" role="dialog" aria-modal="true" aria-label="Datum auswählen" onclick="if(event.target===this)closeCal()" style="align-items:flex-end;padding:0">
+<div class="ov" id="cal-ov" role="dialog" aria-modal="true" aria-label="Datum auswählen" style="align-items:flex-end;padding:0">
   <div class="cal-box" id="cal-box">
     <!-- Header -->
     <div class="cal-hd">
@@ -958,7 +958,7 @@ Telefon: [Ihre Telefonnummer]</p>
 
 
 <!-- HELPER MODAL -->
-<div class="help-ov" id="help-ov" onclick="if(event.target===this)closeHelper()">
+<div class="help-ov" id="help-ov">
   <div class="help-box" style="position:relative">
     <button class="help-close" onclick="closeHelper()">✕</button>
     <div class="help-title" id="help-title">Fast geschafft! ✈️</div>
@@ -969,7 +969,7 @@ Telefon: [Ihre Telefonnummer]</p>
 
 
 <!-- ══ BOOKING FLOW BOTTOM SHEET ══ -->
-<div class="bflow-ov" id="bflow-ov" role="dialog" aria-modal="true" aria-label="Flugbuchung" onclick="if(event.target===this)closeBflow()">
+<div class="bflow-ov" id="bflow-ov" role="dialog" aria-modal="true" aria-label="Flugbuchung">
   <div class="bflow-sheet" id="bflow-sheet" dir="ltr">
     <div class="bflow-handle"></div>
 
@@ -1031,7 +1031,7 @@ Telefon: [Ihre Telefonnummer]</p>
 <div id="results-page">
 
   <!-- Filter Bottom Sheet -->
-  <div class="rp-filter-ov" id="rp-filter-ov" onclick="if(event.target===this)closeRpFilter()">
+  <div class="rp-filter-ov" id="rp-filter-ov">
     <div class="rp-filter-sheet">
       <div class="rp-filter-handle"></div>
       <div class="rp-filter-hd">
@@ -1208,7 +1208,7 @@ Telefon: [Ihre Telefonnummer]</p>
 
 
 <!-- ══ DSGVO DATENSCHUTZ MODAL ══ -->
-<div class="dsgvo-ov" id="dsgvo-ov" role="dialog" aria-modal="true" aria-label="Datenschutz und Datensicherheit" onclick="if(event.target===this)closeDsgvo()">
+<div class="dsgvo-ov" id="dsgvo-ov" role="dialog" aria-modal="true" aria-label="Datenschutz und Datensicherheit">
   <div class="dsgvo-box">
     <div class="dsgvo-hd">
       <h3>🔒 Datenschutz & Datensicherheit</h3>
@@ -1259,11 +1259,11 @@ Telefon: [Ihre Telefonnummer]</p>
   </div>
 </div>
 
-<div class="auth-ov" id="auth-ov" onclick="if(event.target===this)closeAuthModal()">
+<div class="auth-ov" id="auth-ov">
   <div class="auth-box" id="auth-box"></div>
 </div>
 
-<div class="seat-confirm-ov" id="seat-confirm-ov" onclick="if(event.target===this)cancelSeatPick()">
+<div class="seat-confirm-ov" id="seat-confirm-ov">
   <div class="seat-confirm">
     <div class="seat-confirm-q" id="seat-confirm-q"></div>
     <div class="seat-confirm-p" id="seat-confirm-p"></div>
@@ -1278,7 +1278,7 @@ Telefon: [Ihre Telefonnummer]</p>
      on the payment step — previously the button fired a toast and
      immediately re-searched with no way to back out. Same visual pattern
      as seat-confirm-ov above for consistency. -->
-<div class="seat-confirm-ov" id="addpax-confirm-ov" onclick="if(event.target===this)cancelAddPassenger()">
+<div class="seat-confirm-ov" id="addpax-confirm-ov">
   <div class="seat-confirm">
     <div class="seat-confirm-q" id="addpax-confirm-q"></div>
     <div class="seat-confirm-p" id="addpax-confirm-p"></div>
@@ -1292,7 +1292,7 @@ Telefon: [Ihre Telefonnummer]</p>
      (which showed Chrome chrome, not Airpiv branding) for the booking
      cancellation flow. Same seat-confirm-ov visual pattern, with a
      refund-amount summary and explicit non-refundable warning. -->
-<div class="seat-confirm-ov" id="cancel-confirm-ov" onclick="if(event.target===this)closeCancelConfirm()">
+<div class="seat-confirm-ov" id="cancel-confirm-ov">
   <div class="seat-confirm" style="text-align:start">
     <div class="seat-confirm-q" id="cancel-confirm-title">Buchung stornieren?</div>
     <div id="cancel-confirm-body" style="margin:10px 0 14px"></div>
@@ -1303,7 +1303,7 @@ Telefon: [Ihre Telefonnummer]</p>
   </div>
 </div>
 
-<div class="seat-confirm-ov" id="price-details-ov" onclick="if(event.target===this)closePriceDetails()">
+<div class="seat-confirm-ov" id="price-details-ov">
   <div class="seat-confirm" style="text-align:start">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx)" id="pd-title">Preisdetails</div>
@@ -1318,7 +1318,7 @@ Telefon: [Ihre Telefonnummer]</p>
     <button onclick="closePriceDetails()" style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn">Schließen</button>
   </div>
 </div>
-<div class="seat-confirm-ov" id="price-changed-ov" role="dialog" aria-modal="true" onclick="if(event.target===this)closePriceChanged()">
+<div class="seat-confirm-ov" id="price-changed-ov" role="dialog" aria-modal="true">
   <div class="seat-confirm" style="text-align:start">
     <div style="text-align:center;font-size:2.2rem;margin-bottom:6px" id="pc-icon">📊</div>
     <div class="seat-confirm-q" style="text-align:center" data-i18n="pc_title">Der Preis hat sich geändert</div>
@@ -1342,7 +1342,7 @@ Telefon: [Ihre Telefonnummer]</p>
 </div>
 
 <!-- ══ WELCOME REWARDS BANNER ══ -->
-<div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeAuthBanner()">
+<div id="auth-welcome-banner" style="display:none;position:fixed;inset:0;z-index:550;align-items:center;justify-content:center;padding:20px;background:rgba(5,14,20,.78);backdrop-filter:blur(6px)">
   <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:22px;padding:30px 24px 26px;max-width:380px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:welcomePop .4s cubic-bezier(.34,1.56,.64,1) both">
     <button onclick="closeAuthBanner()" aria-label="close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
     <div style="position:relative;width:78px;height:78px;margin:0 auto 14px">
