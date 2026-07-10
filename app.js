@@ -244,6 +244,33 @@ function popularDestinationsHtmlMC(e,t){for(var n={},a=0;a<AP.length;a++)n[AP[a]
   var tripSelEl=document.getElementById("trip-sel");
   if(tripSelEl)tripSelEl.value=trip;
   if(typeof setTripSel==="function")setTripSel(trip);
+  // [URL-AUTOSEARCH-DATE-FIX] doSearch() bails with a "missing date" nudge
+  // (showHelper()) whenever calDepDate is unset — which it always was here,
+  // since a bare /search/FROM-TO link (or a refresh of one) carries no date
+  // and only prefillDateFromUrl()'s ?depart= param sets it. That made the
+  // nudge pop up on every single load/refresh instead of ever actually
+  // searching. Same fallback qs() already uses for quick-pick cards: default
+  // to three weeks out (one week return trip) only when nothing was chosen.
+  if(!calDepDate){
+    var uasDep=new Date();
+    uasDep.setDate(uasDep.getDate()+21);
+    var uasDepStr=uasDep.toISOString().slice(0,10);
+    var uasDepEl=document.getElementById("dep-date");
+    if(uasDepEl)uasDepEl.value=uasDepStr;
+    calDepDate=uasDepStr;
+    var uasDepDisp=document.getElementById("dep-disp");
+    if(uasDepDisp){uasDepDisp.textContent=fmtDate(uasDepStr);uasDepDisp.classList.remove("empty");}
+  }
+  if("rr"===trip&&!calRetDate){
+    var uasRet=new Date();
+    uasRet.setDate(uasRet.getDate()+28);
+    var uasRetStr=uasRet.toISOString().slice(0,10);
+    var uasRetEl=document.getElementById("ret-date");
+    if(uasRetEl)uasRetEl.value=uasRetStr;
+    calRetDate=uasRetStr;
+    var uasRetDisp=document.getElementById("ret-disp");
+    if(uasRetDisp){uasRetDisp.textContent=fmtDate(uasRetStr);uasRetDisp.classList.remove("empty");}
+  }
   prefillPromise.then(function(){doSearch();});
   // [CLEAN-SEARCH-URL] A legacy ?from=&to= link self-heals to the clean
   // /search/FROM-TO form via replaceState and *stays* there — bookmarkable,
