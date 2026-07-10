@@ -1308,6 +1308,371 @@ async function deleteRoutePage(id) {
   }
 }
 
+// ============ [GEO-CMS] Airports & Cities admin ============
+// Mirrors the Route Pages list/search/filter/modal pattern exactly (see
+// loadRoutePages()/renderRoutePagesList()/openRouteEditor() above), with
+// 3 sub-tabs sharing one page. Content CRUD tier (requireAdmin on the
+// server), not owner-only.
+var GEO_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'ar', name: 'العربية' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'nl', name: 'Nederlands' },
+];
+
+function showGeoTab(tab) {
+  ['cities', 'countries', 'airports'].forEach(function (t) {
+    document.getElementById('geo-subtab-' + t).style.display = t === tab ? '' : 'none';
+    var btn = document.getElementById('geo-tab-btn-' + t);
+    btn.className = t === tab ? 'btn btn-primary' : 'btn btn-ghost';
+  });
+  if (tab === 'cities' && !geoCities.length) loadGeoCities();
+  if (tab === 'countries' && !geoCountries.length) loadGeoCountries();
+  if (tab === 'airports' && !geoAirports.length) loadGeoAirports();
+}
+
+// Builds the 7 language-labeled text inputs shared by all 3 editor
+// modals — dynamic instead of hardcoded 7x per modal, so adding an 8th
+// language later is a one-line change to GEO_LANGUAGES, not a template edit.
+function renderTranslationInputs(containerId, idPrefix, values) {
+  var container = document.getElementById(containerId);
+  container.innerHTML = GEO_LANGUAGES.map(function (l) {
+    var v = (values && values[l.code]) || '';
+    return '<div class="form-group" style="margin-bottom:8px">' +
+      '<label class="form-label" style="font-size:11px">' + escHtml(l.name) + ' (' + l.code + ')</label>' +
+      '<input type="text" class="form-input" id="' + idPrefix + '-' + l.code + '" value="' + escHtml(v) + '">' +
+      '</div>';
+  }).join('');
+}
+function readTranslationInputs(idPrefix) {
+  var translations = {};
+  GEO_LANGUAGES.forEach(function (l) {
+    var el = document.getElementById(idPrefix + '-' + l.code);
+    if (el && el.value.trim()) translations[l.code] = el.value.trim();
+  });
+  return translations;
+}
+function translationsSummary(count) {
+  return (count || 0) + '/7';
+}
+
+// ---- Cities ----
+var geoCities = [];
+var geoCityPage = 1, geoCityTotalPages = 1, geoCitySearchTimer = null;
+function geoCitySearchDebounced() { clearTimeout(geoCitySearchTimer); geoCitySearchTimer = setTimeout(geoCityResetAndLoad, 400); }
+function geoCityResetAndLoad() { geoCityPage = 1; loadGeoCities(); }
+function geoCityGoToPage(p) { if (p < 1 || p > geoCityTotalPages) return; geoCityPage = p; loadGeoCities(); }
+
+async function loadGeoCities() {
+  try {
+    var q = encodeURIComponent(document.getElementById('geo-city-search').value.trim());
+    var status = document.getElementById('geo-city-status-filter').value;
+    var url = '/admin/cities?page=' + geoCityPage + '&limit=50';
+    if (q) url += '&q=' + q;
+    if (status) url += '&status=' + status;
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) {
+      geoCities = j.cities;
+      geoCityTotalPages = j.totalPages || 1;
+      renderGeoCitiesList();
+      renderGeoPagination('geo-cities-pagination', j.total || 0, geoCityPage, geoCityTotalPages, 'geoCityGoToPage');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+function renderGeoCitiesList() {
+  var tbody = document.getElementById('geo-cities-list');
+  if (!geoCities.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مدن بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = geoCities.map(function (c) {
+    var statusBadge = c.status === 'published' ? '<span class="badge confirmed">✓ منشورة</span>' : '<span class="badge pending">◔ مسودة</span>';
+    return '<tr>' +
+      '<td>' + escHtml(c.name) + '<div style="font-size:11px;color:var(--tx3)">' + escHtml(c.city_slug) + '</div></td>' +
+      '<td>' + escHtml(c.country_code || '—') + '</td>' +
+      '<td>' + translationsSummary(c.translations_count) + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick=\'openCityEditor(' + escJsonAttr(c) + ')\'>✏️</button> ' +
+      '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#ef4444" onclick="deleteCity(\'' + escHtml(c.id) + '\')">🗑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+async function openCityEditor(city) {
+  document.getElementById('city-editor-title').textContent = city ? 'تعديل مدينة' : 'مدينة جديدة';
+  document.getElementById('city-edit-id').value = city ? city.id : '';
+  document.getElementById('city-name').value = city ? city.name : '';
+  document.getElementById('city-slug').value = city ? city.city_slug : '';
+  document.getElementById('city-country-code').value = city ? (city.country_code || '') : '';
+  document.getElementById('city-status').value = city ? city.status : 'published';
+  var translations = {};
+  if (city) {
+    try {
+      const res = await adminFetch('/admin/cities/' + city.id + '/translations');
+      const j = await res.json();
+      if (j.ok) translations = j.translations;
+    } catch (e) { /* fall through with empty translations rather than blocking the editor */ }
+  }
+  renderTranslationInputs('city-translations-inputs', 'city-tr', translations);
+  document.getElementById('city-editor-modal').classList.add('open');
+}
+
+async function saveCity() {
+  var id = document.getElementById('city-edit-id').value;
+  var payload = {
+    name: document.getElementById('city-name').value.trim(),
+    city_slug: document.getElementById('city-slug').value.trim().toLowerCase(),
+    country_code: document.getElementById('city-country-code').value.trim().toUpperCase() || null,
+    status: document.getElementById('city-status').value,
+  };
+  if (!payload.name || !payload.city_slug) { showToast('⚠️ الاسم والرابط مطلوبان', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/cities/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/cities', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل الحفظ', 'error'); return; }
+    var cityId = id || (j.city && j.city.id);
+    var translations = readTranslationInputs('city-tr');
+    if (cityId && Object.keys(translations).length) {
+      await adminFetch('/admin/cities/' + cityId + '/translations', { method: 'PUT', body: JSON.stringify({ translations: translations }) });
+    }
+    showToast('💾 تم حفظ المدينة', 'success');
+    closeModal('city-editor-modal');
+    loadGeoCities();
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteCity(id) {
+  if (!confirm('تأكيد حذف هذه المدينة نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/cities/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف المدينة', 'success'); loadGeoCities(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ---- Countries ----
+var geoCountries = [];
+var geoCountryPage = 1, geoCountryTotalPages = 1, geoCountrySearchTimer = null;
+function geoCountrySearchDebounced() { clearTimeout(geoCountrySearchTimer); geoCountrySearchTimer = setTimeout(geoCountryResetAndLoad, 400); }
+function geoCountryResetAndLoad() { geoCountryPage = 1; loadGeoCountries(); }
+function geoCountryGoToPage(p) { if (p < 1 || p > geoCountryTotalPages) return; geoCountryPage = p; loadGeoCountries(); }
+
+async function loadGeoCountries() {
+  try {
+    var q = encodeURIComponent(document.getElementById('geo-country-search').value.trim());
+    var status = document.getElementById('geo-country-status-filter').value;
+    var url = '/admin/countries?page=' + geoCountryPage + '&limit=50';
+    if (q) url += '&q=' + q;
+    if (status) url += '&status=' + status;
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) {
+      geoCountries = j.countries;
+      geoCountryTotalPages = j.totalPages || 1;
+      renderGeoCountriesList();
+      renderGeoPagination('geo-countries-pagination', j.total || 0, geoCountryPage, geoCountryTotalPages, 'geoCountryGoToPage');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+function renderGeoCountriesList() {
+  var tbody = document.getElementById('geo-countries-list');
+  if (!geoCountries.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">لا توجد دول بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = geoCountries.map(function (c) {
+    var statusBadge = c.status === 'published' ? '<span class="badge confirmed">✓ منشورة</span>' : '<span class="badge pending">◔ مسودة</span>';
+    return '<tr>' +
+      '<td>' + escHtml(c.name) + '</td>' +
+      '<td class="mono">' + escHtml(c.code) + '</td>' +
+      '<td>' + translationsSummary(c.translations_count) + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick=\'openCountryEditor(' + escJsonAttr(c) + ')\'>✏️</button> ' +
+      '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#ef4444" onclick="deleteCountry(\'' + escHtml(c.id) + '\')">🗑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+async function openCountryEditor(country) {
+  document.getElementById('country-editor-title').textContent = country ? 'تعديل دولة' : 'دولة جديدة';
+  document.getElementById('country-edit-id').value = country ? country.id : '';
+  document.getElementById('country-name').value = country ? country.name : '';
+  document.getElementById('country-code').value = country ? country.code : '';
+  document.getElementById('country-code').disabled = !!country;
+  document.getElementById('country-status').value = country ? country.status : 'published';
+  var translations = {};
+  if (country) {
+    try {
+      const res = await adminFetch('/admin/countries/' + country.id + '/translations');
+      const j = await res.json();
+      if (j.ok) translations = j.translations;
+    } catch (e) { /* fall through with empty translations rather than blocking the editor */ }
+  }
+  renderTranslationInputs('country-translations-inputs', 'country-tr', translations);
+  document.getElementById('country-editor-modal').classList.add('open');
+}
+
+async function saveCountry() {
+  var id = document.getElementById('country-edit-id').value;
+  var payload = {
+    name: document.getElementById('country-name').value.trim(),
+    status: document.getElementById('country-status').value,
+  };
+  if (!id) payload.code = document.getElementById('country-code').value.trim().toUpperCase();
+  if (!payload.name || (!id && !payload.code)) { showToast('⚠️ الاسم والكود مطلوبان', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/countries/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/countries', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل الحفظ', 'error'); return; }
+    var countryId = id || (j.country && j.country.id);
+    var translations = readTranslationInputs('country-tr');
+    if (countryId && Object.keys(translations).length) {
+      await adminFetch('/admin/countries/' + countryId + '/translations', { method: 'PUT', body: JSON.stringify({ translations: translations }) });
+    }
+    showToast('💾 تم حفظ الدولة', 'success');
+    closeModal('country-editor-modal');
+    loadGeoCountries();
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteCountry(id) {
+  if (!confirm('تأكيد حذف هذه الدولة نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/countries/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف الدولة', 'success'); loadGeoCountries(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ---- Airports ----
+var geoAirports = [];
+var geoAirportPage = 1, geoAirportTotalPages = 1, geoAirportSearchTimer = null;
+function geoAirportSearchDebounced() { clearTimeout(geoAirportSearchTimer); geoAirportSearchTimer = setTimeout(geoAirportResetAndLoad, 400); }
+function geoAirportResetAndLoad() { geoAirportPage = 1; loadGeoAirports(); }
+function geoAirportGoToPage(p) { if (p < 1 || p > geoAirportTotalPages) return; geoAirportPage = p; loadGeoAirports(); }
+
+async function loadGeoAirports() {
+  try {
+    var q = encodeURIComponent(document.getElementById('geo-airport-search').value.trim());
+    var status = document.getElementById('geo-airport-status-filter').value;
+    var url = '/admin/airports?page=' + geoAirportPage + '&limit=50';
+    if (q) url += '&q=' + q;
+    if (status) url += '&status=' + status;
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) {
+      geoAirports = j.airports;
+      geoAirportTotalPages = j.totalPages || 1;
+      renderGeoAirportsList();
+      renderGeoPagination('geo-airports-pagination', j.total || 0, geoAirportPage, geoAirportTotalPages, 'geoAirportGoToPage');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+function renderGeoAirportsList() {
+  var tbody = document.getElementById('geo-airports-list');
+  if (!geoAirports.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مطارات بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = geoAirports.map(function (a) {
+    var statusBadge = a.status === 'published' ? '<span class="badge confirmed">✓ منشور</span>' : '<span class="badge pending">◔ مسودة</span>';
+    return '<tr>' +
+      '<td>' + escHtml(a.airport_name) + '</td>' +
+      '<td class="mono">' + escHtml(a.iata_code) + '</td>' +
+      '<td>' + escHtml(a.city_id || '—') + '</td>' +
+      '<td>' + translationsSummary(a.translations_count) + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick=\'openAirportEditor(' + escJsonAttr(a) + ')\'>✏️</button> ' +
+      '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#ef4444" onclick="deleteAirport(\'' + escHtml(a.id) + '\')">🗑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+async function openAirportEditor(airport) {
+  document.getElementById('airport-editor-title').textContent = airport ? 'تعديل مطار' : 'مطار جديد';
+  document.getElementById('airport-edit-id').value = airport ? airport.id : '';
+  document.getElementById('airport-iata').value = airport ? airport.iata_code : '';
+  document.getElementById('airport-iata').disabled = !!airport;
+  document.getElementById('airport-icao').value = airport ? (airport.icao_code || '') : '';
+  document.getElementById('airport-name').value = airport ? airport.airport_name : '';
+  document.getElementById('airport-city-id').value = airport ? (airport.city_id || '') : '';
+  document.getElementById('airport-country-code').value = airport ? (airport.country_code || '') : '';
+  document.getElementById('airport-lat').value = airport && airport.latitude != null ? airport.latitude : '';
+  document.getElementById('airport-lng').value = airport && airport.longitude != null ? airport.longitude : '';
+  document.getElementById('airport-status').value = airport ? airport.status : 'published';
+  var translations = {};
+  if (airport) {
+    try {
+      const res = await adminFetch('/admin/airports/' + airport.id + '/translations');
+      const j = await res.json();
+      if (j.ok) translations = j.translations;
+    } catch (e) { /* fall through with empty translations rather than blocking the editor */ }
+  }
+  renderTranslationInputs('airport-translations-inputs', 'airport-tr', translations);
+  document.getElementById('airport-editor-modal').classList.add('open');
+}
+
+async function saveAirport() {
+  var id = document.getElementById('airport-edit-id').value;
+  var payload = {
+    icao_code: document.getElementById('airport-icao').value.trim().toUpperCase() || null,
+    airport_name: document.getElementById('airport-name').value.trim(),
+    city_id: document.getElementById('airport-city-id').value.trim() || null,
+    country_code: document.getElementById('airport-country-code').value.trim().toUpperCase() || null,
+    latitude: document.getElementById('airport-lat').value.trim() || null,
+    longitude: document.getElementById('airport-lng').value.trim() || null,
+    status: document.getElementById('airport-status').value,
+  };
+  if (!id) payload.iata_code = document.getElementById('airport-iata').value.trim().toUpperCase();
+  if (!payload.airport_name || (!id && !payload.iata_code)) { showToast('⚠️ كود IATA والاسم مطلوبان', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/airports/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/airports', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل الحفظ', 'error'); return; }
+    var airportId = id || (j.airport && j.airport.id);
+    var translations = readTranslationInputs('airport-tr');
+    if (airportId && Object.keys(translations).length) {
+      await adminFetch('/admin/airports/' + airportId + '/translations', { method: 'PUT', body: JSON.stringify({ translations: translations }) });
+    }
+    showToast('💾 تم حفظ المطار', 'success');
+    closeModal('airport-editor-modal');
+    loadGeoAirports();
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteAirport(id) {
+  if (!confirm('تأكيد حذف هذا المطار نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/airports/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف المطار', 'success'); loadGeoAirports(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// Shared pagination renderer for all 3 geo sub-tabs.
+function renderGeoPagination(elId, total, currentPage, totalPages, gotoFn) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  if (total === 0) { el.innerHTML = ''; return; }
+  var html = '<span>' + total.toLocaleString('ar-EG') + ' إجمالاً — صفحة ' + currentPage + ' من ' + totalPages + '</span>';
+  html += '<button class="btn btn-ghost" style="padding:5px 12px" ' + (currentPage <= 1 ? 'disabled' : '') + ' onclick="' + gotoFn + '(' + (currentPage - 1) + ')">‹ السابق</button>';
+  html += '<button class="btn btn-ghost" style="padding:5px 12px" ' + (currentPage >= totalPages ? 'disabled' : '') + ' onclick="' + gotoFn + '(' + (currentPage + 1) + ')">التالي ›</button>';
+  el.innerHTML = html;
+}
+
 // ============ [ERROR-LOGS] Error logs admin ============
 async function loadErrorLogs() {
   var tbody = document.getElementById('errorlogs-list');
@@ -1354,7 +1719,7 @@ async function clearErrorLogs() {
 }
 
 // ============ NAVIGATION ============
-var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','team','api','settings'];
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','geo','errorlogs','team','api','settings'];
 
 function showPage(name) {
   // [STAFF-ROLES] Defense in depth only — the buttons that lead here are
@@ -1397,6 +1762,7 @@ function showPage(name) {
   if (name === 'settings') { loadInvoiceConfigIntoForm(); loadMaintenanceMode(); }
   if (name === 'blog') loadBlogPosts();
   if (name === 'routes') loadRoutePages();
+  if (name === 'geo') loadGeoCities();
   if (name === 'errorlogs') loadErrorLogs();
   if (name === 'team') loadStaff();
   if (name === 'api') { setApiMonitorPeriod('today'); loadApiCostConfig(); }

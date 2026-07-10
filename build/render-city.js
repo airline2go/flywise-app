@@ -1,5 +1,7 @@
-const { escHtml, renderShell, jsonLdScript } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity, getAlternativeAirports } = require('./data');
+const { translate, format } = require('./translate');
+const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 
 const CITY_CSS = `<style>
 .city-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -21,7 +23,6 @@ const CITY_CSS = `<style>
 </style>`;
 
 function renderCityPage(city, routes, lang) {
-  const de = lang !== 'en';
   const cityName = localizeCity(city.name, city.airport_codes && city.airport_codes[0], lang);
   const locRoutes = routes.map((r) => Object.assign({}, r, {
     origin_city: localizeCity(r.origin_city, r.origin_iata, lang),
@@ -33,65 +34,57 @@ function renderCityPage(city, routes, lang) {
   if (locRoutes.length === 1) {
     const r = locRoutes[0];
     const otherCity = r.origin_city_slug === city.city_slug ? r.destination_city : r.origin_city;
-    title = de ? `Flug ${cityName} ↔ ${otherCity}` : `${otherCity} ↔ ${cityName} flights`;
-    description = de
-      ? `Direktverbindung zwischen ${cityName} und ${otherCity}: Preise vergleichen und günstig buchen mit Airpiv.`
-      : `Direct connection between ${cityName} and ${otherCity}: compare prices and book cheap flights with Airpiv.`;
+    title = format(translate('citySingleRouteTitleTemplate', lang), { otherCity, city: cityName });
+    description = format(translate('citySingleRouteDescriptionTemplate', lang), { city: cityName, otherCity });
   } else if (multiAirport) {
-    title = de ? `Flüge nach ${cityName} — alle Flughäfen im Vergleich` : `Flights to ${cityName} — all airports compared`;
-    description = de
-      ? `${cityName} wird von ${city.airport_codes.length} Flughäfen bedient (${city.airport_codes.join(', ')}). Vergleiche alle Strecken mit Airpiv.`
-      : `${cityName} is served by ${city.airport_codes.length} airports (${city.airport_codes.join(', ')}). Compare all routes with Airpiv.`;
+    title = format(translate('cityMultiAirportTitleTemplate', lang), { city: cityName });
+    description = format(translate('cityMultiAirportDescriptionTemplate', lang), { city: cityName, count: city.airport_codes.length, codes: city.airport_codes.join(', ') });
   } else if (locRoutes.length <= 4) {
-    title = de ? `${cityName} Flüge — ${locRoutes.length} Strecken im Vergleich` : `${cityName} flights — ${locRoutes.length} routes compared`;
-    description = de
-      ? `${locRoutes.length} Flugverbindungen von und nach ${cityName} im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.`
-      : `${locRoutes.length} flight connections to and from ${cityName}, compared side by side. Find the cheapest route with Airpiv.`;
+    title = format(translate('cityFewRoutesTitleTemplate', lang), { entity: cityName, count: locRoutes.length });
+    description = format(translate('cityFewRoutesDescriptionTemplate', lang), { entity: cityName, count: locRoutes.length });
   } else {
-    title = de ? `Günstige Flüge nach ${cityName} — alle Strecken` : `Cheap flights to ${cityName} — all routes`;
-    description = de
-      ? `Über ${locRoutes.length} Flugverbindungen nach ${cityName}. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.`
-      : `Over ${locRoutes.length} flight connections to ${cityName}. Compare all destinations and airlines in real time with Airpiv.`;
+    title = format(translate('cityManyRoutesTitleTemplate', lang), { city: cityName });
+    description = format(translate('cityManyRoutesDescriptionTemplate', lang), { city: cityName, count: locRoutes.length });
   }
 
-  const deUrl = `https://airpiv.com/city/${encodeURIComponent(city.city_slug)}`;
-  const enUrl = `https://airpiv.com/en/city/${encodeURIComponent(city.city_slug)}`;
-  const url = de ? deUrl : enUrl;
-  const introText = de
-    ? (city.intro_text || `Entdecke alle Flugverbindungen von und nach ${cityName}. Airpiv vergleicht in Echtzeit hunderte Airlines und findet den besten Preis für deine Reise.`)
-    : `Discover all flight connections to and from ${cityName}. Airpiv compares hundreds of airlines in real time to find the best price for your trip.`;
+  const urls = urlsFor(`city/${encodeURIComponent(city.city_slug)}`);
+  const url = urls[lang];
+  // [ROUTE-SEO-OVERRIDES] intro_text is a single, non-localized column —
+  // it's written by a German-speaking admin, so it only ever overrides
+  // the German intro; every other language always gets the generated
+  // intro (same behavior the old de/en-only version already had, just
+  // generalized instead of hardcoded to the 'de' check).
+  const introText = (lang === DEFAULT_LANGUAGE && city.intro_text) || format(translate('entityIntroTemplate', lang), { entity: cityName });
 
-  const countryHref = de ? `/country/${encodeURIComponent(city.country_code)}` : `/en/country/${encodeURIComponent(city.country_code)}`;
-  let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${de ? '/' : '/en/'}">${de ? 'Startseite' : 'Home'}</a><span>›</span>`;
-  if (city.country_code) breadcrumbHtml += `<a href="${countryHref}">${escHtml(city.country_code)}</a><span>›</span>`;
+  const countryHref = city.country_code ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
+  let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
+  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(city.country_code)}</a><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(cityName)}</span></nav>`;
 
-  const airportHrefBase = de ? '/airport/' : '/en/airport/';
   const airportsHtml = (city.airport_codes && city.airport_codes.length)
-    ? `<div class="city-hero-airports">${city.airport_codes.map((a) => `<a href="${airportHrefBase}${encodeURIComponent(a)}" class="city-airport-badge">${escHtml(a)}</a>`).join('')}</div>`
+    ? `<div class="city-hero-airports">${city.airport_codes.map((a) => `<a href="${pathFor(lang, `airport/${encodeURIComponent(a)}`)}" class="city-airport-badge">${escHtml(a)}</a>`).join('')}</div>`
     : '';
 
   const fromRoutes = locRoutes.filter((r) => r.origin_city_slug === city.city_slug);
   const toRoutes = locRoutes.filter((r) => r.destination_city_slug === city.city_slug);
-  const flightsHrefBase = de ? '/flights/' : '/en/flights/';
   function routeCardHtml(r) {
-    return `<a class="city-route-card" href="${flightsHrefBase}${encodeURIComponent(r.slug)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</a>`;
+    return `<a class="city-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</a>`;
   }
   const fromSectionHtml = fromRoutes.length
-    ? `<section class="city-routes-section"><h2>${de ? 'Flüge ab' : 'Flights from'} ${escHtml(cityName)}</h2><div class="city-route-grid">${fromRoutes.map(routeCardHtml).join('')}</div></section>`
+    ? `<section class="city-routes-section"><h2>${translate('flightsFrom', lang)} ${escHtml(cityName)}</h2><div class="city-route-grid">${fromRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
   const toSectionHtml = toRoutes.length
-    ? `<section class="city-routes-section"><h2>${de ? 'Flüge nach' : 'Flights to'} ${escHtml(cityName)}</h2><div class="city-route-grid">${toRoutes.map(routeCardHtml).join('')}</div></section>`
+    ? `<section class="city-routes-section"><h2>${translate('flightsTo', lang)} ${escHtml(cityName)}</h2><div class="city-route-grid">${toRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
 
-  const routesWord = locRoutes.length === 1 ? (de ? 'Flugroute' : 'route') : (de ? 'Flugrouten' : 'routes');
+  const routesWord = locRoutes.length === 1 ? translate('routeWordSingular', lang) : translate('routeWordPlural', lang);
   const mainContent = `<main id="city-main">
   <div id="city-content">
 ${breadcrumbHtml}
 <h1>${escHtml(title)}</h1>
 <div class="city-hero">
   <div class="city-hero-name">✈ ${escHtml(cityName)}</div>
-  <div class="city-hero-sub">${locRoutes.length} ${de ? 'verfügbare' : 'available'} ${routesWord}</div>
+  <div class="city-hero-sub">${locRoutes.length} ${translate('availableWord', lang)} ${routesWord}</div>
   ${airportsHtml}
 </div>
 <section><p>${escHtml(introText)}</p></section>
@@ -100,8 +93,8 @@ ${toSectionHtml}
   </div>
 </main>`;
 
-  const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: de ? 'Startseite' : 'Home', item: de ? 'https://airpiv.com/' : 'https://airpiv.com/en/' }];
-  if (city.country_code) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: city.country_code, item: (de ? 'https://airpiv.com/country/' : 'https://airpiv.com/en/country/') + city.country_code });
+  const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
+  if (city.country_code) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: city.country_code, item: urlFor(lang, `country/${city.country_code}`) });
   breadcrumbList.push({ '@type': 'ListItem', position: breadcrumbList.length + 1, name: cityName, item: url });
 
   const schema = {
@@ -110,18 +103,19 @@ ${toSectionHtml}
     name: title,
     description,
     url,
+    inLanguage: getLanguage(lang).locale,
+    availableLanguage: LANGUAGES.map((l) => l.locale),
     breadcrumb: { '@type': 'BreadcrumbList', itemListElement: breadcrumbList },
   };
-  if (!de) schema.inLanguage = 'en';
 
   const headExtra = `${jsonLdScript(schema)}\n${CITY_CSS}`;
 
   const html = renderShell({
-    lang: de ? 'de' : 'en',
+    lang,
     title: `${title} | Airpiv`,
     description,
     canonicalUrl: url,
-    deUrl, enUrl,
+    urls,
     headExtra,
     mainContent,
   });

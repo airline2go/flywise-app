@@ -100,6 +100,11 @@
     <button class="nav-item" onclick="showPage('routes')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span> صفحات المسارات
     </button>
+    <!-- [GEO-CMS] Content CRUD, same tier as blog/routes — staff-accessible,
+         not owner-only (not added to applyRoleGating()'s hidden-list). -->
+    <button class="nav-item" onclick="showPage('geo')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z"/></svg></span> المطارات والمدن
+    </button>
     <button class="nav-item" onclick="showPage('errorlogs')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span> سجل الأخطاء
     </button>
@@ -896,6 +901,87 @@
     <div id="health-check-progress" style="display:none;margin-top:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--tx2)"></div>
   </div>
 
+  <!-- ==================== GEO CMS (Airports & Cities) ====================
+       [GEO-CMS] City/country/airport display names + 7-language
+       translations, replacing what used to be hardcoded JS dictionaries
+       in flywise-app's build/data.js — see sql/geo_i18n.sql
+       (flywise-server). Mirrors the Route Pages list/search/filter/modal
+       pattern exactly, with 3 sub-tabs sharing one page. -->
+  <div class="page" id="page-geo">
+    <div class="page-header">
+      <div>
+        <div class="page-title">المطارات والمدن</div>
+        <div class="page-sub">إدارة المدن والدول والمطارات وترجمة أسمائها لكل اللغات السبع — بدون الحاجة لتعديل الكود</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" id="geo-tab-btn-cities" onclick="showGeoTab('cities')">المدن</button>
+      <button class="btn btn-ghost" id="geo-tab-btn-countries" onclick="showGeoTab('countries')">الدول</button>
+      <button class="btn btn-ghost" id="geo-tab-btn-airports" onclick="showGeoTab('airports')">المطارات</button>
+    </div>
+
+    <!-- ---- Cities sub-tab ---- -->
+    <div class="geo-subtab" id="geo-subtab-cities">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="text" id="geo-city-search" placeholder="🔍 دوّر باسم مدينة..." style="flex:1;min-width:220px;padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px" oninput="geoCitySearchDebounced()">
+        <select id="geo-city-status-filter" onchange="geoCityResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+          <option value="">كل الحالات</option>
+          <option value="published">منشورة بس</option>
+          <option value="draft">مسودة بس</option>
+        </select>
+        <button class="btn btn-primary" onclick="openCityEditor()">➕ مدينة جديدة</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>المدينة</th><th>الدولة</th><th>الترجمات</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="geo-cities-list"><tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="geo-cities-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:13px;color:var(--tx2)"></div>
+    </div>
+
+    <!-- ---- Countries sub-tab ---- -->
+    <div class="geo-subtab" id="geo-subtab-countries" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="text" id="geo-country-search" placeholder="🔍 دوّر باسم دولة أو كود..." style="flex:1;min-width:220px;padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px" oninput="geoCountrySearchDebounced()">
+        <select id="geo-country-status-filter" onchange="geoCountryResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+          <option value="">كل الحالات</option>
+          <option value="published">منشورة بس</option>
+          <option value="draft">مسودة بس</option>
+        </select>
+        <button class="btn btn-primary" onclick="openCountryEditor()">➕ دولة جديدة</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>الدولة</th><th>الكود</th><th>الترجمات</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="geo-countries-list"><tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="geo-countries-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:13px;color:var(--tx2)"></div>
+    </div>
+
+    <!-- ---- Airports sub-tab ---- -->
+    <div class="geo-subtab" id="geo-subtab-airports" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="text" id="geo-airport-search" placeholder="🔍 دوّر باسم مطار أو كود IATA/ICAO..." style="flex:1;min-width:220px;padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px" oninput="geoAirportSearchDebounced()">
+        <select id="geo-airport-status-filter" onchange="geoAirportResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+          <option value="">كل الحالات</option>
+          <option value="published">منشور بس</option>
+          <option value="draft">مسودة بس</option>
+        </select>
+        <button class="btn btn-primary" onclick="openAirportEditor()">➕ مطار جديد</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>المطار</th><th>IATA</th><th>المدينة</th><th>الترجمات</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="geo-airports-list"><tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="geo-airports-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:13px;color:var(--tx2)"></div>
+    </div>
+  </div>
+
 
   <!-- ==================== ERROR LOGS ==================== -->
   <div class="page" id="page-errorlogs">
@@ -1317,6 +1403,10 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
     صفحات المسارات
   </button>
+  <button class="more-menu-item" id="mm-geo" onclick="showPage('geo');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z"/></svg>
+    المطارات والمدن
+  </button>
   <button class="more-menu-item" id="mm-errorlogs" onclick="showPage('errorlogs');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     سجل الأخطاء
@@ -1456,6 +1546,131 @@
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="saveRoutePage('draft')">💾 حفظ كمسودة</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveRoutePage('published')">🚀 نشر الآن</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- [GEO-CMS] City/country/airport editors — each shares the same
+     dynamic 7-language translation-input block (built in JS by
+     renderTranslationInputs(), not hardcoded 7x per modal). -->
+<div class="modal-overlay" id="city-editor-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title" id="city-editor-title">مدينة جديدة</div>
+      <button class="modal-close" onclick="closeModal('city-editor-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="city-edit-id">
+      <div class="form-group">
+        <label class="form-label">الاسم الأساسي (الألمانية)</label>
+        <input type="text" class="form-input" id="city-name" placeholder="München">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الرابط (city_slug)</label>
+        <input type="text" class="form-input" id="city-slug" placeholder="muenchen">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كود الدولة (ISO)</label>
+        <input type="text" class="form-input" id="city-country-code" placeholder="DE" maxlength="2" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الحالة</label>
+        <select class="form-input" id="city-status"><option value="published">منشورة</option><option value="draft">مسودة</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الترجمات (7 لغات)</label>
+        <div id="city-translations-inputs"></div>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('city-editor-modal')">إلغاء</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveCity()">💾 حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="country-editor-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title" id="country-editor-title">دولة جديدة</div>
+      <button class="modal-close" onclick="closeModal('country-editor-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="country-edit-id">
+      <div class="form-group">
+        <label class="form-label">الاسم الأساسي (الألمانية)</label>
+        <input type="text" class="form-input" id="country-name" placeholder="Deutschland">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كود الدولة (ISO) — لا يمكن تعديله بعد الإنشاء</label>
+        <input type="text" class="form-input" id="country-code" placeholder="DE" maxlength="2" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الحالة</label>
+        <select class="form-input" id="country-status"><option value="published">منشورة</option><option value="draft">مسودة</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الترجمات (7 لغات)</label>
+        <div id="country-translations-inputs"></div>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('country-editor-modal')">إلغاء</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveCountry()">💾 حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="airport-editor-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title" id="airport-editor-title">مطار جديد</div>
+      <button class="modal-close" onclick="closeModal('airport-editor-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="airport-edit-id">
+      <div class="form-group">
+        <label class="form-label">كود IATA — لا يمكن تعديله بعد الإنشاء</label>
+        <input type="text" class="form-input" id="airport-iata" placeholder="MUC" maxlength="3" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كود ICAO (اختياري)</label>
+        <input type="text" class="form-input" id="airport-icao" placeholder="EDDM" maxlength="4" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الاسم الإداري</label>
+        <input type="text" class="form-input" id="airport-name" placeholder="Munich Airport">
+      </div>
+      <div class="form-group">
+        <label class="form-label">city_id (اختياري — يُملأ تلقائياً عادةً)</label>
+        <input type="text" class="form-input" id="airport-city-id" placeholder="uuid">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كود الدولة (ISO)</label>
+        <input type="text" class="form-input" id="airport-country-code" placeholder="DE" maxlength="2" style="text-transform:uppercase">
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">خط العرض (lat)</label>
+          <input type="text" class="form-input" id="airport-lat" placeholder="48.3538">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">خط الطول (lng)</label>
+          <input type="text" class="form-input" id="airport-lng" placeholder="11.7861">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الحالة</label>
+        <select class="form-input" id="airport-status"><option value="published">منشور</option><option value="draft">مسودة</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ترجمات اسم المطار (7 لغات)</label>
+        <div id="airport-translations-inputs"></div>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('airport-editor-modal')">إلغاء</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveAirport()">💾 حفظ</button>
       </div>
     </div>
   </div>
