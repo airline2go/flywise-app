@@ -1,89 +1,98 @@
-// Shared name/translation data for the page generator, ported verbatim from
-// the per-language logic that used to be duplicated across city.html/
-// city-en.html/country.html/country-en.html/airport.html/airport-en.html/
-// flight-route.html/flight-route-en.html.
+// Shared i18n/data module for the page generator. City/country/airport
+// display names used to live in hardcoded GERMAN_CITY_NAMES/
+// ENGLISH_CITY_NAMES/ENGLISH_COUNTRY_NAMES dictionaries here — they now
+// come from the database (city_translations/country_translations,
+// fetched once via GET /cities and GET /countries and handed to
+// setGeoData() by generate-pages.js's main() before any page renders),
+// so adding a language or a new city/country never needs a code change.
+const { DEFAULT_LANGUAGE } = require('./languages');
 
-const GERMAN_CITY_NAMES = {
-  BER: 'Berlin', MUC: 'München', FRA: 'Frankfurt', HAM: 'Hamburg', DUS: 'Düsseldorf',
-  CGN: 'Köln', STR: 'Stuttgart', HAJ: 'Hannover', LEJ: 'Leipzig', NUE: 'Nürnberg',
-  DTM: 'Dortmund', BRE: 'Bremen', VIE: 'Wien', ZRH: 'Zürich', GVA: 'Genf',
-  LHR: 'London', LGW: 'London', STN: 'London', LTN: 'London', CDG: 'Paris', ORY: 'Paris',
-  FCO: 'Rom', CIA: 'Rom', MXP: 'Mailand', LIN: 'Mailand', VCE: 'Venedig', NAP: 'Neapel',
-  MAD: 'Madrid', BCN: 'Barcelona', VLC: 'Valencia', SVQ: 'Sevilla', AGP: 'Málaga',
-  LIS: 'Lissabon', OPO: 'Porto', AMS: 'Amsterdam', BRU: 'Brüssel', LUX: 'Luxemburg',
-  CPH: 'Kopenhagen', OSL: 'Oslo', ARN: 'Stockholm', HEL: 'Helsinki', DUB: 'Dublin',
-  WAW: 'Warschau', KRK: 'Krakau', PRG: 'Prag', BUD: 'Budapest', ATH: 'Athen',
-  IST: 'Istanbul', SAW: 'Istanbul', CAI: 'Kairo', DXB: 'Dubai', DOH: 'Doha',
-  BKK: 'Bangkok', SIN: 'Singapur', HKG: 'Hongkong', NRT: 'Tokio', HND: 'Tokio',
-  JFK: 'New York', EWR: 'New York', LAX: 'Los Angeles', SFO: 'San Francisco',
-  MIA: 'Miami', YYZ: 'Toronto', GRU: 'São Paulo', CPT: 'Kapstadt', JNB: 'Johannesburg',
-  SYD: 'Sydney', MEL: 'Melbourne', DBV: 'Dubrovnik', SPU: 'Split', ZAG: 'Zagreb',
-};
+let CITY_BY_SLUG = {};
+let IATA_TO_SLUG = {};
+let COUNTRY_BY_CODE = {};
 
-const ENGLISH_CITY_NAMES = {
-  BER: 'Berlin', MUC: 'Munich', FRA: 'Frankfurt', HAM: 'Hamburg', DUS: 'Dusseldorf',
-  CGN: 'Cologne', STR: 'Stuttgart', HAJ: 'Hanover', LEJ: 'Leipzig', NUE: 'Nuremberg',
-  DTM: 'Dortmund', BRE: 'Bremen', VIE: 'Vienna', ZRH: 'Zurich', GVA: 'Geneva',
-  LHR: 'London', LGW: 'London', STN: 'London', LTN: 'London', CDG: 'Paris', ORY: 'Paris',
-  FCO: 'Rome', CIA: 'Rome', MXP: 'Milan', LIN: 'Milan', VCE: 'Venice', NAP: 'Naples',
-  MAD: 'Madrid', BCN: 'Barcelona', VLC: 'Valencia', SVQ: 'Seville', AGP: 'Malaga',
-  LIS: 'Lisbon', OPO: 'Porto', AMS: 'Amsterdam', BRU: 'Brussels', LUX: 'Luxembourg',
-  CPH: 'Copenhagen', OSL: 'Oslo', ARN: 'Stockholm', HEL: 'Helsinki', DUB: 'Dublin',
-  WAW: 'Warsaw', KRK: 'Krakow', PRG: 'Prague', BUD: 'Budapest', ATH: 'Athens',
-  IST: 'Istanbul', SAW: 'Istanbul', CAI: 'Cairo', DXB: 'Dubai', DOH: 'Doha',
-  BKK: 'Bangkok', SIN: 'Singapore', HKG: 'Hong Kong', NRT: 'Tokyo', HND: 'Tokyo',
-  JFK: 'New York', EWR: 'New York', LAX: 'Los Angeles', SFO: 'San Francisco',
-  MIA: 'Miami', YYZ: 'Toronto', GRU: 'São Paulo', CPT: 'Cape Town', JNB: 'Johannesburg',
-  SYD: 'Sydney', MEL: 'Melbourne', DBV: 'Dubrovnik', SPU: 'Split', ZAG: 'Zagreb',
-};
-
-const ENGLISH_COUNTRY_NAMES = {
-  DE: 'Germany', AT: 'Austria', CH: 'Switzerland', GB: 'United Kingdom',
-  FR: 'France', IT: 'Italy', ES: 'Spain', PT: 'Portugal', NL: 'Netherlands',
-  BE: 'Belgium', LU: 'Luxembourg', DK: 'Denmark', NO: 'Norway', SE: 'Sweden',
-  FI: 'Finland', IE: 'Ireland', PL: 'Poland', CZ: 'Czech Republic', HU: 'Hungary',
-  GR: 'Greece', TR: 'Turkey', EG: 'Egypt', AE: 'United Arab Emirates', QA: 'Qatar',
-  TH: 'Thailand', SG: 'Singapore', HK: 'Hong Kong', JP: 'Japan', US: 'United States',
-  CA: 'Canada', BR: 'Brazil', ZA: 'South Africa', AU: 'Australia', HR: 'Croatia',
-};
-
-function germanizeCity(name, iata) {
-  return (iata && GERMAN_CITY_NAMES[iata]) || name;
+// Called once by generate-pages.js's main() after fetching the /cities
+// and /countries lists — populates the lookup tables every localize*()
+// call below reads from for the rest of the build run.
+function setGeoData(cities, countries) {
+  CITY_BY_SLUG = {};
+  IATA_TO_SLUG = {};
+  (cities || []).forEach((c) => {
+    CITY_BY_SLUG[c.city_slug] = c;
+    (c.airport_codes || []).forEach((code) => { IATA_TO_SLUG[code] = c.city_slug; });
+  });
+  COUNTRY_BY_CODE = {};
+  (countries || []).forEach((c) => { COUNTRY_BY_CODE[c.code] = c; });
 }
-function anglicizeCity(name, iata) {
-  return (iata && ENGLISH_CITY_NAMES[iata]) || name;
+
+// language -> English -> German -> the untranslated name itself (never a
+// blank/missing string) — same fallback chain shape as build/translate.js.
+function resolveTranslation(translations, lang, fallbackName) {
+  if (!translations) return fallbackName;
+  if (translations[lang]) return translations[lang];
+  if (translations.en) return translations.en;
+  if (translations[DEFAULT_LANGUAGE]) return translations[DEFAULT_LANGUAGE];
+  return fallbackName;
 }
-function anglicizeCountry(name, code) {
-  return (code && ENGLISH_COUNTRY_NAMES[code]) || name;
-}
+
+// A city's name translations apply to every airport serving it (e.g.
+// LHR/LGW/STN/LTN all localize to the same "London") — iata is resolved
+// to its city via IATA_TO_SLUG before looking up translations.
 function localizeCity(name, iata, lang) {
-  return lang === 'en' ? anglicizeCity(name, iata) : germanizeCity(name, iata);
-}
-function localizeCountry(name, code, lang) {
-  return lang === 'en' ? anglicizeCountry(name, code) : name;
+  const slug = iata && IATA_TO_SLUG[iata];
+  const city = slug && CITY_BY_SLUG[slug];
+  return resolveTranslation(city && city.translations, lang, name);
 }
 
-// [ALTERNATIVE-AIRPORTS] real groupings derived from the trusted IATA->city
-// maps above (cities served by more than one mapped airport).
-function buildCityAirports(namesByIata) {
+function localizeCountry(name, code, lang) {
+  const country = code && COUNTRY_BY_CODE[code];
+  return resolveTranslation(country && country.translations, lang, name);
+}
+
+// Airport name translations (a single airport, not shared across a city)
+// — resolved from the `translations` map already attached to the airport
+// object returned by GET /airports/:code (see content.routes.js), not
+// from setGeoData()'s city/country lookups.
+function localizeAirport(airport, lang) {
+  return resolveTranslation(airport && airport.translations, lang, airport && airport.name);
+}
+
+// [ALTERNATIVE-AIRPORTS] Sibling airports serving the same city as
+// `excludeIata` — read directly from that city's own `airport_codes`
+// array (already fetched via setGeoData()), rather than the old
+// approach of matching on a localized display-name string.
+function getAlternativeAirports(cityName, excludeIata, lang) {
+  const slug = excludeIata && IATA_TO_SLUG[excludeIata];
+  const city = slug && CITY_BY_SLUG[slug];
+  if (!city) return [];
+  return (city.airport_codes || []).filter((c) => c !== excludeIata);
+}
+
+// [LIVE-PRICE-WIDGET] Route pages fetch "related routes" client-side
+// (real-time data, never baked into the static page) — the response
+// carries origin_city/destination_city as raw, non-localized display
+// names. For any non-default language, render-flight-route.js's
+// buildLiveScript() embeds the result of this function (a flat
+// {IATA: localizedName} map, built once at build time from the same
+// city_translations data setGeoData() already loaded) directly into the
+// generated page's inline script, so the browser can relocalize those
+// names into the page's language without a second network round trip.
+// German needs no such map: origin_city/destination_city are already
+// stored in German, the platform's default/source language.
+function buildIataNameMap(lang) {
   const map = {};
-  Object.keys(namesByIata).forEach((code) => {
-    const city = namesByIata[code];
-    if (!map[city]) map[city] = [];
-    map[city].push(code);
+  Object.keys(CITY_BY_SLUG).forEach((slug) => {
+    const city = CITY_BY_SLUG[slug];
+    const name = resolveTranslation(city.translations, lang, city.name);
+    (city.airport_codes || []).forEach((code) => { map[code] = name; });
   });
   return map;
-}
-const CITY_AIRPORTS_DE = buildCityAirports(GERMAN_CITY_NAMES);
-const CITY_AIRPORTS_EN = buildCityAirports(ENGLISH_CITY_NAMES);
-function getAlternativeAirports(cityName, excludeIata, lang) {
-  const table = lang === 'en' ? CITY_AIRPORTS_EN : CITY_AIRPORTS_DE;
-  const list = table[cityName] || [];
-  return list.filter((c) => c !== excludeIata);
 }
 
 // [CONTEXT-DETECTION] known cities/countries for the blog "popular routes"/
 // "similar posts" matching — ported verbatim from blog-post.html/-en.html.
+// Blog posts stay DE/EN-only (independently-authored content per
+// language via separate backend endpoints), so this stays untouched.
 const KNOWN_CITIES = ['Berlin', 'München', 'Munich', 'Frankfurt', 'Hamburg', 'Düsseldorf', 'Cologne', 'Köln', 'Stuttgart', 'Hannover', 'Leipzig', 'Nürnberg', 'Nuremberg', 'Dortmund', 'Bremen', 'Wien', 'Vienna', 'Zürich', 'Zurich', 'Genf', 'Geneva', 'London', 'Paris', 'Rom', 'Rome', 'Mailand', 'Milan', 'Venedig', 'Venice', 'Neapel', 'Naples', 'Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Seville', 'Malaga', 'Lissabon', 'Lisbon', 'Porto', 'Amsterdam', 'Brüssel', 'Brussels', 'Luxemburg', 'Luxembourg', 'Kopenhagen', 'Copenhagen', 'Oslo', 'Stockholm', 'Helsinki', 'Dublin', 'Warschau', 'Warsaw', 'Krakau', 'Krakow', 'Prag', 'Prague', 'Budapest', 'Athen', 'Athens', 'Istanbul', 'Kairo', 'Cairo', 'Dubai', 'Doha', 'Bangkok', 'Singapur', 'Singapore', 'Hongkong', 'Hong Kong', 'Tokio', 'Tokyo', 'New York', 'Los Angeles', 'San Francisco', 'Miami', 'Toronto', 'São Paulo', 'Kapstadt', 'Cape Town', 'Johannesburg', 'Sydney', 'Melbourne', 'Dubrovnik', 'Split', 'Zagreb'];
 
 const CITY_COUNTRY_DE = {
@@ -147,29 +156,9 @@ function citiesToCountries(cities, lang) {
   return Object.keys(set);
 }
 
-// i18n strings for nav/footer/labels — the only per-language differences in
-// the shared page shell that aren't already data-driven above.
-const STRINGS = {
-  de: {
-    homeHref: '/', homeLabel: 'Startseite', searchLabel: 'Flüge suchen',
-    footerTagline: 'Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.',
-    companyLabel: 'Unternehmen', aboutLabel: 'Über uns', aboutHref: '/about.html', blogLabel: 'Blog', blogHref: '/blog.html',
-    supportLabel: 'Support', contactLabel: 'Kontakt', contactHref: '/contact.html', privacyLabel: 'Datenschutz', privacyHref: '/privacy.html', termsLabel: 'AGB', termsHref: '/terms.html',
-    copyright: '© 2026 Airpiv · Alle Rechte vorbehalten',
-  },
-  en: {
-    homeHref: '/en/', homeLabel: 'Home', searchLabel: 'Search flights',
-    footerTagline: 'Find flights no one else can find. 600+ airlines, best prices, full guarantee.',
-    companyLabel: 'Company', aboutLabel: 'About us', aboutHref: '/about.html', blogLabel: 'Blog', blogHref: '/blog.html',
-    supportLabel: 'Support', contactLabel: 'Contact', contactHref: '/contact.html', privacyLabel: 'Privacy', privacyHref: '/privacy.html', termsLabel: 'Terms', termsHref: '/terms.html',
-    copyright: '© 2026 Airpiv · All rights reserved',
-  },
-};
-
 module.exports = {
-  GERMAN_CITY_NAMES, ENGLISH_CITY_NAMES, ENGLISH_COUNTRY_NAMES,
-  germanizeCity, anglicizeCity, anglicizeCountry, localizeCity, localizeCountry,
-  getAlternativeAirports,
+  setGeoData,
+  localizeCity, localizeCountry, localizeAirport,
+  getAlternativeAirports, buildIataNameMap,
   KNOWN_CITIES, detectCitiesInText, citiesToCountries,
-  STRINGS,
 };

@@ -14,6 +14,8 @@ const { renderCountryPage } = require('./render-country');
 const { renderAirportPage } = require('./render-airport');
 const { renderFlightRoutePage } = require('./render-flight-route');
 const { renderBlogPostPage } = require('./render-blog-post');
+const { setGeoData } = require('./data');
+const { LANGUAGES, pathPrefix } = require('./languages');
 
 const PROXY = process.env.API_BASE || 'https://api.airpiv.com';
 const ROOT = path.resolve(__dirname, '..');
@@ -24,6 +26,10 @@ const summary = {
   generated: { city: 0, country: 0, airport: 0, flights: 0, blog: 0 },
   skipped: [],
   urls: [],
+  // [MULTI-LANG-SITEMAP] URLs grouped by language, for the 7 per-language
+  // sitemap-{lang}.xml files — separate from the flat `urls` list above
+  // (kept for the summary.urls.length total-pages count).
+  urlsByLang: Object.fromEntries(LANGUAGES.map((l) => [l.code, []])),
 };
 
 function writePage(relPath, html) {
@@ -55,7 +61,7 @@ async function fetchListOrDie(name, url, extractKey) {
   }
 }
 
-function writeIfValid(relPath, html, url, kind) {
+function writeIfValid(relPath, html, url, kind, langCode) {
   const { ok, problems } = validatePage(html);
   if (!ok) {
     console.warn(`[skip] ${relPath}: failed SEO validation (${problems.join('; ')})`);
@@ -65,19 +71,25 @@ function writeIfValid(relPath, html, url, kind) {
   writePage(relPath, html);
   summary.generated[kind]++;
   summary.urls.push(url);
+  if (langCode) summary.urlsByLang[langCode].push(url);
   return true;
 }
 
+// [N-LANGUAGE-SSG] Every entity type (city/country/airport/route) writes
+// one page per language in LANGUAGES — German unprefixed at root
+// (preserving already-indexed URLs), the other 6 under /xx/ — replacing
+// the old fixed 2-call (de + en) dual-write.
 async function generateCities(cityList) {
   await mapWithConcurrency(cityList, CONCURRENCY, async (c) => {
     const slug = c.city_slug;
     try {
       const detail = await fetchWithRetry(`${PROXY}/cities/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.city) throw new Error('unexpected response shape');
-      const de = renderCityPage(detail.city, detail.routes || [], 'de');
-      const en = renderCityPage(detail.city, detail.routes || [], 'en');
-      writeIfValid(`city/${slug}`, de.html, de.seo.canonicalUrl, 'city');
-      writeIfValid(`en/city/${slug}`, en.html, en.seo.canonicalUrl, 'city');
+      LANGUAGES.forEach((l) => {
+        const { html, seo } = renderCityPage(detail.city, detail.routes || [], l.code);
+        const prefix = pathPrefix(l.code);
+        writeIfValid(`${prefix ? prefix + '/' : ''}city/${slug}`, html, seo.canonicalUrl, 'city', l.code);
+      });
     } catch (e) {
       console.warn(`[skip] city/${slug}: ${e.message}`);
       summary.skipped.push({ path: `city/${slug}`, reason: e.message });
@@ -91,10 +103,11 @@ async function generateCountries(countryList) {
     try {
       const detail = await fetchWithRetry(`${PROXY}/countries/${encodeURIComponent(code)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.country) throw new Error('unexpected response shape');
-      const de = renderCountryPage(detail.country, detail.routes || [], 'de');
-      const en = renderCountryPage(detail.country, detail.routes || [], 'en');
-      writeIfValid(`country/${code}`, de.html, de.seo.canonicalUrl, 'country');
-      writeIfValid(`en/country/${code}`, en.html, en.seo.canonicalUrl, 'country');
+      LANGUAGES.forEach((l) => {
+        const { html, seo } = renderCountryPage(detail.country, detail.routes || [], l.code);
+        const prefix = pathPrefix(l.code);
+        writeIfValid(`${prefix ? prefix + '/' : ''}country/${code}`, html, seo.canonicalUrl, 'country', l.code);
+      });
     } catch (e) {
       console.warn(`[skip] country/${code}: ${e.message}`);
       summary.skipped.push({ path: `country/${code}`, reason: e.message });
@@ -111,10 +124,11 @@ async function generateAirports(airportCodes) {
     try {
       const detail = await fetchWithRetry(`${PROXY}/airports/${encodeURIComponent(code)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.airport) throw new Error('unexpected response shape');
-      const de = renderAirportPage(detail.airport, detail.routes || [], 'de');
-      const en = renderAirportPage(detail.airport, detail.routes || [], 'en');
-      writeIfValid(`airport/${code}`, de.html, de.seo.canonicalUrl, 'airport');
-      writeIfValid(`en/airport/${code}`, en.html, en.seo.canonicalUrl, 'airport');
+      LANGUAGES.forEach((l) => {
+        const { html, seo } = renderAirportPage(detail.airport, detail.routes || [], l.code);
+        const prefix = pathPrefix(l.code);
+        writeIfValid(`${prefix ? prefix + '/' : ''}airport/${code}`, html, seo.canonicalUrl, 'airport', l.code);
+      });
     } catch (e) {
       console.warn(`[skip] airport/${code}: ${e.message}`);
       summary.skipped.push({ path: `airport/${code}`, reason: e.message });
@@ -128,10 +142,11 @@ async function generateFlightRoutes(routeList) {
     try {
       const detail = await fetchWithRetry(`${PROXY}/route-pages/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.route) throw new Error('unexpected response shape');
-      const de = renderFlightRoutePage(detail.route, 'de');
-      const en = renderFlightRoutePage(detail.route, 'en');
-      writeIfValid(`flights/${slug}`, de.html, de.seo.canonicalUrl, 'flights');
-      writeIfValid(`en/flights/${slug}`, en.html, en.seo.canonicalUrl, 'flights');
+      LANGUAGES.forEach((l) => {
+        const { html, seo } = renderFlightRoutePage(detail.route, l.code);
+        const prefix = pathPrefix(l.code);
+        writeIfValid(`${prefix ? prefix + '/' : ''}flights/${slug}`, html, seo.canonicalUrl, 'flights', l.code);
+      });
     } catch (e) {
       console.warn(`[skip] flights/${slug}: ${e.message}`);
       summary.skipped.push({ path: `flights/${slug}`, reason: e.message });
@@ -139,6 +154,12 @@ async function generateFlightRoutes(routeList) {
   });
 }
 
+// [BLOG-STAYS-DE-EN] Blog posts are independently-authored content per
+// language via separate backend endpoints (/blog-posts, /blog-posts-en) —
+// not "translate one entity N ways" like every other page type above, so
+// this intentionally stays out of the N-language loop. A genuinely new
+// language's blog would need its own authored posts and its own endpoint,
+// not a code change here.
 async function generateBlogPosts(postListDe, postListEn, allRoutes) {
   await mapWithConcurrency(postListDe, CONCURRENCY, async (p) => {
     const slug = p.slug;
@@ -146,7 +167,7 @@ async function generateBlogPosts(postListDe, postListEn, allRoutes) {
       const detail = await fetchWithRetry(`${PROXY}/blog-posts/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.post) throw new Error('unexpected response shape');
       const de = renderBlogPostPage(detail.post, allRoutes, postListDe, 'de');
-      writeIfValid(`blog/${slug}`, de.html, de.seo.canonicalUrl, 'blog');
+      writeIfValid(`blog/${slug}`, de.html, de.seo.canonicalUrl, 'blog', 'de');
     } catch (e) {
       console.warn(`[skip] blog/${slug}: ${e.message}`);
       summary.skipped.push({ path: `blog/${slug}`, reason: e.message });
@@ -158,7 +179,7 @@ async function generateBlogPosts(postListDe, postListEn, allRoutes) {
       const detail = await fetchWithRetry(`${PROXY}/blog-posts-en/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.post) throw new Error('unexpected response shape');
       const en = renderBlogPostPage(detail.post, allRoutes, postListEn, 'en');
-      writeIfValid(`en/blog/${slug}`, en.html, en.seo.canonicalUrl, 'blog');
+      writeIfValid(`en/blog/${slug}`, en.html, en.seo.canonicalUrl, 'blog', 'en');
     } catch (e) {
       console.warn(`[skip] en/blog/${slug}: ${e.message}`);
       summary.skipped.push({ path: `en/blog/${slug}`, reason: e.message });
@@ -166,23 +187,35 @@ async function generateBlogPosts(postListDe, postListEn, allRoutes) {
   });
 }
 
-function writeSitemapEntities(urls) {
+function urlsetXml(urls) {
   const today = new Date().toISOString().slice(0, 10);
   const body = urls.map((u) => `  <url>\n    <loc>${u}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`).join('\n');
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
-  fs.writeFileSync(path.join(ROOT, 'sitemap-entities.xml'), xml, 'utf8');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+}
 
-  // Add sitemap-entities.xml to the index alongside the existing entries —
-  // sitemap-routes.xml is left in place for now (a subset of the new file;
-  // removing it is a later cleanup once the new sitemap is confirmed
-  // indexed correctly, same caution as the legacy-HTML migration).
+// [MULTI-LANG-SITEMAP] One sitemap-{lang}.xml per language, each holding
+// only that language's URLs, plus sitemap.xml extended to list all 7 —
+// replacing the old flat sitemap-entities.xml (one file mixing every
+// language's URLs together, which doesn't let Search Console track
+// per-language indexing separately).
+function writeLanguageSitemaps(urlsByLang) {
+  const sitemapEntries = [];
+  LANGUAGES.forEach((l) => {
+    const urls = urlsByLang[l.code] || [];
+    const filename = `sitemap-${l.code}.xml`;
+    fs.writeFileSync(path.join(ROOT, filename), urlsetXml(urls), 'utf8');
+    sitemapEntries.push(`<sitemap><loc>https://airpiv.com/${filename}</loc></sitemap>`);
+    console.log(`[sitemap] ${filename}: ${urls.length} URLs`);
+  });
+
+  // Idempotent index patch, same string-replace pattern the old
+  // writeSitemapEntities() used — safe to re-run the build any number of
+  // times without duplicating entries.
   const indexPath = path.join(ROOT, 'sitemap.xml');
   let indexXml = fs.readFileSync(indexPath, 'utf8');
-  if (!indexXml.includes('sitemap-entities.xml')) {
-    indexXml = indexXml.replace(
-      '</sitemapindex>',
-      '<sitemap><loc>https://airpiv.com/sitemap-entities.xml</loc></sitemap>\n</sitemapindex>',
-    );
+  const missingEntries = sitemapEntries.filter((entry) => !indexXml.includes(entry));
+  if (missingEntries.length) {
+    indexXml = indexXml.replace('</sitemapindex>', `${missingEntries.join('\n')}\n</sitemapindex>`);
     fs.writeFileSync(indexPath, indexXml, 'utf8');
   }
 }
@@ -196,6 +229,11 @@ async function main() {
   const postsDe = await fetchListOrDie('blog-posts-de', `${PROXY}/blog-posts`, 'posts');
   const postsEn = await fetchListOrDie('blog-posts-en', `${PROXY}/blog-posts-en`, 'posts');
 
+  // [GEO-CMS] Populate the shared city/country translation lookup once,
+  // before any page renders — every render-*.js file's localizeCity()/
+  // localizeCountry() call reads from this for the rest of the build.
+  setGeoData(cities, countries);
+
   const airportCodes = Array.from(new Set(routes.flatMap((r) => [r.origin_iata, r.destination_iata]).filter(Boolean)));
 
   await generateCities(cities);
@@ -204,7 +242,7 @@ async function main() {
   await generateFlightRoutes(routes);
   await generateBlogPosts(postsDe, postsEn, routes);
 
-  writeSitemapEntities(summary.urls);
+  writeLanguageSitemaps(summary.urlsByLang);
 
   console.log('\n=== Build summary ===');
   console.log(`Cities:   ${summary.generated.city}`);
