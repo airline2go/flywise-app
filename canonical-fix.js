@@ -10,6 +10,7 @@
   // pathname only (never a query string) — matches the no-trailing-slash
   // convention used by every other clean URL on the site (e.g. /city/berlin).
   var path=window.location.pathname;
-  var canonical=(path==='/en'||path==='/ar')?base+path:base+'/';
+  var homeVariants=['/en','/ar','/es','/fr','/it','/nl'];
+  var canonical=(homeVariants.indexOf(path)!==-1)?base+path:base+'/';
   document.getElementById('canonical-url').setAttribute('href',canonical);
 })();
