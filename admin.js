@@ -572,14 +572,17 @@ async function loadRoutePages() {
   try {
     var q = encodeURIComponent(document.getElementById('rp-search-input').value.trim());
     var status = document.getElementById('rp-status-filter').value;
+    var refreshFilter = document.getElementById('rp-refresh-filter').value;
     var url = '/admin/route-pages?page=' + rpCurrentPage + '&limit=50';
     if (q) url += '&q=' + q;
     if (status) url += '&status=' + status;
+    if (refreshFilter) url += '&refresh_frequency=' + refreshFilter;
     const res = await adminFetch(url);
     const j = await res.json();
     if (j.ok) {
       allRoutePages = j.routes;
       rpTotalPages = j.totalPages || 1;
+      clearRoutePagesSelection();
       renderRoutePagesList();
       renderRoutePagesPagination(j.total || 0);
     }
@@ -596,13 +599,24 @@ function renderRoutePagesPagination(total) {
   el.innerHTML = html;
 }
 
+// [ROUTE-REFRESH-TIER] 'none' = SEO-only, backed by one field — see
+// sql/route_refresh_tier.sql (flywise-server) for the full reasoning.
+function routeRefreshBadge(freq) {
+  if (freq === '6h') return '<span class="badge confirmed">أسعار حية · 6س</span>';
+  if (freq === '12h') return '<span class="badge confirmed">أسعار حية · 12س</span>';
+  if (freq === '24h') return '<span class="badge confirmed">أسعار حية · 24س</span>';
+  return '<span class="badge">SEO فقط</span>';
+}
+
+var selectedRoutePageIds = {}; // {id: true} — current-page selection for bulk refresh-frequency apply
+
 function renderRoutePagesList() {
   var tbody = document.getElementById('route-pages-list');
   if (!allRoutePages.length) {
     var q = document.getElementById('rp-search-input').value.trim();
     tbody.innerHTML = q
-      ? '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">مفيش نتايج لـ "' + escHtml(q) + '"</td></tr>'
-      : '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
+      ? '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">مفيش نتايج لـ "' + escHtml(q) + '"</td></tr>'
+      : '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
     return;
   }
   tbody.innerHTML = allRoutePages.map(function(r) {
@@ -611,9 +625,12 @@ function renderRoutePagesList() {
       : r.status === 'dead'
       ? '<span class="badge" style="background:rgba(239,68,68,.15);color:#ef4444">💀 ميت (مفيش رحلات)</span>'
       : '<span class="badge pending">◔ مسودة</span>';
+    var checked = selectedRoutePageIds[r.id] ? 'checked' : '';
     return '<tr>' +
+      '<td><input type="checkbox" class="route-select-checkbox" data-id="' + escHtml(r.id) + '" ' + checked + ' onchange="toggleRoutePageSelection(this)"></td>' +
       '<td>' + escHtml(r.origin_city) + ' (' + escHtml(r.origin_iata) + ') → ' + escHtml(r.destination_city) + ' (' + escHtml(r.destination_iata) + ')</td>' +
       '<td>' + statusBadge + '</td>' +
+      '<td>' + routeRefreshBadge(r.refresh_frequency) + '</td>' +
       '<td class="mono" style="font-size:11px">flights/' + escHtml(r.slug) + '</td>' +
       '<td style="display:flex;gap:6px">' +
         '<button class="btn btn-ghost route-edit-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">تعديل</button>' +
@@ -621,6 +638,57 @@ function renderRoutePagesList() {
       '</td>' +
     '</tr>';
   }).join('');
+}
+
+function toggleRoutePageSelection(checkbox) {
+  var id = checkbox.getAttribute('data-id');
+  if (checkbox.checked) selectedRoutePageIds[id] = true;
+  else delete selectedRoutePageIds[id];
+  updateBulkRefreshBar();
+}
+
+function toggleAllRoutePagesSelection(checked) {
+  allRoutePages.forEach(function(r) {
+    if (checked) selectedRoutePageIds[r.id] = true;
+    else delete selectedRoutePageIds[r.id];
+  });
+  renderRoutePagesList();
+  updateBulkRefreshBar();
+}
+
+function clearRoutePagesSelection() {
+  selectedRoutePageIds = {};
+  var selectAll = document.getElementById('rp-select-all');
+  if (selectAll) selectAll.checked = false;
+  renderRoutePagesList();
+  updateBulkRefreshBar();
+}
+
+function updateBulkRefreshBar() {
+  var count = Object.keys(selectedRoutePageIds).length;
+  var bar = document.getElementById('rp-bulk-refresh-bar');
+  bar.style.display = count > 0 ? 'flex' : 'none';
+  document.getElementById('rp-bulk-refresh-count').textContent = count.toLocaleString('ar-EG') + ' مسار محدد';
+}
+
+async function applyBulkRefresh() {
+  var ids = Object.keys(selectedRoutePageIds);
+  if (!ids.length) return;
+  var freq = document.getElementById('rp-bulk-refresh-select').value;
+  if (!confirm('هيتغيّر معدل تحديث السعر لـ ' + ids.length.toLocaleString('ar-EG') + ' مسار محدد. متأكد؟')) return;
+  try {
+    const res = await adminFetch('/admin/route-pages/bulk-refresh', {
+      method: 'PUT', body: JSON.stringify({ ids: ids, refresh_frequency: freq }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ تم تحديث ' + j.updated + ' مسار', 'success');
+      clearRoutePagesSelection();
+      loadRoutePages();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
 
 // [BULK-PUBLISH] بيجيب العدد الحقيقي للمسودات الأول (طلب خفيف، limit=1
@@ -716,6 +784,7 @@ function openBulkRouteCreator() {
   renderBulkSelectedAirports();
   document.getElementById('bulk-airport-search').value = '';
   document.getElementById('bulk-preview-box').style.display = 'none';
+  document.getElementById('bulk-refresh-freq').value = 'none';
   document.getElementById('bulk-route-modal').classList.add('open');
 }
 
@@ -814,6 +883,7 @@ async function submitBulkRoutes() {
       body: JSON.stringify({
         airports: bulkSelectedAirports,
         bothDirections: document.getElementById('bulk-both-directions').checked,
+        refresh_frequency: document.getElementById('bulk-refresh-freq').value,
       }),
     });
     const j = await res.json();
@@ -1073,6 +1143,7 @@ function openRouteEditor(route) {
     routeSelectedDestCity = '';
     document.getElementById('route-distance-preview').textContent = '';
   }
+  document.getElementById('route-refresh-freq').value = route ? (route.refresh_frequency || 'none') : 'none';
   document.getElementById('route-intro').value = route ? (route.intro_text || '') : '';
   document.getElementById('route-custom-title').value = route ? (route.custom_title || '') : '';
   document.getElementById('route-custom-desc').value = route ? (route.custom_meta_description || '') : '';
@@ -1206,6 +1277,7 @@ async function saveRoutePage(status) {
     custom_meta_description: document.getElementById('route-custom-desc').value.trim(),
     custom_faq: readRouteFaqItems(),
     status: status,
+    refresh_frequency: document.getElementById('route-refresh-freq').value,
   };
 
   try {
