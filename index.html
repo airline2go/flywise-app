@@ -1257,6 +1257,18 @@ Telefon: [Ihre Telefonnummer]</p>
     </div>
   </div>
 </div>
+<!-- Same seat-confirm-ov visual pattern as cancel-confirm-ov, for the
+     post-booking flight date change flow. -->
+<div class="seat-confirm-ov" id="change-date-confirm-ov">
+  <div class="seat-confirm" style="text-align:start">
+    <div class="seat-confirm-q">Flugdatum ändern?</div>
+    <div id="change-date-confirm-body" style="margin:10px 0 14px"></div>
+    <div class="seat-confirm-btns">
+      <button class="seat-confirm-cancel" data-fn="closeChangeDateConfirm">Abbrechen</button>
+      <button class="seat-confirm-ok" data-fn="executeChangeDate">Bestätigen</button>
+    </div>
+  </div>
+</div>
 
 <div class="seat-confirm-ov" id="price-details-ov">
   <div class="seat-confirm" style="text-align:start">
