@@ -842,20 +842,46 @@
         <option value="draft">مسودة بس</option>
         <option value="dead">💀 ميت بس (مفيش رحلات)</option>
       </select>
+      <!-- [ROUTE-REFRESH-TIER] فلترة حسب معدل تحديث السعر — بديل عن
+           جلب كل المسارات وفلترتهم يدوياً، نفس نمط rp-status-filter. -->
+      <select id="rp-refresh-filter" onchange="rpResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+        <option value="">كل معدلات التحديث</option>
+        <option value="none">SEO فقط (بدون تحديث)</option>
+        <option value="6h">كل 6 ساعات</option>
+        <option value="12h">كل 12 ساعة</option>
+        <option value="24h">كل 24 ساعة</option>
+      </select>
+    </div>
+
+    <!-- [ROUTE-REFRESH-TIER] شريط الإجراء الجماعي — بيظهر بس لما يكون
+         في صف واحد ع الأقل محدد، عشان تغيّر معدل تحديث مجموعة مسارات
+         موجودة فعلاً بضغطة واحدة بدل ما تفتح كل مسار لوحده. -->
+    <div id="rp-bulk-refresh-bar" style="display:none;align-items:center;gap:10px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font-size:13px">
+      <span id="rp-bulk-refresh-count">0 مسار محدد</span>
+      <select id="rp-bulk-refresh-select" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:13px">
+        <option value="none">SEO فقط (بدون تحديث)</option>
+        <option value="6h">كل 6 ساعات</option>
+        <option value="12h">كل 12 ساعة</option>
+        <option value="24h">كل 24 ساعة</option>
+      </select>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="applyBulkRefresh()">تطبيق على المحدد</button>
+      <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px" onclick="clearRoutePagesSelection()">إلغاء التحديد</button>
     </div>
 
     <div class="table-card">
       <table>
         <thead>
           <tr>
+            <th><input type="checkbox" id="rp-select-all" onchange="toggleAllRoutePagesSelection(this.checked)"></th>
             <th>المسار</th>
             <th>الحالة</th>
+            <th>التحديث</th>
             <th>الرابط</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="route-pages-list">
-          <tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1279,6 +1305,19 @@
       </div>
       <div id="route-distance-preview" style="font-size:12px;color:var(--tx3);margin:-4px 0 6px"></div>
 
+      <!-- [ROUTE-REFRESH-TIER] SEO فقط = بدون تحديث خلفي للسعر (لسه بيظهر
+           سعر لأي زائر حقيقي عند الطلب) — أي قيمة تانية = مسار "أسعار
+           حية" بيتحدّث تلقائياً بالمعدل ده. -->
+      <div class="form-group">
+        <label class="form-label">معدل تحديث السعر</label>
+        <select class="form-input" id="route-refresh-freq">
+          <option value="none">SEO فقط (بدون تحديث تلقائي)</option>
+          <option value="6h">كل 6 ساعات</option>
+          <option value="12h">كل 12 ساعة</option>
+          <option value="24h">كل 24 ساعة</option>
+        </select>
+      </div>
+
       <div class="form-group">
         <label class="form-label">نص SEO تعريفي (اختياري — يُولَّد نص عام تلقائياً إذا تُرك فارغاً)</label>
         <textarea class="form-input" id="route-intro" style="min-height:90px;resize:vertical" placeholder="مثال: ابحث عن أرخص رحلات الطيران من برلين إلى لندن..."></textarea>
@@ -1340,6 +1379,20 @@
         <input type="checkbox" id="bulk-both-directions" checked style="width:16px;height:16px">
         كل الاتجاهين (برلين→لندن ولندن→برلين كمسارين منفصلين)
       </label>
+
+      <!-- [ROUTE-REFRESH-TIER] الافتراضي "SEO فقط" عمداً — إنشاء بالجملة
+           ممكن يعمل مئات المسارات دفعة واحدة، ومش كلهم المفروض يدخلوا
+           على قائمة تحديث Duffel المستمرة من غير ما الأدمن يختار كده
+           بوعي. -->
+      <div class="form-group">
+        <label class="form-label">معدل تحديث السعر لكل المسارات دي</label>
+        <select class="form-input" id="bulk-refresh-freq">
+          <option value="none" selected>SEO فقط (بدون تحديث تلقائي)</option>
+          <option value="6h">كل 6 ساعات</option>
+          <option value="12h">كل 12 ساعة</option>
+          <option value="24h">كل 24 ساعة</option>
+        </select>
+      </div>
 
       <div id="bulk-preview-box" style="background:var(--bg2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--tx2);display:none"></div>
 
