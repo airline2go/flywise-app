@@ -146,7 +146,7 @@ function doAdminLogout() {
 // (sidebar + more-menu) for a staff session.
 function applyRoleGating() {
   var isAdmin = ADMIN_ROLE === 'admin';
-  ['nav-profit', 'nav-ancillary', 'nav-team', 'mm-profit', 'mm-ancillary', 'mm-team'].forEach(function (id) {
+  ['nav-profit', 'nav-ancillary', 'nav-team', 'nav-api', 'mm-profit', 'mm-ancillary', 'mm-team', 'mm-api'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) el.style.display = isAdmin ? '' : 'none';
   });
@@ -1354,13 +1354,13 @@ async function clearErrorLogs() {
 }
 
 // ============ NAVIGATION ============
-var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','team','settings'];
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','team','api','settings'];
 
 function showPage(name) {
   // [STAFF-ROLES] Defense in depth only — the buttons that lead here are
   // already hidden for a staff session; the real boundary is the server's
   // requireFullAdmin on every request these pages actually make.
-  if ((name === 'team' || name === 'profit' || name === 'ancillary') && ADMIN_ROLE !== 'admin') {
+  if ((name === 'team' || name === 'profit' || name === 'ancillary' || name === 'api') && ADMIN_ROLE !== 'admin') {
     showToast('هذه الصفحة للمدير فقط', 'error');
     return;
   }
@@ -1399,6 +1399,7 @@ function showPage(name) {
   if (name === 'routes') loadRoutePages();
   if (name === 'errorlogs') loadErrorLogs();
   if (name === 'team') loadStaff();
+  if (name === 'api') { setApiMonitorPeriod('today'); loadApiCostConfig(); }
 }
 
 function toggleMoreMenu() {
@@ -1496,6 +1497,149 @@ async function setProfitPeriod(which) {
       document.getElementById('period-bookings').textContent = j.bookingsCount;
     } else {
       showToast(j.error || 'فشل تحميل البيانات', 'error');
+    }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ============ [API-COST-MONITORING] API Monitoring page ============
+async function setApiMonitorPeriod(which) {
+  var fromEl = document.getElementById('api-period-from');
+  var toEl = document.getElementById('api-period-to');
+  var today = new Date();
+
+  if (which === 'today') {
+    fromEl.value = fmtDateInput(today);
+    toEl.value = fmtDateInput(today);
+  } else if (which === 'week') {
+    var dow = today.getDay();
+    var diffToMonday = (dow === 0) ? 6 : dow - 1;
+    var monday = new Date(today); monday.setDate(today.getDate() - diffToMonday);
+    fromEl.value = fmtDateInput(monday);
+    toEl.value = fmtDateInput(today);
+  } else if (which === 'month') {
+    var firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    fromEl.value = fmtDateInput(firstOfMonth);
+    toEl.value = fmtDateInput(today);
+  }
+  // 'custom' just uses whatever's already in the inputs.
+
+  ['today', 'week', 'month'].forEach(function(p) {
+    var btn = document.getElementById('api-period-btn-' + p);
+    if (btn) btn.classList.toggle('active', p === which);
+  });
+
+  if (!fromEl.value || !toEl.value) { showToast('اختر تاريخ البداية والنهاية', 'error'); return; }
+  loadApiMonitorStats();
+}
+
+async function loadApiMonitorStats() {
+  var fromEl = document.getElementById('api-period-from');
+  var toEl = document.getElementById('api-period-to');
+  if (!fromEl.value || !toEl.value) return;
+  try {
+    const res = await adminFetch('/admin/api-logs/stats?from=' + fromEl.value + '&to=' + toEl.value);
+    const j = await res.json();
+    if (j.ok) renderApiMonitorStats(j);
+    else showToast(j.error || 'فشل تحميل البيانات', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function renderApiMonitorStats(data) {
+  document.getElementById('api-stat-total').textContent = data.totalRequests.toLocaleString('ar-EG');
+  document.getElementById('api-stat-search').textContent = data.byCategory.search.toLocaleString('ar-EG');
+  document.getElementById('api-stat-booking').textContent = data.byCategory.booking.toLocaleString('ar-EG');
+  document.getElementById('api-stat-errors').textContent = data.errorCount.toLocaleString('ar-EG');
+  var errorRate = data.totalRequests > 0 ? ((data.errorCount / data.totalRequests) * 100).toFixed(1) : '0';
+  document.getElementById('api-stat-errors-sub').textContent = 'نسبة الفشل ' + errorRate + '%';
+  document.getElementById('api-stat-total-sub').textContent = data.byCategory.other.toLocaleString('ar-EG') + ' طلب آخر';
+
+  // Top-consuming routes — same rank-row/rank-bar-fill visual language as
+  // the Reports page's top-destinations list (renderTopList()), adapted
+  // to {origin,destination,count} instead of a bookings array.
+  var routesEl = document.getElementById('api-top-routes');
+  if (!data.topRoutes.length) {
+    routesEl.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:8px 0">لا توجد بيانات لهذه الفترة</div>';
+  } else {
+    var maxCount = data.topRoutes[0].count;
+    routesEl.innerHTML = data.topRoutes.map(function(r, idx) {
+      var pct = maxCount > 0 ? (r.count / maxCount * 100) : 0;
+      return '<div class="rank-row">' +
+        '<div class="rank-num">' + (idx + 1) + '</div>' +
+        '<div class="rank-info">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+            '<span class="rank-name">✈️ ' + escHtml(r.origin) + ' → ' + escHtml(r.destination) + '</span>' +
+            '<span class="rank-value">' + r.count.toLocaleString('ar-EG') + ' طلب</span>' +
+          '</div>' +
+          '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Circuit-breaker health tile.
+  var circuitEl = document.getElementById('api-circuit-status');
+  var circuitLabel = data.circuit.state === 'closed' ? '✅ يعمل بشكل طبيعي'
+    : data.circuit.state === 'half-open' ? '🟡 يُعاد المحاولة...'
+    : '🔴 متوقف مؤقتاً';
+  var circuitColor = data.circuit.state === 'closed' ? 'var(--teal)' : data.circuit.state === 'half-open' ? '#f59e0b' : '#dc2626';
+  circuitEl.innerHTML = '<div style="font-size:15px;font-weight:700;color:' + circuitColor + ';margin-bottom:6px">' + circuitLabel + '</div>' +
+    '<div style="font-size:12px;color:var(--tx3)">فشل متتالي: ' + data.circuit.consecutiveFailures + '</div>';
+
+  // Hidden-by-default alert banner (same bordered-card technique as
+  // loadBookingIssuesPanel()) — shown when the circuit isn't closed, or
+  // the admin's own configured daily-request threshold is exceeded.
+  const costCfgRes = await adminFetch('/admin/api-cost-config');
+  const costCfgJ = await costCfgRes.json();
+  var threshold = costCfgJ.ok ? costCfgJ.config.dailyRequestAlertThreshold : 1000;
+  var alertEl = document.getElementById('api-monitor-alert');
+  var circuitTrouble = data.circuit.state !== 'closed';
+  var overThreshold = data.totalRequests > threshold;
+  if (!circuitTrouble && !overThreshold) {
+    alertEl.style.display = 'none';
+  } else {
+    var msgs = [];
+    if (circuitTrouble) msgs.push('اتصال Duffel متوقف مؤقتاً بسبب أخطاء متكررة — النظام بيعيد المحاولة تلقائياً.');
+    if (overThreshold) msgs.push('عدد الطلبات في هذه الفترة (' + data.totalRequests.toLocaleString('ar-EG') + ') تجاوز الحد المُعرَّف (' + threshold.toLocaleString('ar-EG') + ').');
+    alertEl.innerHTML = '<div style="background:var(--bg2);border:1.5px solid #f59e0b;border-radius:10px;padding:14px 16px">' +
+      '<div style="font-weight:700;color:#f59e0b;font-size:13px;margin-bottom:6px">⚠️ تنبيه استهلاك API</div>' +
+      msgs.map(function(m) { return '<div style="font-size:12.5px;color:var(--tx2)">' + escHtml(m) + '</div>'; }).join('') +
+    '</div>';
+    alertEl.style.display = 'block';
+  }
+
+  if (costCfgJ.ok) {
+    var costPer = costCfgJ.config.costPerRequestEur;
+    var estEl = document.getElementById('api-estimated-cost');
+    estEl.textContent = costPer > 0
+      ? '💰 تقدير تكلفة هذه الفترة: €' + (data.totalRequests * costPer).toFixed(2)
+      : '';
+  }
+}
+
+async function loadApiCostConfig() {
+  try {
+    const res = await adminFetch('/admin/api-cost-config');
+    const j = await res.json();
+    if (j.ok) {
+      document.getElementById('api-cost-per-request').value = j.config.costPerRequestEur || '';
+      document.getElementById('api-alert-threshold').value = j.config.dailyRequestAlertThreshold || '';
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+async function saveApiCostConfig() {
+  var costPerRequestEur = parseFloat(document.getElementById('api-cost-per-request').value) || 0;
+  var dailyRequestAlertThreshold = parseInt(document.getElementById('api-alert-threshold').value, 10) || 1000;
+  try {
+    const res = await adminFetch('/admin/api-cost-config', {
+      method: 'POST', body: JSON.stringify({ costPerRequestEur, dailyRequestAlertThreshold }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('✅ تم الحفظ', 'success');
+      loadApiMonitorStats();
+    } else {
+      showToast(j.error || 'فشل الحفظ', 'error');
     }
   } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
