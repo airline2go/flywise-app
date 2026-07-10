@@ -26,13 +26,29 @@
       </div>
     </div>
     <div class="login-title">تسجيل الدخول</div>
-    <div class="login-sub">أدخل كلمة مرور لوحة التحكم</div>
+    <div class="login-sub" id="login-sub">أدخل كلمة مرور لوحة التحكم</div>
     <div class="login-err" id="login-err">كلمة مرور خاطئة</div>
-    <div class="form-group">
-      <label class="form-label">كلمة المرور</label>
-      <input type="password" class="form-input" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <div id="login-owner-fields">
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input type="password" class="form-input" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLoginSubmit()">
+      </div>
     </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doAdminLogin()">دخول</button>
+    <!-- [STAFF-LOGIN] Hidden by default — toggled in for a staff/team-member
+         login, which authenticates against /admin/staff-login (email +
+         password) instead of the single owner password. -->
+    <div id="login-staff-fields" style="display:none">
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input type="email" class="form-input" id="login-staff-email" placeholder="you@airpiv.com" onkeydown="if(event.key==='Enter')doLoginSubmit()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input type="password" class="form-input" id="login-staff-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLoginSubmit()">
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doLoginSubmit()">دخول</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" id="login-mode-toggle" onclick="toggleStaffLoginMode()">تسجيل دخول كموظف</button>
   </div>
 </div>
 
@@ -66,10 +82,10 @@
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> الفواتير
     </button>
     <div class="nav-section">الإعدادات</div>
-    <button class="nav-item" onclick="showPage('profit')">
+    <button class="nav-item" id="nav-profit" onclick="showPage('profit')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span> هامش الربح
     </button>
-    <button class="nav-item" onclick="showPage('ancillary')">
+    <button class="nav-item" id="nav-ancillary" onclick="showPage('ancillary')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></span> هامش المقاعد والحقائب
     </button>
     <button class="nav-item" onclick="showPage('loyalty')">
@@ -86,6 +102,11 @@
     </button>
     <button class="nav-item" onclick="showPage('errorlogs')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span> سجل الأخطاء
+    </button>
+    <!-- [STAFF-ROLES] Managing team accounts is itself a sensitive action —
+         hidden for a staff session, same as profit/ancillary margins. -->
+    <button class="nav-item" id="nav-team" onclick="showPage('team')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> الفريق
     </button>
     <button class="nav-item" onclick="showPage('settings')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> الإعدادات
@@ -300,7 +321,7 @@
       <div class="header-actions">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" placeholder="ابحث بالإيميل أو الاسم..." oninput="filterCustomers(this.value)" id="customer-search">
+          <input type="text" placeholder="ابحث بالإيميل أو الاسم أو رقم الهاتف..." oninput="filterCustomers(this.value)" id="customer-search">
         </div>
         <button class="btn btn-ghost" id="vip-filter-btn" onclick="toggleVipFilter()">⭐ VIP فقط</button>
       </div>
@@ -338,6 +359,7 @@
         <thead>
           <tr>
             <th>العميل</th>
+            <th>الهاتف</th>
             <th>عدد الحجوزات</th>
             <th>إجمالي الإنفاق</th>
             <th>صافي ربحنا منه</th>
@@ -347,7 +369,7 @@
           </tr>
         </thead>
         <tbody id="customers-table">
-          <tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">لا توجد بيانات — اربط Supabase أولاً</td></tr>
+          <tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:30px">لا توجد بيانات — اربط Supabase أولاً</td></tr>
         </tbody>
       </table>
     </div>
@@ -888,6 +910,103 @@
     </div>
   </div>
 
+  <!-- ==================== TEAM (STAFF ACCOUNTS) ==================== -->
+  <!-- [STAFF-ROLES] Owner-only: create/manage restricted "staff" accounts
+       that can operate the day-to-day panel but never touch profit
+       margins, customer credit, or other team accounts. Gated client-side
+       in applyRoleGating() — the real boundary is requireFullAdmin
+       server-side. -->
+  <div class="page" id="page-team">
+    <div class="page-header">
+      <div>
+        <div class="page-title">الفريق</div>
+        <div class="page-sub">حسابات الموظفين اللي عندهم دخول للوحة التحكم</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openStaffModal()">+ إضافة موظف</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>البريد الإلكتروني</th>
+            <th>الصلاحية</th>
+            <th>الحالة</th>
+            <th>تاريخ الإضافة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="staff-table">
+          <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Staff Modal -->
+  <div class="modal-overlay" id="staff-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="staff-modal-title">موظف جديد</div>
+        <button class="modal-close" onclick="closeModal('staff-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sm-id">
+        <div class="form-group">
+          <label class="form-label">الاسم</label>
+          <input type="text" class="form-input" id="sm-name" placeholder="اسم الموظف">
+        </div>
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input type="email" class="form-input" id="sm-email" placeholder="staff@airpiv.com">
+        </div>
+        <div class="form-group" id="sm-password-group">
+          <label class="form-label">كلمة المرور (٨ أحرف على الأقل)</label>
+          <input type="password" class="form-input" id="sm-password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الصلاحية</label>
+          <select class="form-input" id="sm-role">
+            <option value="staff">موظف — بدون هوامش ربح أو رصيد</option>
+            <option value="admin">مدير كامل الصلاحيات</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveStaff()">✅ حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Credit Modal -->
+  <!-- [CREDIT-TOPUP] Owner-only — server also enforces this via
+       requireFullAdmin regardless of what this UI shows/hides. -->
+  <div class="modal-overlay" id="credit-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">إضافة رصيد</div>
+        <button class="modal-close" onclick="closeModal('credit-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cm-user-id">
+        <div class="form-group">
+          <div class="form-label">العميل</div>
+          <div id="cm-customer-name" style="font-weight:600"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المبلغ (€)</label>
+          <input type="number" class="form-input" id="cm-amount" placeholder="10" min="0.01" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">السبب (اختياري)</label>
+          <input type="text" class="form-input" id="cm-reason" placeholder="مثلاً: تعويض عن تأخير">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitCredit()">✅ إضافة الرصيد</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== SETTINGS ==================== -->
   <div class="page" id="page-settings">
     <div class="page-header">
@@ -1069,6 +1188,10 @@
   <button class="more-menu-item" id="mm-errorlogs" onclick="showPage('errorlogs');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     سجل الأخطاء
+  </button>
+  <button class="more-menu-item" id="mm-team" onclick="showPage('team');closeMoreMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    الفريق
   </button>
   <button class="more-menu-item" id="mm-settings" onclick="showPage('settings');closeMoreMenu()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>

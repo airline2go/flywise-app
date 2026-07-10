@@ -3,6 +3,12 @@
 // Supabase from the browser. Change API_BASE if the backend ever moves.
 const API_BASE = 'https://api.airpiv.com';
 let ADMIN_TOKEN = sessionStorage.getItem('airpiv_admin_token') || null;
+// [STAFF-ROLES] Defaults to 'admin' when unset — a token stored before this
+// feature existed can only be the legacy ADMIN_TOKEN, which is always full
+// access anyway. Every FRESH login (owner or staff) sets this explicitly.
+let ADMIN_ROLE = sessionStorage.getItem('airpiv_admin_role') || 'admin';
+let ADMIN_NAME = sessionStorage.getItem('airpiv_admin_name') || '';
+let _staffLoginMode = false;
 
 // Wrapper around fetch() that always sends the bearer token and handles
 // 401s uniformly (kick back to the login screen if the token is rejected).
@@ -45,7 +51,11 @@ async function doAdminLogin() {
     const j = await res.json();
     if (res.ok && j.ok && j.token) {
       ADMIN_TOKEN = j.token;
+      ADMIN_ROLE = j.role || 'admin';
+      ADMIN_NAME = '';
       sessionStorage.setItem('airpiv_admin_token', ADMIN_TOKEN);
+      sessionStorage.setItem('airpiv_admin_role', ADMIN_ROLE);
+      sessionStorage.setItem('airpiv_admin_name', ADMIN_NAME);
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app-shell').classList.add('ready');
       pwInput.value = '';
@@ -62,10 +72,84 @@ async function doAdminLogin() {
   }
 }
 
+// [STAFF-LOGIN] Same shape as doAdminLogin() but posts to /admin/staff-login
+// (email+password) instead of the single owner password.
+async function doStaffLogin() {
+  const emailInput = document.getElementById('login-staff-email');
+  const pwInput = document.getElementById('login-staff-password');
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  const email = (emailInput.value || '').trim();
+  const password = pwInput.value || '';
+  if (!email || !password) return;
+  err.classList.remove('show');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(API_BASE + '/admin/staff-login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const j = await res.json();
+    if (res.ok && j.ok && j.token) {
+      ADMIN_TOKEN = j.token;
+      ADMIN_ROLE = j.role || 'staff';
+      ADMIN_NAME = j.name || '';
+      sessionStorage.setItem('airpiv_admin_token', ADMIN_TOKEN);
+      sessionStorage.setItem('airpiv_admin_role', ADMIN_ROLE);
+      sessionStorage.setItem('airpiv_admin_name', ADMIN_NAME);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-shell').classList.add('ready');
+      pwInput.value = '';
+      initDashboard();
+    } else {
+      err.textContent = j.error || 'بيانات دخول خاطئة';
+      err.classList.add('show');
+    }
+  } catch (e) {
+    err.textContent = 'خطأ في الاتصال بالسيرفر';
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'دخول';
+  }
+}
+
+function doLoginSubmit() {
+  if (_staffLoginMode) doStaffLogin(); else doAdminLogin();
+}
+
+function toggleStaffLoginMode() {
+  _staffLoginMode = !_staffLoginMode;
+  document.getElementById('login-owner-fields').style.display = _staffLoginMode ? 'none' : '';
+  document.getElementById('login-staff-fields').style.display = _staffLoginMode ? '' : 'none';
+  document.getElementById('login-mode-toggle').textContent = _staffLoginMode ? 'تسجيل دخول كمدير' : 'تسجيل دخول كموظف';
+  document.getElementById('login-sub').textContent = _staffLoginMode ? 'أدخل بريدك وكلمة المرور الخاصة بحساب الموظف' : 'أدخل كلمة مرور لوحة التحكم';
+  document.getElementById('login-err').classList.remove('show');
+}
+
 function doAdminLogout() {
+  if (ADMIN_TOKEN) {
+    // Best-effort — a legacy ADMIN_TOKEN login has no session to revoke,
+    // and the server treats that case as a harmless no-op either way.
+    fetch(API_BASE + '/admin/staff-logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + ADMIN_TOKEN } }).catch(() => {});
+  }
   ADMIN_TOKEN = null;
+  ADMIN_ROLE = 'admin';
+  ADMIN_NAME = '';
   sessionStorage.removeItem('airpiv_admin_token');
+  sessionStorage.removeItem('airpiv_admin_role');
+  sessionStorage.removeItem('airpiv_admin_name');
   showLoginScreen();
+}
+
+// [STAFF-ROLES] Client-side hiding is UX only — the real boundary is
+// requireFullAdmin on the server. Hides the 3 admin-only nav entries
+// (sidebar + more-menu) for a staff session.
+function applyRoleGating() {
+  var isAdmin = ADMIN_ROLE === 'admin';
+  ['nav-profit', 'nav-ancillary', 'nav-team', 'mm-profit', 'mm-ancillary', 'mm-team'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? '' : 'none';
+  });
 }
 
 // ============ STATE ============
@@ -93,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Loads everything the dashboard needs right after a successful login —
 // replaces the old tryAutoConnect()/connectSupabase() flow.
 async function initDashboard() {
+  applyRoleGating();
   await Promise.all([
     loadStats(),
     loadPromosFromServer(),
@@ -1197,9 +1282,16 @@ async function clearErrorLogs() {
 }
 
 // ============ NAVIGATION ============
-var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','settings'];
+var morePages = ['reports','invoices','profit','ancillary','loyalty','promos','blog','routes','errorlogs','team','settings'];
 
 function showPage(name) {
+  // [STAFF-ROLES] Defense in depth only — the buttons that lead here are
+  // already hidden for a staff session; the real boundary is the server's
+  // requireFullAdmin on every request these pages actually make.
+  if ((name === 'team' || name === 'profit' || name === 'ancillary') && ADMIN_ROLE !== 'admin') {
+    showToast('هذه الصفحة للمدير فقط', 'error');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -1234,6 +1326,7 @@ function showPage(name) {
   if (name === 'blog') loadBlogPosts();
   if (name === 'routes') loadRoutePages();
   if (name === 'errorlogs') loadErrorLogs();
+  if (name === 'team') loadStaff();
 }
 
 function toggleMoreMenu() {
@@ -2138,14 +2231,16 @@ var customerFilter = '';
 var customerVipOnly = false;
 
 function buildCustomers() {
-  var map = {}; // email -> {email, name, bookings: []}
+  var map = {}; // email -> {email, name, phone, user_id, bookings: []}
   allBookings.forEach(b => {
     var email = (b.customer_email || '').trim().toLowerCase();
     if (!email) return; // skip bookings with no identifiable customer
     if (!map[email]) {
-      map[email] = { email: b.customer_email, name: b.customer_name || '', bookings: [] };
+      map[email] = { email: b.customer_email, name: b.customer_name || '', phone: b.customer_phone || '', user_id: b.user_id || null, bookings: [] };
     }
     if (!map[email].name && b.customer_name) map[email].name = b.customer_name;
+    if (!map[email].phone && b.customer_phone) map[email].phone = b.customer_phone;
+    if (!map[email].user_id && b.user_id) map[email].user_id = b.user_id;
     map[email].bookings.push(b);
   });
 
@@ -2157,6 +2252,8 @@ function buildCustomers() {
     return {
       email: c.email,
       name: c.name,
+      phone: c.phone,
+      user_id: c.user_id,
       bookingCount: c.bookings.length,
       confirmedCount: confirmed.length,
       totalSpent: totalSpent,
@@ -2168,10 +2265,22 @@ function buildCustomers() {
   }).sort((a, b) => b.totalSpent - a.totalSpent);
 }
 
-async function renderCustomers() {
-  // Ensure we have the FULL booking list, not just loadStats()'s 8-row
-  // preview — customer grouping needs every booking to be accurate.
-  await loadBookingsFromServer();
+// [CUSTOMER-SEARCH] q, when given, is forwarded to the server's own
+// ilike search across email/name/phone (GET /admin/bookings?q=) — real
+// server-side search, not just a client-side substring filter, so a
+// customer well past the 200-row page can still be found by phone.
+async function loadCustomerBookings(q) {
+  try {
+    var url = '/admin/bookings?limit=200';
+    if (q) url += '&q=' + encodeURIComponent(q);
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) allBookings = j.bookings;
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+async function renderCustomers(q) {
+  await loadCustomerBookings(q);
   customersData = buildCustomers();
   var noEmailCount = allBookings.filter(b => !(b.customer_email || '').trim()).length;
 
@@ -2192,17 +2301,14 @@ async function renderCustomers() {
 
 function renderCustomersTable() {
   var tbody = document.getElementById('customers-table');
-  var list = customersData.filter(c => {
-    if (customerVipOnly && !c.isVip) return false;
-    if (customerFilter) {
-      var hay = (c.email + ' ' + c.name).toLowerCase();
-      if (!hay.includes(customerFilter)) return false;
-    }
-    return true;
-  });
+  // [CUSTOMER-SEARCH] Text matching already happened server-side (the q
+  // param on /admin/bookings) — re-filtering by email/name here client-side
+  // would silently drop a phone-only match, so only the VIP toggle (a
+  // purely client-side view of the already-fetched set) narrows further.
+  var list = customersData.filter(c => !customerVipOnly || c.isVip);
 
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">لا توجد نتائج</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:30px">لا توجد نتائج</td></tr>';
     return;
   }
 
@@ -2210,26 +2316,36 @@ function renderCustomersTable() {
     var idx = customersData.indexOf(c);
     var lastDate = c.lastBooking ? new Date(c.lastBooking).toLocaleDateString('ar') : '—';
     var vipBadge = c.isVip ? '<span class="badge confirmed">⭐ VIP</span>' : '<span class="badge">عادي</span>';
+    // [CREDIT-TOPUP] Owner-only, and only possible for a registered
+    // (non-guest) customer — no user_id means no loyalty_accounts row can
+    // exist for them under the current schema.
+    var creditBtn = (ADMIN_ROLE === 'admin' && c.user_id)
+      ? `<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick='openCreditModal(${escJsonAttr({ user_id: c.user_id, name: c.name || c.email })})'>+ رصيد</button>`
+      : '';
     return `<tr>
       <td>
         <div style="font-weight:600">${escHtml(c.name) || 'بدون اسم'}</div>
         <div style="font-size:11px;color:var(--tx3)" class="mono">${escHtml(c.email)}</div>
       </td>
+      <td class="mono">${escHtml(c.phone) || '—'}</td>
       <td class="mono">${c.bookingCount}</td>
       <td class="mono" style="color:var(--blue)">€${c.totalSpent.toFixed(2)}</td>
       <td class="mono" style="color:var(--teal)">€${c.totalProfit.toFixed(2)}</td>
       <td>${lastDate}</td>
       <td>${vipBadge}</td>
-      <td>
+      <td style="display:flex;gap:6px">
         <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showCustomerDetail(${idx})">تفاصيل</button>
+        ${creditBtn}
       </td>
     </tr>`;
   }).join('');
 }
 
+var _customerSearchTimer = null;
 function filterCustomers(val) {
-  customerFilter = val.toLowerCase();
-  renderCustomersTable();
+  customerFilter = (val || '').trim();
+  clearTimeout(_customerSearchTimer);
+  _customerSearchTimer = setTimeout(() => renderCustomers(customerFilter), 300);
 }
 
 function toggleVipFilter() {
@@ -2265,6 +2381,7 @@ function showCustomerDetail(idx) {
       <div class="detail-section-title">معلومات العميل</div>
       <div class="detail-grid">
         <div class="detail-item"><div class="detail-key">الإيميل</div><div class="detail-val mono">${escHtml(c.email)}</div></div>
+        <div class="detail-item"><div class="detail-key">الهاتف</div><div class="detail-val mono">${escHtml(c.phone) || '—'}</div></div>
         <div class="detail-item"><div class="detail-key">عدد الحجوزات</div><div class="detail-val">${c.bookingCount}</div></div>
         <div class="detail-item"><div class="detail-key">إجمالي الإنفاق</div><div class="detail-val">€${c.totalSpent.toFixed(2)}</div></div>
         <div class="detail-item"><div class="detail-key">صافي ربحنا منه</div><div class="detail-val">€${c.totalProfit.toFixed(2)}</div></div>
@@ -2284,6 +2401,7 @@ function showCustomerDetail(idx) {
       </table>
     </div>
     <div class="detail-section">
+      ${(ADMIN_ROLE === 'admin' && c.user_id) ? `<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick='closeModal("customer-modal");openCreditModal(${escJsonAttr({ user_id: c.user_id, name: c.name || c.email })})'>💳 إضافة رصيد</button>` : ''}
       <button class="btn btn-primary" style="width:100%" onclick='emailCustomer(${escJsonAttr({ email: c.email, name: c.name })})'>✉️ إرسال إيميل للعميل</button>
     </div>
   `;
@@ -2294,6 +2412,128 @@ function emailCustomer(c) {
   var subject = encodeURIComponent('Airpiv — بخصوص حجوزاتك');
   var body = encodeURIComponent('مرحباً ' + (c.name || '') + ',\n\n');
   window.location.href = 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + subject + '&body=' + body;
+}
+
+// ============ [CREDIT-TOPUP] Admin-triggered loyalty credit ============
+// Owner-only — the server independently enforces this via requireFullAdmin
+// regardless of what this UI shows or hides.
+function openCreditModal(payload) {
+  document.getElementById('cm-user-id').value = payload.user_id;
+  document.getElementById('cm-customer-name').textContent = payload.name || '';
+  document.getElementById('cm-amount').value = '';
+  document.getElementById('cm-reason').value = '';
+  document.getElementById('credit-modal').classList.add('open');
+}
+
+async function submitCredit() {
+  var userId = document.getElementById('cm-user-id').value;
+  var amount = parseFloat(document.getElementById('cm-amount').value);
+  var reason = document.getElementById('cm-reason').value.trim();
+  if (!userId || !amount || amount <= 0) { showToast('أدخل مبلغ صحيح', 'error'); return; }
+  try {
+    const res = await adminFetch('/admin/customers/credit', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, amount: amount, reason: reason || undefined }),
+    });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('تمت إضافة €' + amount.toFixed(2) + ' للعميل ✅', 'success');
+      closeModal('credit-modal');
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) { /* adminFetch already redirected to the login screen on 401 */ }
+}
+
+// ============ [STAFF-ROLES] Team page — staff account management ============
+var staffData = []; // cached list from GET /admin/staff
+
+async function loadStaff() {
+  try {
+    const res = await adminFetch('/admin/staff');
+    const j = await res.json();
+    if (j.ok) { staffData = j.staff || []; renderStaffTable(); }
+    else showToast(j.error || 'فشل تحميل الفريق', 'error');
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function renderStaffTable() {
+  var tbody = document.getElementById('staff-table');
+  if (!staffData.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا يوجد موظفون بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = staffData.map(s => {
+    var roleLabel = s.role === 'admin' ? '<span class="badge confirmed">مدير</span>' : '<span class="badge">موظف</span>';
+    var statusLabel = s.active ? '<span class="badge confirmed">✓ فعّال</span>' : '<span class="badge cancelled">✕ معطّل</span>';
+    var created = s.created_at ? new Date(s.created_at).toLocaleDateString('ar') : '—';
+    return `<tr>
+      <td>${escHtml(s.name)}</td>
+      <td class="mono">${escHtml(s.email)}</td>
+      <td>${roleLabel}</td>
+      <td>${statusLabel}</td>
+      <td>${created}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick='openStaffModal(${escJsonAttr(s)})'>تعديل</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="toggleStaffActive('${escHtml(s.id)}', ${!s.active})">${s.active ? 'تعطيل' : 'تفعيل'}</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;color:var(--red,#e54848)" onclick="deleteStaffAccount('${escHtml(s.id)}')">حذف</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// staff is undefined for "add new"; a staff row object for "edit".
+function openStaffModal(staff) {
+  document.getElementById('sm-id').value = staff ? staff.id : '';
+  document.getElementById('staff-modal-title').textContent = staff ? 'تعديل الموظف' : 'موظف جديد';
+  document.getElementById('sm-name').value = staff ? staff.name : '';
+  document.getElementById('sm-email').value = staff ? staff.email : '';
+  document.getElementById('sm-password').value = '';
+  document.getElementById('sm-password').placeholder = staff ? 'اتركها فارغة لعدم التغيير' : '••••••••';
+  document.getElementById('sm-role').value = staff ? staff.role : 'staff';
+  document.getElementById('staff-modal').classList.add('open');
+}
+
+async function saveStaff() {
+  var id = document.getElementById('sm-id').value;
+  var name = document.getElementById('sm-name').value.trim();
+  var email = document.getElementById('sm-email').value.trim();
+  var password = document.getElementById('sm-password').value;
+  var role = document.getElementById('sm-role').value;
+  if (!name || !email) { showToast('الاسم والبريد الإلكتروني مطلوبان', 'error'); return; }
+  if (!id && !password) { showToast('كلمة المرور مطلوبة للحساب الجديد', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/staff/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify({ name, role, password: password || undefined }) })
+      : await adminFetch('/admin/staff', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('تم الحفظ ✅', 'success');
+      closeModal('staff-modal');
+      loadStaff();
+    } else {
+      showToast(j.error || 'فشل الحفظ', 'error');
+    }
+  } catch (e) { /* adminFetch already redirected to the login screen on 401 */ }
+}
+
+async function toggleStaffActive(id, nextActive) {
+  try {
+    const res = await adminFetch('/admin/staff/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify({ active: nextActive }) });
+    const j = await res.json();
+    if (j.ok) { loadStaff(); }
+    else showToast(j.error || 'فشل التحديث', 'error');
+  } catch (e) { /* adminFetch already redirected to the login screen on 401 */ }
+}
+
+async function deleteStaffAccount(id) {
+  if (!confirm('تأكيد حذف هذا الموظف نهائياً؟')) return;
+  try {
+    const res = await adminFetch('/admin/staff/' + encodeURIComponent(id), { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('تم الحذف', 'success'); loadStaff(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { /* adminFetch already redirected to the login screen on 401 */ }
 }
 
 // ============ [ADMIN-MARGIN] INVOICE CONFIG — server only ============
