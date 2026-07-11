@@ -102,5 +102,15 @@
   "airlineSingleRouteDescriptionTemplate": "{airline} flies the {otherCity} – {otherCity2} route. Compare prices and book cheap with Airpiv.",
   "airlineManyRoutesTitleTemplate": "{airline} flights — {count} routes compared",
   "airlineManyRoutesDescriptionTemplate": "{count} flight connections operated by {airline}, compared side by side. Find the cheapest route with Airpiv.",
-  "airlineWord": "Airline"
+  "airlineWord": "Airline",
+  "routeIntroOpeningDomesticLongHaul": "Flying domestically from {origin} to {destination}?",
+  "routeIntroOpeningDomesticShortHaul": "Looking for a domestic flight from {origin} to {destination}?",
+  "routeIntroClosingLongHaulV2": " Airpiv tracks this long-haul route around the clock, so you can lock in a fair price before fares climb — no hidden fees, ever.",
+  "routeIntroClosingShortHaulV2": " Airpiv keeps an eye on this route day and night, helping you catch the best fare the moment it drops — no hidden fees, ever.",
+  "routeIntroCarrierSingle": " Just one airline currently operates this route.",
+  "routeIntroCarrierMulti": " {count} airlines compete on this route, giving you more options to compare.",
+  "routeIntroPopular": " This is one of the more popular routes on Airpiv, with strong demand from travelers.",
+  "routeFaqAirlineQuestion": "Which airlines fly from {origin} to {destination}?",
+  "routeFaqAirlineAnswerSingle": "Currently, one airline operates this route.",
+  "routeFaqAirlineAnswerMulti": "Currently, {count} airlines operate this route, so it's worth comparing them."
 }

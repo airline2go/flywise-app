@@ -102,5 +102,15 @@
   "airlineSingleRouteDescriptionTemplate": "{airline} fliegt die Strecke {otherCity} – {otherCity2}. Preis vergleichen und günstig buchen mit Airpiv.",
   "airlineManyRoutesTitleTemplate": "{airline} Flüge — {count} Strecken im Vergleich",
   "airlineManyRoutesDescriptionTemplate": "{count} Flugverbindungen von {airline} im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.",
-  "airlineWord": "Fluggesellschaft"
+  "airlineWord": "Fluggesellschaft",
+  "routeIntroOpeningDomesticLongHaul": "Planst du einen Inlandsflug von {origin} nach {destination}?",
+  "routeIntroOpeningDomesticShortHaul": "Suchst du einen Inlandsflug von {origin} nach {destination}?",
+  "routeIntroClosingLongHaulV2": " Airpiv beobachtet diese Langstrecke rund um die Uhr, damit du einen fairen Preis sicherst, bevor die Tarife steigen — ganz ohne versteckte Gebühren.",
+  "routeIntroClosingShortHaulV2": " Airpiv behält diese Strecke Tag und Nacht im Blick, damit du den besten Preis sofort erkennst, sobald er fällt — ganz ohne versteckte Gebühren.",
+  "routeIntroCarrierSingle": " Aktuell fliegt nur eine Airline diese Strecke.",
+  "routeIntroCarrierMulti": " {count} Airlines fliegen diese Strecke — mehr Auswahl zum Vergleichen für dich.",
+  "routeIntroPopular": " Diese Strecke gehört zu den beliebteren Routen bei Airpiv und wird stark nachgefragt.",
+  "routeFaqAirlineQuestion": "Welche Airlines fliegen von {origin} nach {destination}?",
+  "routeFaqAirlineAnswerSingle": "Aktuell bedient eine Airline diese Strecke.",
+  "routeFaqAirlineAnswerMulti": "Aktuell bedienen {count} Airlines diese Strecke — ein Vergleich lohnt sich."
 }

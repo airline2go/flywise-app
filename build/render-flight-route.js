@@ -2,22 +2,63 @@ const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { pickVariant } = require('./content-variants');
 
 // [BUG-FIX] The original flight-route.html wrote its JSON-LD schema TWICE —
 // a second, dead write unconditionally clobbered the first with a generic
 // hardcoded 2-question FAQ, discarding the real dynamic FAQ/custom_faq data.
 // This generator writes it once, correctly, with the real FAQ items.
 
+// [CONTENT-VARIATION-2] Expanded from a 2-variable branch (haul type,
+// distance presence) to also branch on: domestic vs international
+// (origin_country === destination_country — a different opening
+// template), single- vs multi-carrier (airline_count, persisted by
+// Phase 1's route intelligence core — appends a short clause), and
+// route popularity (route_score_confidence === 'high' — appends a
+// short clause). The closing sentence itself is picked between 2
+// variants via a deterministic hash of the route's slug, so even two
+// routes sharing every other dimension above don't read byte-identical.
+// Every new clause is independently omitted when its underlying signal
+// is unknown (null) — never fabricated.
 function buildDynamicIntro(r, lang) {
   const hasDistance = r.distance_km != null;
   const isLongHaul = r.haul_type === 'long-haul';
+  const isDomestic = !!(r.origin_country && r.destination_country && r.origin_country === r.destination_country);
   const distanceStr = hasDistance ? r.distance_km.toLocaleString(getLanguage(lang).locale) : null;
-  const opening = format(translate(isLongHaul ? 'routeIntroOpeningLongHaul' : 'routeIntroOpeningShortHaul', lang), { origin: r.origin_city, destination: r.destination_city });
+
+  const openingKey = isDomestic
+    ? (isLongHaul ? 'routeIntroOpeningDomesticLongHaul' : 'routeIntroOpeningDomesticShortHaul')
+    : (isLongHaul ? 'routeIntroOpeningLongHaul' : 'routeIntroOpeningShortHaul');
+  const opening = format(translate(openingKey, lang), { origin: r.origin_city, destination: r.destination_city });
+
   const distancePhrase = hasDistance
     ? format(translate(isLongHaul ? 'routeIntroDistanceLongHaul' : 'routeIntroDistanceShortHaul', lang), { distance: distanceStr })
     : '';
-  const closing = translate(isLongHaul ? 'routeIntroClosingLongHaul' : 'routeIntroClosingShortHaul', lang);
-  return opening + distancePhrase + closing;
+
+  const closingVariantKeys = isLongHaul
+    ? ['routeIntroClosingLongHaul', 'routeIntroClosingLongHaulV2']
+    : ['routeIntroClosingShortHaul', 'routeIntroClosingShortHaulV2'];
+  const closing = translate(closingVariantKeys[pickVariant(r.slug, closingVariantKeys.length)], lang);
+
+  let carrierClause = '';
+  if (r.airline_count != null && r.airline_count > 0) {
+    carrierClause = r.airline_count === 1
+      ? translate('routeIntroCarrierSingle', lang)
+      : format(translate('routeIntroCarrierMulti', lang), { count: r.airline_count });
+  }
+
+  const popularClause = r.route_score_confidence === 'high' ? translate('routeIntroPopular', lang) : '';
+
+  return opening + distancePhrase + closing + carrierClause + popularClause;
+}
+
+// Build-time equivalent of the fmtHrsMin() helper that used to live only
+// inside buildLiveScript()'s client-side string — now usable at build
+// time since avg_duration_min is a persisted Phase 1 field.
+function formatHoursMinutes(min, lang) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h + translate('hoursAbbrev', lang) + (m > 0 ? ` ${m}${translate('minutesAbbrev', lang)}` : '');
 }
 
 function buildFaqItems(route, lang) {
@@ -39,8 +80,35 @@ function buildFaqItems(route, lang) {
       question: format(translate('routeFaqCheapestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
       answer: translate('routeFaqCheapestAnswer', lang),
     };
+
+  const items = [bestTimeFaqItem, haulQuestion];
+
+  // [CONTENT-VARIATION-2] Previously this FAQ item only ever existed
+  // client-side (buildLiveScript(), appended to the DOM after page load,
+  // never in the static HTML/JSON-LD a crawler sees) since duration data
+  // was only available from a live request. Now avg_duration_min is a
+  // persisted Phase 1 field, so it can be a real build-time FAQ item.
+  if (route.avg_duration_min != null) {
+    const directLineKey = route.all_direct ? 'allFlightsDirect' : (route.direct_flight_available ? 'directFlightsAvailable' : 'noDirectFlights');
+    items.push({
+      question: format(translate('routeDurationFaqQuestionTemplate', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: format(translate('routeDurationFaqAnswerTemplate', lang), { duration: formatHoursMinutes(route.avg_duration_min, lang), directLine: translate(directLineKey, lang) }),
+    });
+  }
+
+  // [CONTENT-VARIATION-2] New — varies FAQ content based on the route's
+  // actual airline data (Phase 1), rather than a fixed question set.
+  if (route.airline_count != null && route.airline_count > 0) {
+    items.push({
+      question: format(translate('routeFaqAirlineQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: route.airline_count === 1
+        ? translate('routeFaqAirlineAnswerSingle', lang)
+        : format(translate('routeFaqAirlineAnswerMulti', lang), { count: route.airline_count }),
+    });
+  }
+
   if (route.custom_faq && route.custom_faq.length) return route.custom_faq;
-  return [bestTimeFaqItem, haulQuestion];
+  return items;
 }
 
 function buildBestTimeHtml(route, lang) {
@@ -138,12 +206,6 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
       '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
       var insightsTarget = document.getElementById('route-insights-section');
       if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
-      var faqSection = document.querySelector('.route-faq');
-      if (faqSection && !faqSection.dataset.durationFaqAdded) {
-        var durationFaqHtml = '<div class="route-faq-item"><div class="route-faq-q">${escHtml(format(translate('routeDurationFaqQuestionTemplate', lang), { origin: route.origin_city, destination: route.destination_city }))}</div><div class="route-faq-a">' + ${JSON.stringify(translate('routeDurationFaqAnswerTemplate', lang))}.replace('{duration}', fmtHrsMin(ins.avgDurationMin)).replace('{directLine}', directLine) + '</div></div>';
-        faqSection.insertAdjacentHTML('beforeend', durationFaqHtml);
-        faqSection.dataset.durationFaqAdded = '1';
-      }
     }
   })
   .catch(function(){

@@ -102,5 +102,15 @@
   "airlineSingleRouteDescriptionTemplate": "{airline} opera la tratta {otherCity} – {otherCity2}. Confronta i prezzi e prenota al miglior prezzo con Airpiv.",
   "airlineManyRoutesTitleTemplate": "Voli {airline} — {count} tratte a confronto",
   "airlineManyRoutesDescriptionTemplate": "{count} collegamenti aerei operati da {airline}, messi a confronto. Trova la tratta più economica con Airpiv.",
-  "airlineWord": "Compagnia aerea"
+  "airlineWord": "Compagnia aerea",
+  "routeIntroOpeningDomesticLongHaul": "Voli nazionali da {origin} a {destination}?",
+  "routeIntroOpeningDomesticShortHaul": "Cerchi un volo nazionale da {origin} a {destination}?",
+  "routeIntroClosingLongHaulV2": " Airpiv monitora questa tratta a lungo raggio 24 ore su 24, così puoi bloccare un prezzo equo prima che le tariffe salgano — senza costi nascosti.",
+  "routeIntroClosingShortHaulV2": " Airpiv tiene d'occhio questa tratta giorno e notte, aiutandoti a cogliere la tariffa migliore non appena scende — senza costi nascosti.",
+  "routeIntroCarrierSingle": " Al momento solo una compagnia aerea opera su questa tratta.",
+  "routeIntroCarrierMulti": " {count} compagnie aeree operano su questa tratta, offrendoti più opzioni da confrontare.",
+  "routeIntroPopular": " Questa è una delle tratte più popolari su Airpiv, con una forte richiesta da parte dei viaggiatori.",
+  "routeFaqAirlineQuestion": "Quali compagnie aeree volano da {origin} a {destination}?",
+  "routeFaqAirlineAnswerSingle": "Al momento, una compagnia aerea opera su questa tratta.",
+  "routeFaqAirlineAnswerMulti": "Al momento, {count} compagnie aeree operano su questa tratta, quindi vale la pena confrontarle."
 }
