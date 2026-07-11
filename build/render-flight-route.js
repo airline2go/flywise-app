@@ -84,6 +84,32 @@ function localizeCityLive(name, iata){ return (iata && IATA_NAMES[iata]) || name
 var PROXY = 'https://api.airpiv.com';
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 ${iataNameMapJs}
+// [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
+// never affects page behavior if it fails. sendBeacon (with a text/plain
+// Blob, not JSON) is preferred so a click that immediately navigates away
+// doesn't abort a plain fetch mid-flight; text/plain also avoids a CORS
+// preflight that sendBeacon can't reliably complete before unload.
+function sendRouteTrack(eventType) {
+  try {
+    var payload = JSON.stringify({ event_type: eventType, route_slug: ${JSON.stringify(route.slug)}, origin_iata: ${JSON.stringify(route.origin_iata)}, destination_iata: ${JSON.stringify(route.destination_iata)}, language: ${JSON.stringify(lang)} });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(PROXY + '/track/route-page', new Blob([payload], { type: 'text/plain' }));
+    } else {
+      fetch(PROXY + '/track/route-page', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: payload });
+    }
+  } catch (e) {}
+}
+sendRouteTrack('impression');
+var routeCtaEl = document.querySelector('.route-cta');
+if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
+  // Hands the originating route page off to app.js's prefillSearchFromUrl(),
+  // which reads this (once) to attribute the resulting booking_start signal
+  // back to this specific route page/language — no URL or search-flow
+  // change involved, purely an in-memory relay for tracking.
+  try { sessionStorage.setItem('fw_route_ref', JSON.stringify({ slug: ${JSON.stringify(route.slug)}, origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, lang: ${JSON.stringify(lang)} })); } catch (e) {}
+  sendRouteTrack('click');
+});
+
 fetch(PROXY + '/route-pages/' + encodeURIComponent(${JSON.stringify(route.slug)}) + '/related')
   .then(function(r){ return r.json(); })
   .then(function(j){

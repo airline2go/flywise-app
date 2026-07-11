@@ -573,10 +573,12 @@ async function loadRoutePages() {
     var q = encodeURIComponent(document.getElementById('rp-search-input').value.trim());
     var status = document.getElementById('rp-status-filter').value;
     var refreshFilter = document.getElementById('rp-refresh-filter').value;
+    var sort = document.getElementById('rp-sort-select').value;
     var url = '/admin/route-pages?page=' + rpCurrentPage + '&limit=50';
     if (q) url += '&q=' + q;
     if (status) url += '&status=' + status;
     if (refreshFilter) url += '&refresh_frequency=' + refreshFilter;
+    if (sort) url += '&sort=' + sort;
     const res = await adminFetch(url);
     const j = await res.json();
     if (j.ok) {
@@ -608,6 +610,17 @@ function routeRefreshBadge(freq) {
   return '<span class="badge">SEO فقط</span>';
 }
 
+// [ROUTE-SCORE-4A] للعرض فقط — لا يوجد أتمتة تقرأ هاي القيمة بهاي
+// المرحلة. الثقة (confidence) موضحة جنب الرقم عشان رقم مبني على بيانات
+// قليلة ما ينقرأ وكأنه بنفس وزن رقم مبني على بيانات وفيرة.
+function routeScoreBadge(score, confidence) {
+  if (score == null) return '<span class="badge" style="color:var(--tx3)">—</span>';
+  var confLabel = confidence === 'high' ? 'ثقة عالية' : confidence === 'medium' ? 'ثقة متوسطة' : 'ثقة منخفضة';
+  var confColor = confidence === 'high' ? '#22c55e' : confidence === 'medium' ? '#f59e0b' : 'var(--tx3)';
+  return '<span class="mono" style="font-weight:700">' + Number(score).toLocaleString('en-US', { maximumFractionDigits: 1 }) + '</span>' +
+    '<div style="font-size:10px;color:' + confColor + '">' + confLabel + '</div>';
+}
+
 var selectedRoutePageIds = {}; // {id: true} — current-page selection for bulk refresh-frequency apply
 
 function renderRoutePagesList() {
@@ -615,8 +628,8 @@ function renderRoutePagesList() {
   if (!allRoutePages.length) {
     var q = document.getElementById('rp-search-input').value.trim();
     tbody.innerHTML = q
-      ? '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">مفيش نتايج لـ "' + escHtml(q) + '"</td></tr>'
-      : '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
+      ? '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">مفيش نتايج لـ "' + escHtml(q) + '"</td></tr>'
+      : '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">لا توجد مسارات بعد — اضغط "مسار جديد" للبدء</td></tr>';
     return;
   }
   tbody.innerHTML = allRoutePages.map(function(r) {
@@ -631,6 +644,7 @@ function renderRoutePagesList() {
       '<td>' + escHtml(r.origin_city) + ' (' + escHtml(r.origin_iata) + ') → ' + escHtml(r.destination_city) + ' (' + escHtml(r.destination_iata) + ')</td>' +
       '<td>' + statusBadge + '</td>' +
       '<td>' + routeRefreshBadge(r.refresh_frequency) + '</td>' +
+      '<td>' + routeScoreBadge(r.route_score, r.route_score_confidence) + '</td>' +
       '<td class="mono" style="font-size:11px">flights/' + escHtml(r.slug) + '</td>' +
       '<td style="display:flex;gap:6px">' +
         '<button class="btn btn-ghost route-edit-btn" style="padding:5px 10px;font-size:11px" data-id="' + escHtml(r.id) + '">تعديل</button>' +
@@ -1765,7 +1779,7 @@ function showPage(name) {
   if (name === 'geo') loadGeoCities();
   if (name === 'errorlogs') loadErrorLogs();
   if (name === 'team') loadStaff();
-  if (name === 'api') { setApiMonitorPeriod('today'); loadApiCostConfig(); }
+  if (name === 'api') { setApiMonitorPeriod('today'); loadApiCostConfig(); loadRouteScoreConfig(); }
 }
 
 function toggleMoreMenu() {
@@ -2007,6 +2021,44 @@ async function saveApiCostConfig() {
     } else {
       showToast(j.error || 'فشل الحفظ', 'error');
     }
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// [ROUTE-SCORE-4A] Mirrors loadApiCostConfig()/saveApiCostConfig() —
+// weights only, read-only display in this phase (see routeScoreBadge()).
+async function loadRouteScoreConfig() {
+  try {
+    const res = await adminFetch('/admin/route-score-config');
+    const j = await res.json();
+    if (j.ok) {
+      document.getElementById('rs-half-life').value = j.config.halfLifeDays || '';
+      document.getElementById('rs-lookback').value = j.config.lookbackDays || '';
+      document.getElementById('rs-w-impression').value = j.config.impressionWeight != null ? j.config.impressionWeight : '';
+      document.getElementById('rs-w-click').value = j.config.clickWeight != null ? j.config.clickWeight : '';
+      document.getElementById('rs-w-booking').value = j.config.bookingWeight != null ? j.config.bookingWeight : '';
+      document.getElementById('rs-w-ctr').value = j.config.ctrWeight != null ? j.config.ctrWeight : '';
+      document.getElementById('rs-conf-low').value = j.config.confidenceLowMax != null ? j.config.confidenceLowMax : '';
+      document.getElementById('rs-conf-high').value = j.config.confidenceHighMin != null ? j.config.confidenceHighMin : '';
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+async function saveRouteScoreConfig() {
+  var payload = {
+    halfLifeDays: parseFloat(document.getElementById('rs-half-life').value) || 7,
+    lookbackDays: parseInt(document.getElementById('rs-lookback').value, 10) || 30,
+    impressionWeight: parseFloat(document.getElementById('rs-w-impression').value) || 0,
+    clickWeight: parseFloat(document.getElementById('rs-w-click').value) || 0,
+    bookingWeight: parseFloat(document.getElementById('rs-w-booking').value) || 0,
+    ctrWeight: parseFloat(document.getElementById('rs-w-ctr').value) || 0,
+    confidenceLowMax: parseInt(document.getElementById('rs-conf-low').value, 10) || 0,
+    confidenceHighMin: parseInt(document.getElementById('rs-conf-high').value, 10) || 0,
+  };
+  try {
+    const res = await adminFetch('/admin/route-score-config', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (j.ok) showToast('✅ تم الحفظ — الأثر يظهر بعد دورة الحساب التالية (كل ساعة)', 'success');
+    else showToast(j.error || 'فشل الحفظ', 'error');
   } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }
 
