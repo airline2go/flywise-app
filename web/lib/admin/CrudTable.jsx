@@ -8,12 +8,21 @@ import { ADMIN_COLORS } from './theme';
 // admin.js pattern: fetch list -> render rows -> edit/delete per row ->
 // re-fetch. `columns[].render(row)` lets a caller format/compose a cell;
 // plain `columns[].key` falls back to `row[key]`.
-export default function CrudTable({ columns, rows, keyField = 'id', onEdit, onDelete, loading, emptyLabel = 'لا توجد بيانات' }) {
+// `selection` (optional) adds a leading checkbox column — { selectedIds:
+// {id:true}, onToggle(id), onToggleAll(checked) } — used by route-pages'
+// bulk refresh-frequency apply, matching admin.js's per-row + select-all
+// checkboxes.
+export default function CrudTable({ columns, rows, keyField = 'id', onEdit, onDelete, loading, emptyLabel = 'لا توجد بيانات', selection }) {
+  const colSpan = columns.length + 1 + (selection ? 1 : 0);
+  const allSelected = !!selection && rows.length > 0 && rows.every((r) => selection.selectedIds[r[keyField]]);
   return (
     <div style={{ overflowX: 'auto', border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 10 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
         <thead>
           <tr style={{ background: ADMIN_COLORS.bg3 }}>
+            {selection && (
+              <th style={thStyle}><input type="checkbox" checked={allSelected} onChange={(e) => selection.onToggleAll(e.target.checked)} /></th>
+            )}
             {columns.map((c) => (
               <th key={c.key} style={thStyle}>{c.label}</th>
             ))}
@@ -22,13 +31,18 @@ export default function CrudTable({ columns, rows, keyField = 'id', onEdit, onDe
         </thead>
         <tbody>
           {loading && (
-            <tr><td colSpan={columns.length + 1} style={emptyCellStyle}>...جارٍ التحميل</td></tr>
+            <tr><td colSpan={colSpan} style={emptyCellStyle}>...جارٍ التحميل</td></tr>
           )}
           {!loading && rows.length === 0 && (
-            <tr><td colSpan={columns.length + 1} style={emptyCellStyle}>{emptyLabel}</td></tr>
+            <tr><td colSpan={colSpan} style={emptyCellStyle}>{emptyLabel}</td></tr>
           )}
           {!loading && rows.map((row) => (
             <tr key={row[keyField]} style={{ borderTop: `1px solid ${ADMIN_COLORS.border}` }}>
+              {selection && (
+                <td style={tdStyle}>
+                  <input type="checkbox" checked={!!selection.selectedIds[row[keyField]]} onChange={() => selection.onToggle(row[keyField])} />
+                </td>
+              )}
               {columns.map((c) => (
                 <td key={c.key} style={tdStyle}>{c.render ? c.render(row) : row[c.key]}</td>
               ))}
