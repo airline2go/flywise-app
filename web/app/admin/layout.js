@@ -9,13 +9,13 @@
 // can't itself require a session) — the actual auth gate lives one
 // level down in app/admin/(protected)/layout.js.
 export const metadata = {
-  title: 'Airpiv Admin',
+  title: 'Airpiv — لوحة التحكم',
   robots: 'noindex, nofollow',
 };
 
 export default function AdminRootLayout({ children }) {
   return (
-    <html lang="de">
+    <html lang="ar" dir="rtl">
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#0a1822', color: '#e6ecef' }}>
         {children}
       </body>

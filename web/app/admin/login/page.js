@@ -3,10 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Two login paths, matching the old admin.js/admin.html exactly:
-// owner (password-only, POST /admin/login) and staff (email+password,
-// POST /admin/staff-login) — both proxied through
-// app/admin/api/login/route.js so the token never touches page JS.
+// Two login paths, matching the old admin.js/admin.html exactly (same
+// Arabic copy, same fallback-to-raw-server-error behavior — the server's
+// error strings are German, e.g. "Falsches Passwort"; the old UI just
+// displayed them as-is when present, only falling back to the Arabic
+// default when the server gave no message at all): owner (password-only,
+// POST /admin/login) and staff (email+password, POST /admin/staff-login)
+// — both proxied through app/admin/api/login/route.js so the token never
+// touches page JS.
 export default function AdminLoginPage() {
   const router = useRouter();
   const [staffMode, setStaffMode] = useState(false);
@@ -27,13 +31,13 @@ export default function AdminLoginPage() {
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error || 'Anmeldung fehlgeschlagen');
+        setError(data.error || 'كلمة مرور خاطئة');
         return;
       }
       router.push('/admin');
       router.refresh();
     } catch {
-      setError('Netzwerkfehler — bitte erneut versuchen');
+      setError('خطأ في الاتصال بالسيرفر');
     } finally {
       setSubmitting(false);
     }
@@ -42,40 +46,33 @@ export default function AdminLoginPage() {
   return (
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1822', color: '#e6ecef' }}>
       <form onSubmit={handleSubmit} style={{ width: 320, background: '#0f2430', border: '1px solid #1c3644', borderRadius: 14, padding: 28 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 18 }}>Airpiv Admin</h1>
-
-        <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
-          <button type="button" onClick={() => setStaffMode(false)} style={tabStyle(!staffMode)}>Besitzer</button>
-          <button type="button" onClick={() => setStaffMode(true)} style={tabStyle(staffMode)}>Mitarbeiter</button>
-        </div>
+        <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>تسجيل الدخول</h1>
+        <p style={{ fontSize: 12.5, color: '#9db3bd', marginBottom: 18 }}>
+          {staffMode ? 'أدخل بريدك وكلمة المرور الخاصة بحساب الموظف' : 'أدخل كلمة مرور لوحة التحكم'}
+        </p>
 
         {staffMode && (
           <label style={labelStyle}>
-            E-Mail
+            البريد الإلكتروني
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} autoComplete="username" />
           </label>
         )}
         <label style={labelStyle}>
-          Passwort
+          كلمة المرور
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} autoComplete="current-password" />
         </label>
 
-        {error && <div style={{ color: '#f87171', fontSize: 13, marginTop: 6 }}>{error}</div>}
+        {error && <div style={{ color: '#f87171', fontSize: 13, marginTop: 8 }}>{error}</div>}
 
         <button type="submit" disabled={submitting} style={submitStyle}>
-          {submitting ? 'Anmelden…' : 'Anmelden'}
+          {submitting ? '...' : 'دخول'}
+        </button>
+        <button type="button" onClick={() => setStaffMode((v) => !v)} style={toggleStyle}>
+          {staffMode ? 'تسجيل دخول كمدير' : 'تسجيل دخول كموظف'}
         </button>
       </form>
     </main>
   );
-}
-
-function tabStyle(active) {
-  return {
-    flex: 1, padding: '8px 0', borderRadius: 8, border: '1px solid #1c3644',
-    background: active ? '#0fb5a0' : 'transparent', color: active ? '#0a1822' : '#9db3bd',
-    fontWeight: 700, fontSize: 13, cursor: 'pointer',
-  };
 }
 
 const labelStyle = { display: 'block', fontSize: 12.5, color: '#9db3bd', marginTop: 12 };
@@ -86,4 +83,8 @@ const inputStyle = {
 const submitStyle = {
   width: '100%', marginTop: 20, padding: '10px 0', borderRadius: 8, border: 'none',
   background: '#0fb5a0', color: '#0a1822', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+};
+const toggleStyle = {
+  width: '100%', marginTop: 8, padding: '10px 0', borderRadius: 8, border: '1px solid #1c3644',
+  background: 'transparent', color: '#9db3bd', fontSize: 13, cursor: 'pointer',
 };

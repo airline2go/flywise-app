@@ -14,15 +14,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Dashboard</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>لوحة التحكم</h1>
       {stats && stats.ok ? (
         <div style={{ display: 'flex', gap: 16 }}>
-          <StatTile label="Umsatz" value={`€${stats.revenue.toFixed(2)}`} />
-          <StatTile label="Gewinn" value={`€${stats.profit.toFixed(2)}`} />
-          <StatTile label="Buchungen" value={stats.bookingsCount} />
+          <StatTile label="إجمالي الإيرادات" value={`€${stats.revenue.toFixed(2)}`} />
+          <StatTile label="صافي الربح" value={`€${stats.profit.toFixed(2)}`} />
+          <StatTile label="عدد الحجوزات" value={stats.bookingsCount} />
         </div>
       ) : (
-        <p style={{ color: '#f87171' }}>Statistiken konnten nicht geladen werden.</p>
+        <p style={{ color: '#f87171' }}>تعذّر تحميل الإحصائيات.</p>
       )}
     </div>
   );

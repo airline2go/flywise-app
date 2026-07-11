@@ -10,8 +10,8 @@ import { getAdminSession } from '../../../lib/admin/adminFetch';
 import LogoutButton from '../../../lib/admin/LogoutButton';
 
 const NAV_ITEMS = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/route-pages', label: 'Route-Seiten' },
+  { href: '/admin', label: 'لوحة التحكم' },
+  { href: '/admin/route-pages', label: 'صفحات المسارات' },
 ];
 
 export default async function AdminProtectedLayout({ children }) {
@@ -28,7 +28,7 @@ export default async function AdminProtectedLayout({ children }) {
           ))}
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: '#9db3bd' }}>
-          <span>{session.name || (session.role === 'admin' ? 'Besitzer' : 'Mitarbeiter')}</span>
+          <span>{session.name || (session.role === 'admin' ? 'مدير' : 'موظف')}</span>
           <LogoutButton />
         </div>
       </header>
