@@ -8,6 +8,8 @@
 // This layout stays auth-agnostic (must render /admin/login too, which
 // can't itself require a session) — the actual auth gate lives one
 // level down in app/admin/(protected)/layout.js.
+import { ADMIN_COLORS, ADMIN_FONT_SANS } from '../../lib/admin/theme';
+
 export const metadata = {
   title: 'Airpiv — لوحة التحكم',
   robots: 'noindex, nofollow',
@@ -16,7 +18,7 @@ export const metadata = {
 export default function AdminRootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl">
-      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#0a1822', color: '#e6ecef' }}>
+      <body style={{ margin: 0, fontFamily: ADMIN_FONT_SANS, background: ADMIN_COLORS.bg, color: ADMIN_COLORS.tx }}>
         {children}
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ADMIN_COLORS } from '../../../lib/admin/theme';
 
 // Two login paths, matching the old admin.js/admin.html exactly (same
 // Arabic copy, same fallback-to-raw-server-error behavior — the server's
@@ -44,10 +45,10 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1822', color: '#e6ecef' }}>
-      <form onSubmit={handleSubmit} style={{ width: 320, background: '#0f2430', border: '1px solid #1c3644', borderRadius: 14, padding: 28 }}>
+    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: ADMIN_COLORS.bg, color: ADMIN_COLORS.tx }}>
+      <form onSubmit={handleSubmit} style={{ width: 320, background: ADMIN_COLORS.card, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 14, padding: 28 }}>
         <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>تسجيل الدخول</h1>
-        <p style={{ fontSize: 12.5, color: '#9db3bd', marginBottom: 18 }}>
+        <p style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, marginBottom: 18 }}>
           {staffMode ? 'أدخل بريدك وكلمة المرور الخاصة بحساب الموظف' : 'أدخل كلمة مرور لوحة التحكم'}
         </p>
 
@@ -62,7 +63,7 @@ export default function AdminLoginPage() {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} autoComplete="current-password" />
         </label>
 
-        {error && <div style={{ color: '#f87171', fontSize: 13, marginTop: 8 }}>{error}</div>}
+        {error && <div style={{ color: ADMIN_COLORS.red, fontSize: 13, marginTop: 8 }}>{error}</div>}
 
         <button type="submit" disabled={submitting} style={submitStyle}>
           {submitting ? '...' : 'دخول'}
@@ -75,16 +76,16 @@ export default function AdminLoginPage() {
   );
 }
 
-const labelStyle = { display: 'block', fontSize: 12.5, color: '#9db3bd', marginTop: 12 };
+const labelStyle = { display: 'block', fontSize: 12.5, color: ADMIN_COLORS.tx2, marginTop: 12 };
 const inputStyle = {
   display: 'block', width: '100%', marginTop: 4, padding: '9px 11px',
-  background: '#0a1822', border: '1px solid #1c3644', borderRadius: 8, color: '#e6ecef', fontSize: 14,
+  background: ADMIN_COLORS.bg, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 8, color: ADMIN_COLORS.tx, fontSize: 14,
 };
 const submitStyle = {
   width: '100%', marginTop: 20, padding: '10px 0', borderRadius: 8, border: 'none',
-  background: '#0fb5a0', color: '#0a1822', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+  background: ADMIN_COLORS.teal, color: ADMIN_COLORS.bg, fontWeight: 700, fontSize: 14, cursor: 'pointer',
 };
 const toggleStyle = {
-  width: '100%', marginTop: 8, padding: '10px 0', borderRadius: 8, border: '1px solid #1c3644',
-  background: 'transparent', color: '#9db3bd', fontSize: 13, cursor: 'pointer',
+  width: '100%', marginTop: 8, padding: '10px 0', borderRadius: 8, border: `1px solid ${ADMIN_COLORS.border}`,
+  background: 'transparent', color: ADMIN_COLORS.tx2, fontSize: 13, cursor: 'pointer',
 };

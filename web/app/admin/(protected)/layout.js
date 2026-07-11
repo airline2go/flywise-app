@@ -8,6 +8,7 @@
 import { redirect } from 'next/navigation';
 import { getAdminSession } from '../../../lib/admin/adminFetch';
 import LogoutButton from '../../../lib/admin/LogoutButton';
+import { ADMIN_COLORS } from '../../../lib/admin/theme';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة التحكم' },
@@ -20,14 +21,14 @@ export default async function AdminProtectedLayout({ children }) {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: '1px solid #1c3644' }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: `1px solid ${ADMIN_COLORS.border}` }}>
         <nav style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
           <strong style={{ fontSize: 15 }}>Airpiv Admin</strong>
           {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href} style={{ color: '#9db3bd', fontSize: 13.5, textDecoration: 'none' }}>{item.label}</a>
+            <a key={item.href} href={item.href} style={{ color: ADMIN_COLORS.tx2, fontSize: 13.5, textDecoration: 'none' }}>{item.label}</a>
           ))}
         </nav>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: '#9db3bd' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: ADMIN_COLORS.tx2 }}>
           <span>{session.name || (session.role === 'admin' ? 'مدير' : 'موظف')}</span>
           <LogoutButton />
         </div>

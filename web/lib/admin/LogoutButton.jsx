@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { ADMIN_COLORS } from './theme';
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function LogoutButton() {
     <button
       type="button"
       onClick={handleLogout}
-      style={{ background: 'transparent', border: '1px solid #1c3644', color: '#9db3bd', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}
+      style={{ background: 'transparent', border: `1px solid ${ADMIN_COLORS.border}`, color: ADMIN_COLORS.tx2, borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}
     >
       🚪 تسجيل الخروج
     </button>
