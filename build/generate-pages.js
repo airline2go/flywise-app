@@ -197,7 +197,12 @@ function scoreRelatedRoute(route, candidate) {
 }
 
 function computeRelatedRoutes(route, routeList) {
+  // [BUG-FIX] Exclude not just this exact slug but also the reverse-direction
+  // same-city-pair route (e.g. Hamburg->Barcelona showing up as "related" on
+  // the Barcelona->Hamburg page) — same trip, opposite direction, not a
+  // useful suggestion.
   const candidates = routeList.filter((r) => r.slug !== route.slug
+    && !(r.origin_city === route.destination_city && r.destination_city === route.origin_city)
     && (r.origin_city === route.origin_city || r.destination_city === route.destination_city
       || (route.destination_country && r.destination_country === route.destination_country)));
 
@@ -293,8 +298,21 @@ function writeLanguageSitemaps(urlsByLang) {
   }
 }
 
+// [INCREMENTAL-BUILD-PROBE] Diagnostic only — checks whether a page from a
+// previous build is already sitting on disk before this run writes
+// anything, to find out whether Render's build cache carries forward the
+// generated output directories (city/, flights/, etc.) or only node_modules.
+// Doesn't skip, alter, or gate any part of the build; safe to remove once
+// the answer is known from a real deploy's log.
+function probeIncrementalBuildCache() {
+  const probePath = path.join(ROOT, 'en', 'flights', 'barcelona-hamburg.html');
+  const exists = fs.existsSync(probePath);
+  console.log(`[incremental-build-probe] ${probePath} exists before build: ${exists}`);
+}
+
 async function main() {
   console.log(`[generate-pages] API_BASE=${PROXY}`);
+  probeIncrementalBuildCache();
 
   const cities = await fetchListOrDie('cities', `${PROXY}/cities`, 'cities');
   const countries = await fetchListOrDie('countries', `${PROXY}/countries`, 'countries');

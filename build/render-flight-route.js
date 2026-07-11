@@ -107,18 +107,62 @@ function buildFaqItems(route, lang) {
     });
   }
 
+  // [CONTENT-VARIATION-3] Explicit, distinctly-worded direct-flight FAQ
+  // (a real long-tail search query in its own right) — separate from the
+  // duration FAQ's folded-in directLine, reusing the same three existing
+  // allFlightsDirect/directFlightsAvailable/noDirectFlights answer strings.
+  if (route.direct_flight_available != null) {
+    const directLineKey = route.all_direct ? 'allFlightsDirect' : (route.direct_flight_available ? 'directFlightsAvailable' : 'noDirectFlights');
+    items.push({
+      question: format(translate('routeFaqDirectQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: translate(directLineKey, lang),
+    });
+  }
+
+  // [CONTENT-VARIATION-3] Alternative-airports FAQ — only when the
+  // destination city genuinely has sibling airports (real data from
+  // data.js's city airport_codes, already used for the airport-info
+  // section below); omitted entirely otherwise, never fabricated.
+  const altAirports = getAlternativeAirports(route.destination_city, route.destination_iata, lang);
+  if (altAirports.length) {
+    items.push({
+      question: format(translate('routeFaqAltAirportsQuestion', lang), { destination: route.destination_city }),
+      answer: format(translate('routeFaqAltAirportsAnswer', lang), { destination: route.destination_city, airports: altAirports.join(', ') }),
+    });
+  }
+
   if (route.custom_faq && route.custom_faq.length) return route.custom_faq;
   return items;
 }
 
+// [CONTENT-VARIATION-3] Was a flat 2-variant branch (long-haul/short-haul)
+// shared verbatim by every route of that haul type — the single most
+// repetitive section on the page. Now branches on domestic vs international
+// too (4 body variants), appends a tip clause built from the route's real
+// persisted direct/connecting field (never fabricated), and picks a closing
+// sentence deterministically per-route so two routes sharing every other
+// signal still read differently.
 function buildBestTimeHtml(route, lang) {
   if (route.distance_km == null) return '';
   const isLongHaul = route.haul_type === 'long-haul';
-  const body = format(translate(isLongHaul ? 'routeBestTimeBodyLongHaul' : 'routeBestTimeBodyShortHaul', lang), { origin: escHtml(route.origin_city), destination: escHtml(route.destination_city) });
+  const isDomestic = !!(route.origin_country && route.destination_country && route.origin_country === route.destination_country);
+  const bodyKey = isDomestic
+    ? (isLongHaul ? 'routeBestTimeBodyDomesticLongHaul' : 'routeBestTimeBodyDomesticShortHaul')
+    : (isLongHaul ? 'routeBestTimeBodyLongHaul' : 'routeBestTimeBodyShortHaul');
+  const body = format(translate(bodyKey, lang), { origin: escHtml(route.origin_city), destination: escHtml(route.destination_city) });
   const bookingWindow = translate(isLongHaul ? 'routeBestTimeWindowLongHaul' : 'routeBestTimeWindowShortHaul', lang);
+
+  let tip = '';
+  if (route.all_direct === true) tip = translate('routeBestTimeTipDirect', lang);
+  else if (route.direct_flight_available === false) tip = translate('routeBestTimeTipConnecting', lang);
+  else if (route.direct_flight_available === true) tip = translate('routeBestTimeTipMixed', lang);
+
+  const closingKeys = ['routeBestTimeClosingV1', 'routeBestTimeClosingV2'];
+  const closing = translate(closingKeys[pickVariant(`${route.slug}:bt`, closingKeys.length)], lang);
+
   return `<section class="route-besttime-section"><h2>${translate('routeBestTimeHeading', lang)}</h2>` +
     `<div class="route-booking-window"><span class="route-booking-window-lbl">${translate('routeBestTimeBookingWindowLabel', lang)}</span><span class="route-booking-window-val">${bookingWindow}</span></div>` +
-    `<p>${body}</p></section>`;
+    `<p>${body}${tip ? ` ${tip}` : ''} ${closing}</p></section>`;
 }
 
 // Organization schema is now injected uniformly for every page by shell.js's
