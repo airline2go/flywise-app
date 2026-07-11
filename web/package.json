@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
     "next": "16.2.10",
     "node-html-parser": "^9.0.0",
     "pdf-lib": "^1.17.1",
