@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/admin/invoices', label: 'الفواتير الضريبية' },
   { href: '/admin/profit', label: 'هامش الربح', fullAdminOnly: true },
   { href: '/admin/ancillary', label: 'هامش المقاعد والحقائب', fullAdminOnly: true },
+  { href: '/admin/loyalty', label: 'إعدادات الولاء' },
   { href: '/admin/promos', label: 'كودات الخصم' },
   { href: '/admin/blog', label: 'المدونة' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
