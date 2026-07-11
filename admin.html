@@ -1734,6 +1734,14 @@
         <label class="form-label">مقدمة SEO مخصصة (اختياري) — تحل محل النص التلقائي في كل اللغات</label>
         <textarea class="form-input" id="airline-intro-text" rows="3" placeholder="اترك فارغاً لاستخدام النص التلقائي"></textarea>
       </div>
+      <div class="form-group">
+        <label class="form-label">كود الدولة (ISO، اختياري)</label>
+        <input type="text" class="form-input" id="airline-country-code" placeholder="DE" maxlength="2" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">مطار المحور الرئيسي (اختياري) — يتجاوز الاستنتاج التلقائي</label>
+        <input type="text" class="form-input" id="airline-hub-iata" placeholder="FRA" maxlength="3" style="text-transform:uppercase">
+      </div>
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="closeModal('airline-editor-modal')">إلغاء</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveAirline()">💾 حفظ</button>
@@ -1783,6 +1791,22 @@
       <div class="form-group">
         <label class="form-label">الحالة</label>
         <select class="form-input" id="airport-status"><option value="published">منشور</option><option value="draft">مسودة</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">المسافة عن مركز المدينة (كم، اختياري)</label>
+        <input type="text" class="form-input" id="airport-distance-city-center" placeholder="28.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">خيارات النقل (اختياري)</label>
+        <textarea class="form-input" id="airport-transit-options" rows="2" placeholder="قطار سريع كل 20 دقيقة، حوالي 45 دقيقة لوسط المدينة..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">معلومات الصالات (اختياري)</label>
+        <textarea class="form-input" id="airport-terminal-info" rows="2" placeholder="صالتان T1 وT2، مربوطتان بمكوك مجاني..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">نصائح للمسافر (اختياري)</label>
+        <textarea class="form-input" id="airport-traveler-tips" rows="2" placeholder="يُنصح بالوصول قبل ساعتين للرحلات الدولية..."></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">ترجمات اسم المطار (7 لغات)</label>

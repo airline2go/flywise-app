@@ -112,5 +112,17 @@
   "routeIntroPopular": " C'est l'une des liaisons les plus populaires sur Airpiv, très demandée par les voyageurs.",
   "routeFaqAirlineQuestion": "Quelles compagnies aériennes desservent {origin} à {destination} ?",
   "routeFaqAirlineAnswerSingle": "Actuellement, une seule compagnie aérienne dessert cette liaison.",
-  "routeFaqAirlineAnswerMulti": "Actuellement, {count} compagnies aériennes desservent cette liaison — cela vaut la peine de les comparer."
+  "routeFaqAirlineAnswerMulti": "Actuellement, {count} compagnies aériennes desservent cette liaison — cela vaut la peine de les comparer.",
+  "relatedReasonPopular": "Populaire auprès des voyageurs",
+  "relatedReasonMoreFlights": "Plus d'options de vol",
+  "relatedReasonSimilarTrip": "Durée de trajet similaire",
+  "relatedReasonSameRegion": "Même région",
+  "airlineHubLabel": "Plaque tournante",
+  "airlineMostFlownRoutesLabel": "Liaisons les plus fréquentes",
+  "airportTravelerInfoHeading": "Informations pour les voyageurs",
+  "airportDistanceCityCenterLabel": "Distance du centre-ville",
+  "airportDistanceCityCenterValueTemplate": "Environ {distance} km du centre-ville",
+  "airportTransitOptionsLabel": "Comment s'y rendre",
+  "airportTerminalInfoLabel": "Terminaux",
+  "airportTravelerTipsLabel": "Conseils aux voyageurs"
 }

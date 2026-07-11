@@ -263,11 +263,24 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     distanceHtml = `<div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px">📏 ${route.distance_km.toLocaleString(getLanguage(lang).locale)} km · ${haulLabel}</div>`;
   }
 
+  // [ROUTE-INTELLIGENCE-3] Each related route now carries a reasonKey
+  // computed by computeRelatedRoutes() (generate-pages.js) — surfaced as a
+  // short subtitle so the suggestion isn't just an unexplained city pair.
+  // reasonKey is null for a candidate that matched only on the base
+  // same-city relation with no stronger signal — no subtitle shown then.
+  const RELATED_REASON_KEYS = {
+    popularWithTravelers: 'relatedReasonPopular',
+    moreFlightOptions: 'relatedReasonMoreFlights',
+    similarTripLength: 'relatedReasonSimilarTrip',
+    sameRegion: 'relatedReasonSameRegion',
+  };
   const relatedRoutesHtml = (relatedRoutes && relatedRoutes.length)
     ? `<section id="related-routes-section"><h2>${translate('similarFlightRoutes', lang)}</h2><div class="related-routes-grid">${relatedRoutes.map((r) => {
       const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
       const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
-      return `<a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
+      const reasonTranslationKey = r.reasonKey && RELATED_REASON_KEYS[r.reasonKey];
+      const reasonHtml = reasonTranslationKey ? `<span class="related-route-reason">${translate(reasonTranslationKey, lang)}</span>` : '';
+      return `<a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}${reasonHtml}</a>`;
     }).join('')}</div></section>`
     : '';
 

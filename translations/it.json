@@ -112,5 +112,17 @@
   "routeIntroPopular": " Questa è una delle tratte più popolari su Airpiv, con una forte richiesta da parte dei viaggiatori.",
   "routeFaqAirlineQuestion": "Quali compagnie aeree volano da {origin} a {destination}?",
   "routeFaqAirlineAnswerSingle": "Al momento, una compagnia aerea opera su questa tratta.",
-  "routeFaqAirlineAnswerMulti": "Al momento, {count} compagnie aeree operano su questa tratta, quindi vale la pena confrontarle."
+  "routeFaqAirlineAnswerMulti": "Al momento, {count} compagnie aeree operano su questa tratta, quindi vale la pena confrontarle.",
+  "relatedReasonPopular": "Popolare tra i viaggiatori",
+  "relatedReasonMoreFlights": "Più opzioni di volo",
+  "relatedReasonSimilarTrip": "Durata di viaggio simile",
+  "relatedReasonSameRegion": "Stessa regione",
+  "airlineHubLabel": "Hub principale",
+  "airlineMostFlownRoutesLabel": "Tratte più frequenti",
+  "airportTravelerInfoHeading": "Informazioni per i viaggiatori",
+  "airportDistanceCityCenterLabel": "Distanza dal centro città",
+  "airportDistanceCityCenterValueTemplate": "Circa {distance} km dal centro città",
+  "airportTransitOptionsLabel": "Come arrivare",
+  "airportTerminalInfoLabel": "Terminal",
+  "airportTravelerTipsLabel": "Consigli per i viaggiatori"
 }

@@ -17,6 +17,7 @@ const AIRLINE_CSS = `<style>
 .airline-route-card{display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
 .airline-route-card:hover{border-color:var(--teal)}
 .airline-route-card .arrow{color:var(--teal);margin:0 4px}
+.airline-hub-badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;background:rgba(15,181,160,.15);border:1px solid rgba(15,181,160,.3);color:var(--teal);font-size:12px;font-weight:700;border-radius:8px;padding:5px 12px;text-decoration:none}
 @media (max-width:480px){.airline-route-grid{grid-template-columns:1fr}}
 </style>`;
 
@@ -25,7 +26,11 @@ const AIRLINE_CSS = `<style>
 // shape, same intro-template pattern. `routes` is the set of published
 // route_pages rows this airline has been observed operating (via the
 // route_airlines join table — see content.routes.js's GET /airlines/:code).
-function renderAirlinePage(airline, routes, lang) {
+// [ROUTE-INTELLIGENCE-3] `mostUsedRoutes` (a recency-ranked subset of
+// `routes`) and `airline.hubAirport` (admin-set or inferred) are new,
+// optional — both simply don't render when absent, e.g. for an airline
+// observed on too few routes for either to be meaningful.
+function renderAirlinePage(airline, routes, lang, mostUsedRoutes) {
   const locRoutes = routes.map((r) => Object.assign({}, r, {
     origin_city: localizeCity(r.origin_city, r.origin_iata, lang),
     destination_city: localizeCity(r.destination_city, r.destination_iata, lang),
@@ -47,9 +52,25 @@ function renderAirlinePage(airline, routes, lang) {
 
   const breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span><span>${escHtml(airline.name)}</span></nav>`;
 
+  const hubAirportHtml = airline.hubAirport
+    ? `<a class="airline-hub-badge" href="${pathFor(lang, `airport/${encodeURIComponent(airline.hubAirport)}`)}">✈ ${translate('airlineHubLabel', lang)}: ${escHtml(airline.hubAirport)}</a>`
+    : '';
+
   function routeCardHtml(r) {
     return `<a class="airline-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</a>`;
   }
+
+  // Only worth a separate "most flown" highlight when it's a genuine
+  // curated subset of a longer full list — for a small airline the two
+  // would just be the same handful of routes shown twice.
+  const locMostUsed = (mostUsedRoutes || []).map((r) => Object.assign({}, r, {
+    origin_city: localizeCity(r.origin_city, r.origin_iata, lang),
+    destination_city: localizeCity(r.destination_city, r.destination_iata, lang),
+  }));
+  const mostUsedSectionHtml = (locMostUsed.length && locRoutes.length > locMostUsed.length)
+    ? `<section class="airline-routes-section"><h2>${translate('airlineMostFlownRoutesLabel', lang)}</h2><div class="airline-route-grid">${locMostUsed.map(routeCardHtml).join('')}</div></section>`
+    : '';
+
   const routesSectionHtml = locRoutes.length
     ? `<section class="airline-routes-section"><h2>${translate('routesLabel', lang)}</h2><div class="airline-route-grid">${locRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
@@ -62,8 +83,10 @@ ${breadcrumbHtml}
   <div class="airline-hero-name">${escHtml(airline.name)}</div>
   <div class="airline-hero-code">${escHtml(airline.iata_code)}</div>
   <div class="airline-hero-sub">${translate('airlineWord', lang)}</div>
+  ${hubAirportHtml}
 </div>
 <section><p>${escHtml(introText)}</p></section>
+${mostUsedSectionHtml}
 ${routesSectionHtml}
   </div>
 </main>`;
