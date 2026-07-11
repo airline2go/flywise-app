@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
   { href: '/admin/geo', label: 'المطارات والمدن' },
   { href: '/admin/team', label: 'الفريق', fullAdminOnly: true },
+  { href: '/admin/settings', label: 'الإعدادات' },
 ];
 
 export default async function AdminProtectedLayout({ children }) {
