@@ -1,27 +1,33 @@
 'use client';
 
-// Ports the results-page behavior from app.js's initResults()/
-// rebuildFilterPanels()/applyF()/sortBy() — one clean page instead of
-// the old code's two parallel results containers (#rw/#offers-list and
-// the #results-page overlay that ended up being the only one users
-// actually saw, per the B2 research notes — not replicated here, this
-// component IS the results page).
+// Ports the real #results-page full-screen overlay exactly (same
+// classes: .rp-header/.rp-tabs/.rp-body/.rp-filter-ov/.filter-section
+// etc. from styles.css) — this is the ONLY results surface in this app
+// (app.js's #rw/#offers-list inline section never actually showed once
+// a later monkey-patch made #results-page load unconditionally on every
+// search — see the B2 research notes; not replicated here).
+//
+// [SIMPLIFIED] The inline "edit search" dropdown (.rp-edit-drop, lets
+// you tweak origin/dates without leaving the results page) is not
+// ported in this pass — back button returns to the search homepage
+// instead. Also not ported: per-card share button and the tap-to-expand
+// segment detail sheet (openFlightSheet/.fdet).
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearch } from './SearchProvider';
 import { useFlightSearch } from './useFlightSearch';
 import OfferCard from './OfferCard';
-import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes } from './offerUtils';
+import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes, fmtPrice } from './offerUtils';
 
 const PAGE_SIZE = 10;
 
-export default function ResultsClient({ origin, destination, trip, departDate, returnDate, t }) {
+export default function ResultsClient({ origin, destination, trip, departDate, returnDate }) {
   const router = useRouter();
   const search = useSearch();
   const mcLegs = search.mcLegs;
   const [sortMode, setSortMode] = useState('best');
   const [filters, setFilters] = useState(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [shown, setShown] = useState(PAGE_SIZE);
 
   const payload = useMemo(() => {
@@ -59,149 +65,159 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
     return [...map.entries()];
   }, [offers]);
 
-  const filtered = filters ? sortOffers(applyFilters(offers, filters), sortMode) : [];
-
-  function retry() {
-    router.refresh();
-  }
+  const bestList = filters ? sortOffers(applyFilters(offers, filters), 'best') : [];
+  const priceList = filters ? sortOffers(applyFilters(offers, filters), 'price') : [];
+  const durList = filters ? sortOffers(applyFilters(offers, filters), 'dur') : [];
+  const filtered = sortMode === 'best' ? bestList : sortMode === 'price' ? priceList : durList;
 
   function selectOffer(offer) {
     search.setSelectedOffer(offer);
-    // Booking-flow entry lands in milestone B3 — for now this just
-    // records the pick so B3 has somewhere to read it from.
+    // Booking-flow entry lands in milestone B3.
   }
 
+  const routeLabel = trip === 'mc'
+    ? mcLegs.map((l) => l.origin?.iata).filter(Boolean).join(' → ')
+    : `${origin} → ${destination}`;
+  const metaLabel = trip === 'mc' ? '' : `${departDate ? new Date(departDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) : ''}${returnDate ? ' – ' + new Date(returnDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) : ''} · ${paxCount} Erw.`;
+
   return (
-    <div style={pageStyle}>
-      <div style={headerStyle}>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 800 }}>
-            {trip === 'mc' ? t.tripMultiCity : `${origin} → ${destination}`}
+    <div id="results-page" className="open">
+      {filterSheetOpen && filters && (
+        <div className="rp-filter-ov open">
+          <div className="rp-filter-sheet">
+            <div className="rp-filter-handle" />
+            <div className="rp-filter-hd">
+              <h3>⚙️ Filter</h3>
+              <button type="button" className="rp-filter-close" onClick={() => setFilterSheetOpen(false)}>✕</button>
+            </div>
+            <div className="rp-filter-body">
+              <div className="filter-section">
+                <div className="filter-section-title">Stopps</div>
+                {[[0, 'Direktflug'], [1, '1 Stopp'], [2, '2+ Stopps']].map(([key, label]) => (
+                  <div key={key} className="filter-check" onClick={() => setFilters({ ...filters, stops: { ...filters.stops, [key]: !filters.stops[key] } })}>
+                    <div className="filter-check-left">
+                      <div className={`filter-check-box${filters.stops[key] ? ' checked' : ''}`} />
+                      <span className="filter-check-label">{label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="filter-section">
+                <div className="filter-section-title">Max. Preis</div>
+                <div className="filter-price-row"><span>€0</span><span>{fmtPrice(filters.maxPrice)}</span></div>
+                <input
+                  type="range" min={0} max={filters.priceCeiling} value={filters.maxPrice}
+                  onChange={(e) => setFilters({ ...filters, maxPrice: Number(e.target.value) })}
+                  style={{ width: '100%', height: 6, borderRadius: 6, accentColor: '#00a991', cursor: 'pointer', margin: '8px 0' }}
+                />
+              </div>
+              <div className="filter-section">
+                <div className="filter-section-title">Abflugzeit</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[['early', '🌅', '00–06h'], ['morning', '☀️', '06–12h'], ['afternoon', '🌤', '12–18h'], ['evening', '🌙', '18–24h']].map(([key, icon, label]) => (
+                    <button
+                      key={key} type="button" className={`tcc${filters.timeOfDay[key] ? ' on' : ''}`}
+                      onClick={() => setFilters({ ...filters, timeOfDay: { ...filters.timeOfDay, [key]: !filters.timeOfDay[key] } })}
+                    >
+                      <div>{icon}</div>{label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {airlineOptions.length > 1 && (
+                <div className="filter-section">
+                  <div className="filter-section-title">Airlines</div>
+                  {airlineOptions.map(([code, name]) => (
+                    <div key={code} className="filter-check" onClick={() => {
+                      const current = filters.airlines || new Set(airlineOptions.map(([c]) => c));
+                      const next = new Set(current);
+                      if (next.has(code)) next.delete(code); else next.add(code);
+                      setFilters({ ...filters, airlines: next });
+                    }}>
+                      <div className="filter-check-left">
+                        <div className={`filter-check-box${(!filters.airlines || filters.airlines.has(code)) ? ' checked' : ''}`} />
+                        <span className="filter-check-label">{name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rp-filter-foot">
+              <button type="button" className="rp-filter-reset" onClick={() => setFilters(defaultFilters(offers))}>↺ Reset</button>
+              <button type="button" className="rp-filter-apply" onClick={() => setFilterSheetOpen(false)}>✓ Anwenden</button>
+            </div>
           </div>
-          {status === 'success' && <div style={{ fontSize: 12.5, color: 'var(--tx3)' }}>{filtered.length} {paxCount > 1 ? `· ${paxCount} Pax` : ''}</div>}
         </div>
+      )}
+
+      <div className="rp-header">
+        <div className="rp-header-top">
+          <button type="button" className="rp-back" onClick={() => router.back()}>←</button>
+          <div className="rp-title-wrap">
+            <div className="rp-route">{routeLabel || '—'}</div>
+            <div className="rp-meta">{metaLabel || '—'}</div>
+          </div>
+          <button type="button" className="rp-filter-btn" onClick={() => setFilterSheetOpen(true)}>⚙️</button>
+        </div>
+
         {status === 'success' && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[['best', 'Beste'], ['price', 'Preis'], ['dur', 'Dauer']].map(([mode, label]) => (
-              <button key={mode} type="button" onClick={() => setSortMode(mode)} style={sortMode === mode ? activeTabStyle : tabStyle}>{label}</button>
-            ))}
-            <button type="button" onClick={() => setFiltersOpen((v) => !v)} style={tabStyle}>⚙️</button>
+          <div className="rp-tabs">
+            <div className={`rp-tab${sortMode === 'best' ? ' on' : ''}`} onClick={() => setSortMode('best')}>
+              <div className="rp-tab-label">⭐ Beste</div>
+              <div className="rp-tab-price">{bestList[0] ? fmtPrice(bestList[0].price) : '—'}</div>
+            </div>
+            <div className={`rp-tab${sortMode === 'price' ? ' on' : ''}`} onClick={() => setSortMode('price')}>
+              <div className="rp-tab-label">💰 Günstigste</div>
+              <div className="rp-tab-price">{priceList[0] ? fmtPrice(priceList[0].price) : '—'}</div>
+            </div>
+            <div className={`rp-tab${sortMode === 'dur' ? ' on' : ''}`} onClick={() => setSortMode('dur')}>
+              <div className="rp-tab-label">⚡ Schnellste</div>
+              <div className="rp-tab-price">{durList[0] ? fmtPrice(durList[0].price) : '—'}</div>
+            </div>
           </div>
         )}
       </div>
 
-      {filtersOpen && filters && (
-        <FilterPanel filters={filters} onChange={setFilters} airlineOptions={airlineOptions} />
-      )}
+      <div className="rp-body">
+        {status === 'success' && (
+          <div className="rp-count-bar"><span className="rp-count-txt">{filtered.length} Flüge gefunden</span></div>
+        )}
 
-      {status === 'loading' && <LoadingState trip={trip} />}
-      {status === 'error' && <ErrorState message={error} onRetry={retry} />}
-      {status === 'empty' && <EmptyState />}
-      {status === 'idle' && <EmptyState message="—" />}
+        {status === 'loading' && (
+          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+            <div className="lplane">✈️</div>
+            <div className="ltxt">{trip === 'mc' ? 'Mehrere Städte werden gesucht...' : 'Suche die besten Verbindungen...'}</div>
+            <div className="lsub">600+ Airlines werden durchsucht</div>
+          </div>
+        )}
 
-      {status === 'success' && (
-        <>
-          {filtered.slice(0, shown).map((offer, i) => (
-            <OfferCard key={offer.id} offer={offer} isBestValue={i === 0 && sortMode === 'best'} onSelect={selectOffer} paxCount={paxCount} />
-          ))}
-          {shown < filtered.length && (
-            <button type="button" onClick={() => setShown((s) => s + PAGE_SIZE)} style={loadMoreStyle}>Mehr Flüge anzeigen ↓</button>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
+        {status === 'error' && (
+          <div className="ebox show">
+            <div className="ein">⚠️ ❌ Server nicht erreichbar — {error}
+              <button type="button" onClick={() => router.refresh()} style={{ display: 'block', margin: '12px auto 0', padding: '9px 18px', borderRadius: 10, border: 'none', background: 'var(--teal)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>🔄 Erneut versuchen</button>
+            </div>
+          </div>
+        )}
 
-function FilterPanel({ filters, onChange, airlineOptions }) {
-  function toggleStop(key) {
-    onChange({ ...filters, stops: { ...filters.stops, [key]: !filters.stops[key] } });
-  }
-  function toggleTime(key) {
-    onChange({ ...filters, timeOfDay: { ...filters.timeOfDay, [key]: !filters.timeOfDay[key] } });
-  }
-  function toggleAirline(code) {
-    const current = filters.airlines || new Set(airlineOptions.map(([c]) => c));
-    const next = new Set(current);
-    if (next.has(code)) next.delete(code); else next.add(code);
-    onChange({ ...filters, airlines: next });
-  }
-  return (
-    <div style={filterPanelStyle}>
-      <div style={filterGroupStyle}>
-        <span style={filterLabelStyle}>Stopps</span>
-        {[[0, 'Direkt'], [1, '1 Stopp'], [2, '2+ Stopps']].map(([key, label]) => (
-          <label key={key} style={checkLabelStyle}>
-            <input type="checkbox" checked={filters.stops[key]} onChange={() => toggleStop(key)} /> {label}
-          </label>
-        ))}
-      </div>
-      <div style={filterGroupStyle}>
-        <span style={filterLabelStyle}>Abflugzeit</span>
-        {[['early', '00-06'], ['morning', '06-12'], ['afternoon', '12-18'], ['evening', '18-24']].map(([key, label]) => (
-          <label key={key} style={checkLabelStyle}>
-            <input type="checkbox" checked={filters.timeOfDay[key]} onChange={() => toggleTime(key)} /> {label}
-          </label>
-        ))}
-      </div>
-      <div style={filterGroupStyle}>
-        <span style={filterLabelStyle}>Max. Preis: €{filters.maxPrice}</span>
-        <input type="range" min={0} max={filters.priceCeiling} step={10} value={filters.maxPrice} onChange={(e) => onChange({ ...filters, maxPrice: Number(e.target.value) })} style={{ width: '100%' }} />
-      </div>
-      {airlineOptions.length > 1 && (
-        <div style={filterGroupStyle}>
-          <span style={filterLabelStyle}>Airlines</span>
-          {airlineOptions.map(([code, name]) => (
-            <label key={code} style={checkLabelStyle}>
-              <input type="checkbox" checked={!filters.airlines || filters.airlines.has(code)} onChange={() => toggleAirline(code)} /> {name}
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+        {status === 'empty' && (
+          <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--tx3)' }}>😕 Keine Flüge gefunden</div>
+        )}
 
-function LoadingState({ trip }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-      <div style={{ fontSize: 32, marginBottom: 10 }}>✈️</div>
-      <div style={{ fontSize: 14, color: 'var(--tx2)' }}>
-        {trip === 'mc' ? 'Mehrere Städte werden gesucht…' : 'Suche die besten Verbindungen…'}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
-        {[1, 2, 3].map((i) => <div key={i} style={skeletonCardStyle} />)}
+        {status === 'success' && (
+          <div id="rp-offers-list">
+            {filtered.slice(0, shown).map((offer, i) => (
+              <OfferCard key={offer.id} offer={offer} index={i} isBestValue={i === 0 && sortMode === 'best'} onSelect={selectOffer} paxCount={paxCount} />
+            ))}
+          </div>
+        )}
+
+        {status === 'success' && shown < filtered.length && (
+          <div style={{ textAlign: 'center', padding: '14px 0' }}>
+            <button type="button" className="lm-btn" onClick={() => setShown((s) => s + PAGE_SIZE)}>Mehr Flüge anzeigen ↓</button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-function EmptyState({ message }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--tx2)' }}>
-      <div style={{ fontSize: 32, marginBottom: 10 }}>😕</div>
-      <div>{message || 'Keine Flüge gefunden — versuch andere Daten oder Filter.'}</div>
-    </div>
-  );
-}
-
-function ErrorState({ message, onRetry }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--rd)' }}>
-      <div style={{ marginBottom: 10 }}>❌ Server nicht erreichbar — {message}</div>
-      <button type="button" onClick={onRetry} style={retryBtnStyle}>🔄 Erneut versuchen</button>
-    </div>
-  );
-}
-
-const pageStyle = { maxWidth: 760, margin: '0 auto', padding: '16px 20px 60px' };
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 };
-const tabStyle = { padding: '7px 12px', borderRadius: 20, border: '1px solid var(--bd)', background: 'var(--bg)', color: 'var(--tx2)', fontSize: 12.5, cursor: 'pointer' };
-const activeTabStyle = { ...tabStyle, background: 'var(--teal)', color: '#fff', borderColor: 'var(--teal)', fontWeight: 700 };
-const loadMoreStyle = { width: '100%', padding: '12px 0', borderRadius: 'var(--r-sm)', border: '1px solid var(--bd)', background: 'var(--bg)', color: 'var(--tx)', fontSize: 13.5, cursor: 'pointer', marginTop: 6 };
-const retryBtnStyle = { padding: '9px 18px', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--teal)', color: '#fff', fontWeight: 700, cursor: 'pointer' };
-const skeletonCardStyle = { height: 96, borderRadius: 'var(--r)', background: 'linear-gradient(90deg, var(--bg2) 25%, var(--bd) 50%, var(--bg2) 75%)', backgroundSize: '200% 100%', animation: 'fw-shimmer 1.4s infinite' };
-const filterPanelStyle = { display: 'flex', flexWrap: 'wrap', gap: 20, padding: 16, marginBottom: 16, background: 'var(--bg2)', borderRadius: 'var(--r)', border: '1px solid var(--bd)' };
-const filterGroupStyle = { display: 'flex', flexDirection: 'column', gap: 6, minWidth: 130 };
-const filterLabelStyle = { fontSize: 11, fontWeight: 700, color: 'var(--tx2)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 };
-const checkLabelStyle = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--tx)' };

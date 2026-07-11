@@ -1,15 +1,17 @@
 'use client';
 
-// Ports app.js's home search card: trip-type select (one-way/round-trip/
-// multi-city), origin/destination fields with swap, the custom calendar,
-// the passenger/cabin popover, and doSearch()'s pre-submit validation
-// (missing field / same-airport checks — shown as a compact inline
-// banner here instead of the old #help-ov overlay, same checks, lighter
-// UI). Submission is a client-side route push to the canonical
-// `/search/{ORIGIN}-{DEST}?trip=&depart=&return=` deep-link shape (or
-// `/search/multi-city` for the mc trip type, which has no single
-// origin-destination pair to encode) — the actual search request itself
-// runs on the results page, not here.
+// Ported directly from the real index.html/app.js homepage search card —
+// same CSS classes (styles.css), same structural markup, same copy
+// (see legacyStrings.js, extracted verbatim from app.js's own
+// TRANSLATIONS dict). Not a redesign: this file exists so the visible
+// result matches the original pixel-for-pixel, not just functionally.
+//
+// [NOT-PORTED] The svc-tabs "hotels/cars/insurance" coming-soon stub,
+// #recent-searches quick-pick chips, and the homepage's own inline
+// .loader/.ebox (search always transitions to the full-screen results
+// route in this app, so those never actually show — see the ResultsClient
+// loading/error states instead) are deferred to a follow-up pass, not
+// silently dropped as "not needed."
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AirportField from './AirportField';
@@ -20,7 +22,7 @@ import { useSearch } from './SearchProvider';
 function fmtDisplayDate(iso) {
   if (!iso) return null;
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+  return new Date(y, m - 1, d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
 }
 
 function addDays(days) {
@@ -33,12 +35,14 @@ function emptyLeg() {
   return { origin: null, destination: null, date: null };
 }
 
-export default function SearchForm({ lang, t }) {
+const MC_LEG_LABELS_DE = ['(Hinflug)', '(Zwischenstopp)', '(letzter Stopp)'];
+
+export default function SearchForm({ lang, ls }) {
   const router = useRouter();
   const search = useSearch();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [paxOpen, setPaxOpen] = useState(false);
-  const [mcLegDateOpen, setMcLegDateOpen] = useState(null); // leg index or null
+  const [mcLegDateOpen, setMcLegDateOpen] = useState(null);
   const [error, setError] = useState('');
 
   const legs = search.mcLegs.length ? search.mcLegs : [emptyLeg(), emptyLeg()];
@@ -48,14 +52,8 @@ export default function SearchForm({ lang, t }) {
     next[index] = { ...next[index], ...patch };
     search.setMcLegs(next);
   }
-
-  function addLeg() {
-    search.setMcLegs([...legs, emptyLeg()]);
-  }
-
-  function removeLeg(index) {
-    search.setMcLegs(legs.filter((_, i) => i !== index));
-  }
+  function addLeg() { search.setMcLegs([...legs, emptyLeg()]); }
+  function removeLeg(index) { search.setMcLegs(legs.filter((_, i) => i !== index)); }
 
   function resultsPath(pair) {
     const prefix = lang === 'de' ? '' : `/${lang}`;
@@ -65,97 +63,128 @@ export default function SearchForm({ lang, t }) {
   function submit() {
     setError('');
     if (search.trip === 'mc') {
-      const invalid = legs.some((l) => !l.origin || !l.destination || !l.date);
-      if (invalid) { setError(t.searchValidationDateRequired); return; }
+      if (legs.some((l) => !l.origin || !l.destination || !l.date)) { setError('Bitte alle Felder ausfüllen'); return; }
       router.push(resultsPath('multi-city'));
       return;
     }
-    if (!search.origin) { setError(t.searchValidationOriginRequired); return; }
-    if (!search.destination) { setError(t.searchValidationDestinationRequired); return; }
-    if (search.origin.iata === search.destination.iata) { setError(t.searchValidationSameAirport); return; }
-    if (!search.departureDate) { setError(t.searchValidationDateRequired); return; }
+    if (!search.origin) { setError('Bitte wähle einen Abflughafen'); return; }
+    if (!search.destination) { setError('Bitte wähle einen Zielflughafen'); return; }
+    if (search.origin.iata === search.destination.iata) { setError('Start und Ziel dürfen nicht gleich sein'); return; }
+    if (!search.departureDate) { setError('Bitte wähle ein Reisedatum'); return; }
     const params = new URLSearchParams({ trip: search.trip, depart: search.departureDate });
     if (search.trip === 'rr' && search.returnDate) params.set('return', search.returnDate);
     router.push(`${resultsPath(`${search.origin.iata}-${search.destination.iata}`)}?${params.toString()}`);
   }
 
-  const paxCount = search.pax.adults + search.pax.children + search.pax.infants;
+  const paxLabel = `${search.pax.adults + search.pax.children + search.pax.infants} Erw. · ${search.pax.cabin === 'economy' ? 'Economy' : search.pax.cabin === 'premium_economy' ? 'Premium Economy' : search.pax.cabin === 'business' ? 'Business' : 'First Class'}`;
 
   return (
-    <div style={cardStyle}>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-        <select
-          value={search.trip}
-          onChange={(e) => search.setTrip(e.target.value)}
-          style={tripSelectStyle}
-        >
-          <option value="rr">{t.tripRoundTrip}</option>
-          <option value="ow">{t.tripOneWay}</option>
-          <option value="mc">{t.tripMultiCity}</option>
-        </select>
+    <div className="scard">
+      <div className="krow">
+        <div className="ksel-wrap">
+          <select className="ksel" value={search.trip} onChange={(e) => search.setTrip(e.target.value)}>
+            <option value="rr">{ls.trip_rr}</option>
+            <option value="ow">{ls.trip_ow}</option>
+            <option value="mc">+ Mehrere Städte</option>
+          </select>
+          <svg className="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+        </div>
+        <button type="button" className="kpax-btn" onClick={() => setPaxOpen(true)}>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+          <span>{search.pax.adults + search.pax.children + search.pax.infants}</span>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginInlineStart: 5 }}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
+          <span>{search.pax.checkedBags}</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginInlineStart: 3 }}><path d="M6 9l6 6 6-6" /></svg>
+        </button>
       </div>
 
       {search.trip !== 'mc' ? (
         <>
-          <div style={fieldRowStyle}>
-            <AirportField label={t.searchOriginLabel} placeholder={t.searchOriginPlaceholder} value={search.origin} onSelect={search.setOrigin} t={t} />
-            <button type="button" onClick={search.swapOriginDestination} style={swapBtnStyle} aria-label={t.searchSwapAria}>⇄</button>
-            <AirportField label={t.searchDestinationLabel} placeholder={t.searchDestinationPlaceholder} value={search.destination} onSelect={search.setDestination} t={t} />
+          <AirportField
+            side="from" ls={ls}
+            value={search.origin}
+            onSelect={search.setOrigin}
+          />
+
+          <div className="kswap-row">
+            <div className="kline" />
+            <button type="button" className="kswap" onClick={search.swapOriginDestination} aria-label="Abflug- und Zielort tauschen">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
+            </button>
+            <div className="kline" />
           </div>
 
-          <div style={fieldRowStyle}>
-            <button type="button" onClick={() => setDatePickerOpen(true)} style={dateFieldStyle}>
-              <span style={labelStyle}>{t.searchDepartDateLabel}</span>
-              <span>{fmtDisplayDate(search.departureDate) || t.searchDatePlaceholder}</span>
-            </button>
-            {search.trip === 'rr' && (
-              <button type="button" onClick={() => setDatePickerOpen(true)} style={dateFieldStyle}>
-                <span style={labelStyle}>{t.searchReturnDateLabel}</span>
-                <span>{fmtDisplayDate(search.returnDate) || t.searchDatePlaceholder}</span>
+          <AirportField
+            side="to" ls={ls}
+            value={search.destination}
+            onSelect={search.setDestination}
+          />
+
+          <div className="kfield kdates-field">
+            <div className="kfield-in kdates-in">
+              <button type="button" className="kdate-half" onClick={() => setDatePickerOpen(true)}>
+                <div className="kdate-lbl">{ls.depart_lbl}</div>
+                <div className="kdate-val">{fmtDisplayDate(search.departureDate) || ls.date_pick}</div>
               </button>
-            )}
-            <button type="button" onClick={() => setPaxOpen(true)} style={paxFieldStyle}>
-              <span style={labelStyle}>{t.paxCabinClass}</span>
-              <span>{t.paxSummaryTemplate.replace('{count}', paxCount)}</span>
-            </button>
+              {search.trip === 'rr' && (
+                <>
+                  <div className="kdates-sep" />
+                  <button type="button" className="kdate-half" onClick={() => setDatePickerOpen(true)}>
+                    <div className="kdate-lbl">{ls.return_lbl}</div>
+                    <div className="kdate-val">{fmtDisplayDate(search.returnDate) || ls.date_pick}</div>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div>
           {legs.map((leg, i) => (
-            <div key={i} style={fieldRowStyle}>
-              <AirportField label={`${t.searchLegLabel.replace('{n}', i + 1)} · ${t.searchOriginLabel}`} placeholder={t.searchOriginPlaceholder} value={leg.origin} onSelect={(a) => setLeg(i, { origin: a })} t={t} />
-              <AirportField label={t.searchDestinationLabel} placeholder={t.searchDestinationPlaceholder} value={leg.destination} onSelect={(a) => setLeg(i, { destination: a })} t={t} />
-              <button type="button" onClick={() => setMcLegDateOpen(i)} style={dateFieldStyle}>
-                <span style={labelStyle}>{t.searchDepartDateLabel}</span>
-                <span>{fmtDisplayDate(leg.date) || t.searchDatePlaceholder}</span>
+            <div key={i} className="mc-leg" style={mcLegBoxStyle}>
+              <div style={mcLegTitleStyle}>
+                Flug {i + 1} {MC_LEG_LABELS_DE[i === 0 ? 0 : i === legs.length - 1 ? 2 : 1]}
+                {legs.length > 2 && (
+                  <button type="button" onClick={() => removeLeg(i)} style={mcRemoveBtnStyle}>✕ entfernen</button>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <AirportField side="mc-from" ls={ls} value={leg.origin} onSelect={(a) => setLeg(i, { origin: a })} compact />
+                <AirportField side="mc-to" ls={ls} value={leg.destination} onSelect={(a) => setLeg(i, { destination: a })} compact />
+              </div>
+              <button type="button" onClick={() => setMcLegDateOpen(i)} style={mcDateBtnStyle}>
+                <div style={{ flex: 1 }}>
+                  <div style={mcDateLblStyle}>Datum</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: leg.date ? 'var(--tx)' : 'var(--tx3)' }}>{fmtDisplayDate(leg.date) || ls.date_pick}</div>
+                </div>
               </button>
-              {legs.length > 2 && (
-                <button type="button" onClick={() => removeLeg(i)} style={removeLegBtnStyle}>{t.searchRemoveLeg}</button>
-              )}
             </div>
           ))}
           {legs.length < 6 && (
-            <button type="button" onClick={addLeg} style={addLegBtnStyle}>{t.searchAddLeg}</button>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={() => setPaxOpen(true)} style={{ ...paxFieldStyle, maxWidth: 220 }}>
-              <span style={labelStyle}>{t.paxCabinClass}</span>
-              <span>{t.paxSummaryTemplate.replace('{count}', paxCount)}</span>
+            <button type="button" id="mc-add-btn" onClick={addLeg} style={{ display: 'block', width: '100%', background: 'transparent', border: '2px dashed var(--teal)', borderRadius: 12, padding: 12, color: 'var(--teal)', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}>
+              + Weiteren Stopp hinzufügen
             </button>
-          </div>
+          )}
         </div>
       )}
 
-      {error && <div style={errorStyle}>{error}</div>}
+      <button type="button" className="gobtn" onClick={submit}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+        <span>{ls.search_btn}</span>
+      </button>
 
-      <button type="button" onClick={submit} style={submitBtnStyle}>{t.searchSubmitButton}</button>
+      {error && <div style={{ color: 'var(--rd)', fontSize: 12.5, textAlign: 'center', marginTop: 8 }}>{error}</div>}
+
+      <div className="kextras">
+        <button type="button" className="xch">{ls.direct_chip}</button>
+        <button type="button" className="xch">{ls.baggage_chip}</button>
+        <span className="xtax">{ls.tax_note}</span>
+      </div>
 
       {datePickerOpen && (
         <DatePicker
           mode="range"
           value={{ depart: search.departureDate, return: search.trip === 'rr' ? search.returnDate : null }}
-          doneLabel={t.paxDoneButton}
           onChange={(v) => search.setDates(v.depart, v.return)}
           onClose={() => setDatePickerOpen(false)}
         />
@@ -170,42 +199,16 @@ export default function SearchForm({ lang, t }) {
         />
       )}
       {paxOpen && (
-        <PaxPicker pax={search.pax} onChange={search.setPax} onClose={() => setPaxOpen(false)} t={t} />
+        <PaxPicker pax={search.pax} onChange={search.setPax} onClose={() => setPaxOpen(false)} />
       )}
+      {/* paxLabel computed for parity with the old #pax-lbl hidden field; not otherwise rendered here */}
+      <span style={{ display: 'none' }}>{paxLabel}</span>
     </div>
   );
 }
 
-const cardStyle = {
-  background: 'var(--bg)', border: '1px solid var(--bd)', borderRadius: 'var(--r)',
-  padding: 20, boxShadow: '0 8px 28px rgba(16,29,44,.08)', maxWidth: 760, margin: '0 auto',
-};
-const tripSelectStyle = {
-  padding: '9px 14px', borderRadius: 'var(--r-sm)', border: '1px solid var(--bd)',
-  background: 'var(--bg2)', color: 'var(--tx)', fontSize: 13.5, fontWeight: 600,
-};
-const fieldRowStyle = { display: 'flex', gap: 10, alignItems: 'flex-end', marginBottom: 10, flexWrap: 'wrap' };
-const labelStyle = { display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--tx2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 };
-const dateFieldStyle = {
-  flex: 1, minWidth: 130, textAlign: 'right', padding: '11px 12px', borderRadius: 'var(--r-sm)',
-  border: '1px solid var(--bd)', background: 'var(--bg)', color: 'var(--tx)', fontSize: 14, cursor: 'pointer',
-  display: 'flex', flexDirection: 'column', gap: 2,
-};
-const paxFieldStyle = { ...dateFieldStyle, flex: 1 };
-const swapBtnStyle = {
-  width: 38, height: 38, borderRadius: '50%', border: '1px solid var(--bd)', background: 'var(--bg)',
-  color: 'var(--teal)', fontSize: 16, cursor: 'pointer', flexShrink: 0, alignSelf: 'flex-end', marginBottom: 1,
-};
-const addLegBtnStyle = {
-  padding: '9px 14px', borderRadius: 'var(--r-sm)', border: '1px dashed var(--bd2)', background: 'transparent',
-  color: 'var(--teal2)', fontSize: 13, cursor: 'pointer', fontWeight: 600,
-};
-const removeLegBtnStyle = {
-  padding: '9px 12px', borderRadius: 'var(--r-sm)', border: '1px solid var(--bd)', background: 'transparent',
-  color: 'var(--rd)', fontSize: 12, cursor: 'pointer',
-};
-const errorStyle = { color: 'var(--rd)', fontSize: 13, marginBottom: 10 };
-const submitBtnStyle = {
-  width: '100%', padding: '13px 0', borderRadius: 'var(--r-sm)', border: 'none', background: 'var(--teal)',
-  color: '#fff', fontWeight: 700, fontSize: 15.5, cursor: 'pointer',
-};
+const mcLegBoxStyle = { background: 'var(--bg2)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: 12, marginBottom: 8, position: 'relative' };
+const mcLegTitleStyle = { fontSize: 11, fontWeight: 700, color: 'var(--teal)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', justifyContent: 'space-between' };
+const mcRemoveBtnStyle = { background: 'none', border: 'none', color: 'var(--rd)', fontSize: 11, cursor: 'pointer', textTransform: 'none', letterSpacing: 0 };
+const mcDateBtnStyle = { width: '100%', textAlign: 'right', background: 'var(--bg)', border: '1.5px solid var(--bd)', borderRadius: 10, padding: '12px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 };
+const mcDateLblStyle = { fontSize: 10, color: 'var(--tx3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 };

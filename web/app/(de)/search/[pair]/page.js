@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { stringsFor } from '../../../../lib/translate';
+import '../../../../styles/styles.css';
 import ResultsClient from '../../../../lib/booking/ResultsClient';
 import { resolveDeepLinkDates } from '../../../../lib/booking/dateDefaults';
 
@@ -19,7 +19,6 @@ export default async function SearchResultsPage({ params, searchParams }) {
   // handleUrlAutoSearch() — only an explicit ?trip=rr from the search
   // form itself opts into round-trip.
   const trip = sp.trip === 'rr' || sp.trip === 'mc' ? sp.trip : 'ow';
-  const t = stringsFor('de');
   const { departDate, returnDate } = resolveDeepLinkDates(sp, trip);
 
   return (
@@ -29,7 +28,6 @@ export default async function SearchResultsPage({ params, searchParams }) {
       trip={trip}
       departDate={departDate}
       returnDate={returnDate}
-      t={t}
     />
   );
 }

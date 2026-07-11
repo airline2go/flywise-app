@@ -218,9 +218,3 @@ footer {
 [data-theme="dark"] main p {
   color: #aebcc9;
 }
-
-/* Booking-app search-results skeleton loader (lib/booking/ResultsClient.jsx) */
-@keyframes fw-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
