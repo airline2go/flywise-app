@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import SearchForm from './SearchForm';
 import RecentSearches from './RecentSearches';
+import FlexHint from './FlexHint';
 import { LEGACY_STRINGS } from './legacyStrings';
 
 const SVC_TABS = [
@@ -56,6 +57,8 @@ export default function HomeHero({ lang }) {
         ) : (
           <SearchForm lang={lang} ls={ls} />
         )}
+
+        <FlexHint ls={ls} />
       </div>
 
       <div className="trust">

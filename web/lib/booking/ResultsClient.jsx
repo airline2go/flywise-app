@@ -6,16 +6,12 @@
 // (app.js's #rw/#offers-list inline section never actually showed once
 // a later monkey-patch made #results-page load unconditionally on every
 // search — see the B2 research notes; not replicated here).
-//
-// [SIMPLIFIED] The inline "edit search" dropdown (.rp-edit-drop, lets
-// you tweak origin/dates without leaving the results page) is not
-// ported in this pass — back button returns to the search homepage
-// instead. (Tracked as a follow-up fidelity item.)
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearch } from './SearchProvider';
 import { useFlightSearch } from './useFlightSearch';
 import OfferCard from './OfferCard';
+import RpEditDrop from './RpEditDrop';
 import { FlightDetailSheet, BagInfoModal, shareOffer } from './flightDetail';
 import { LEGACY_STRINGS } from './legacyStrings';
 import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes, fmtPrice } from './offerUtils';
@@ -33,6 +29,7 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
   const [shown, setShown] = useState(PAGE_SIZE);
   const [detailOffer, setDetailOffer] = useState(null);
   const [bagOffer, setBagOffer] = useState(null);
+  const [editDropOpen, setEditDropOpen] = useState(false);
 
   const payload = useMemo(() => {
     if (trip === 'mc') {
@@ -158,12 +155,23 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
       <div className="rp-header">
         <div className="rp-header-top">
           <button type="button" className="rp-back" onClick={() => router.back()}>←</button>
-          <div className="rp-title-wrap">
+          <div className="rp-title-wrap" onClick={() => setEditDropOpen((o) => !o)}>
             <div className="rp-route">{routeLabel || '—'}</div>
             <div className="rp-meta">{metaLabel || '—'}</div>
           </div>
           <button type="button" className="rp-filter-btn" onClick={() => setFilterSheetOpen(true)}>⚙️</button>
         </div>
+
+        <RpEditDrop
+          open={editDropOpen}
+          lang={lang}
+          trip={trip}
+          origin={origin}
+          destination={destination}
+          departDate={departDate}
+          returnDate={returnDate}
+          onClose={() => setEditDropOpen(false)}
+        />
 
         {status === 'success' && (
           <div className="rp-tabs">
