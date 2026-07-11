@@ -102,5 +102,15 @@
   "airlineSingleRouteDescriptionTemplate": "{airline} vliegt de route {otherCity} – {otherCity2}. Vergelijk prijzen en boek voordelig met Airpiv.",
   "airlineManyRoutesTitleTemplate": "{airline} vluchten — {count} routes vergeleken",
   "airlineManyRoutesDescriptionTemplate": "{count} vluchtverbindingen van {airline}, naast elkaar vergeleken. Vind de goedkoopste route met Airpiv.",
-  "airlineWord": "Luchtvaartmaatschappij"
+  "airlineWord": "Luchtvaartmaatschappij",
+  "routeIntroOpeningDomesticLongHaul": "Vlieg je binnenlands van {origin} naar {destination}?",
+  "routeIntroOpeningDomesticShortHaul": "Op zoek naar een binnenlandse vlucht van {origin} naar {destination}?",
+  "routeIntroClosingLongHaulV2": " Airpiv houdt deze langeafstandsroute dag en nacht in de gaten, zodat je een eerlijke prijs kunt vastleggen voordat de tarieven stijgen — zonder verborgen kosten.",
+  "routeIntroClosingShortHaulV2": " Airpiv houdt deze route dag en nacht in de gaten, zodat je de beste prijs meteen opmerkt zodra die daalt — zonder verborgen kosten.",
+  "routeIntroCarrierSingle": " Momenteel vliegt slechts één maatschappij op deze route.",
+  "routeIntroCarrierMulti": " {count} maatschappijen vliegen op deze route, dus je hebt meer opties om te vergelijken.",
+  "routeIntroPopular": " Dit is een van de populairdere routes op Airpiv, met sterke vraag van reizigers.",
+  "routeFaqAirlineQuestion": "Welke maatschappijen vliegen van {origin} naar {destination}?",
+  "routeFaqAirlineAnswerSingle": "Op dit moment vliegt één maatschappij op deze route.",
+  "routeFaqAirlineAnswerMulti": "Op dit moment vliegen {count} maatschappijen op deze route — het loont om ze te vergelijken."
 }

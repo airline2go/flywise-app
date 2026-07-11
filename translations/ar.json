@@ -102,5 +102,15 @@
   "airlineSingleRouteDescriptionTemplate": "تشغّل {airline} خط رحلات {otherCity} – {otherCity2}. قارن الأسعار واحجز برخص مع Airpiv.",
   "airlineManyRoutesTitleTemplate": "رحلات {airline} — مقارنة بين {count} خطوط رحلات",
   "airlineManyRoutesDescriptionTemplate": "{count} خطوط رحلات تشغّلها {airline}، مقارنة جنبًا إلى جنب. اعثر على أرخص خط رحلات مع Airpiv.",
-  "airlineWord": "شركة طيران"
+  "airlineWord": "شركة طيران",
+  "routeIntroOpeningDomesticLongHaul": "هل تسافر داخلياً من {origin} إلى {destination}؟",
+  "routeIntroOpeningDomesticShortHaul": "تبحث عن رحلة داخلية من {origin} إلى {destination}؟",
+  "routeIntroClosingLongHaulV2": " تراقب Airpiv هذا الخط الطويل على مدار الساعة، لتتمكن من تثبيت سعر عادل قبل ارتفاع الأسعار — بدون أي رسوم خفية.",
+  "routeIntroClosingShortHaulV2": " تراقب Airpiv هذا الخط ليلاً ونهاراً لمساعدتك على اقتناص أفضل سعر فور انخفاضه — بدون أي رسوم خفية.",
+  "routeIntroCarrierSingle": " تشغّل شركة طيران واحدة فقط هذا الخط حالياً.",
+  "routeIntroCarrierMulti": " تتنافس {count} شركات طيران على هذا الخط، مما يمنحك خيارات أكثر للمقارنة.",
+  "routeIntroPopular": " هذا من أكثر الخطوط شعبية على Airpiv، ويشهد إقبالاً كبيراً من المسافرين.",
+  "routeFaqAirlineQuestion": "ما هي شركات الطيران التي تسافر من {origin} إلى {destination}؟",
+  "routeFaqAirlineAnswerSingle": "تشغّل شركة طيران واحدة هذا الخط حالياً.",
+  "routeFaqAirlineAnswerMulti": "تشغّل {count} شركات طيران هذا الخط حالياً، لذا يستحق الأمر المقارنة بينها."
 }
