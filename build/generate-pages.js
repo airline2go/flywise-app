@@ -21,7 +21,10 @@ const { LANGUAGES, pathPrefix } = require('./languages');
 const PROXY = process.env.API_BASE || 'https://api.airpiv.com';
 const ROOT = path.resolve(__dirname, '..');
 const SNAPSHOT_DIR = path.join(__dirname, '.snapshot');
-const CONCURRENCY = 8;
+// [RATE-LIMIT-429-FIX] Lowered from 8 — combined with fetch-utils.js's new
+// per-request pacing, keeps the build's own request rate comfortably under
+// content.routes.js's shared rate limit even as page count grows.
+const CONCURRENCY = 2;
 
 const summary = {
   generated: { city: 0, country: 0, airport: 0, airline: 0, flights: 0, blog: 0 },
