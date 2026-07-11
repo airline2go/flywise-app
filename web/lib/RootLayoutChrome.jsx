@@ -15,6 +15,7 @@
 import Script from 'next/script';
 import { getLanguage } from './languages';
 import { SiteChrome, JsonLd, ORGANIZATION_SCHEMA } from './page-shell';
+import { BookingProviders } from './booking/BookingProviders';
 // [CSS-IMPORT] A bundled import, not a raw <link> tag pointing at
 // public/ — guarantees correct <head> placement via Next's CSS pipeline
 // rather than depending on React 19's separate (and here, empirically
@@ -35,7 +36,9 @@ export default function RootLayoutChrome({ lang, children }) {
             every page's <head> — position in the document doesn't affect
             how crawlers parse JSON-LD, only presence/content does. */}
         <JsonLd schema={ORGANIZATION_SCHEMA} />
-        <SiteChrome lang={lang}>{children}</SiteChrome>
+        <BookingProviders>
+          <SiteChrome lang={lang}>{children}</SiteChrome>
+        </BookingProviders>
       </body>
     </html>
   );

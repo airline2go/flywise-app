@@ -6,6 +6,7 @@
 // unchanged markup/classes so shared-layout.css applies identically) and
 // the JSON-LD safety helper, which still needs the exact same escaping
 // the original did.
+import Link from 'next/link';
 import { DEFAULT_LANGUAGE, pathPrefix } from './languages';
 import { translate } from './translate';
 
@@ -50,13 +51,12 @@ function JsonLd({ schema }) {
 // as shell.js's renderShell() so shared-layout.css applies identically
 // (no visual change, only the templating mechanism changed).
 //
-// [PLAIN-ANCHORS-INTENTIONAL] These deliberately stay <a> tags, not
-// next/link's <Link> — "/" is NOT part of this Next.js app (see the
-// migration plan's routing section: the home/search page stays on the
-// current static site, reached only via a Vercel rewrite once this app
-// becomes the front door). <Link> would try to client-side-navigate
-// within this app's own router and could bypass that rewrite; a plain
-// <a> guarantees a real full-page request that the rewrite layer sees.
+// [HOME-IS-NOW-REAL] Milestone B2 gave "/" (and "/xx/") a real search
+// homepage in this same Next.js app — the logo and "search flights" nav
+// links now use next/link's <Link> for a client-side transition instead
+// of the plain <a> full-page-request workaround B1 deliberately kept
+// (back when "/" was still the Phase 0 placeholder and needed to fall
+// through to the old static site via the Vercel rewrite).
 function SiteChrome({ lang, children }) {
   const searchLabel = translate('searchLabel', lang);
   const footerTagline = translate('footerTagline', lang);
@@ -68,20 +68,20 @@ function SiteChrome({ lang, children }) {
   const privacyLabel = translate('privacyLabel', lang);
   const termsLabel = translate('termsLabel', lang);
   const copyright = translate('copyright', lang);
+  const home = homeHref(lang);
 
   return (
     <>
       <nav className="topnav">
         <div className="navi">
-          <a href={homeHref(lang)} className="logo">
+          <Link href={home} className="logo">
             <picture>
               <source srcSet="/airpiv-logo.webp" type="image/webp" />
               <img src="/airpiv-logo.png" alt="Airpiv" width="118" height="38" />
             </picture>
-          </a>
+          </Link>
           <div className="navr">
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see PLAIN-ANCHORS-INTENTIONAL above */}
-            <a href="/" className="btn-t">{searchLabel}</a>
+            <Link href={home} className="btn-t">{searchLabel}</Link>
           </div>
         </div>
       </nav>
