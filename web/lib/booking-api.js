@@ -61,8 +61,8 @@ async function searchAirports(query) {
 // search.routes.js — not ported). cabin_bags/checked_bags are also not
 // sent here: the server's POST /search never reads them (bag counts only
 // matter at booking/pricing time), so app.js was sending them for nothing.
-async function search(payload) {
-  return bookingFetch('/search', { method: 'POST', body: JSON.stringify(payload), skipAuth: true });
+async function search(payload, signal) {
+  return bookingFetch('/search', { method: 'POST', body: JSON.stringify(payload), skipAuth: true, signal });
 }
 
 export { API_BASE, authHeader, bookingFetch, fetchMe, linkGuestBookings, fetchMyBookings, searchAirports, search };
