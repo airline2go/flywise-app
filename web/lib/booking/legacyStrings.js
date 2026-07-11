@@ -33,7 +33,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Tipp: Flexible Daten? Probiere ±3 Tage für günstigere Preise!",
     "det_direct": "Direktflug",
     "stops": "Stopps",
-    "stop": "Stopp"
+    "stop": "Stopp",
+    "det_outbound": "Hinflug",
+    "det_return": "Rückflug",
+    "det_layover": "Aufenthalt in",
+    "det_flight": "Flug",
+    "det_title": "Flugdetails",
+    "det_book_now": "Diesen Flug buchen",
+    "perPerson": "pro Person",
+    "fc_cabin": "Handgepäck",
+    "fc_checked": "Aufgabegepäck",
+    "bg_overview": "Gepäckübersicht",
+    "bg_close": "Schließen"
   },
   "en": {
     "hero_pill": "Real prices · Live availability",
@@ -63,7 +74,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Tip: Flexible dates? Try ±3 days for cheaper prices!",
     "det_direct": "Direct flight",
     "stops": "Stops",
-    "stop": "Stop"
+    "stop": "Stop",
+    "det_outbound": "Outbound",
+    "det_return": "Return",
+    "det_layover": "Layover in",
+    "det_flight": "Flight",
+    "det_title": "Flight details",
+    "det_book_now": "Book this flight",
+    "perPerson": "per person",
+    "fc_cabin": "Cabin baggage",
+    "fc_checked": "Checked baggage",
+    "bg_overview": "Baggage overview",
+    "bg_close": "Close"
   },
   "ar": {
     "hero_pill": "أسعار حقيقية · توفر فوري",
@@ -93,7 +115,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 نصيحة: تواريخ مرنة؟ جرّب ±3 أيام للحصول على أسعار أرخص!",
     "det_direct": "رحلة مباشرة",
     "stops": "توقفات",
-    "stop": "توقف"
+    "stop": "توقف",
+    "det_outbound": "الذهاب",
+    "det_return": "العودة",
+    "det_layover": "توقف في",
+    "det_flight": "رحلة",
+    "det_title": "تفاصيل الرحلة",
+    "det_book_now": "احجز هذه الرحلة",
+    "perPerson": "للشخص",
+    "fc_cabin": "حقيبة يد",
+    "fc_checked": "حقيبة مسجّلة",
+    "bg_overview": "ملخص الحقائب",
+    "bg_close": "إغلاق"
   },
   "es": {
     "hero_pill": "Precios reales · Disponibilidad en vivo",
@@ -123,7 +156,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Consejo: ¿Fechas flexibles? ¡Prueba ±3 días para precios más baratos!",
     "det_direct": "Vuelo directo",
     "stops": "Escalas",
-    "stop": "Escala"
+    "stop": "Escala",
+    "det_outbound": "Ida",
+    "det_return": "Vuelta",
+    "det_layover": "Escala en",
+    "det_flight": "Vuelo",
+    "det_title": "Detalles del vuelo",
+    "det_book_now": "Reservar este vuelo",
+    "perPerson": "por persona",
+    "fc_cabin": "Equipaje de mano",
+    "fc_checked": "Equipaje facturado",
+    "bg_overview": "Resumen del equipaje",
+    "bg_close": "Cerrar"
   },
   "fr": {
     "hero_pill": "Prix réels · Disponibilité en temps réel",
@@ -153,7 +197,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Astuce : dates flexibles ? Essayez ±3 jours pour des prix plus intéressants !",
     "det_direct": "Vol direct",
     "stops": "Escales",
-    "stop": "Escale"
+    "stop": "Escale",
+    "det_outbound": "Aller",
+    "det_return": "Retour",
+    "det_layover": "Escale à",
+    "det_flight": "Vol",
+    "det_title": "Détails du vol",
+    "det_book_now": "Réserver ce vol",
+    "perPerson": "par personne",
+    "fc_cabin": "Bagage cabine",
+    "fc_checked": "Bagage en soute",
+    "bg_overview": "Récapitulatif des bagages",
+    "bg_close": "Fermer"
   },
   "it": {
     "hero_pill": "Prezzi reali · Disponibilità in tempo reale",
@@ -183,7 +238,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Consiglio: date flessibili? Prova ±3 giorni per prezzi più convenienti!",
     "det_direct": "Volo diretto",
     "stops": "Scali",
-    "stop": "Scalo"
+    "stop": "Scalo",
+    "det_outbound": "Andata",
+    "det_return": "Ritorno",
+    "det_layover": "Scalo a",
+    "det_flight": "Volo",
+    "det_title": "Dettagli del volo",
+    "det_book_now": "Prenota questo volo",
+    "perPerson": "a persona",
+    "fc_cabin": "Bagaglio a mano",
+    "fc_checked": "Bagaglio da stiva",
+    "bg_overview": "Riepilogo bagagli",
+    "bg_close": "Chiudi"
   },
   "nl": {
     "hero_pill": "Echte prijzen · Realtime beschikbaarheid",
@@ -213,7 +279,18 @@ const LEGACY_STRINGS = {
     "flex_hint": "💡 Tip: flexibele data? Probeer ±3 dagen voor goedkopere prijzen!",
     "det_direct": "Directe vlucht",
     "stops": "Tussenstops",
-    "stop": "Tussenstop"
+    "stop": "Tussenstop",
+    "det_outbound": "Heenreis",
+    "det_return": "Terugreis",
+    "det_layover": "Tussenstop in",
+    "det_flight": "Vlucht",
+    "det_title": "Vluchtdetails",
+    "det_book_now": "Boek deze vlucht",
+    "perPerson": "per persoon",
+    "fc_cabin": "Handbagage",
+    "fc_checked": "Ruimbagage",
+    "bg_overview": "Bagageoverzicht",
+    "bg_close": "Sluiten"
   }
 };
 

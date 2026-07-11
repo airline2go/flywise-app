@@ -1,3 +1,5 @@
+import { localeFor } from '../languages';
+
 // Pure helpers over the server's normalizeOffer() shape (see
 // flywise-server/src/services/normalizeOffer.js) — {id, al, price,
 // currency, outbound:{orig,dest,dep,arr,dur,stops,segs}, inbound:
@@ -55,12 +57,38 @@ function fmtTime(iso) {
   return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
 }
 
+// Ports app.js's fmtSegDate() exactly — weekday/day/month in the visitor's
+// locale (ar → 'ar', en → 'en-GB', de → 'de-DE', else the language's own
+// locale tag), with the same numeric "dd.mm." fallback if Intl throws.
+function fmtSegDate(iso, lang) {
+  const d = new Date(iso);
+  const loc = lang === 'ar' ? 'ar' : lang === 'en' ? 'en-GB' : lang === 'de' ? 'de-DE' : localeFor(lang);
+  try {
+    return d.toLocaleDateString(loc, { weekday: 'short', day: '2-digit', month: 'short' });
+  } catch {
+    return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.`;
+  }
+}
+
+// Whole-day difference between two ISO datetimes (calendar days, ignoring
+// time-of-day) — ports app.js's dayDiff(), used for the "+1"/"+2" arrival
+// day-shift badge in the detail sheet.
+function dayDiff(depIso, arrIso) {
+  const a = new Date(depIso);
+  const b = new Date(arrIso);
+  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((db - da) / 864e5);
+}
+
 // Ports app.js's fmt() exactly — always EUR, no decimal places (Duffel
 // prices are already whole-euro after margin rounding), not the offer's
-// own `currency` field (which fmt() never read either).
-function fmtPrice(price) {
+// own `currency` field (which fmt() never read either). Locale-aware via
+// langLocale() in the original, so it takes the same `lang` argument here
+// (defaulting to the platform default) instead of hardcoding 'de-DE'.
+function fmtPrice(price, lang = 'de') {
   try {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(price);
+    return new Intl.NumberFormat(localeFor(lang), { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(price);
   } catch {
     return `€${price}`;
   }
@@ -119,5 +147,5 @@ function applyFilters(offers, filters) {
 
 export {
   offerLegs, offerAirlineCodes, offerMaxStops, offerTotalDuration, offerIsRefundable,
-  fmtDuration, fmtTime, fmtPrice, sortOffers, defaultFilters, applyFilters, timeBucket,
+  fmtDuration, fmtTime, fmtSegDate, dayDiff, fmtPrice, sortOffers, defaultFilters, applyFilters, timeBucket,
 };

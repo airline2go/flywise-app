@@ -10,25 +10,29 @@
 // [SIMPLIFIED] The inline "edit search" dropdown (.rp-edit-drop, lets
 // you tweak origin/dates without leaving the results page) is not
 // ported in this pass — back button returns to the search homepage
-// instead. Also not ported: per-card share button and the tap-to-expand
-// segment detail sheet (openFlightSheet/.fdet).
+// instead. (Tracked as a follow-up fidelity item.)
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearch } from './SearchProvider';
 import { useFlightSearch } from './useFlightSearch';
 import OfferCard from './OfferCard';
+import { FlightDetailSheet, BagInfoModal, shareOffer } from './flightDetail';
+import { LEGACY_STRINGS } from './legacyStrings';
 import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes, fmtPrice } from './offerUtils';
 
 const PAGE_SIZE = 10;
 
-export default function ResultsClient({ origin, destination, trip, departDate, returnDate }) {
+export default function ResultsClient({ origin, destination, trip, departDate, returnDate, lang = 'de' }) {
   const router = useRouter();
   const search = useSearch();
+  const ls = LEGACY_STRINGS[lang] || LEGACY_STRINGS.de;
   const mcLegs = search.mcLegs;
   const [sortMode, setSortMode] = useState('best');
   const [filters, setFilters] = useState(null);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [shown, setShown] = useState(PAGE_SIZE);
+  const [detailOffer, setDetailOffer] = useState(null);
+  const [bagOffer, setBagOffer] = useState(null);
 
   const payload = useMemo(() => {
     if (trip === 'mc') {
@@ -104,7 +108,7 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
               </div>
               <div className="filter-section">
                 <div className="filter-section-title">Max. Preis</div>
-                <div className="filter-price-row"><span>€0</span><span>{fmtPrice(filters.maxPrice)}</span></div>
+                <div className="filter-price-row"><span>€0</span><span>{fmtPrice(filters.maxPrice, lang)}</span></div>
                 <input
                   type="range" min={0} max={filters.priceCeiling} value={filters.maxPrice}
                   onChange={(e) => setFilters({ ...filters, maxPrice: Number(e.target.value) })}
@@ -165,15 +169,15 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
           <div className="rp-tabs">
             <div className={`rp-tab${sortMode === 'best' ? ' on' : ''}`} onClick={() => setSortMode('best')}>
               <div className="rp-tab-label">⭐ Beste</div>
-              <div className="rp-tab-price">{bestList[0] ? fmtPrice(bestList[0].price) : '—'}</div>
+              <div className="rp-tab-price">{bestList[0] ? fmtPrice(bestList[0].price, lang) : '—'}</div>
             </div>
             <div className={`rp-tab${sortMode === 'price' ? ' on' : ''}`} onClick={() => setSortMode('price')}>
               <div className="rp-tab-label">💰 Günstigste</div>
-              <div className="rp-tab-price">{priceList[0] ? fmtPrice(priceList[0].price) : '—'}</div>
+              <div className="rp-tab-price">{priceList[0] ? fmtPrice(priceList[0].price, lang) : '—'}</div>
             </div>
             <div className={`rp-tab${sortMode === 'dur' ? ' on' : ''}`} onClick={() => setSortMode('dur')}>
               <div className="rp-tab-label">⚡ Schnellste</div>
-              <div className="rp-tab-price">{durList[0] ? fmtPrice(durList[0].price) : '—'}</div>
+              <div className="rp-tab-price">{durList[0] ? fmtPrice(durList[0].price, lang) : '—'}</div>
             </div>
           </div>
         )}
@@ -207,7 +211,18 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
         {status === 'success' && (
           <div id="rp-offers-list">
             {filtered.slice(0, shown).map((offer, i) => (
-              <OfferCard key={offer.id} offer={offer} index={i} isBestValue={i === 0 && sortMode === 'best'} onSelect={selectOffer} paxCount={paxCount} />
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                index={i}
+                isBestValue={i === 0 && sortMode === 'best'}
+                lang={lang}
+                onSelect={selectOffer}
+                onOpenDetail={setDetailOffer}
+                onOpenBags={setBagOffer}
+                onShare={(o) => shareOffer(o, lang)}
+                paxCount={paxCount}
+              />
             ))}
           </div>
         )}
@@ -218,6 +233,16 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
           </div>
         )}
       </div>
+
+      <FlightDetailSheet
+        offer={detailOffer}
+        lang={lang}
+        ls={ls}
+        paxCount={paxCount}
+        onClose={() => setDetailOffer(null)}
+        onBook={(o) => { setDetailOffer(null); selectOffer(o); }}
+      />
+      <BagInfoModal offer={bagOffer} lang={lang} ls={ls} onClose={() => setBagOffer(null)} />
     </div>
   );
 }

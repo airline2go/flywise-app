@@ -28,6 +28,7 @@ export default async function SearchResultsPage({ params, searchParams }) {
       trip={trip}
       departDate={departDate}
       returnDate={returnDate}
+      lang="de"
     />
   );
 }

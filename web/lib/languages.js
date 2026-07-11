@@ -32,6 +32,13 @@ function getLanguage(code) {
   return LANGUAGES.find((l) => l.code === code) || LANGUAGES.find((l) => l.code === DEFAULT_LANGUAGE);
 }
 
+// BCP-47 locale tag for a language code — the argument the old app.js
+// langLocale() fed to Intl.NumberFormat/toLocaleDateString. Falls back to
+// the default language's locale for an unknown code.
+function localeFor(code) {
+  return getLanguage(code).locale;
+}
+
 // URL path prefix for a given language — '' for the default language
 // (root), 'xx' for every other one.
 function pathPrefix(code) {
@@ -58,4 +65,4 @@ function urlsFor(relativePath) {
   return out;
 }
 
-export { LANGUAGES, LANGUAGE_CODES, DEFAULT_LANGUAGE, getLanguage, pathPrefix, pathFor, urlFor, urlsFor };
+export { LANGUAGES, LANGUAGE_CODES, DEFAULT_LANGUAGE, getLanguage, localeFor, pathPrefix, pathFor, urlFor, urlsFor };
