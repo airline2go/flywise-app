@@ -12,6 +12,7 @@ import { ADMIN_COLORS } from '../../../lib/admin/theme';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة التحكم' },
+  { href: '/admin/promos', label: 'كودات الخصم' },
   { href: '/admin/blog', label: 'المدونة' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
   { href: '/admin/geo', label: 'المطارات والمدن' },
