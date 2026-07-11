@@ -861,6 +861,12 @@
         <option value="12h">كل 12 ساعة</option>
         <option value="24h">كل 24 ساعة</option>
       </select>
+      <!-- [ROUTE-SCORE-4A] ترتيب حسب Route Score — مجرد عرض، مفيش أي
+           تغيير أوتوماتيكي مرتبط فيه بهاي المرحلة. -->
+      <select id="rp-sort-select" onchange="rpResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+        <option value="">الأحدث أولاً</option>
+        <option value="score">الأعلى Route Score أولاً</option>
+      </select>
     </div>
 
     <!-- [ROUTE-REFRESH-TIER] شريط الإجراء الجماعي — بيظهر بس لما يكون
@@ -886,12 +892,13 @@
             <th>المسار</th>
             <th>الحالة</th>
             <th>التحديث</th>
+            <th title="مؤشر تفاعل الزوار — للعرض فقط، لا يغيّر شيء تلقائياً حالياً">Route Score</th>
             <th>الرابط</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="route-pages-list">
-          <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1221,6 +1228,58 @@
           <button class="btn btn-primary" style="padding:9px 16px" onclick="saveApiCostConfig()">💾 حفظ</button>
         </div>
         <div id="api-estimated-cost" style="font-size:13px;color:var(--tx2)"></div>
+      </div>
+    </div>
+
+    <!-- [ROUTE-SCORE-4A] عرض/تعديل أوزان صيغة Route Score فقط — القيم
+         هنا بتتحكم برقم Score اللي بيظهر بجدول Route Pages، ومفيش أي
+         شي تلقائي بيقرأها لسا (هيك بتضل لحد ما تنعمل مرحلة 4B وتتفعّل
+         يدوياً بعد أسبوع مراقبة على الأقل — راجع الخطة). -->
+    <div class="table-card" style="margin-top:16px">
+      <div class="table-header">
+        <div class="table-title">📊 أوزان Route Score</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+        <p style="font-size:12px;color:var(--tx3);margin:0;line-height:1.6">
+          Route Score رقم يعتمد على زيارات/كليكات/بدايات حجز حقيقية لكل مسار — للعرض فقط حالياً، مفيش أي أتمتة مرتبطة فيه. القيم الافتراضية تخمينات أولية، عدّلها بعد ما تشوف بيانات حقيقية كافية.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">نصف عمر الأهمية (أيام)</label>
+            <input type="number" class="form-input" id="rs-half-life" placeholder="7" min="0.1" step="0.5">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">نافذة البيانات (أيام)</label>
+            <input type="number" class="form-input" id="rs-lookback" placeholder="30" min="1" step="1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">وزن الزيارة (impression)</label>
+            <input type="number" class="form-input" id="rs-w-impression" placeholder="1" min="0" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">وزن الكليك (click)</label>
+            <input type="number" class="form-input" id="rs-w-click" placeholder="10" min="0" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">وزن بداية الحجز (booking_start)</label>
+            <input type="number" class="form-input" id="rs-w-booking" placeholder="100" min="0" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">وزن نسبة الكليك (CTR)</label>
+            <input type="number" class="form-input" id="rs-w-ctr" placeholder="50" min="0" step="0.1">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">حد الثقة المنخفضة (أقل من)</label>
+            <input type="number" class="form-input" id="rs-conf-low" placeholder="100" min="0" step="1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">حد الثقة العالية (أكبر أو يساوي)</label>
+            <input type="number" class="form-input" id="rs-conf-high" placeholder="1000" min="0" step="1">
+          </div>
+          <button class="btn btn-primary" style="padding:9px 16px" onclick="saveRouteScoreConfig()">💾 حفظ</button>
+        </div>
       </div>
     </div>
   </div>
