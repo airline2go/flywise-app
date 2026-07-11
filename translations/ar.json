@@ -10,7 +10,6 @@
   "privacyLabel": "الخصوصية",
   "termsLabel": "الشروط",
   "copyright": "© 2026 Airpiv · جميع الحقوق محفوظة",
-
   "flightsFrom": "رحلات من",
   "flightsTo": "رحلات إلى",
   "availableWord": "متاحة",
@@ -43,7 +42,6 @@
   "airlinesFlyingThisRoute": "شركات الطيران المشغّلة لهذا الخط:",
   "hoursAbbrev": "س",
   "minutesAbbrev": "د",
-
   "routeTitleTemplate": "رحلات من {origin} إلى {destination}",
   "routeDescriptionTemplate": "ابحث واحجز رحلات رخيصة من {origin} ({originCode}) إلى {destination} ({destCode}) — قارن الأسعار مع Airpiv.",
   "routeIntroOpeningLongHaul": "تبحث عن رحلة من {origin} إلى {destination}؟",
@@ -70,7 +68,6 @@
   "routeBestTimeWindowShortHaul": "21–45 يومًا قبل الإقلاع",
   "routeDurationFaqQuestionTemplate": "كم تستغرق الرحلة من {origin} إلى {destination}؟",
   "routeDurationFaqAnswerTemplate": "يبلغ متوسط مدة الرحلة {duration}. {directLine}",
-
   "cityFewRoutesTitleTemplate": "رحلات {entity} — مقارنة بين {count} خطوط رحلات",
   "cityFewRoutesDescriptionTemplate": "{count} خطوط رحلات من وإلى {entity}، مقارنة جنبًا إلى جنب. اعثر على أرخص خط رحلات مع Airpiv.",
   "citySingleRouteTitleTemplate": "رحلات {otherCity} ↔ {city}",
@@ -79,13 +76,10 @@
   "cityMultiAirportDescriptionTemplate": "تخدم {city} عبر {count} مطارات ({codes}). قارن جميع خطوط الرحلات مع Airpiv.",
   "cityManyRoutesTitleTemplate": "رحلات رخيصة إلى {city} — جميع خطوط الرحلات",
   "cityManyRoutesDescriptionTemplate": "أكثر من {count} خط رحلات إلى {city}. قارن جميع الوجهات وشركات الطيران في الوقت الفعلي مع Airpiv.",
-  "entityIntroTemplate": "اكتشف جميع خطوط الرحلات من وإلى {entity}. تقارن Airpiv مئات شركات الطيران في الوقت الفعلي لإيجاد أفضل سعر لرحلتك.",
-
   "countrySingleRouteTitleTemplate": "رحلات إلى {country} — {otherCity} ↔ {country}",
   "countrySingleRouteDescriptionTemplate": "خط رحلات مباشر بين {otherCity} و{country}: قارن الأسعار واحجز رحلات رخيصة مع Airpiv.",
   "countryManyRoutesTitleTemplate": "رحلات رخيصة إلى {country} — جميع الوجهات",
   "countryManyRoutesDescriptionTemplate": "أكثر من {count} خط رحلات إلى {country}. قارن جميع الوجهات وشركات الطيران في الوقت الفعلي مع Airpiv.",
-
   "airportSingleRouteTitleTemplate": "مطار {code} — رحلة مباشرة من {city}",
   "airportSingleRouteDescriptionTemplate": "يوفّر مطار {code} في {city} خط رحلات مباشرًا واحدًا. قارن السعر واحجز مع Airpiv.",
   "airportMixedHaulTitleTemplate": "مطار {code} ({city}) — رحلات قصيرة وطويلة المدى",
@@ -98,5 +92,15 @@
   "departuresLabel": "المغادرات",
   "arrivalsLabel": "الوصول",
   "departuresFrom": "المغادرات من",
-  "arrivalsAt": "الوصول إلى"
+  "arrivalsAt": "الوصول إلى",
+  "cityIntroTemplate": "اكتشف جميع خطوط الرحلات من وإلى {entity}. تقارن Airpiv مئات شركات الطيران في الوقت الفعلي لإيجاد أفضل سعر لرحلتك.",
+  "countryIntroTemplate": "قارن أسعار الرحلات لجميع الوجهات في {entity}. تبحث Airpiv في مئات شركات الطيران في الوقت الفعلي لتجد أرخص خط رحلات لرحلتك.",
+  "countryFewRoutesTitleTemplate": "رحلات إلى {entity} — مقارنة بين {count} وجهات",
+  "countryFewRoutesDescriptionTemplate": "{count} وجهة في {entity}، مقارنة جنبًا إلى جنب. اعثر على أرخص خط رحلات مع Airpiv.",
+  "airlineIntroTemplate": "تشغّل {airline} عدة خطوط رحلات تتابعها Airpiv في مقارنة الأسعار. قارن جميع خطوط الرحلات المتاحة لهذه الشركة واعثر على أفضل سعر.",
+  "airlineSingleRouteTitleTemplate": "رحلات {airline} — {otherCity} ↔ {otherCity2}",
+  "airlineSingleRouteDescriptionTemplate": "تشغّل {airline} خط رحلات {otherCity} – {otherCity2}. قارن الأسعار واحجز برخص مع Airpiv.",
+  "airlineManyRoutesTitleTemplate": "رحلات {airline} — مقارنة بين {count} خطوط رحلات",
+  "airlineManyRoutesDescriptionTemplate": "{count} خطوط رحلات تشغّلها {airline}، مقارنة جنبًا إلى جنب. اعثر على أرخص خط رحلات مع Airpiv.",
+  "airlineWord": "شركة طيران"
 }

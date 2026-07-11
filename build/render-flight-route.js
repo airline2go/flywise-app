@@ -1,7 +1,7 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
-const { localizeCity, getAlternativeAirports, buildIataNameMap } = require('./data');
+const { localizeCity, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
-const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 
 // [BUG-FIX] The original flight-route.html wrote its JSON-LD schema TWICE —
 // a second, dead write unconditionally clobbered the first with a generic
@@ -53,8 +53,9 @@ function buildBestTimeHtml(route, lang) {
     `<p>${body}</p></section>`;
 }
 
-const ROUTE_HEAD_EXTRA_STATIC = `<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Airpiv","url":"https://airpiv.com","logo":"https://airpiv.com/apple-touch-icon.png"}</script>
-<link rel="stylesheet" href="/flight-route.css">`;
+// Organization schema is now injected uniformly for every page by shell.js's
+// renderShell() — no longer duplicated per render-*.js file.
+const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css">`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
 // and average-duration insights are genuinely live data from Duffel/Redis —
@@ -73,17 +74,10 @@ const ROUTE_HEAD_EXTRA_STATIC = `<script type="application/ld+json">{"@context":
 // count, a computed duration) use a `{placeholder}`.replace(...) at the
 // JS level against an already-translated template string.
 function buildLiveScript(route, lang) {
-  const relatedHrefBase = pathFor(lang, 'flights/');
-  const needsLiveLocalization = lang !== DEFAULT_LANGUAGE;
-  const iataNameMapJs = needsLiveLocalization
-    ? `var IATA_NAMES = ${JSON.stringify(buildIataNameMap(lang))};
-function localizeCityLive(name, iata){ return (iata && IATA_NAMES[iata]) || name; }`
-    : '';
   return `<script>
 (function(){
 var PROXY = 'https://api.airpiv.com';
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-${iataNameMapJs}
 // [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
 // never affects page behavior if it fails. sendBeacon (with a text/plain
 // Blob, not JSON) is preferred so a click that immediately navigates away
@@ -109,20 +103,6 @@ if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
   try { sessionStorage.setItem('fw_route_ref', JSON.stringify({ slug: ${JSON.stringify(route.slug)}, origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, lang: ${JSON.stringify(lang)} })); } catch (e) {}
   sendRouteTrack('click');
 });
-
-fetch(PROXY + '/route-pages/' + encodeURIComponent(${JSON.stringify(route.slug)}) + '/related')
-  .then(function(r){ return r.json(); })
-  .then(function(j){
-    if (!j.ok || !j.related || !j.related.length) return;
-    var section = document.getElementById('related-routes-section');
-    section.innerHTML = '<h2>${translate('similarFlightRoutes', lang)}</h2><div class="related-routes-grid">' +
-      j.related.map(function(r) {
-        ${needsLiveLocalization ? 'var oCity = localizeCityLive(r.origin_city, r.origin_iata), dCity = localizeCityLive(r.destination_city, r.destination_iata);' : 'var oCity = r.origin_city, dCity = r.destination_city;'}
-        return '<a class="related-route-card" href="${relatedHrefBase}' + encodeURIComponent(r.slug) + '">' + escHtml(oCity) + ' → ' + escHtml(dCity) + '</a>';
-      }).join('') +
-    '</div>';
-  })
-  .catch(function(){});
 
 fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.origin_iata)}) + '&to=' + encodeURIComponent(${JSON.stringify(route.destination_iata)}))
   .then(function(r){ return r.json(); })
@@ -174,19 +154,24 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 </script>`;
 }
 
-function renderFlightRoutePage(routeRaw, lang) {
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
   });
 
-  const isDefaultLang = lang === DEFAULT_LANGUAGE;
-  const title = (isDefaultLang && route.custom_title) || format(translate('routeTitleTemplate', lang), { origin: route.origin_city, destination: route.destination_city });
-  const description = (isDefaultLang && route.custom_meta_description) || format(translate('routeDescriptionTemplate', lang), { origin: route.origin_city, originCode: route.origin_iata, destination: route.destination_city, destCode: route.destination_iata });
+  // [ADMIN-OVERRIDE-ALL-LANGS] custom_title/custom_meta_description/intro_text
+  // are admin-authored per route (not per language) — they used to only
+  // apply when lang===DEFAULT_LANGUAGE, silently no-op-ing for the other 6
+  // languages while custom_faq (below) already applied uniformly. Now
+  // consistent: an admin override always wins over the generated template,
+  // regardless of language.
+  const title = route.custom_title || format(translate('routeTitleTemplate', lang), { origin: route.origin_city, destination: route.destination_city });
+  const description = route.custom_meta_description || format(translate('routeDescriptionTemplate', lang), { origin: route.origin_city, originCode: route.origin_iata, destination: route.destination_city, destCode: route.destination_iata });
 
   const urls = urlsFor(`flights/${encodeURIComponent(route.slug)}`);
   const url = urls[lang];
-  const introText = (isDefaultLang && route.intro_text) || buildDynamicIntro(route, lang);
+  const introText = route.intro_text || buildDynamicIntro(route, lang);
   const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
@@ -215,6 +200,14 @@ function renderFlightRoutePage(routeRaw, lang) {
     const haulLabel = route.haul_type === 'long-haul' ? translate('longHaulFlightLabel', lang) : translate('shortHaulFlightLabel', lang);
     distanceHtml = `<div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px">📏 ${route.distance_km.toLocaleString(getLanguage(lang).locale)} km · ${haulLabel}</div>`;
   }
+
+  const relatedRoutesHtml = (relatedRoutes && relatedRoutes.length)
+    ? `<section id="related-routes-section"><h2>${translate('similarFlightRoutes', lang)}</h2><div class="related-routes-grid">${relatedRoutes.map((r) => {
+      const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
+      const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
+      return `<a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
+    }).join('')}</div></section>`
+    : '';
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
@@ -246,7 +239,7 @@ ${altAirportsHtml}
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
   ${faqHtml}
 </section>
-<section id="related-routes-section"></section>
+${relatedRoutesHtml}
   </div>
 </main>`;
 

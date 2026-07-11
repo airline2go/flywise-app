@@ -10,7 +10,6 @@
   "privacyLabel": "Privacy",
   "termsLabel": "Terms",
   "copyright": "© 2026 Airpiv · All rights reserved",
-
   "flightsFrom": "Flights from",
   "flightsTo": "Flights to",
   "availableWord": "available",
@@ -43,7 +42,6 @@
   "airlinesFlyingThisRoute": "Airlines flying this route:",
   "hoursAbbrev": "h",
   "minutesAbbrev": "m",
-
   "routeTitleTemplate": "Flights from {origin} to {destination}",
   "routeDescriptionTemplate": "Find and book cheap flights from {origin} ({originCode}) to {destination} ({destCode}) — compare prices with Airpiv.",
   "routeIntroOpeningLongHaul": "Looking for a flight from {origin} to {destination}?",
@@ -70,7 +68,6 @@
   "routeBestTimeWindowShortHaul": "21–45 days before departure",
   "routeDurationFaqQuestionTemplate": "How long does the flight from {origin} to {destination} take?",
   "routeDurationFaqAnswerTemplate": "The average flight time is {duration}. {directLine}",
-
   "cityFewRoutesTitleTemplate": "{entity} flights — {count} routes compared",
   "cityFewRoutesDescriptionTemplate": "{count} flight connections to and from {entity}, compared side by side. Find the cheapest route with Airpiv.",
   "citySingleRouteTitleTemplate": "{otherCity} ↔ {city} flights",
@@ -79,13 +76,10 @@
   "cityMultiAirportDescriptionTemplate": "{city} is served by {count} airports ({codes}). Compare all routes with Airpiv.",
   "cityManyRoutesTitleTemplate": "Cheap flights to {city} — all routes",
   "cityManyRoutesDescriptionTemplate": "Over {count} flight connections to {city}. Compare all destinations and airlines in real time with Airpiv.",
-  "entityIntroTemplate": "Discover all flight connections to and from {entity}. Airpiv compares hundreds of airlines in real time to find the best price for your trip.",
-
   "countrySingleRouteTitleTemplate": "Flights to {country} — {otherCity} ↔ {country}",
   "countrySingleRouteDescriptionTemplate": "Direct connection between {otherCity} and {country}: compare prices and book cheap flights with Airpiv.",
   "countryManyRoutesTitleTemplate": "Cheap flights to {country} — all destinations",
   "countryManyRoutesDescriptionTemplate": "Over {count} flight connections to {country}. Compare all destinations and airlines in real time with Airpiv.",
-
   "airportSingleRouteTitleTemplate": "{code} airport — direct flight from {city}",
   "airportSingleRouteDescriptionTemplate": "{code} airport in {city} offers one direct connection. Compare the price and book with Airpiv.",
   "airportMixedHaulTitleTemplate": "{code} airport ({city}) — short & long-haul",
@@ -98,5 +92,15 @@
   "departuresLabel": "Departures",
   "arrivalsLabel": "Arrivals",
   "departuresFrom": "Departures from",
-  "arrivalsAt": "Arrivals at"
+  "arrivalsAt": "Arrivals at",
+  "cityIntroTemplate": "Discover all flight connections to and from {entity}. Airpiv compares hundreds of airlines in real time to find the best price for your trip.",
+  "countryIntroTemplate": "Compare flight prices to every destination in {entity}. Airpiv searches hundreds of airlines in real time so you can find the cheapest connection for your trip.",
+  "countryFewRoutesTitleTemplate": "Flights to {entity} — {count} destinations compared",
+  "countryFewRoutesDescriptionTemplate": "{count} destinations in {entity}, compared side by side. Find the cheapest connection with Airpiv.",
+  "airlineIntroTemplate": "{airline} operates several routes that Airpiv tracks in its price comparison. Compare all available connections from this airline and find the best price.",
+  "airlineSingleRouteTitleTemplate": "{airline} flights — {otherCity} ↔ {otherCity2}",
+  "airlineSingleRouteDescriptionTemplate": "{airline} flies the {otherCity} – {otherCity2} route. Compare prices and book cheap with Airpiv.",
+  "airlineManyRoutesTitleTemplate": "{airline} flights — {count} routes compared",
+  "airlineManyRoutesDescriptionTemplate": "{count} flight connections operated by {airline}, compared side by side. Find the cheapest route with Airpiv.",
+  "airlineWord": "Airline"
 }

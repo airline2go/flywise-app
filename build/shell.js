@@ -35,6 +35,18 @@ function jsonLdScript(schema) {
   return `<script type="application/ld+json">${json}</script>`;
 }
 
+// [SHARED-ORGANIZATION-SCHEMA] Previously only render-flight-route.js and
+// render-blog-post.js declared an Organization schema (each with its own
+// separately hand-written literal) — city/country/airport pages had none at
+// all. Injected once here into every page's <head>, so it's uniform across
+// all 5 entity types instead of ad hoc per render-*.js file.
+const ORGANIZATION_SCHEMA = { '@context': 'https://schema.org', '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' };
+
+// [OG-LOCALE] schema.org locale tags (BCP-47-ish og:locale values) per
+// language — og:locale was previously absent entirely, which link
+// previews/crawlers use to pick the right localized rendering.
+const OG_LOCALE = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR', es: 'es_ES', fr: 'fr_FR', it: 'it_IT', nl: 'nl_NL' };
+
 // Root-relative home URL for a language, honoring the same
 // default-language-stays-unprefixed rule as every generated page URL.
 function homeHref(lang) {
@@ -52,6 +64,7 @@ function homeHref(lang) {
 function renderShell({
   lang, title, description, canonicalUrl, urls = {}, includeHreflang = true,
   ogType = 'website', ogImage = 'https://airpiv.com/og-image.png',
+  robotsContent = 'index, follow',
   headExtra = '', bodyPrefix = '', mainContent, bodySuffix = '', scripts = '',
 }) {
   const s = stringsFor(lang);
@@ -73,10 +86,12 @@ function renderShell({
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escHtml(title)}</title>
 <meta name="description" content="${escHtml(description)}">
-<meta name="robots" content="index, follow">
+<meta name="robots" content="${escHtml(robotsContent)}">
 <link rel="canonical" href="${escHtml(canonicalUrl)}">
 ${hreflangHtml}
 <meta property="og:type" content="${ogType}">
+<meta property="og:site_name" content="Airpiv">
+<meta property="og:locale" content="${OG_LOCALE[lang] || OG_LOCALE.en}">
 <meta property="og:title" content="${escHtml(title)}">
 <meta property="og:description" content="${escHtml(description)}">
 <meta property="og:url" content="${escHtml(canonicalUrl)}">
@@ -87,6 +102,7 @@ ${hreflangHtml}
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/shared-layout.css">
+${jsonLdScript(ORGANIZATION_SCHEMA)}
 ${headExtra}
 </head>
 <body>
@@ -120,4 +136,4 @@ ${scripts}
 `;
 }
 
-module.exports = { renderShell, escHtml, jsonLdScript, homeHref };
+module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA };

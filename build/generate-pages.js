@@ -12,6 +12,7 @@ const { validatePage } = require('./validate-page');
 const { renderCityPage } = require('./render-city');
 const { renderCountryPage } = require('./render-country');
 const { renderAirportPage } = require('./render-airport');
+const { renderAirlinePage } = require('./render-airline');
 const { renderFlightRoutePage } = require('./render-flight-route');
 const { renderBlogPostPage } = require('./render-blog-post');
 const { setGeoData } = require('./data');
@@ -23,7 +24,7 @@ const SNAPSHOT_DIR = path.join(__dirname, '.snapshot');
 const CONCURRENCY = 8;
 
 const summary = {
-  generated: { city: 0, country: 0, airport: 0, flights: 0, blog: 0 },
+  generated: { city: 0, country: 0, airport: 0, airline: 0, flights: 0, blog: 0 },
   skipped: [],
   urls: [],
   // [MULTI-LANG-SITEMAP] URLs grouped by language, for the 7 per-language
@@ -136,14 +137,48 @@ async function generateAirports(airportCodes) {
   });
 }
 
+// [AIRLINE-PAGES] Mirrors generateAirports() exactly — GET /airlines gives
+// the distinct set of published airlines (auto-populated on-demand by
+// ensureAirlineExists(), see routePages.js), then GET /airlines/:code
+// fetches its observed routes for each page render.
+async function generateAirlines(airlineList) {
+  await mapWithConcurrency(airlineList, CONCURRENCY, async (a) => {
+    const code = a.iata_code;
+    try {
+      const detail = await fetchWithRetry(`${PROXY}/airlines/${encodeURIComponent(code)}`, { retries: 3, timeoutMs: 15000 });
+      if (!detail.ok || !detail.airline) throw new Error('unexpected response shape');
+      LANGUAGES.forEach((l) => {
+        const { html, seo } = renderAirlinePage(detail.airline, detail.routes || [], l.code);
+        const prefix = pathPrefix(l.code);
+        writeIfValid(`${prefix ? prefix + '/' : ''}airline/${code}`, html, seo.canonicalUrl, 'airline', l.code);
+      });
+    } catch (e) {
+      console.warn(`[skip] airline/${code}: ${e.message}`);
+      summary.skipped.push({ path: `airline/${code}`, reason: e.message });
+    }
+  });
+}
+
+// [RELATED-ROUTES-SSG] Mirrors the same-origin-OR-destination-city matching
+// the old client-only `/route-pages/:slug/related` endpoint used, but
+// computed here at build time from the already-fetched route list — no
+// extra network round-trip per page, and the result is real server-rendered
+// HTML instead of an empty placeholder a crawler never sees filled in.
+function computeRelatedRoutes(route, routeList) {
+  return routeList
+    .filter((r) => r.slug !== route.slug && (r.origin_city === route.origin_city || r.destination_city === route.destination_city))
+    .slice(0, 6);
+}
+
 async function generateFlightRoutes(routeList) {
   await mapWithConcurrency(routeList, CONCURRENCY, async (r) => {
     const slug = r.slug;
     try {
       const detail = await fetchWithRetry(`${PROXY}/route-pages/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.route) throw new Error('unexpected response shape');
+      const related = computeRelatedRoutes(detail.route, routeList);
       LANGUAGES.forEach((l) => {
-        const { html, seo } = renderFlightRoutePage(detail.route, l.code);
+        const { html, seo } = renderFlightRoutePage(detail.route, l.code, related);
         const prefix = pathPrefix(l.code);
         writeIfValid(`${prefix ? prefix + '/' : ''}flights/${slug}`, html, seo.canonicalUrl, 'flights', l.code);
       });
@@ -228,6 +263,19 @@ async function main() {
   const routes = await fetchListOrDie('route-pages', `${PROXY}/route-pages`, 'routes');
   const postsDe = await fetchListOrDie('blog-posts-de', `${PROXY}/blog-posts`, 'posts');
   const postsEn = await fetchListOrDie('blog-posts-en', `${PROXY}/blog-posts-en`, 'posts');
+  // [AIRLINE-PAGES] Soft-fetch, not fetchListOrDie — a brand-new site may
+  // have zero airlines observed yet (ensureAirlineExists() only populates
+  // this table from live Duffel searches), and that's not a build-blocking
+  // condition the way an empty cities/countries/routes list would be.
+  let airlines = [];
+  try {
+    const airlinesJson = await fetchWithRetry(`${PROXY}/airlines`, { retries: 3, timeoutMs: 15000 });
+    airlines = airlinesJson.airlines || [];
+    saveSnapshot('airlines', airlines);
+    console.log(`[list] airlines: ${airlines.length} items`);
+  } catch (e) {
+    console.warn(`[skip] airlines list unavailable: ${e.message}`);
+  }
 
   // [GEO-CMS] Populate the shared city/country translation lookup once,
   // before any page renders — every render-*.js file's localizeCity()/
@@ -239,6 +287,7 @@ async function main() {
   await generateCities(cities);
   await generateCountries(countries);
   await generateAirports(airportCodes);
+  await generateAirlines(airlines);
   await generateFlightRoutes(routes);
   await generateBlogPosts(postsDe, postsEn, routes);
 
@@ -248,6 +297,7 @@ async function main() {
   console.log(`Cities:   ${summary.generated.city}`);
   console.log(`Countries:${summary.generated.country}`);
   console.log(`Airports: ${summary.generated.airport}`);
+  console.log(`Airlines: ${summary.generated.airline}`);
   console.log(`Flights:  ${summary.generated.flights}`);
   console.log(`Blog:     ${summary.generated.blog}`);
   console.log(`Total pages written: ${summary.urls.length}`);

@@ -117,10 +117,13 @@ ${toSectionHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
-    breadcrumb: { '@type': 'BreadcrumbList', itemListElement: breadcrumbList },
   };
 
-  const headExtra = `${jsonLdScript(schema)}\n${AIRPORT_CSS}`;
+  // [STANDALONE-BREADCRUMB] Standalone top-level BreadcrumbList block
+  // (matching render-flight-route.js) instead of nested under Airport.breadcrumb.
+  const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbList };
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${AIRPORT_CSS}`;
 
   const html = renderShell({
     lang,

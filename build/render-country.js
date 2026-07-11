@@ -1,7 +1,7 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity, localizeCountry } = require('./data');
 const { translate, format } = require('./translate');
-const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 
 const COUNTRY_CSS = `<style>
 .country-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -33,8 +33,8 @@ function renderCountryPage(country, routes, lang) {
     title = format(translate('countrySingleRouteTitleTemplate', lang), { country: countryName, otherCity });
     description = format(translate('countrySingleRouteDescriptionTemplate', lang), { country: countryName, otherCity });
   } else if (locRoutes.length <= 4) {
-    title = format(translate('cityFewRoutesTitleTemplate', lang), { entity: countryName, count: locRoutes.length });
-    description = format(translate('cityFewRoutesDescriptionTemplate', lang), { entity: countryName, count: locRoutes.length });
+    title = format(translate('countryFewRoutesTitleTemplate', lang), { entity: countryName, count: locRoutes.length });
+    description = format(translate('countryFewRoutesDescriptionTemplate', lang), { entity: countryName, count: locRoutes.length });
   } else {
     title = format(translate('countryManyRoutesTitleTemplate', lang), { country: countryName });
     description = format(translate('countryManyRoutesDescriptionTemplate', lang), { country: countryName, count: locRoutes.length });
@@ -42,7 +42,7 @@ function renderCountryPage(country, routes, lang) {
 
   const urls = urlsFor(`country/${encodeURIComponent(country.code)}`);
   const url = urls[lang];
-  const introText = (lang === DEFAULT_LANGUAGE && country.intro_text) || format(translate('entityIntroTemplate', lang), { entity: countryName });
+  const introText = country.intro_text || format(translate('countryIntroTemplate', lang), { entity: countryName });
 
   const breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span><span>${escHtml(countryName)}</span></nav>`;
 
@@ -81,16 +81,25 @@ ${toSectionHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
-    breadcrumb: {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') },
-        { '@type': 'ListItem', position: 2, name: countryName, item: url },
-      ],
-    },
   };
 
-  const headExtra = `${jsonLdScript(schema)}\n${COUNTRY_CSS}`;
+  // [STANDALONE-BREADCRUMB] Standalone top-level BreadcrumbList block
+  // (matching render-flight-route.js) instead of nested under WebPage.breadcrumb.
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') },
+      { '@type': 'ListItem', position: 2, name: countryName, item: url },
+    ],
+  };
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${COUNTRY_CSS}`;
+
+  // [THIN-CONTENT-NOINDEX] Same rule as render-city.js — a country with at
+  // most one route and no admin-written intro isn't worth indexing on its
+  // own; still `follow` so link equity flows through to its route.
+  const robotsContent = (locRoutes.length <= 1 && !country.intro_text) ? 'noindex, follow' : 'index, follow';
 
   const html = renderShell({
     lang,
@@ -98,6 +107,7 @@ ${toSectionHtml}
     description,
     canonicalUrl: url,
     urls,
+    robotsContent,
     headExtra,
     mainContent,
   });

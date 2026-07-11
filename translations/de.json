@@ -10,7 +10,6 @@
   "privacyLabel": "Datenschutz",
   "termsLabel": "AGB",
   "copyright": "© 2026 Airpiv · Alle Rechte vorbehalten",
-
   "flightsFrom": "Flüge ab",
   "flightsTo": "Flüge nach",
   "availableWord": "verfügbare",
@@ -43,7 +42,6 @@
   "airlinesFlyingThisRoute": "Fliegende Airlines:",
   "hoursAbbrev": "Std",
   "minutesAbbrev": "Min",
-
   "routeTitleTemplate": "Flüge von {origin} nach {destination}",
   "routeDescriptionTemplate": "Günstige Flüge von {origin} ({originCode}) nach {destination} ({destCode}) finden und buchen — Preise vergleichen mit Airpiv.",
   "routeIntroOpeningLongHaul": "Auf der Suche nach einem Flug von {origin} nach {destination}?",
@@ -70,7 +68,6 @@
   "routeBestTimeWindowShortHaul": "21–45 Tage vor Abflug",
   "routeDurationFaqQuestionTemplate": "Wie lange dauert der Flug von {origin} nach {destination}?",
   "routeDurationFaqAnswerTemplate": "Die durchschnittliche Flugzeit liegt bei {duration}. {directLine}",
-
   "cityFewRoutesTitleTemplate": "{entity} Flüge — {count} Strecken im Vergleich",
   "cityFewRoutesDescriptionTemplate": "{count} Flugverbindungen von und nach {entity} im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.",
   "citySingleRouteTitleTemplate": "Flug {city} ↔ {otherCity}",
@@ -79,13 +76,10 @@
   "cityMultiAirportDescriptionTemplate": "{city} wird von {count} Flughäfen bedient ({codes}). Vergleiche alle Strecken mit Airpiv.",
   "cityManyRoutesTitleTemplate": "Günstige Flüge nach {city} — alle Strecken",
   "cityManyRoutesDescriptionTemplate": "Über {count} Flugverbindungen nach {city}. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.",
-  "entityIntroTemplate": "Entdecke alle Flugverbindungen von und nach {entity}. Airpiv vergleicht in Echtzeit hunderte Airlines und findet den besten Preis für deine Reise.",
-
   "countrySingleRouteTitleTemplate": "Flug nach {country} — {otherCity} ↔ {country}",
   "countrySingleRouteDescriptionTemplate": "Direktverbindung zwischen {otherCity} und {country}: Preise vergleichen und günstig buchen mit Airpiv.",
   "countryManyRoutesTitleTemplate": "Günstige Flüge nach {country} — alle Reiseziele",
   "countryManyRoutesDescriptionTemplate": "Über {count} Flugverbindungen nach {country}. Vergleiche alle Reiseziele und Airlines in Echtzeit mit Airpiv.",
-
   "airportSingleRouteTitleTemplate": "Flughafen {code} — Direktflug ab {city}",
   "airportSingleRouteDescriptionTemplate": "Der Flughafen {code} in {city} bietet eine Direktverbindung. Preis vergleichen und buchen mit Airpiv.",
   "airportMixedHaulTitleTemplate": "Flughafen {code} ({city}) — Kurz- & Langstrecke",
@@ -98,5 +92,15 @@
   "departuresLabel": "Abflüge",
   "arrivalsLabel": "Ankünfte",
   "departuresFrom": "Abflüge von",
-  "arrivalsAt": "Ankünfte in"
+  "arrivalsAt": "Ankünfte in",
+  "cityIntroTemplate": "Entdecke alle Flugverbindungen von und nach {entity}. Airpiv vergleicht in Echtzeit hunderte Airlines und findet den besten Preis für deine Reise.",
+  "countryIntroTemplate": "Vergleiche Flugpreise für alle Reiseziele in {entity}. Airpiv durchsucht in Echtzeit hunderte Airlines, damit du die günstigste Verbindung für deinen Trip findest.",
+  "countryFewRoutesTitleTemplate": "Flüge nach {entity} — {count} Reiseziele im Vergleich",
+  "countryFewRoutesDescriptionTemplate": "{count} Reiseziele in {entity} im direkten Vergleich. Finde die günstigste Verbindung mit Airpiv.",
+  "airlineIntroTemplate": "{airline} fliegt mehrere Strecken, die Airpiv im Preisvergleich führt. Vergleiche alle verfügbaren Verbindungen dieser Airline und finde den besten Preis.",
+  "airlineSingleRouteTitleTemplate": "{airline} Flüge — {otherCity} ↔ {otherCity2}",
+  "airlineSingleRouteDescriptionTemplate": "{airline} fliegt die Strecke {otherCity} – {otherCity2}. Preis vergleichen und günstig buchen mit Airpiv.",
+  "airlineManyRoutesTitleTemplate": "{airline} Flüge — {count} Strecken im Vergleich",
+  "airlineManyRoutesDescriptionTemplate": "{count} Flugverbindungen von {airline} im direkten Vergleich. Finde die günstigste Strecke mit Airpiv.",
+  "airlineWord": "Fluggesellschaft"
 }
