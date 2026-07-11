@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة التحكم' },
   { href: '/admin/bookings', label: 'الحجوزات' },
   { href: '/admin/customers', label: 'العملاء' },
+  { href: '/admin/invoices', label: 'الفواتير الضريبية' },
   { href: '/admin/promos', label: 'كودات الخصم' },
   { href: '/admin/blog', label: 'المدونة' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },

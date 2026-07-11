@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import InvoiceIssueModal from '../../../../lib/admin/InvoiceIssueModal';
 import { ADMIN_COLORS } from '../../../../lib/admin/theme';
 
 function statusBadge(status) {
@@ -29,6 +30,7 @@ export default function BookingsClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [detail, setDetail] = useState(null);
+  const [invoiceTarget, setInvoiceTarget] = useState(null);
   const [issues, setIssues] = useState({ sync: [], failures: [], cancellations: [] });
 
   const load = useCallback(async () => {
@@ -223,8 +225,26 @@ export default function BookingsClient() {
                 <DetailItem label="Session ID" value={detail.stripe_session_id} mono small />
               </div>
             )}
+
+            {detail.status === 'confirmed' && (
+              <button
+                type="button"
+                onClick={() => { setInvoiceTarget(detail); setDetail(null); }}
+                style={{ ...primaryBtnStyle, width: '100%' }}
+              >
+                🧾 إصدار فاتورة ضريبية
+              </button>
+            )}
           </div>
         </div>
+      )}
+
+      {invoiceTarget && (
+        <InvoiceIssueModal
+          booking={invoiceTarget}
+          onClose={() => setInvoiceTarget(null)}
+          onIssued={() => setInvoiceTarget(null)}
+        />
       )}
     </div>
   );
@@ -261,6 +281,10 @@ const modalStyle = {
   borderRadius: 14, padding: 24,
 };
 const closeBtnStyle = { background: 'none', border: 'none', color: ADMIN_COLORS.tx2, cursor: 'pointer', fontSize: 16 };
+const primaryBtnStyle = {
+  padding: '10px 16px', borderRadius: 8, border: 'none', background: ADMIN_COLORS.teal,
+  color: ADMIN_COLORS.bg, fontWeight: 700, fontSize: 13.5, cursor: 'pointer', marginTop: 20,
+};
 const ghostBtnStyle = {
   padding: '9px 16px', borderRadius: 8, border: `1px solid ${ADMIN_COLORS.border}`, background: 'transparent',
   color: ADMIN_COLORS.tx, fontSize: 13.5, cursor: 'pointer', whiteSpace: 'nowrap',
