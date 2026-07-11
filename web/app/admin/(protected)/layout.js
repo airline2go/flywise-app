@@ -13,6 +13,7 @@ import { ADMIN_COLORS } from '../../../lib/admin/theme';
 const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة التحكم' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
+  { href: '/admin/geo', label: 'المطارات والمدن' },
 ];
 
 export default async function AdminProtectedLayout({ children }) {

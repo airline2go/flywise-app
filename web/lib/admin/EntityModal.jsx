@@ -36,7 +36,7 @@ export default function EntityModal({ title, fields = [], values, onChange, onSu
             button without forking the whole modal. */}
         {footer || (
           <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-            <button type="submit" disabled={submitting} style={saveBtnStyle}>{submitting ? '...' : 'حفظ'}</button>
+            <button type="submit" disabled={submitting} style={saveBtnStyle}>{submitting ? '...' : '💾 حفظ'}</button>
             <button type="button" onClick={onClose} style={cancelBtnStyle}>إلغاء</button>
           </div>
         )}
