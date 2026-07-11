@@ -298,8 +298,21 @@ function writeLanguageSitemaps(urlsByLang) {
   }
 }
 
+// [INCREMENTAL-BUILD-PROBE] Diagnostic only — checks whether a page from a
+// previous build is already sitting on disk before this run writes
+// anything, to find out whether Render's build cache carries forward the
+// generated output directories (city/, flights/, etc.) or only node_modules.
+// Doesn't skip, alter, or gate any part of the build; safe to remove once
+// the answer is known from a real deploy's log.
+function probeIncrementalBuildCache() {
+  const probePath = path.join(ROOT, 'en', 'flights', 'barcelona-hamburg.html');
+  const exists = fs.existsSync(probePath);
+  console.log(`[incremental-build-probe] ${probePath} exists before build: ${exists}`);
+}
+
 async function main() {
   console.log(`[generate-pages] API_BASE=${PROXY}`);
+  probeIncrementalBuildCache();
 
   const cities = await fetchListOrDie('cities', `${PROXY}/cities`, 'cities');
   const countries = await fetchListOrDie('countries', `${PROXY}/countries`, 'countries');
