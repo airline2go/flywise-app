@@ -12,6 +12,7 @@ import { ADMIN_COLORS } from '../../../lib/admin/theme';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة التحكم' },
+  { href: '/admin/reports', label: 'التقارير' },
   { href: '/admin/bookings', label: 'الحجوزات' },
   { href: '/admin/customers', label: 'العملاء' },
   { href: '/admin/invoices', label: 'الفواتير الضريبية' },
