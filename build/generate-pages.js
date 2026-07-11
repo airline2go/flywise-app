@@ -197,7 +197,12 @@ function scoreRelatedRoute(route, candidate) {
 }
 
 function computeRelatedRoutes(route, routeList) {
+  // [BUG-FIX] Exclude not just this exact slug but also the reverse-direction
+  // same-city-pair route (e.g. Hamburg->Barcelona showing up as "related" on
+  // the Barcelona->Hamburg page) — same trip, opposite direction, not a
+  // useful suggestion.
   const candidates = routeList.filter((r) => r.slug !== route.slug
+    && !(r.origin_city === route.destination_city && r.destination_city === route.origin_city)
     && (r.origin_city === route.origin_city || r.destination_city === route.destination_city
       || (route.destination_country && r.destination_country === route.destination_country)));
 
