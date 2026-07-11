@@ -1629,6 +1629,10 @@ async function openAirportEditor(airport) {
   document.getElementById('airport-lat').value = airport && airport.latitude != null ? airport.latitude : '';
   document.getElementById('airport-lng').value = airport && airport.longitude != null ? airport.longitude : '';
   document.getElementById('airport-status').value = airport ? airport.status : 'published';
+  document.getElementById('airport-distance-city-center').value = airport && airport.distance_to_city_center_km != null ? airport.distance_to_city_center_km : '';
+  document.getElementById('airport-transit-options').value = airport ? (airport.transit_options || '') : '';
+  document.getElementById('airport-terminal-info').value = airport ? (airport.terminal_info || '') : '';
+  document.getElementById('airport-traveler-tips').value = airport ? (airport.traveler_tips || '') : '';
   var translations = {};
   if (airport) {
     try {
@@ -1651,6 +1655,10 @@ async function saveAirport() {
     latitude: document.getElementById('airport-lat').value.trim() || null,
     longitude: document.getElementById('airport-lng').value.trim() || null,
     status: document.getElementById('airport-status').value,
+    distance_to_city_center_km: document.getElementById('airport-distance-city-center').value.trim() || null,
+    transit_options: document.getElementById('airport-transit-options').value.trim() || null,
+    terminal_info: document.getElementById('airport-terminal-info').value.trim() || null,
+    traveler_tips: document.getElementById('airport-traveler-tips').value.trim() || null,
   };
   if (!id) payload.iata_code = document.getElementById('airport-iata').value.trim().toUpperCase();
   if (!payload.airport_name || (!id && !payload.iata_code)) { showToast('⚠️ كود IATA والاسم مطلوبان', 'error'); return; }
@@ -1731,6 +1739,8 @@ function openAirlineEditor(airline) {
   document.getElementById('airline-code').disabled = !!airline;
   document.getElementById('airline-status').value = airline ? airline.status : 'published';
   document.getElementById('airline-intro-text').value = airline ? (airline.intro_text || '') : '';
+  document.getElementById('airline-country-code').value = airline ? (airline.country_code || '') : '';
+  document.getElementById('airline-hub-iata').value = airline ? (airline.hub_iata || '') : '';
   document.getElementById('airline-editor-modal').classList.add('open');
 }
 
@@ -1740,6 +1750,8 @@ async function saveAirline() {
     name: document.getElementById('airline-name').value.trim(),
     status: document.getElementById('airline-status').value,
     intro_text: document.getElementById('airline-intro-text').value.trim() || null,
+    country_code: document.getElementById('airline-country-code').value.trim().toUpperCase() || null,
+    hub_iata: document.getElementById('airline-hub-iata').value.trim().toUpperCase() || null,
   };
   if (!id) payload.iata_code = document.getElementById('airline-code').value.trim().toUpperCase();
   if (!payload.name || (!id && !payload.iata_code)) { showToast('⚠️ الاسم وكود IATA مطلوبان', 'error'); return; }

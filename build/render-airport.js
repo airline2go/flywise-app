@@ -22,6 +22,11 @@ const AIRPORT_CSS = `<style>
 .airport-route-card:hover{border-color:var(--teal)}
 .airport-route-card .arrow{color:var(--teal);margin:0 4px}
 .airport-route-card .haul-tag{display:block;font-size:10.5px;color:var(--tx3);font-weight:500;margin-top:2px}
+.airport-traveler-info-section{margin-top:28px}
+.airport-traveler-info-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.airport-traveler-info-item{margin-bottom:14px}
+.airport-traveler-info-item h3{font-size:13px;color:var(--tx2);margin-bottom:4px}
+.airport-traveler-info-item p{font-size:13.5px;color:var(--tx);line-height:1.6}
 @media (max-width:480px){.airport-route-grid{grid-template-columns:1fr}}
 </style>`;
 
@@ -83,6 +88,26 @@ function renderAirportPage(airport, routes, lang) {
     ? `<section class="airport-routes-section"><h2>${translate('arrivalsAt', lang)} ${escHtml(airport.code)}</h2><div class="airport-route-grid">${toRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
 
+  // [ROUTE-INTELLIGENCE-3] Optional, admin-authored traveler info — every
+  // item independently omitted when null, so an airport with none of
+  // these filled in renders exactly as before.
+  const travelerInfoItems = [];
+  if (airport.distance_to_city_center_km != null) {
+    travelerInfoItems.push(`<div class="airport-traveler-info-item"><h3>${translate('airportDistanceCityCenterLabel', lang)}</h3><p>${format(translate('airportDistanceCityCenterValueTemplate', lang), { distance: Number(airport.distance_to_city_center_km).toLocaleString(getLanguage(lang).locale) })}</p></div>`);
+  }
+  if (airport.transit_options) {
+    travelerInfoItems.push(`<div class="airport-traveler-info-item"><h3>${translate('airportTransitOptionsLabel', lang)}</h3><p>${escHtml(airport.transit_options)}</p></div>`);
+  }
+  if (airport.terminal_info) {
+    travelerInfoItems.push(`<div class="airport-traveler-info-item"><h3>${translate('airportTerminalInfoLabel', lang)}</h3><p>${escHtml(airport.terminal_info)}</p></div>`);
+  }
+  if (airport.traveler_tips) {
+    travelerInfoItems.push(`<div class="airport-traveler-info-item"><h3>${translate('airportTravelerTipsLabel', lang)}</h3><p>${escHtml(airport.traveler_tips)}</p></div>`);
+  }
+  const travelerInfoHtml = travelerInfoItems.length
+    ? `<section class="airport-traveler-info-section"><h2>${translate('airportTravelerInfoHeading', lang)}</h2>${travelerInfoItems.join('')}</section>`
+    : '';
+
   const mainContent = `<main id="airport-main">
   <div id="airport-content">
 ${breadcrumbHtml}
@@ -94,6 +119,7 @@ ${breadcrumbHtml}
   ${factsHtml}
 </div>
 <section><p>${escHtml(introText)}</p></section>
+${travelerInfoHtml}
 ${fromSectionHtml}
 ${toSectionHtml}
   </div>

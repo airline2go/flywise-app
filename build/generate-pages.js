@@ -148,7 +148,7 @@ async function generateAirlines(airlineList) {
       const detail = await fetchWithRetry(`${PROXY}/airlines/${encodeURIComponent(code)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.airline) throw new Error('unexpected response shape');
       LANGUAGES.forEach((l) => {
-        const { html, seo } = renderAirlinePage(detail.airline, detail.routes || [], l.code);
+        const { html, seo } = renderAirlinePage(detail.airline, detail.routes || [], l.code, detail.mostUsedRoutes || []);
         const prefix = pathPrefix(l.code);
         writeIfValid(`${prefix ? prefix + '/' : ''}airline/${code}`, html, seo.canonicalUrl, 'airline', l.code);
       });
@@ -159,15 +159,50 @@ async function generateAirlines(airlineList) {
   });
 }
 
-// [RELATED-ROUTES-SSG] Mirrors the same-origin-OR-destination-city matching
-// the old client-only `/route-pages/:slug/related` endpoint used, but
-// computed here at build time from the already-fetched route list — no
-// extra network round-trip per page, and the result is real server-rendered
-// HTML instead of an empty placeholder a crawler never sees filled in.
+// [RELATED-ROUTES-SSG] Originally pure same-origin-OR-destination-city
+// matching, first-N-in-list order, no stated reason. [ROUTE-INTELLIGENCE-3]
+// Upgraded to a scored ranking using Phase 1's persisted intelligence
+// fields (haul_type, distance_km, airline_count, route_score) — each
+// candidate carries a single `reasonKey` naming its strongest signal, so
+// the rendered card can say *why* it's related instead of just listing
+// city pairs. Computed at build time from the already-fetched route
+// list — no extra network round-trip per page.
+const RELATED_ROUTE_LIMIT = 6;
+const POPULAR_ROUTE_SCORE_THRESHOLD = 50;
+const SIMILAR_TRIP_DISTANCE_TOLERANCE_KM = 500;
+
+function scoreRelatedRoute(route, candidate) {
+  const sameOriginOrDest = candidate.origin_city === route.origin_city || candidate.destination_city === route.destination_city;
+  const sameHaul = !!(route.haul_type && candidate.haul_type === route.haul_type);
+  const similarDistance = route.distance_km != null && candidate.distance_km != null
+    && Math.abs(candidate.distance_km - route.distance_km) <= SIMILAR_TRIP_DISTANCE_TOLERANCE_KM;
+  const sameRegion = !!(candidate.destination_country && candidate.destination_country === route.destination_country && candidate.destination_city !== route.destination_city);
+
+  let reasonKey = null;
+  if (candidate.route_score != null && candidate.route_score >= POPULAR_ROUTE_SCORE_THRESHOLD) reasonKey = 'popularWithTravelers';
+  else if (candidate.airline_count != null && candidate.airline_count >= 2) reasonKey = 'moreFlightOptions';
+  else if (sameHaul && similarDistance) reasonKey = 'similarTripLength';
+  else if (sameRegion) reasonKey = 'sameRegion';
+
+  const score = (sameOriginOrDest ? 10 : 0)
+    + (sameHaul ? 3 : 0)
+    + (similarDistance ? 2 : 0)
+    + Math.min(candidate.route_score || 0, 500) * 0.02
+    + Math.min(candidate.airline_count || 0, 10);
+
+  return { candidate, score, reasonKey };
+}
+
 function computeRelatedRoutes(route, routeList) {
-  return routeList
-    .filter((r) => r.slug !== route.slug && (r.origin_city === route.origin_city || r.destination_city === route.destination_city))
-    .slice(0, 6);
+  const candidates = routeList.filter((r) => r.slug !== route.slug
+    && (r.origin_city === route.origin_city || r.destination_city === route.destination_city
+      || (route.destination_country && r.destination_country === route.destination_country)));
+
+  return candidates
+    .map((c) => scoreRelatedRoute(route, c))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, RELATED_ROUTE_LIMIT)
+    .map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
 }
 
 async function generateFlightRoutes(routeList) {

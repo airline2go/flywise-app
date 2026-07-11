@@ -112,5 +112,17 @@
   "routeIntroPopular": " هذا من أكثر الخطوط شعبية على Airpiv، ويشهد إقبالاً كبيراً من المسافرين.",
   "routeFaqAirlineQuestion": "ما هي شركات الطيران التي تسافر من {origin} إلى {destination}؟",
   "routeFaqAirlineAnswerSingle": "تشغّل شركة طيران واحدة هذا الخط حالياً.",
-  "routeFaqAirlineAnswerMulti": "تشغّل {count} شركات طيران هذا الخط حالياً، لذا يستحق الأمر المقارنة بينها."
+  "routeFaqAirlineAnswerMulti": "تشغّل {count} شركات طيران هذا الخط حالياً، لذا يستحق الأمر المقارنة بينها.",
+  "relatedReasonPopular": "شائع بين المسافرين",
+  "relatedReasonMoreFlights": "خيارات رحلات أكثر",
+  "relatedReasonSimilarTrip": "مدة رحلة مشابهة",
+  "relatedReasonSameRegion": "نفس المنطقة",
+  "airlineHubLabel": "المحور الرئيسي",
+  "airlineMostFlownRoutesLabel": "أكثر الخطوط تشغيلاً",
+  "airportTravelerInfoHeading": "معلومات للمسافر",
+  "airportDistanceCityCenterLabel": "المسافة عن مركز المدينة",
+  "airportDistanceCityCenterValueTemplate": "على بعد حوالي {distance} كم من وسط المدينة",
+  "airportTransitOptionsLabel": "كيفية الوصول",
+  "airportTerminalInfoLabel": "الصالات",
+  "airportTravelerTipsLabel": "نصائح للمسافر"
 }

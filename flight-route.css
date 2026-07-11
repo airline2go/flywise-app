@@ -113,6 +113,13 @@
 .related-route-card:hover {
   border-color: var(--teal);
 }
+.related-route-reason {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tx3);
+}
 @media (max-width: 480px) {
   .related-routes-grid {
     grid-template-columns: 1fr;

@@ -112,5 +112,17 @@
   "routeIntroPopular": " Dit is een van de populairdere routes op Airpiv, met sterke vraag van reizigers.",
   "routeFaqAirlineQuestion": "Welke maatschappijen vliegen van {origin} naar {destination}?",
   "routeFaqAirlineAnswerSingle": "Op dit moment vliegt één maatschappij op deze route.",
-  "routeFaqAirlineAnswerMulti": "Op dit moment vliegen {count} maatschappijen op deze route — het loont om ze te vergelijken."
+  "routeFaqAirlineAnswerMulti": "Op dit moment vliegen {count} maatschappijen op deze route — het loont om ze te vergelijken.",
+  "relatedReasonPopular": "Populair bij reizigers",
+  "relatedReasonMoreFlights": "Meer vluchtopties",
+  "relatedReasonSimilarTrip": "Vergelijkbare reisduur",
+  "relatedReasonSameRegion": "Zelfde regio",
+  "airlineHubLabel": "Hub",
+  "airlineMostFlownRoutesLabel": "Meest gevlogen routes",
+  "airportTravelerInfoHeading": "Reizigersinformatie",
+  "airportDistanceCityCenterLabel": "Afstand tot stadscentrum",
+  "airportDistanceCityCenterValueTemplate": "Ongeveer {distance} km van het centrum",
+  "airportTransitOptionsLabel": "Hoe kom je er",
+  "airportTerminalInfoLabel": "Terminals",
+  "airportTravelerTipsLabel": "Reizigerstips"
 }
