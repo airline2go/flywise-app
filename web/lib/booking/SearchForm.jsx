@@ -6,18 +6,18 @@
 // TRANSLATIONS dict). Not a redesign: this file exists so the visible
 // result matches the original pixel-for-pixel, not just functionally.
 //
-// [NOT-PORTED] The svc-tabs "hotels/cars/insurance" coming-soon stub,
-// #recent-searches quick-pick chips, and the homepage's own inline
-// .loader/.ebox (search always transitions to the full-screen results
-// route in this app, so those never actually show — see the ResultsClient
-// loading/error states instead) are deferred to a follow-up pass, not
-// silently dropped as "not needed."
+// [NOT-PORTED] The homepage's own inline .loader/.ebox (search always
+// transitions to the full-screen results route in this app, so those never
+// actually show — see the ResultsClient loading/error states instead). The
+// #recent-searches chips are handled by <RecentSearches> in HomeHero; this
+// form persists each search to localStorage on submit (saveRecentSearch).
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AirportField from './AirportField';
 import DatePicker from './DatePicker';
 import PaxPicker from './PaxPicker';
 import { useSearch } from './SearchProvider';
+import { saveRecentSearch, saveRecentSearchMC } from './recentSearches';
 
 function fmtDisplayDate(iso) {
   if (!iso) return null;
@@ -64,6 +64,7 @@ export default function SearchForm({ lang, ls }) {
     setError('');
     if (search.trip === 'mc') {
       if (legs.some((l) => !l.origin || !l.destination || !l.date)) { setError('Bitte alle Felder ausfüllen'); return; }
+      saveRecentSearchMC(legs.map((l) => ({ orig: l.origin.iata, dest: l.destination.iata, dep: l.date, origC: l.origin.city, destC: l.destination.city })));
       router.push(resultsPath('multi-city'));
       return;
     }
@@ -71,6 +72,11 @@ export default function SearchForm({ lang, ls }) {
     if (!search.destination) { setError('Bitte wähle einen Zielflughafen'); return; }
     if (search.origin.iata === search.destination.iata) { setError('Start und Ziel dürfen nicht gleich sein'); return; }
     if (!search.departureDate) { setError('Bitte wähle ein Reisedatum'); return; }
+    saveRecentSearch({
+      orig: search.origin.iata, dest: search.destination.iata,
+      dep: search.departureDate, ret: search.trip === 'rr' ? search.returnDate : '',
+      origC: search.origin.city, destC: search.destination.city,
+    });
     const params = new URLSearchParams({ trip: search.trip, depart: search.departureDate });
     if (search.trip === 'rr' && search.returnDate) params.set('return', search.returnDate);
     router.push(`${resultsPath(`${search.origin.iata}-${search.destination.iata}`)}?${params.toString()}`);

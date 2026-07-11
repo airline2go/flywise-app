@@ -5,13 +5,12 @@
 // coming-soon behavior for hotels/cars/insurance is preserved — only
 // "flights" is a real destination in this app.
 //
-// [DEFERRED] #recent-searches quick-pick chips and the post-search
-// flex-date hint banner (only ever shown once, 2s after a completed
-// search, gated by localStorage — moot in this app's architecture since
-// search always navigates to a separate results route) are not wired up
-// yet; not fabricated as done, just not in this pass.
+// switchSvcTab()'s coming-soon behavior for hotels/cars/insurance is
+// preserved — only "flights" is a real destination in this app. The
+// #recent-searches quick-pick chip is wired via <RecentSearches>.
 import { useState } from 'react';
 import SearchForm from './SearchForm';
+import RecentSearches from './RecentSearches';
 import { LEGACY_STRINGS } from './legacyStrings';
 
 const SVC_TABS = [
@@ -31,7 +30,7 @@ export default function HomeHero({ lang }) {
         <div className="hero-pill"><span className="dot" />{ls.hero_pill}</div>
         <h1>{ls.hero_title1}<br />{ls.hero_title2} <span>{ls.hero_title_span}</span></h1>
         <p className="hero-sub">{ls.hero_sub}</p>
-        <div id="recent-searches" />
+        <RecentSearches lang={lang} ls={ls} />
 
         <div className="svc-tabs">
           {SVC_TABS.map((tab) => (
