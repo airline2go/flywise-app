@@ -1,29 +1,45 @@
 'use client';
 
-// Ports app.js's origin/destination autocomplete fields (acS()/pickAC()/
-// handleFromInput() etc.): 300ms-debounced GET /search/airports, up to
-// 8 results, city entries carry a "City" badge distinct from airports.
-// [SEARCH-INTEGRITY-FIX] Typing over a previously-picked value must
-// invalidate it — ported from app.js's acTypeReset(), otherwise a user
-// could edit the text after picking an airport and submit a stale
-// origin/destination that no longer matches what's displayed.
+// Ports app.js's acS()/pickAC()/clearField() and the real .kfield/.acdrop/
+// .aci markup exactly (see SearchForm.jsx's header comment on why this
+// matters). 300ms-debounced GET /search/airports, up to 8 results, a
+// "City"/"Stadt" badge on city-type results — including the original's
+// own quirk of only translating that badge for ar/en and leaving every
+// other language (de/es/fr/it/nl) as German "Stadt"/"Alle Flughäfen"
+// (see acS()'s inline ternary — not a bug I'm fixing, a faithful port).
 import { useEffect, useRef, useState } from 'react';
 import { searchAirports } from '../booking-api';
 
-export default function AirportField({ label, placeholder, value, onSelect, t }) {
-  const [query, setQuery] = useState(value ? `${value.city} (${value.iata})` : '');
+const ICONS = {
+  from: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 6H5L3 8l4 2-2 4 2 1 3-3 4 2 2-2-2-5 4-2-2-2h-3z" /></svg>,
+  to: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>,
+};
+
+function cityBadgeLabel(lang) {
+  if (lang === 'ar') return 'مدينة';
+  if (lang === 'en') return 'City';
+  return 'Stadt';
+}
+function allAirportsLabel(lang) {
+  if (lang === 'ar') return 'كل المطارات';
+  if (lang === 'en') return 'All airports';
+  return 'Alle Flughäfen';
+}
+
+export default function AirportField({ side, ls, value, onSelect, compact }) {
+  const isFrom = side === 'from' || side === 'mc-from';
+  const [query, setQuery] = useState(value ? value.city : (side === 'from' ? 'Berlin' : ''));
+  const [sub, setSub] = useState(value ? `${value.name} · ${value.iata}` : (side === 'from' ? 'Berlin Brandenburg · BER' : (compact ? '' : 'Wohin soll es gehen?')));
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const debounceRef = useRef(null);
   const wrapRef = useRef(null);
+  const lang = 'de';
 
-  // [SET-STATE-IN-EFFECT] setQuery() runs inside this callback boundary,
-  // not synchronously in the effect body — same pattern used throughout
-  // this codebase (e.g. AirportAutocomplete.jsx) to satisfy the
-  // set-state-in-effect lint rule.
   useEffect(() => {
-    const t = setTimeout(() => { setQuery(value ? `${value.city} (${value.iata})` : ''); }, 0);
+    const t = setTimeout(() => {
+      if (value) { setQuery(value.city); setSub(`${value.name} · ${value.iata}`); }
+    }, 0);
     return () => clearTimeout(t);
   }, [value]);
 
@@ -38,69 +54,105 @@ export default function AirportField({ label, placeholder, value, onSelect, t })
   function handleChange(e) {
     const next = e.target.value;
     setQuery(next);
-    // Any keystroke invalidates a previously-picked value until a new
-    // suggestion is chosen — matches acTypeReset()'s intent.
-    if (value) onSelect(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (next.trim().length < 2) { setResults([]); setOpen(false); return; }
-    setLoading(true);
+    if (next.trim().length < 2) { setOpen(false); return; }
+    setResults([]);
     setOpen(true);
     debounceRef.current = setTimeout(async () => {
       const { ok, data } = await searchAirports(next.trim());
-      setLoading(false);
-      setResults(ok ? (data.airports || []) : []);
+      if (!ok || !data.airports || !data.airports.length) { setResults([]); return; }
+      setResults(data.airports.slice(0, 8));
     }, 300);
   }
 
   function pick(a) {
-    onSelect({ iata: a.code, city: a.city, name: a.name, country: a.country, lat: a.lat, lng: a.lng });
-    setQuery(`${a.city} (${a.code})`);
+    const isCity = a.type === 'city';
+    const name = isCity ? a.city : (a.name || a.city);
+    onSelect({ iata: a.code, city: a.city, name, country: a.country, lat: a.lat, lng: a.lng });
+    setQuery(a.city);
+    setSub(`${name} · ${a.code}`);
     setResults([]);
     setOpen(false);
   }
 
+  function clear() {
+    onSelect(null);
+    if (side === 'from') { setQuery('Berlin'); setSub('Berlin Brandenburg · BER'); }
+    else { setQuery(''); setSub('Wohin soll es gehen?'); }
+  }
+
+  if (compact) {
+    return (
+      <div ref={wrapRef} style={compactWrapStyle}>
+        <div style={compactLabelStyle}>{isFrom ? 'Von' : 'Nach'}</div>
+        <input
+          value={query} onChange={handleChange} onFocus={() => query.trim().length >= 2 && setOpen(true)}
+          placeholder="Stadt oder Flughafen" autoComplete="off" style={compactInputStyle}
+        />
+        {open && (
+          <div style={compactDropStyle}>
+            {results.map((a) => (
+              <button key={a.code} type="button" onMouseDown={() => pick(a)} style={compactOptionStyle}>
+                {a.city} — {a.name} <span style={{ fontFamily: 'monospace' }}>{a.code}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div ref={wrapRef} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-      <label style={labelStyle}>{label}</label>
-      <input
-        type="search"
-        value={query}
-        onChange={handleChange}
-        onFocus={() => query.trim().length >= 2 && setOpen(true)}
-        placeholder={placeholder}
-        autoComplete="off"
-        style={inputStyle}
-      />
+    <div ref={wrapRef} className="kfield" style={{ position: 'relative' }}>
+      <div className="kfield-ico">{ICONS[isFrom ? 'from' : 'to']}</div>
+      <div className="kfield-in">
+        <input
+          type="search" className="kinput"
+          placeholder={isFrom ? ls.from_placeholder : ls.to_placeholder}
+          autoComplete="off" value={query}
+          onChange={handleChange}
+          onFocus={() => query.trim().length >= 2 && setOpen(true)}
+        />
+        <div className="kfield-sub">{sub}</div>
+      </div>
+      {isFrom && <button type="button" className="kclear" onClick={clear}>✕</button>}
       {open && (
-        <div style={dropdownStyle}>
-          {loading && <div style={emptyRowStyle}>…</div>}
-          {!loading && results.length === 0 && <div style={emptyRowStyle}>{t.searchNoAirportResults}</div>}
-          {!loading && results.map((a) => (
-            <button key={a.code} type="button" onMouseDown={() => pick(a)} style={optionStyle}>
-              <span>{a.city} — {a.name}</span>
-              <span style={codeStyle}>{a.code}{a.type === 'city' ? ` · ${t.searchCityBadge}` : ''}</span>
-            </button>
-          ))}
+        <div className="acdrop open" role="listbox" aria-label={isFrom ? 'Abflughäfen' : 'Zielflughäfen'}>
+          {results.map((a) => {
+            const isCity = a.type === 'city';
+            const name = isCity ? a.city : (a.name || a.city);
+            const sub2 = isCity ? `${a.country ? a.country + ' · ' : ''}${allAirportsLabel(lang)}` : `${a.city}${a.country ? ' · ' + a.country : ''}`;
+            return (
+              <div key={a.code} className="aci" role="option" aria-selected="false" onMouseDown={() => pick(a)}>
+                <div className="acb" style={isCity ? { background: 'var(--teal-lt)', color: 'var(--teal2)' } : undefined}>{a.code}</div>
+                <div>
+                  <div className="acn">
+                    {name}
+                    {isCity && <span style={cityBadgeStyle}>{cityBadgeLabel(lang)}</span>}
+                  </div>
+                  <div className="acs">{sub2}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-const labelStyle = { display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--tx2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 };
-const inputStyle = {
-  width: '100%', padding: '11px 12px', borderRadius: 'var(--r-sm)', border: '1px solid var(--bd)',
-  background: 'var(--bg)', color: 'var(--tx)', fontSize: 15,
+const cityBadgeStyle = {
+  marginInlineStart: 8, fontSize: 9, fontWeight: 800, color: 'var(--teal2)',
+  background: 'var(--teal-lt)', borderRadius: 5, padding: '1px 6px', verticalAlign: 'middle',
 };
-const dropdownStyle = {
-  position: 'absolute', zIndex: 20, top: '100%', insetInline: 0, marginTop: 4,
-  background: 'var(--bg)', border: '1px solid var(--bd)', borderRadius: 'var(--r-sm)',
-  maxHeight: 280, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,.12)',
+const compactWrapStyle = {
+  flex: 1, position: 'relative', background: 'var(--bg)', border: '1.5px solid var(--bd)',
+  borderRadius: 10, padding: '10px 12px',
 };
-const optionStyle = {
-  display: 'flex', justifyContent: 'space-between', gap: 10, width: '100%', textAlign: 'right',
-  background: 'none', border: 'none', borderBottom: '1px solid var(--bd)', color: 'var(--tx)',
-  fontSize: 13.5, padding: '10px 12px', cursor: 'pointer',
+const compactLabelStyle = { fontSize: 10, color: 'var(--tx3)', marginBottom: 2 };
+const compactInputStyle = { border: 'none', background: 'transparent', width: '100%', fontSize: 14, fontWeight: 700, color: 'var(--tx)', outline: 'none' };
+const compactDropStyle = {
+  position: 'absolute', top: 'calc(100% + 4px)', insetInline: 0, background: 'var(--bg)',
+  border: '1.5px solid var(--bd)', borderRadius: 10, zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,.15)', maxHeight: 220, overflowY: 'auto',
 };
-const codeStyle = { fontFamily: 'monospace', color: 'var(--tx3)', fontSize: 12, whiteSpace: 'nowrap' };
-const emptyRowStyle = { padding: '12px', color: 'var(--tx3)', fontSize: 13, textAlign: 'center' };
+const compactOptionStyle = { display: 'block', width: '100%', textAlign: 'right', background: 'none', border: 'none', color: 'var(--tx)', fontSize: 13, padding: '8px 10px', cursor: 'pointer' };

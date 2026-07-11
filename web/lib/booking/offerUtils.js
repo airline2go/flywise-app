@@ -46,12 +46,24 @@ function fmtDuration(minutes) {
   return `${h}h ${String(m).padStart(2, '0')}m`;
 }
 
-function fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+function p2(n) {
+  return String(n).padStart(2, '0');
 }
 
-function fmtPrice(price, currency) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'EUR' }).format(price);
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+}
+
+// Ports app.js's fmt() exactly — always EUR, no decimal places (Duffel
+// prices are already whole-euro after margin rounding), not the offer's
+// own `currency` field (which fmt() never read either).
+function fmtPrice(price) {
+  try {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(price);
+  } catch {
+    return `€${price}`;
+  }
 }
 
 // sortMode: 'best' | 'price' | 'dur' — 'best' ports the weighted

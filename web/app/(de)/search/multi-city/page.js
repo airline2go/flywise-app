@@ -1,4 +1,4 @@
-import { stringsFor } from '../../../../lib/translate';
+import '../../../../styles/styles.css';
 import ResultsClient from '../../../../lib/booking/ResultsClient';
 
 export const metadata = { robots: 'noindex, follow' };
@@ -9,6 +9,5 @@ export const metadata = { robots: 'noindex, follow' };
 // the URL, matching how app.js never persisted an mc search past the
 // current tab.
 export default function MultiCitySearchResultsPage() {
-  const t = stringsFor('de');
-  return <ResultsClient origin={null} destination={null} trip="mc" departDate={null} returnDate={null} t={t} />;
+  return <ResultsClient origin={null} destination={null} trip="mc" departDate={null} returnDate={null} />;
 }

@@ -1,49 +1,50 @@
 'use client';
 
-// Ports app.js's custom calendar overlay (#cal-ov/buildCalGrid()/
-// calClickDay()/confirmCal()) as one reusable popover: 'range' mode for
-// the main depart+return picker (classic two-tap range selection —
-// first tap sets depart, second sets return; tapping an earlier date
-// while picking return swaps them), 'single' mode for one-way and for
-// each multi-city leg (where minDate enforces leg N's date >= leg
-// N-1's, same constraint mcOpenCal() applied).
+// Ports the real #cal-ov/.cal-box bottom-sheet calendar exactly
+// (buildCalGrid()/calClickDay()/confirmCal()) — same classes so
+// styles.css applies identically. 'range' mode is the main depart+return
+// picker (classic two-tap range selection); 'single' mode (no return
+// selector shown) is reused for one-way and each multi-city leg, same
+// as the original reusing one #cal-ov for both.
 import { useState } from 'react';
 
 function fmtDateInput(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-
 function parseDateInput(s) {
   if (!s) return null;
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
-
 function startOfToday() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
 }
+function fmtSelVal(d) {
+  return d ? d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) : 'Datum wählen';
+}
 
-export default function DatePicker({ mode, value, minDate, maxDate, onChange, onClose, doneLabel }) {
+const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+export default function DatePicker({ mode, value, minDate, maxDate, onChange, onClose }) {
   const seed = mode === 'single' ? parseDateInput(value) : parseDateInput(value?.depart) || new Date();
   const [viewYear, setViewYear] = useState(seed ? seed.getFullYear() : new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(seed ? seed.getMonth() : new Date().getMonth());
+  const [calMode, setCalMode] = useState('dep');
 
   const today = startOfToday();
   const min = minDate ? parseDateInput(minDate) : today;
   const max = maxDate ? parseDateInput(maxDate) : null;
-  const depart = mode === 'range' ? parseDateInput(value?.depart) : null;
+  const depart = mode === 'range' ? parseDateInput(value?.depart) : parseDateInput(value);
   const ret = mode === 'range' ? parseDateInput(value?.return) : null;
-  const single = mode === 'single' ? parseDateInput(value) : null;
 
   function changeMonth(delta) {
     let m = viewMonth + delta;
     let y = viewYear;
     if (m < 0) { m = 11; y -= 1; }
     if (m > 11) { m = 0; y += 1; }
-    setViewMonth(m);
-    setViewYear(y);
+    setViewMonth(m); setViewYear(y);
   }
 
   function isDisabled(d) {
@@ -54,95 +55,95 @@ export default function DatePicker({ mode, value, minDate, maxDate, onChange, on
 
   function clickDay(d) {
     if (isDisabled(d)) return;
-    if (mode === 'single') {
-      onChange(fmtDateInput(d));
+    if (mode === 'single') { onChange(fmtDateInput(d)); onClose(); return; }
+    if (calMode === 'dep') {
+      onChange({ depart: fmtDateInput(d), return: ret ? fmtDateInput(ret) : null });
+      if (ret && d < ret) { onClose(); return; }
+      setCalMode('ret');
+      return;
+    }
+    if (depart && d < depart) {
+      onChange({ depart: fmtDateInput(d), return: fmtDateInput(depart) });
       onClose();
       return;
     }
-    // range mode
-    if (!depart || (depart && ret)) {
-      onChange({ depart: fmtDateInput(d), return: null });
-      return;
-    }
-    if (d < depart) {
-      onChange({ depart: fmtDateInput(d), return: fmtDateInput(depart) });
-      return;
-    }
-    onChange({ depart: fmtDateInput(depart), return: fmtDateInput(d) });
+    onChange({ depart: depart ? fmtDateInput(depart) : fmtDateInput(d), return: fmtDateInput(d) });
     onClose();
   }
 
   const firstOfMonth = new Date(viewYear, viewMonth, 1);
-  const offset = (firstOfMonth.getDay() + 6) % 7; // Monday-first
+  const offset = (firstOfMonth.getDay() + 6) % 7;
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+  const totalCells = 7 * Math.ceil((offset + daysInMonth) / 7);
   const cells = [];
-  for (let i = 0; i < offset; i++) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day++) cells.push(new Date(viewYear, viewMonth, day));
+  for (let i = 0; i < totalCells; i++) {
+    let day, month = viewMonth, year = viewYear, otherMonth = false;
+    if (i < offset) { day = prevMonthDays - (offset - 1 - i); month = viewMonth - 1; if (month < 0) { month = 11; year--; } otherMonth = true; }
+    else if (i >= offset + daysInMonth) { day = i - offset - daysInMonth + 1; month = viewMonth + 1; if (month > 11) { month = 0; year++; } otherMonth = true; }
+    else { day = i - offset + 1; }
+    cells.push({ date: new Date(year, month, day), otherMonth });
+  }
 
-  const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const monthLabel = firstOfMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={panelStyle}>
-        <div style={headerStyle}>
-          <button type="button" onClick={() => changeMonth(-1)} style={navBtnStyle} aria-label="prev">‹</button>
-          <div style={{ fontWeight: 700, fontSize: 14, textTransform: 'capitalize' }}>{monthLabel}</div>
-          <button type="button" onClick={() => changeMonth(1)} style={navBtnStyle} aria-label="next">›</button>
+    <div className="ov open" role="dialog" aria-modal="true" aria-label="Datum auswählen" style={{ alignItems: 'flex-end', padding: 0 }} onClick={onClose}>
+      <div className="cal-box" onClick={(e) => e.stopPropagation()}>
+        <div className="cal-hd">
+          <div className="cal-sel-row">
+            <div className={`cal-sel-btn${calMode === 'dep' ? ' active' : ''}`} onClick={() => setCalMode('dep')}>
+              <div className="cal-sel-lbl">Hinreise</div>
+              <div className="cal-sel-val">{fmtSelVal(depart)}</div>
+            </div>
+            {mode === 'range' && (
+              <div className={`cal-sel-btn${calMode === 'ret' ? ' active' : ''}`} onClick={() => setCalMode('ret')}>
+                <div className="cal-sel-lbl">Rückreise</div>
+                <div className="cal-sel-val">{fmtSelVal(ret)}</div>
+              </div>
+            )}
+          </div>
         </div>
-        <div style={weekRowStyle}>
-          {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d) => <span key={d} style={weekLabelStyle}>{d}</span>)}
+
+        <div className="cal-nav">
+          <button type="button" className="cal-nav-btn" onClick={() => changeMonth(-1)}>‹</button>
+          <span className="cal-month-lbl">{monthLabel}</span>
+          <button type="button" className="cal-nav-btn" onClick={() => changeMonth(1)}>›</button>
         </div>
-        <div style={gridStyle}>
-          {cells.map((d, idx) => {
-            if (!d) return <span key={idx} />;
-            const disabled = isDisabled(d);
-            const isDep = mode === 'range' && depart && d.getTime() === depart.getTime();
-            const isRet = mode === 'range' && ret && d.getTime() === ret.getTime();
-            const inRange = mode === 'range' && depart && ret && d > depart && d < ret;
-            const isSingle = mode === 'single' && single && d.getTime() === single.getTime();
-            const isToday = d.getTime() === today.getTime();
+
+        <div className="cal-weekdays">
+          {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
+        </div>
+
+        <div className="cal-grid">
+          {cells.map(({ date: real, otherMonth }, idx) => {
+            const disabled = isDisabled(real);
+            const isToday = real.getTime() === today.getTime();
+            const isDep = depart && real.getTime() === depart.getTime();
+            const isRet = ret && real.getTime() === ret.getTime();
+            const inRange = depart && ret && real > depart && real < ret;
+            let cls = 'cal-day';
+            if (otherMonth) cls += ' other-month';
+            if (disabled) cls += ' past';
+            if (isToday) cls += ' today';
+            if (isDep) cls += ' dep-sel';
+            if (isRet) cls += ' ret-sel';
+            if (inRange) cls += ' in-range';
+            if (isDep && ret) cls += ' range-start';
+            if (isRet && depart) cls += ' range-end';
             return (
-              <button
-                key={idx} type="button" disabled={disabled} onClick={() => clickDay(d)}
-                style={dayStyle({ disabled, selected: isDep || isRet || isSingle, inRange, isToday })}
-              >
-                {d.getDate()}
+              <button key={idx} type="button" className={cls} disabled={disabled} onClick={() => clickDay(real)}>
+                {real.getDate()}
               </button>
             );
           })}
         </div>
-        {mode === 'range' && (
-          <button type="button" onClick={onClose} disabled={!depart} style={doneBtnStyle}>{doneLabel}</button>
-        )}
+
+        <div className="cal-foot">
+          <button type="button" className="cal-cancel" onClick={onClose}>Abbrechen</button>
+          <button type="button" className="cal-confirm" onClick={onClose}>Daten festlegen</button>
+        </div>
       </div>
     </div>
   );
 }
-
-function dayStyle({ disabled, selected, inRange, isToday }) {
-  return {
-    width: 36, height: 36, borderRadius: '50%', border: isToday ? '1px solid var(--teal)' : 'none',
-    background: selected ? 'var(--teal)' : inRange ? 'var(--teal-lt)' : 'transparent',
-    color: disabled ? 'var(--tx3)' : selected ? '#fff' : 'var(--tx)',
-    cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: selected ? 700 : 400,
-  };
-}
-
-const overlayStyle = {
-  position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex',
-  alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px', overflowY: 'auto', zIndex: 60,
-};
-const panelStyle = {
-  width: '100%', maxWidth: 340, background: 'var(--bg)', border: '1px solid var(--bd)',
-  borderRadius: 'var(--r)', padding: 16, boxShadow: '0 12px 32px rgba(0,0,0,.2)',
-};
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 };
-const navBtnStyle = { background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--tx2)', padding: '0 8px' };
-const weekRowStyle = { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 };
-const weekLabelStyle = { textAlign: 'center', fontSize: 11, color: 'var(--tx3)', fontWeight: 700 };
-const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, justifyItems: 'center' };
-const doneBtnStyle = {
-  width: '100%', marginTop: 14, padding: '10px 0', borderRadius: 'var(--r-sm)', border: 'none',
-  background: 'var(--teal)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-  opacity: 1,
-};
