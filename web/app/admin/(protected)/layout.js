@@ -23,7 +23,9 @@ const NAV_ITEMS = [
   { href: '/admin/blog', label: 'المدونة' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
   { href: '/admin/geo', label: 'المطارات والمدن' },
+  { href: '/admin/error-logs', label: 'سجل الأخطاء' },
   { href: '/admin/team', label: 'الفريق', fullAdminOnly: true },
+  { href: '/admin/api-monitor', label: 'مراقبة API', fullAdminOnly: true },
   { href: '/admin/settings', label: 'الإعدادات' },
 ];
 

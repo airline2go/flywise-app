@@ -6,6 +6,7 @@ import EntityModal from '../../../../lib/admin/EntityModal';
 import AirportAutocomplete from '../../../../lib/admin/AirportAutocomplete';
 import RouteFaqEditor from '../../../../lib/admin/RouteFaqEditor';
 import BulkRouteModal from '../../../../lib/admin/BulkRouteModal';
+import RouteMatrixModal from '../../../../lib/admin/RouteMatrixModal';
 import { ADMIN_COLORS } from '../../../../lib/admin/theme';
 
 const REFRESH_OPTIONS = [
@@ -86,6 +87,7 @@ export default function RoutePagesClient() {
   const [error, setError] = useState('');
 
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [matrixModalOpen, setMatrixModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState({});
   const [bulkRefreshFreq, setBulkRefreshFreq] = useState('none');
   const [banner, setBanner] = useState(null); // {type: 'info'|'success'|'error', text}
@@ -142,6 +144,21 @@ export default function RoutePagesClient() {
       custom_title: route.custom_title || '',
       custom_meta_description: route.custom_meta_description || '',
       custom_faq: route.custom_faq || [],
+    });
+    setError('');
+    setModalOpen(true);
+  }
+
+  // [MISSING-ROUTES-MATRIX] Clicking an empty (missing) matrix cell jumps
+  // straight into the create-route form with both airports prefilled —
+  // still requires manual save, matches matrixQuickCreate()'s "no silent
+  // auto-creation" intent.
+  function openCreatePrefilled(origin, dest) {
+    setMatrixModalOpen(false);
+    setForm({
+      ...emptyForm(),
+      origin_iata: origin.code, origin_city: origin.city, origin_country: origin.country, origin_lat: origin.lat, origin_lng: origin.lng,
+      destination_iata: dest.code, destination_city: dest.city, destination_country: dest.country, destination_lat: dest.lat, destination_lng: dest.lng,
     });
     setError('');
     setModalOpen(true);
@@ -305,6 +322,7 @@ export default function RoutePagesClient() {
           <button type="button" onClick={clearRoutePriceCache} style={ghostSmallBtnStyle}>🔄 تحديث كل الأسعار</button>
           <button type="button" onClick={openCreate} style={primarySmallBtnStyle}>➕ مسار جديد</button>
           <button type="button" onClick={() => setBulkModalOpen(true)} style={ghostSmallBtnStyle}>📦 إنشاء بالجملة</button>
+          <button type="button" onClick={() => setMatrixModalOpen(true)} style={ghostSmallBtnStyle}>🗺️ مصفوفة المسارات</button>
           <button type="button" onClick={publishAllDrafts} style={ghostSmallBtnStyle}>🚀 نشر كل المسودات</button>
           <button type="button" disabled={healthCheckRunning} onClick={runHealthCheck} style={ghostSmallBtnStyle}>🩺 فحص صحة المسارات</button>
         </div>
@@ -450,6 +468,13 @@ export default function RoutePagesClient() {
             setPage(1);
             load();
           }}
+        />
+      )}
+
+      {matrixModalOpen && (
+        <RouteMatrixModal
+          onClose={() => setMatrixModalOpen(false)}
+          onQuickCreate={openCreatePrefilled}
         />
       )}
     </div>
