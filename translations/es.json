@@ -10,7 +10,6 @@
   "privacyLabel": "Privacidad",
   "termsLabel": "Términos",
   "copyright": "© 2026 Airpiv · Todos los derechos reservados",
-
   "flightsFrom": "Vuelos desde",
   "flightsTo": "Vuelos a",
   "availableWord": "disponibles",
@@ -43,7 +42,6 @@
   "airlinesFlyingThisRoute": "Aerolíneas que operan esta ruta:",
   "hoursAbbrev": "h",
   "minutesAbbrev": "min",
-
   "routeTitleTemplate": "Vuelos de {origin} a {destination}",
   "routeDescriptionTemplate": "Encuentra y reserva vuelos baratos de {origin} ({originCode}) a {destination} ({destCode}) — compara precios con Airpiv.",
   "routeIntroOpeningLongHaul": "¿Buscas un vuelo de {origin} a {destination}?",
@@ -70,7 +68,6 @@
   "routeBestTimeWindowShortHaul": "21–45 días antes de la salida",
   "routeDurationFaqQuestionTemplate": "¿Cuánto dura el vuelo de {origin} a {destination}?",
   "routeDurationFaqAnswerTemplate": "La duración media del vuelo es de {duration}. {directLine}",
-
   "cityFewRoutesTitleTemplate": "Vuelos a {entity} — {count} rutas comparadas",
   "cityFewRoutesDescriptionTemplate": "{count} conexiones de vuelo desde y hacia {entity}, comparadas una junto a otra. Encuentra la ruta más barata con Airpiv.",
   "citySingleRouteTitleTemplate": "Vuelos {otherCity} ↔ {city}",
@@ -79,13 +76,10 @@
   "cityMultiAirportDescriptionTemplate": "{city} cuenta con {count} aeropuertos ({codes}). Compara todas las rutas con Airpiv.",
   "cityManyRoutesTitleTemplate": "Vuelos baratos a {city} — todas las rutas",
   "cityManyRoutesDescriptionTemplate": "Más de {count} conexiones de vuelo a {city}. Compara todos los destinos y aerolíneas en tiempo real con Airpiv.",
-  "entityIntroTemplate": "Descubre todas las conexiones de vuelo desde y hacia {entity}. Airpiv compara cientos de aerolíneas en tiempo real para encontrar el mejor precio para tu viaje.",
-
   "countrySingleRouteTitleTemplate": "Vuelos a {country} — {otherCity} ↔ {country}",
   "countrySingleRouteDescriptionTemplate": "Conexión directa entre {otherCity} y {country}: compara precios y reserva vuelos baratos con Airpiv.",
   "countryManyRoutesTitleTemplate": "Vuelos baratos a {country} — todos los destinos",
   "countryManyRoutesDescriptionTemplate": "Más de {count} conexiones de vuelo a {country}. Compara todos los destinos y aerolíneas en tiempo real con Airpiv.",
-
   "airportSingleRouteTitleTemplate": "Aeropuerto de {code} — vuelo directo desde {city}",
   "airportSingleRouteDescriptionTemplate": "El aeropuerto de {code} en {city} ofrece una conexión directa. Compara el precio y reserva con Airpiv.",
   "airportMixedHaulTitleTemplate": "Aeropuerto de {code} ({city}) — corta y larga distancia",
@@ -98,5 +92,15 @@
   "departuresLabel": "Salidas",
   "arrivalsLabel": "Llegadas",
   "departuresFrom": "Salidas desde",
-  "arrivalsAt": "Llegadas a"
+  "arrivalsAt": "Llegadas a",
+  "cityIntroTemplate": "Descubre todas las conexiones de vuelo desde y hacia {entity}. Airpiv compara cientos de aerolíneas en tiempo real para encontrar el mejor precio para tu viaje.",
+  "countryIntroTemplate": "Compara los precios de los vuelos a todos los destinos de {entity}. Airpiv busca en cientos de aerolíneas en tiempo real para que encuentres la conexión más barata para tu viaje.",
+  "countryFewRoutesTitleTemplate": "Vuelos a {entity} — {count} destinos comparados",
+  "countryFewRoutesDescriptionTemplate": "{count} destinos en {entity}, comparados uno junto a otro. Encuentra la conexión más barata con Airpiv.",
+  "airlineIntroTemplate": "{airline} opera varias rutas que Airpiv incluye en su comparador de precios. Compara todas las conexiones disponibles de esta aerolínea y encuentra el mejor precio.",
+  "airlineSingleRouteTitleTemplate": "Vuelos de {airline} — {otherCity} ↔ {otherCity2}",
+  "airlineSingleRouteDescriptionTemplate": "{airline} vuela la ruta {otherCity} – {otherCity2}. Compara precios y reserva barato con Airpiv.",
+  "airlineManyRoutesTitleTemplate": "Vuelos de {airline} — {count} rutas comparadas",
+  "airlineManyRoutesDescriptionTemplate": "{count} conexiones de vuelo operadas por {airline}, comparadas una junto a otra. Encuentra la ruta más barata con Airpiv.",
+  "airlineWord": "Aerolínea"
 }

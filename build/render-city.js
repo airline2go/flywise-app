@@ -1,7 +1,7 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
-const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 
 const CITY_CSS = `<style>
 .city-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -49,12 +49,11 @@ function renderCityPage(city, routes, lang) {
 
   const urls = urlsFor(`city/${encodeURIComponent(city.city_slug)}`);
   const url = urls[lang];
-  // [ROUTE-SEO-OVERRIDES] intro_text is a single, non-localized column —
-  // it's written by a German-speaking admin, so it only ever overrides
-  // the German intro; every other language always gets the generated
-  // intro (same behavior the old de/en-only version already had, just
-  // generalized instead of hardcoded to the 'de' check).
-  const introText = (lang === DEFAULT_LANGUAGE && city.intro_text) || format(translate('entityIntroTemplate', lang), { entity: cityName });
+  // [ADMIN-OVERRIDE-ALL-LANGS] intro_text is admin-authored per city, not
+  // per language — applies uniformly across all 7 languages rather than
+  // only overriding the German intro and silently falling back to the
+  // generated template everywhere else.
+  const introText = city.intro_text || format(translate('cityIntroTemplate', lang), { entity: cityName });
 
   const countryHref = city.country_code ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
@@ -105,10 +104,21 @@ ${toSectionHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
-    breadcrumb: { '@type': 'BreadcrumbList', itemListElement: breadcrumbList },
   };
 
-  const headExtra = `${jsonLdScript(schema)}\n${CITY_CSS}`;
+  // [STANDALONE-BREADCRUMB] Emitted as its own top-level BreadcrumbList
+  // JSON-LD block (matching render-flight-route.js) rather than nested
+  // inside WebPage.breadcrumb — the standalone form is what Google's rich
+  // results tooling actually looks for.
+  const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbList };
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${CITY_CSS}`;
+
+  // [THIN-CONTENT-NOINDEX] A city with at most one route and no admin-
+  // written intro has nothing but a generated one-line template and a
+  // single link — not enough unique content to be worth indexing. Still
+  // `follow` so link equity flows through to the (single) route it links.
+  const robotsContent = (locRoutes.length <= 1 && !city.intro_text) ? 'noindex, follow' : 'index, follow';
 
   const html = renderShell({
     lang,
@@ -116,6 +126,7 @@ ${toSectionHtml}
     description,
     canonicalUrl: url,
     urls,
+    robotsContent,
     headExtra,
     mainContent,
   });

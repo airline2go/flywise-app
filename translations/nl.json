@@ -10,7 +10,6 @@
   "privacyLabel": "Privacy",
   "termsLabel": "Voorwaarden",
   "copyright": "© 2026 Airpiv · Alle rechten voorbehouden",
-
   "flightsFrom": "Vluchten vanaf",
   "flightsTo": "Vluchten naar",
   "availableWord": "beschikbare",
@@ -43,7 +42,6 @@
   "airlinesFlyingThisRoute": "Maatschappijen die deze route vliegen:",
   "hoursAbbrev": "u",
   "minutesAbbrev": "min",
-
   "routeTitleTemplate": "Vluchten van {origin} naar {destination}",
   "routeDescriptionTemplate": "Vind en boek goedkope vluchten van {origin} ({originCode}) naar {destination} ({destCode}) — vergelijk prijzen met Airpiv.",
   "routeIntroOpeningLongHaul": "Op zoek naar een vlucht van {origin} naar {destination}?",
@@ -70,7 +68,6 @@
   "routeBestTimeWindowShortHaul": "21–45 dagen voor vertrek",
   "routeDurationFaqQuestionTemplate": "Hoe lang duurt de vlucht van {origin} naar {destination}?",
   "routeDurationFaqAnswerTemplate": "De gemiddelde vluchttijd is {duration}. {directLine}",
-
   "cityFewRoutesTitleTemplate": "Vluchten {entity} — {count} routes vergeleken",
   "cityFewRoutesDescriptionTemplate": "{count} vluchtverbindingen van en naar {entity}, naast elkaar vergeleken. Vind de goedkoopste route met Airpiv.",
   "citySingleRouteTitleTemplate": "Vluchten {otherCity} ↔ {city}",
@@ -79,13 +76,10 @@
   "cityMultiAirportDescriptionTemplate": "{city} wordt bediend door {count} luchthavens ({codes}). Vergelijk alle routes met Airpiv.",
   "cityManyRoutesTitleTemplate": "Goedkope vluchten naar {city} — alle routes",
   "cityManyRoutesDescriptionTemplate": "Meer dan {count} vluchtverbindingen naar {city}. Vergelijk alle bestemmingen en maatschappijen in realtime met Airpiv.",
-  "entityIntroTemplate": "Ontdek alle vluchtverbindingen van en naar {entity}. Airpiv vergelijkt in realtime honderden maatschappijen om de beste prijs voor je reis te vinden.",
-
   "countrySingleRouteTitleTemplate": "Vluchten naar {country} — {otherCity} ↔ {country}",
   "countrySingleRouteDescriptionTemplate": "Directe verbinding tussen {otherCity} en {country}: vergelijk prijzen en boek goedkope vluchten met Airpiv.",
   "countryManyRoutesTitleTemplate": "Goedkope vluchten naar {country} — alle bestemmingen",
   "countryManyRoutesDescriptionTemplate": "Meer dan {count} vluchtverbindingen naar {country}. Vergelijk alle bestemmingen en maatschappijen in realtime met Airpiv.",
-
   "airportSingleRouteTitleTemplate": "Luchthaven {code} — directe vlucht vanaf {city}",
   "airportSingleRouteDescriptionTemplate": "Luchthaven {code} in {city} biedt een directe verbinding. Vergelijk de prijs en boek met Airpiv.",
   "airportMixedHaulTitleTemplate": "Luchthaven {code} ({city}) — korte & lange afstand",
@@ -98,5 +92,15 @@
   "departuresLabel": "Vertrekken",
   "arrivalsLabel": "Aankomsten",
   "departuresFrom": "Vertrekken vanaf",
-  "arrivalsAt": "Aankomsten op"
+  "arrivalsAt": "Aankomsten op",
+  "cityIntroTemplate": "Ontdek alle vluchtverbindingen van en naar {entity}. Airpiv vergelijkt in realtime honderden maatschappijen om de beste prijs voor je reis te vinden.",
+  "countryIntroTemplate": "Vergelijk vluchtprijzen naar alle bestemmingen in {entity}. Airpiv doorzoekt in realtime honderden maatschappijen zodat je de goedkoopste verbinding voor je reis vindt.",
+  "countryFewRoutesTitleTemplate": "Vluchten naar {entity} — {count} bestemmingen vergeleken",
+  "countryFewRoutesDescriptionTemplate": "{count} bestemmingen in {entity}, naast elkaar vergeleken. Vind de goedkoopste verbinding met Airpiv.",
+  "airlineIntroTemplate": "{airline} vliegt meerdere routes die Airpiv volgt in de prijsvergelijking. Vergelijk alle beschikbare verbindingen van deze maatschappij en vind de beste prijs.",
+  "airlineSingleRouteTitleTemplate": "{airline} vluchten — {otherCity} ↔ {otherCity2}",
+  "airlineSingleRouteDescriptionTemplate": "{airline} vliegt de route {otherCity} – {otherCity2}. Vergelijk prijzen en boek voordelig met Airpiv.",
+  "airlineManyRoutesTitleTemplate": "{airline} vluchten — {count} routes vergeleken",
+  "airlineManyRoutesDescriptionTemplate": "{count} vluchtverbindingen van {airline}, naast elkaar vergeleken. Vind de goedkoopste route met Airpiv.",
+  "airlineWord": "Luchtvaartmaatschappij"
 }

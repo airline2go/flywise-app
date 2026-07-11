@@ -1338,7 +1338,7 @@ var GEO_LANGUAGES = [
 ];
 
 function showGeoTab(tab) {
-  ['cities', 'countries', 'airports'].forEach(function (t) {
+  ['cities', 'countries', 'airports', 'airlines'].forEach(function (t) {
     document.getElementById('geo-subtab-' + t).style.display = t === tab ? '' : 'none';
     var btn = document.getElementById('geo-tab-btn-' + t);
     btn.className = t === tab ? 'btn btn-primary' : 'btn btn-ghost';
@@ -1346,6 +1346,7 @@ function showGeoTab(tab) {
   if (tab === 'cities' && !geoCities.length) loadGeoCities();
   if (tab === 'countries' && !geoCountries.length) loadGeoCountries();
   if (tab === 'airports' && !geoAirports.length) loadGeoAirports();
+  if (tab === 'airlines' && !geoAirlines.length) loadGeoAirlines();
 }
 
 // Builds the 7 language-labeled text inputs shared by all 3 editor
@@ -1423,6 +1424,7 @@ async function openCityEditor(city) {
   document.getElementById('city-slug').value = city ? city.city_slug : '';
   document.getElementById('city-country-code').value = city ? (city.country_code || '') : '';
   document.getElementById('city-status').value = city ? city.status : 'published';
+  document.getElementById('city-intro-text').value = city ? (city.intro_text || '') : '';
   var translations = {};
   if (city) {
     try {
@@ -1442,6 +1444,7 @@ async function saveCity() {
     city_slug: document.getElementById('city-slug').value.trim().toLowerCase(),
     country_code: document.getElementById('city-country-code').value.trim().toUpperCase() || null,
     status: document.getElementById('city-status').value,
+    intro_text: document.getElementById('city-intro-text').value.trim() || null,
   };
   if (!payload.name || !payload.city_slug) { showToast('⚠️ الاسم والرابط مطلوبان', 'error'); return; }
   try {
@@ -1521,6 +1524,7 @@ async function openCountryEditor(country) {
   document.getElementById('country-code').value = country ? country.code : '';
   document.getElementById('country-code').disabled = !!country;
   document.getElementById('country-status').value = country ? country.status : 'published';
+  document.getElementById('country-intro-text').value = country ? (country.intro_text || '') : '';
   var translations = {};
   if (country) {
     try {
@@ -1538,6 +1542,7 @@ async function saveCountry() {
   var payload = {
     name: document.getElementById('country-name').value.trim(),
     status: document.getElementById('country-status').value,
+    intro_text: document.getElementById('country-intro-text').value.trim() || null,
   };
   if (!id) payload.code = document.getElementById('country-code').value.trim().toUpperCase();
   if (!payload.name || (!id && !payload.code)) { showToast('⚠️ الاسم والكود مطلوبان', 'error'); return; }
@@ -1672,6 +1677,90 @@ async function deleteAirport(id) {
     const res = await adminFetch('/admin/airports/' + id, { method: 'DELETE' });
     const j = await res.json();
     if (j.ok) { showToast('🗑 تم حذف المطار', 'success'); loadGeoAirports(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+// ---- Airlines ----
+var geoAirlines = [];
+var geoAirlinePage = 1, geoAirlineTotalPages = 1, geoAirlineSearchTimer = null;
+function geoAirlineSearchDebounced() { clearTimeout(geoAirlineSearchTimer); geoAirlineSearchTimer = setTimeout(geoAirlineResetAndLoad, 400); }
+function geoAirlineResetAndLoad() { geoAirlinePage = 1; loadGeoAirlines(); }
+function geoAirlineGoToPage(p) { if (p < 1 || p > geoAirlineTotalPages) return; geoAirlinePage = p; loadGeoAirlines(); }
+
+async function loadGeoAirlines() {
+  try {
+    var q = encodeURIComponent(document.getElementById('geo-airline-search').value.trim());
+    var status = document.getElementById('geo-airline-status-filter').value;
+    var url = '/admin/airlines?page=' + geoAirlinePage + '&limit=50';
+    if (q) url += '&q=' + q;
+    if (status) url += '&status=' + status;
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) {
+      geoAirlines = j.airlines;
+      geoAirlineTotalPages = j.totalPages || 1;
+      renderGeoAirlinesList();
+      renderGeoPagination('geo-airlines-pagination', j.total || 0, geoAirlinePage, geoAirlineTotalPages, 'geoAirlineGoToPage');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+function renderGeoAirlinesList() {
+  var tbody = document.getElementById('geo-airlines-list');
+  if (!geoAirlines.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:30px">لا توجد شركات طيران بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = geoAirlines.map(function (a) {
+    var statusBadge = a.status === 'published' ? '<span class="badge confirmed">✓ منشورة</span>' : '<span class="badge pending">◔ مسودة</span>';
+    return '<tr>' +
+      '<td>' + escHtml(a.name) + '</td>' +
+      '<td class="mono">' + escHtml(a.iata_code) + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick=\'openAirlineEditor(' + escJsonAttr(a) + ')\'>✏️</button> ' +
+      '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#ef4444" onclick="deleteAirline(\'' + escHtml(a.id) + '\')">🗑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function openAirlineEditor(airline) {
+  document.getElementById('airline-editor-title').textContent = airline ? 'تعديل شركة طيران' : 'شركة طيران جديدة';
+  document.getElementById('airline-edit-id').value = airline ? airline.id : '';
+  document.getElementById('airline-name').value = airline ? airline.name : '';
+  document.getElementById('airline-code').value = airline ? airline.iata_code : '';
+  document.getElementById('airline-code').disabled = !!airline;
+  document.getElementById('airline-status').value = airline ? airline.status : 'published';
+  document.getElementById('airline-intro-text').value = airline ? (airline.intro_text || '') : '';
+  document.getElementById('airline-editor-modal').classList.add('open');
+}
+
+async function saveAirline() {
+  var id = document.getElementById('airline-edit-id').value;
+  var payload = {
+    name: document.getElementById('airline-name').value.trim(),
+    status: document.getElementById('airline-status').value,
+    intro_text: document.getElementById('airline-intro-text').value.trim() || null,
+  };
+  if (!id) payload.iata_code = document.getElementById('airline-code').value.trim().toUpperCase();
+  if (!payload.name || (!id && !payload.iata_code)) { showToast('⚠️ الاسم وكود IATA مطلوبان', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/airlines/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/airlines', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل الحفظ', 'error'); return; }
+    showToast('💾 تم حفظ شركة الطيران', 'success');
+    closeModal('airline-editor-modal');
+    loadGeoAirlines();
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteAirline(id) {
+  if (!confirm('تأكيد حذف شركة الطيران هذه نهائياً؟ لا يمكن التراجع.')) return;
+  try {
+    const res = await adminFetch('/admin/airlines/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف شركة الطيران', 'success'); loadGeoAirlines(); }
     else showToast(j.error || 'فشل الحذف', 'error');
   } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
 }

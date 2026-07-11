@@ -3,7 +3,11 @@
 <sitemap>
 <loc>https://airpiv.com/sitemap-pages.xml</loc>
 </sitemap>
-<sitemap>
-<loc>https://airpiv.com/sitemap-routes.xml</loc>
-</sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-en.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-de.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-ar.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-es.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-fr.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-it.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-nl.xml</loc></sitemap>
 </sitemapindex>
