@@ -8,13 +8,14 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages } from '../content-api';
+import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
 import cityMod from './render-city.js';
 import countryMod from './render-country.js';
 import airportMod from './render-airport.js';
 import airlineMod from './render-airline.js';
 import flightRouteMod from './render-flight-route.js';
+import blogPostMod from './render-blog-post.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
@@ -22,6 +23,7 @@ const { renderCountryPage } = countryMod;
 const { renderAirportPage } = airportMod;
 const { renderAirlinePage } = airlineMod;
 const { renderFlightRoutePage } = flightRouteMod;
+const { renderBlogPostPage } = blogPostMod;
 const { setGeoData } = dataMod;
 
 // Populate the generators' geo lookup tables exactly once per process. The
@@ -82,4 +84,17 @@ export async function renderFlightRouteHtml(slug, lang) {
   const routeList = await listRoutePages();
   const related = computeRelatedRoutes(routeRaw, routeList);
   return renderFlightRoutePage(routeRaw, lang, related).html;
+}
+
+export async function renderBlogPostHtml(slug, lang) {
+  // Blog content is DE/EN-only (independently authored per language); the
+  // other five prefixed languages 404 here even though they're valid site
+  // languages elsewhere — matches the original build, which only rendered
+  // blog posts for 'de' and 'en'.
+  if (lang !== 'de' && lang !== 'en') return null;
+  const post = await getBlogPost(slug, lang);
+  if (!post) return null;
+  await ensureGeo();
+  const [allRoutes, allPosts] = await Promise.all([listRoutePages(), listBlogPosts(lang)]);
+  return renderBlogPostPage(post, allRoutes, allPosts, lang).html;
 }
