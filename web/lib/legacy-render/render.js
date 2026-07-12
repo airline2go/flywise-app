@@ -8,17 +8,20 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, getCity, getCountry, getAirport, getAirline } from '../content-api';
+import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages } from '../content-api';
+import { computeRelatedRoutes } from '../related-routes';
 import cityMod from './render-city.js';
 import countryMod from './render-country.js';
 import airportMod from './render-airport.js';
 import airlineMod from './render-airline.js';
+import flightRouteMod from './render-flight-route.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
 const { renderCountryPage } = countryMod;
 const { renderAirportPage } = airportMod;
 const { renderAirlinePage } = airlineMod;
+const { renderFlightRoutePage } = flightRouteMod;
 const { setGeoData } = dataMod;
 
 // Populate the generators' geo lookup tables exactly once per process. The
@@ -67,4 +70,16 @@ export async function renderAirlineHtml(code, lang) {
   if (!data) return null;
   await ensureGeo();
   return renderAirlinePage(data.airline, data.routes, lang, data.mostUsedRoutes || []).html;
+}
+
+export async function renderFlightRouteHtml(slug, lang) {
+  const routeRaw = await getRoutePage(slug);
+  if (!routeRaw) return null;
+  await ensureGeo();
+  // Related routes are computed from the full route list exactly as the build
+  // script did (related-routes.js is its verbatim port) — not the server's
+  // /related endpoint — so the "Similar flight routes" section matches 1:1.
+  const routeList = await listRoutePages();
+  const related = computeRelatedRoutes(routeRaw, routeList);
+  return renderFlightRoutePage(routeRaw, lang, related).html;
 }
