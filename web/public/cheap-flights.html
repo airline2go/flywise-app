@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!-- Google Analytics 4 -->
+<link rel="preconnect" href="https://api.airpiv.com">
+<link rel="dns-prefetch" href="https://api.airpiv.com">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
+<script src="/analytics.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Günstige Flüge – Die besten Preise im Überblick | Airpiv</title>
+<meta name="description" id="page-description" content="Alle günstigen Flugstrecken von Airpiv auf einen Blick — sortiert nach Preis, live und transparent, ohne versteckte Kosten.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://airpiv.com/cheap-flights.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Günstige Flüge – Die besten Preise im Überblick | Airpiv">
+<meta property="og:description" id="og-description" content="Alle günstigen Flugstrecken von Airpiv auf einen Blick — sortiert nach Preis, live und transparent.">
+<meta property="og:url" content="https://airpiv.com/cheap-flights.html">
+<meta property="og:image" content="https://airpiv.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://airpiv.com/og-image.png">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/shared-layout.css">
+<script type="application/ld+json" id="page-schema">{}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Airpiv","url":"https://airpiv.com","logo":"https://airpiv.com/apple-touch-icon.png"}</script>
+<link rel="stylesheet" href="/flights-promo.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="navi">
+    <a href="/" class="logo"><picture>
+      <source srcset="/airpiv-logo.webp" type="image/webp">
+      <img src="/airpiv-logo.png" alt="Airpiv" width="118" height="38">
+    </picture></a>
+    <div class="navr">
+      <a href="/" class="btn-t">Flüge suchen</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Startseite</a><span>›</span><span>Günstige Flüge</span></nav>
+  <h1>Günstige Flüge — alle Strecken im Preisvergleich</h1>
+  <p class="sub">Live-Preise aller Airpiv-Strecken, sortiert vom günstigsten Angebot — direkt aus dem echten Preisvergleich, nicht geschätzt.</p>
+
+  <div class="cf-grid" id="cf-grid">
+    <p style="color:var(--tx3)">Lade aktuelle Preise…</p>
+  </div>
+
+  <!-- [REAL-DATA-ONLY] Diese FAQ bleibt bewusst allgemein und ehrlich —
+       keine erfundenen Statistiken ("83% günstiger im März" o.ä.) ohne
+       echte Datenbasis. -->
+  <section class="cf-faq">
+    <h2>Häufig gestellte Fragen zu günstigen Flügen</h2>
+    <div class="cf-faq-item"><div class="cf-faq-q">Wie findet Airpiv die günstigsten Preise?</div><div class="cf-faq-a">Airpiv vergleicht in Echtzeit hunderte Airlines für jede Strecke und zeigt dir den tatsächlich günstigsten verfügbaren Preis — keine geschätzten oder veralteten Zahlen.</div></div>
+    <div class="cf-faq-item"><div class="cf-faq-q">Sind die angezeigten Preise pro Person?</div><div class="cf-faq-a">Ja, alle Preise auf dieser Seite gelten für einen Erwachsenen in der Economy-Klasse, einfache Strecke, sofern nicht anders angegeben.</div></div>
+    <div class="cf-faq-item"><div class="cf-faq-q">Ändern sich die Preise häufig?</div><div class="cf-faq-a">Flugpreise schwanken laufend. Die hier gezeigten Preise werden regelmäßig aktualisiert, der tatsächliche Preis zum Buchungszeitpunkt kann leicht abweichen — die finale Suche zeigt dir immer den aktuellen Preis.</div></div>
+  </section>
+</main>
+
+<footer><div class="fi2">
+  <div class="fgr">
+    <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">Finde Flüge, die sonst niemand findet. 600+ Airlines, beste Preise, volle Garantie.</p></div>
+    <div class="fcol"><h4>Unternehmen</h4><ul><li><a href="/about.html">Über uns</a></li><li><a href="/blog.html">Blog</a></li></ul></div>
+    <div class="fcol"><h4>Support</h4><ul><li><a href="/contact.html">Kontakt</a></li><li><a href="/privacy.html">Datenschutz</a></li><li><a href="/terms.html">AGB</a></li></ul></div>
+  </div>
+  <div class="fbot"><p>© 2026 Airpiv · Alle Rechte vorbehalten</p></div>
+</div></footer>
+
+<script>
+var PROXY = 'https://api.airpiv.com';
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// [BATCH-FETCH] نفس أسلوب الصفحة الرئيسية بالظبط — دفعات صغيرة (3 في
+// المرة) بدل ما كل المسارات تضرب Duffel مرة واحدة، عشان الصفحة تفضل
+// سريعة حتى لو عدد المسارات كبر مستقبلاً.
+function fetchPricesInBatches(routes, batchSize, onEach) {
+  var i = 0;
+  function next() {
+    if (i >= routes.length) return Promise.resolve();
+    var batch = routes.slice(i, i + batchSize);
+    i += batchSize;
+    return Promise.all(batch.map(function (r) {
+      return fetch(PROXY + '/route-price?from=' + encodeURIComponent(r.origin_iata) + '&to=' + encodeURIComponent(r.destination_iata))
+        .then(function (res) { return res.json(); })
+        .then(function (d) { onEach(r, d); })
+        .catch(function () { onEach(r, null); });
+    })).then(next);
+  }
+  return next();
+}
+
+fetch(PROXY + '/route-pages')
+  .then(function (r) { return r.json(); })
+  .then(function (j) {
+    var grid = document.getElementById('cf-grid');
+    if (!j.ok || !j.routes || !j.routes.length) {
+      grid.innerHTML = '<p style="color:var(--tx3)">Aktuell sind noch keine Strecken verfügbar — schau bald wieder vorbei!</p>';
+      return;
+    }
+    var routes = j.routes;
+    var priced = []; // { route, price } — nur Strecken mit einem echten Preis
+
+    grid.innerHTML = routes.map(function (r) {
+      return '<a class="cf-card loading" id="cf-card-' + escHtml(r.slug) + '" href="/flights/' + encodeURIComponent(r.slug) + '">' +
+        '<div><div class="cf-card-route">' + escHtml(r.origin_city) + ' → ' + escHtml(r.destination_city) + '</div><div class="cf-card-meta">' + escHtml(r.origin_iata) + ' → ' + escHtml(r.destination_iata) + '</div></div>' +
+        '<div class="cf-card-price"><div class="cf-card-price-val">…</div><div class="cf-card-price-lbl">wird geladen</div></div>' +
+      '</a>';
+    }).join('');
+
+    fetchPricesInBatches(routes, 3, function (route, data) {
+      var card = document.getElementById('cf-card-' + route.slug);
+      if (!card) return;
+      card.classList.remove('loading');
+      if (data && data.ok && data.price != null) {
+        card.querySelector('.cf-card-price-val').textContent = 'ab ' + data.price.toFixed(0) + ' €';
+        card.querySelector('.cf-card-price-lbl').textContent = 'pro Person';
+        priced.push({ route: route, price: data.price });
+      } else {
+        card.querySelector('.cf-card-price-val').textContent = '—';
+        card.querySelector('.cf-card-price-lbl').textContent = 'Preis in Suche';
+      }
+    }).then(function () {
+      // [REAL-SORT] بعد ما كل الأسعار الحقيقية توصل، نرتب الكروت فعلياً
+      // من الأرخص للأغلى — مش ترتيب عشوائي أو حسب ترتيب الإضافة.
+      if (!priced.length) return;
+      priced.sort(function (a, b) { return a.price - b.price; });
+      priced.forEach(function (p, idx) {
+        var card = document.getElementById('cf-card-' + p.route.slug);
+        if (card) {
+          card.querySelector('.cf-card-route').insertAdjacentHTML('afterbegin', '<span class="cf-rank">' + (idx + 1) + '</span>');
+          grid.appendChild(card); // إعادة الترتيب الفعلي في الـ DOM
+        }
+      });
+
+      // [SCHEMA] ItemList حقيقي بالترتيب الفعلي بعد الفرز — مش قايمة ثابتة.
+      document.getElementById('page-schema').textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "itemListElement": priced.map(function (p, idx) {
+          return {
+            "@type": "ListItem",
+            "position": idx + 1,
+            "name": p.route.origin_city + ' → ' + p.route.destination_city,
+            "url": "https://airpiv.com/flights/" + p.route.slug
+          };
+        })
+      });
+    });
+  })
+  .catch(function () {
+    document.getElementById('cf-grid').innerHTML = '<p style="color:var(--tx3)">Preise konnten nicht geladen werden. Bitte versuche es später erneut.</p>';
+  });
+</script>
+
+</body>
+</html>

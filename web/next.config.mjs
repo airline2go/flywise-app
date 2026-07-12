@@ -6,6 +6,20 @@ const nextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+
+  // [VERBATIM-HOME] The customer-facing homepage + booking/search/checkout
+  // SPA is the original index.html + app.js + styles.css, served byte-for-byte
+  // from public/ so it is visually and behaviourally 1:1 with production (a
+  // React reimplementation drifted — proven by visual-parity/). '/' is
+  // rewritten to the static /index.html in beforeFiles so it wins over any
+  // app-router route. Verified 0px against the legacy home in visual-parity/.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: '/', destination: '/index.html' }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 export default nextConfig;
