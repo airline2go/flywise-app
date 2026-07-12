@@ -56,9 +56,15 @@ async function resolveFile(docRoot, urlPath) {
 // Start the server; resolves to { url, close() }. `notFoundFile` (e.g.
 // 404.html) is served with a 404 status when nothing matches, so the
 // harness can screenshot the real not-found page.
-export async function startStaticServer({ docRoot, port = 0, notFoundFile = null }) {
+// `extraRoutes` maps an exact request path to a file served from docRoot,
+// mirroring the production host's rewrites (e.g. the SPA language homes
+// /en, /ar … are all served from index.html, localized client-side).
+export async function startStaticServer({ docRoot, port = 0, notFoundFile = null, extraRoutes = {} }) {
   const server = http.createServer(async (req, res) => {
-    const abs = await resolveFile(docRoot, req.url || '/');
+    const reqPath = (req.url || '/').split('?')[0].split('#')[0];
+    const abs = extraRoutes[reqPath]
+      ? path.join(docRoot, extraRoutes[reqPath])
+      : await resolveFile(docRoot, req.url || '/');
     const send = (file, status) => {
       const stream = fs.createReadStream(file);
       res.writeHead(status, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream' });

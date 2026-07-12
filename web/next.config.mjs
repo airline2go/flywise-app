@@ -13,9 +13,19 @@ const nextConfig = {
   // React reimplementation drifted — proven by visual-parity/). '/' is
   // rewritten to the static /index.html in beforeFiles so it wins over any
   // app-router route. Verified 0px against the legacy home in visual-parity/.
+  // The legacy index.html localizes itself from window.location.pathname
+  // (app.js: '/en' -> English, '/ar' -> Arabic, …), so every language home is
+  // the SAME file served under its own URL. Rewrites mask the path, so the
+  // browser URL stays '/en' and app.js localizes exactly as in production.
+  // Only the bare language home is rewritten — '/en/city/…' etc. still route
+  // to the app-router SEO pages.
   async rewrites() {
+    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl'];
     return {
-      beforeFiles: [{ source: '/', destination: '/index.html' }],
+      beforeFiles: [
+        { source: '/', destination: '/index.html' },
+        ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: '/index.html' })),
+      ],
       afterFiles: [],
       fallback: [],
     };
