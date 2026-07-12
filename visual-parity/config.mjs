@@ -66,7 +66,19 @@ export const RTL_LANGUAGES = new Set(['ar']);
 // `home` is the one already reimplemented as an RSC/component page, so its
 // candidate path is the app-router root '/' — this row measures that gap.
 export const PAGES = [
-  { id: 'home', legacy: '/index.html', candidate: '/', langs: ['de'], fullPage: true },
+  // The homepage is served verbatim from index.html and localizes itself
+  // from the URL path (app.js: '/en' -> English, '/ar' -> Arabic, …), so all
+  // 7 languages are tested — including Arabic RTL. legacyByLang points each
+  // localized home at its own URL; the harness's static server + the Next.js
+  // rewrites both serve index.html there.
+  {
+    id: 'home',
+    legacy: '/index.html',
+    candidate: '/',
+    langs: ['de', 'en', 'ar', 'es', 'fr', 'it', 'nl'],
+    legacyByLang: { en: '/en', ar: '/ar', es: '/es', fr: '/fr', it: '/it', nl: '/nl' },
+    fullPage: true,
+  },
   { id: 'about', legacy: '/about.html', candidate: '/about.html', langs: ['de'], fullPage: true },
   { id: 'contact', legacy: '/contact.html', candidate: '/contact.html', langs: ['de'], fullPage: true },
   { id: 'privacy', legacy: '/privacy.html', candidate: '/privacy.html', langs: ['de'], fullPage: true },

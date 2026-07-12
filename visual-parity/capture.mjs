@@ -40,10 +40,21 @@ async function main() {
   let base;
   let server = null;
   if (target === 'legacy') {
+    // Mirror production's host rewrites: any legacyByLang URL that is a clean
+    // path (no file extension, e.g. /en) is served from the page's base file
+    // (index.html), exactly as the CDN does — the SPA then localizes itself.
+    const extraRoutes = {};
+    for (const page of PAGES) {
+      if (!page.legacyByLang) continue;
+      for (const urlPath of Object.values(page.legacyByLang)) {
+        if (!path.extname(urlPath)) extraRoutes[urlPath] = page.legacy.replace(/^\//, '');
+      }
+    }
     server = await startStaticServer({
       docRoot: TARGETS.legacy.docRoot,
       port: TARGETS.legacy.port,
       notFoundFile: '404.html',
+      extraRoutes,
     });
     base = server.url;
     console.log(`[legacy] serving ${TARGETS.legacy.docRoot} at ${base}`);
