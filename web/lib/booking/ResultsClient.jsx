@@ -14,7 +14,7 @@ import OfferCard from './OfferCard';
 import RpEditDrop from './RpEditDrop';
 import { FlightDetailSheet, BagInfoModal, shareOffer } from './flightDetail';
 import { LEGACY_STRINGS } from './legacyStrings';
-import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes, fmtPrice } from './offerUtils';
+import { sortOffers, applyFilters, defaultFilters, offerAirlineCodes, offerMaxStops, fmtPrice } from './offerUtils';
 
 const PAGE_SIZE = 10;
 
@@ -65,6 +65,20 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
     offers.forEach((o) => offerAirlineCodes(o).forEach((code) => { if (!map.has(code)) map.set(code, o.al[1] || code); }));
     return [...map.entries()];
   }, [offers]);
+  // Per-stop-bucket offer counts shown next to each stops filter (the
+  // original's filter-check-count spans).
+  const stopCounts = useMemo(() => {
+    const c = { 0: 0, 1: 0, 2: 0 };
+    offers.forEach((o) => { c[Math.min(offerMaxStops(o), 2)]++; });
+    return c;
+  }, [offers]);
+  // Whether any filter deviates from the default — drives the rp-filter-dot.
+  const filtersActive = !!filters && (
+    !filters.stops[0] || !filters.stops[1] || !filters.stops[2]
+    || filters.maxPrice < filters.priceCeiling
+    || !filters.timeOfDay.early || !filters.timeOfDay.morning || !filters.timeOfDay.afternoon || !filters.timeOfDay.evening
+    || filters.airlines !== null
+  );
 
   const bestList = filters ? sortOffers(applyFilters(offers, filters), 'best') : [];
   const priceList = filters ? sortOffers(applyFilters(offers, filters), 'price') : [];
@@ -100,6 +114,7 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
                       <div className={`filter-check-box${filters.stops[key] ? ' checked' : ''}`} />
                       <span className="filter-check-label">{label}</span>
                     </div>
+                    <span className="filter-check-count">{stopCounts[key] || ''}</span>
                   </div>
                 ))}
               </div>
@@ -108,9 +123,13 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
                 <div className="filter-price-row"><span>€0</span><span>{fmtPrice(filters.maxPrice, lang)}</span></div>
                 <input
                   type="range" min={0} max={filters.priceCeiling} value={filters.maxPrice}
+                  aria-label="Maximaler Preis"
                   onChange={(e) => setFilters({ ...filters, maxPrice: Number(e.target.value) })}
                   style={{ width: '100%', height: 6, borderRadius: 6, accentColor: '#00a991', cursor: 'pointer', margin: '8px 0' }}
                 />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8fa4b4', marginTop: 2 }}>
+                  <span>Min</span><span>Max</span>
+                </div>
               </div>
               <div className="filter-section">
                 <div className="filter-section-title">Abflugzeit</div>
@@ -159,7 +178,10 @@ export default function ResultsClient({ origin, destination, trip, departDate, r
             <div className="rp-route">{routeLabel || '—'}</div>
             <div className="rp-meta">{metaLabel || '—'}</div>
           </div>
-          <button type="button" className="rp-filter-btn" onClick={() => setFilterSheetOpen(true)}>⚙️</button>
+          <button type="button" className="rp-filter-btn" onClick={() => setFilterSheetOpen(true)}>
+            ⚙️
+            <div className="rp-filter-dot" style={{ display: filtersActive ? '' : 'none' }} />
+          </button>
         </div>
 
         <RpEditDrop
