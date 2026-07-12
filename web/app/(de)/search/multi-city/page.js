@@ -9,5 +9,5 @@ export const metadata = { robots: 'noindex, follow' };
 // the URL, matching how app.js never persisted an mc search past the
 // current tab.
 export default function MultiCitySearchResultsPage() {
-  return <ResultsClient origin={null} destination={null} trip="mc" departDate={null} returnDate={null} />;
+  return <ResultsClient origin={null} destination={null} trip="mc" departDate={null} returnDate={null} lang="de" />;
 }

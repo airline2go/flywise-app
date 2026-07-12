@@ -30,6 +30,16 @@ export default function RootLayoutChrome({ lang, children }) {
       <body>
         <link rel="preconnect" href="https://api.airpiv.com" />
         <link rel="dns-prefetch" href="https://api.airpiv.com" />
+        {/* [FONTS] The whole site's typography is Space Grotesk (body) + Syne
+            (headings) — styles.css/shared-layout.css reference them but the
+            webfonts must be loaded or everything falls back to a system font
+            and the entire page looks wrong. index.html loaded these exact
+            Google Fonts; ported verbatim so every page (home + entity) renders
+            in the real typefaces. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- this is the shared App Router root layout, so the font loads on every page (not the pages-router single-page case the rule warns about); matches index.html's exact Google Fonts link. */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM" strategy="afterInteractive" />
         <Script src="/analytics.js" strategy="afterInteractive" />
         {/* [SHARED-ORGANIZATION-SCHEMA] shell.js injected this once into

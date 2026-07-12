@@ -8,7 +8,7 @@ const PAIR_RE = /^([A-Za-z]{3})-([A-Za-z]{3})$/;
 export const metadata = { robots: 'noindex, follow' };
 
 export default async function SearchResultsPage({ params, searchParams }) {
-  const { pair } = await params;
+  const { lang, pair } = await params;
   const sp = await searchParams;
   const match = PAIR_RE.exec(pair);
   if (!match) notFound();
@@ -24,6 +24,7 @@ export default async function SearchResultsPage({ params, searchParams }) {
       trip={trip}
       departDate={departDate}
       returnDate={returnDate}
+      lang={lang}
     />
   );
 }
