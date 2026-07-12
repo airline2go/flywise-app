@@ -8,11 +8,17 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, getCity } from '../content-api';
+import { listCities, listCountries, getCity, getCountry, getAirport, getAirline } from '../content-api';
 import cityMod from './render-city.js';
+import countryMod from './render-country.js';
+import airportMod from './render-airport.js';
+import airlineMod from './render-airline.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
+const { renderCountryPage } = countryMod;
+const { renderAirportPage } = airportMod;
+const { renderAirlinePage } = airlineMod;
 const { setGeoData } = dataMod;
 
 // Populate the generators' geo lookup tables exactly once per process. The
@@ -32,10 +38,33 @@ function ensureGeo() {
   return geoPromise;
 }
 
-// Returns the full HTML document string, or null if the slug doesn't exist.
+// Each returns the full HTML document string, or null if the entity doesn't
+// exist. All go through the original generator, so output is byte-identical to
+// production's SSG.
 export async function renderCityHtml(slug, lang) {
   const data = await getCity(slug);
   if (!data) return null;
   await ensureGeo();
   return renderCityPage(data.city, data.routes, lang).html;
+}
+
+export async function renderCountryHtml(code, lang) {
+  const data = await getCountry(code);
+  if (!data) return null;
+  await ensureGeo();
+  return renderCountryPage(data.country, data.routes, lang).html;
+}
+
+export async function renderAirportHtml(code, lang) {
+  const data = await getAirport(code);
+  if (!data) return null;
+  await ensureGeo();
+  return renderAirportPage(data.airport, data.routes, lang).html;
+}
+
+export async function renderAirlineHtml(code, lang) {
+  const data = await getAirline(code);
+  if (!data) return null;
+  await ensureGeo();
+  return renderAirlinePage(data.airline, data.routes, lang, data.mostUsedRoutes || []).html;
 }
