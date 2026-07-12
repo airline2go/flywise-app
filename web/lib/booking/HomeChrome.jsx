@@ -20,6 +20,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LANGUAGES, DEFAULT_LANGUAGE, pathPrefix } from '../languages';
 import { CHROME_STRINGS } from './chromeStrings';
+import HomeFloatCta from './HomeFloatCta';
+import WelcomeBanner from './WelcomeBanner';
 
 function homeHref(lang) {
   const p = pathPrefix(lang);
@@ -185,6 +187,9 @@ export default function HomeChrome({ lang, children }) {
           </button>
         </div>
       </nav>
+
+      <HomeFloatCta lang={lang} />
+      <WelcomeBanner lang={lang} />
     </div>
   );
 }
