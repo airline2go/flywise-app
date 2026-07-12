@@ -3,6 +3,7 @@
 // link points here now (see page-shell.jsx's HOME-IS-NOW-REAL note).
 import '../../styles/styles.css';
 import HomeHero from '../../lib/booking/HomeHero';
+import HomeChrome from '../../lib/booking/HomeChrome';
 
 export const metadata = {
   title: 'Airpiv — Günstige Flüge finden und buchen',
@@ -10,5 +11,9 @@ export const metadata = {
 };
 
 export default function HomePage() {
-  return <HomeHero lang="de" />;
+  return (
+    <HomeChrome lang="de">
+      <HomeHero lang="de" />
+    </HomeChrome>
+  );
 }

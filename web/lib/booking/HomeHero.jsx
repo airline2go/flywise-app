@@ -12,6 +12,7 @@ import { useState } from 'react';
 import SearchForm from './SearchForm';
 import RecentSearches from './RecentSearches';
 import FlexHint from './FlexHint';
+import HomeSections from './HomeSections';
 import { LEGACY_STRINGS } from './legacyStrings';
 
 const SVC_TABS = [
@@ -26,8 +27,9 @@ export default function HomeHero({ lang }) {
   const [activeSvc, setActiveSvc] = useState('flights');
 
   return (
-    <div className="hero">
-      <div className="hero-wrap">
+    <>
+      <div className="hero">
+        <div className="hero-wrap">
         <div className="hero-pill"><span className="dot" />{ls.hero_pill}</div>
         <h1>{ls.hero_title1}<br />{ls.hero_title2} <span>{ls.hero_title_span}</span></h1>
         <p className="hero-sub">{ls.hero_sub}</p>
@@ -72,6 +74,9 @@ export default function HomeHero({ lang }) {
           <div className="ti">🌐 600+ Airlines</div>
         </div>
       </div>
-    </div>
+      </div>
+
+      <HomeSections lang={lang} />
+    </>
   );
 }

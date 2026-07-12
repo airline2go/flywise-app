@@ -1,5 +1,6 @@
 import '../../styles/styles.css';
 import HomeHero from '../../lib/booking/HomeHero';
+import HomeChrome from '../../lib/booking/HomeChrome';
 import { LEGACY_STRINGS } from '../../lib/booking/legacyStrings';
 import { stringsFor } from '../../lib/translate';
 
@@ -12,5 +13,9 @@ export async function generateMetadata({ params }) {
 
 export default async function HomePage({ params }) {
   const { lang } = await params;
-  return <HomeHero lang={lang} />;
+  return (
+    <HomeChrome lang={lang}>
+      <HomeHero lang={lang} />
+    </HomeChrome>
+  );
 }
