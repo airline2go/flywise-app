@@ -60,14 +60,19 @@ export const RTL_LANGUAGES = new Set(['ar']);
 //
 //   legacy    : how the URL maps onto the legacy static site
 //   candidate : how the same page is addressed on the Next.js site
+// Real public URLs keep the .html suffix (see sitemap-pages.xml); the
+// static content pages are served byte-identical from the Next.js public/
+// dir at those exact URLs, so legacy and candidate paths are the same.
+// `home` is the one already reimplemented as an RSC/component page, so its
+// candidate path is the app-router root '/' — this row measures that gap.
 export const PAGES = [
   { id: 'home', legacy: '/index.html', candidate: '/', langs: ['de'], fullPage: true },
-  { id: 'about', legacy: '/about.html', candidate: '/about', langs: ['de'], fullPage: true },
-  { id: 'contact', legacy: '/contact.html', candidate: '/contact', langs: ['de'], fullPage: true },
-  { id: 'privacy', legacy: '/privacy.html', candidate: '/privacy', langs: ['de'], fullPage: true },
-  { id: 'terms', legacy: '/terms.html', candidate: '/terms', langs: ['de'], fullPage: true },
-  { id: 'blog-index', legacy: '/blog.html', candidate: '/blog', langs: ['de'], fullPage: true },
-  { id: 'not-found', legacy: '/404.html', candidate: '/this-page-does-not-exist', langs: ['de'], fullPage: true },
+  { id: 'about', legacy: '/about.html', candidate: '/about.html', langs: ['de'], fullPage: true },
+  { id: 'contact', legacy: '/contact.html', candidate: '/contact.html', langs: ['de'], fullPage: true },
+  { id: 'privacy', legacy: '/privacy.html', candidate: '/privacy.html', langs: ['de'], fullPage: true },
+  { id: 'terms', legacy: '/terms.html', candidate: '/terms.html', langs: ['de'], fullPage: true },
+  { id: 'blog-index', legacy: '/blog.html', candidate: '/blog.html', langs: ['de'], fullPage: true },
+  { id: 'not-found', legacy: '/404.html', candidate: '/404.html', langs: ['de'], fullPage: true },
 ];
 
 // The default per-page acceptance threshold: 0 diff pixels = truly identical.
