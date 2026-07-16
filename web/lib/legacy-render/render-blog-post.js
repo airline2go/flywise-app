@@ -3,10 +3,13 @@ const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
 
+// blog-post.css is inlined (bundled string, not a <link>) so it isn't a
+// render-blocking round-trip — same reasoning as the flight-route page.
+const BLOG_POST_CSS = require('./blog-post-css');
 const BLOG_POST_HEAD_EXTRA = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/blog-post.css">`;
+<style>${BLOG_POST_CSS}</style>`;
 
 // [POPULAR-ROUTES] Computed at build time from the full route list already
 // fetched for this build run — the same city-detection/scoring logic as
