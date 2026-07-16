@@ -37,6 +37,27 @@ const nextConfig = {
       fallback: [],
     };
   },
+
+  // [ASSET-CACHING] The verbatim public/ assets were served with
+  // `max-age=0, must-revalidate` (no caching) — a PageSpeed "efficient cache
+  // policy" penalty and slower repeat views. These rules cache the root-level
+  // static assets only: `:file` matches a single path segment, so /_next/*
+  // (which Next already fingerprints + serves immutable) and the HTML pages
+  // are untouched. Images/fonts never change → 1 year immutable. CSS/JS live
+  // at fixed unhashed paths, so they get a 1-day fresh window plus a 30-day
+  // stale-while-revalidate so a deploy is still picked up promptly.
+  async headers() {
+    return [
+      {
+        source: '/:file(.*\\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|otf))',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/:file(.*\\.(?:css|js|mjs))',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=2592000' }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
