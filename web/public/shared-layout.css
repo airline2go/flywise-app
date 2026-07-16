@@ -2,13 +2,36 @@
    Airpiv — Shared layout styles for static content pages
    (about.html, contact.html, privacy.html, terms.html, 404.html)
    Colors/fonts extracted directly from index.html's :root and
-   header/footer rules — the shared color/radius tokens now live in
-   css-tokens.css (imported below) so the two files can't drift out
-   of sync; only --pad differs intentionally (flat 20px here vs.
-   styles.css's responsive 15/20/22px) and stays local to each file.
+   header/footer rules. The shared color/radius tokens (kept in sync with
+   css-tokens.css) are inlined here rather than @import-ed: a CSS @import is
+   a render-blocking, serial round-trip (the browser must fetch this file,
+   parse it, THEN fetch css-tokens.css), which delayed first paint. Inlining
+   the tokens is byte-for-byte the same rendered result, one fewer request.
+   --pad differs intentionally (flat 20px here vs. styles.css's responsive
+   15/20/22px) and stays local to each file.
    ============================================================ */
-@import url("css-tokens.css");
 :root {
+  --teal: #0fb5a0;
+  --teal2: #0a9384;
+  --teal-lt: #e6f7f4;
+  --pink: #ff5a5f;
+  --pink2: #e63e52;
+  --navy: #0a1822;
+  --navy2: #16283a;
+  --bg: #ffffff;
+  --bg2: #f6f8fa;
+  --bd: #e1e7ec;
+  --bd2: #c8d4de;
+  --tx: #101d2c;
+  --tx2: #46586c;
+  --tx3: #8fa4b4;
+  --gr: #0f9d58;
+  --gr-bg: #e8f5ee;
+  --rd: #dc2626;
+  --rd-bg: #fef2f2;
+  --r: 14px;
+  --r-sm: 10px;
+  --r-xs: 8px;
   --pad: 20px;
 }
 * {
