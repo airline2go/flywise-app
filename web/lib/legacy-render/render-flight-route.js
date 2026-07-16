@@ -167,7 +167,20 @@ function buildBestTimeHtml(route, lang) {
 
 // Organization schema is now injected uniformly for every page by shell.js's
 // renderShell() — no longer duplicated per render-*.js file.
-const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css">`;
+//
+// [INLINE-CRITICAL-CSS] The flight-route page's LCP element is the dark hero
+// card, styled by flight-route.css. Served as a second <link>, it was a
+// separate render-blocking round-trip that held LCP at ~2.7s on mobile while
+// FCP (chrome, styled by shared-layout.css) was already 0.8s. Inlining these
+// ~4KB of section styles into <head> lets the hero paint with the HTML — no
+// extra request. Read from the same public/ file (single source, no drift)
+// and bundled by Next's file tracing; if that ever fails to include it, we
+// fall back to the external stylesheet so a page can never break.
+// The section CSS is inlined (imported as a bundled string, not fetched via a
+// <link>) so the page's LCP element — the hero card it styles — paints with
+// the HTML instead of waiting on a second render-blocking round-trip.
+const FLIGHT_ROUTE_CSS = require('./flight-route-css');
+const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
 // and average-duration insights are genuinely live data from Duffel/Redis —
