@@ -19,12 +19,19 @@ const nextConfig = {
   // browser URL stays '/en' and app.js localizes exactly as in production.
   // Only the bare language home is rewritten — '/en/city/…' etc. still route
   // to the app-router SEO pages.
+  // The bare search deep-links (/search/BER-CDG and /search/multi-city) are
+  // served by the SAME original index.html on production — app.js reads the
+  // pathname and auto-runs the search. `:pair` matches both the IATA pair and
+  // the literal "multi-city" segment. Localized search (/en/search/…) does NOT
+  // exist on production (it 404s), so only the root path is rewritten and the
+  // React [lang]/search routes are removed.
   async rewrites() {
     const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl'];
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
         ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: '/index.html' })),
+        { source: '/search/:pair', destination: '/index.html' },
       ],
       afterFiles: [],
       fallback: [],
