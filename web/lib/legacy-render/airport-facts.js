@@ -6,7 +6,7 @@
 const { getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { pickVariant } = require('./content-variants');
-const { nfmt, listSep, summarizeConnections } = require('./connection-facts');
+const { nfmt, listSep, summarizeConnections, variantKey } = require('./connection-facts');
 
 // [ANTI-BOILERPLATE] Per-airport varied intro — the opening/closing sentences
 // are picked from several phrasings by a stable hash of the airport code, and
@@ -61,26 +61,30 @@ function computeAirportFacts(airport, routes, routeMetaBySlug, lang) {
 function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   const items = [];
   const sep = listSep(lang);
+  // Pick between an answer's two phrasings by a stable per-airport/per-question
+  // hash (seeded on the IATA code), so two airports never share identical FAQ
+  // answer wording.
+  const av = (base) => translate(variantKey(base, `${code}:${base}`), lang);
 
   if (cityName) {
     const key = countryName ? 'airportFaqCityAnswer' : 'airportFaqCityAnswerNoCountry';
     items.push({
       question: format(translate('airportFaqCityQuestion', lang), { code }),
-      answer: format(translate(key, lang), { code, city: cityName, country: countryName }),
+      answer: format(av(key), { code, city: cityName, country: countryName }),
     });
   }
 
   if (facts.destinationCount > 0) {
     items.push({
       question: format(translate('airportFaqDestinationsQuestion', lang), { code }),
-      answer: format(translate('airportFaqDestinationsAnswer', lang), { code, count: nfmt(facts.destinationCount, lang) }),
+      answer: format(av('airportFaqDestinationsAnswer'), { code, count: nfmt(facts.destinationCount, lang) }),
     });
   }
 
   if (facts.countryCount > 0) {
     items.push({
       question: format(translate('airportFaqCountriesQuestion', lang), { code }),
-      answer: format(translate('airportFaqCountriesAnswer', lang), {
+      answer: format(av('airportFaqCountriesAnswer'), {
         code,
         count: facts.countryCount,
         countries: facts.countries.map((c) => c.name).join(sep),
@@ -91,7 +95,7 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   if (facts.internationalCount > 0) {
     items.push({
       question: format(translate('airportFaqInternationalQuestion', lang), { code }),
-      answer: format(translate('airportFaqInternationalAnswer', lang), {
+      answer: format(av('airportFaqInternationalAnswer'), {
         code,
         count: nfmt(facts.internationalCount, lang),
         countryCount: facts.countryCount,
@@ -102,7 +106,7 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   if (facts.domesticCount > 0 && countryName) {
     items.push({
       question: format(translate('airportFaqDomesticQuestion', lang), { code }),
-      answer: format(translate('airportFaqDomesticAnswer', lang), {
+      answer: format(av('airportFaqDomesticAnswer'), {
         code,
         count: nfmt(facts.domesticCount, lang),
         country: countryName,
@@ -113,7 +117,7 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   if (facts.popularDestination) {
     items.push({
       question: format(translate('airportFaqPopularQuestion', lang), { code }),
-      answer: format(translate('airportFaqPopularAnswer', lang), { code, destination: facts.popularDestination.name }),
+      answer: format(av('airportFaqPopularAnswer'), { code, destination: facts.popularDestination.name }),
     });
   }
 
@@ -121,14 +125,14 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
     const names = facts.topDestinations.slice(0, 5).map((d) => d.name).join(sep);
     items.push({
       question: format(translate('airportFaqTopDestinationsQuestion', lang), { code }),
-      answer: format(translate('airportFaqTopDestinationsAnswer', lang), { code, destinations: names }),
+      answer: format(av('airportFaqTopDestinationsAnswer'), { code, destinations: names }),
     });
   }
 
   if (facts.alternativeAirports && facts.alternativeAirports.length && cityName) {
     items.push({
       question: format(translate('airportFaqAlternativesQuestion', lang), { city: cityName }),
-      answer: format(translate('airportFaqAlternativesAnswer', lang), {
+      answer: format(av('airportFaqAlternativesAnswer'), {
         city: cityName,
         airports: facts.alternativeAirports.join(sep),
       }),
@@ -138,11 +142,11 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   if (facts.distances) {
     items.push({
       question: format(translate('airportFaqAvgDistanceQuestion', lang), { code }),
-      answer: format(translate('airportFaqAvgDistanceAnswer', lang), { code, distance: nfmt(facts.distances.avg, lang) }),
+      answer: format(av('airportFaqAvgDistanceAnswer'), { code, distance: nfmt(facts.distances.avg, lang) }),
     });
     items.push({
       question: format(translate('airportFaqLongestQuestion', lang), { code }),
-      answer: format(translate('airportFaqLongestAnswer', lang), {
+      answer: format(av('airportFaqLongestAnswer'), {
         code,
         destination: facts.distances.longest.name,
         distance: nfmt(facts.distances.longest.km, lang),
@@ -150,7 +154,7 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
     });
     items.push({
       question: format(translate('airportFaqShortestQuestion', lang), { code }),
-      answer: format(translate('airportFaqShortestAnswer', lang), {
+      answer: format(av('airportFaqShortestAnswer'), {
         code,
         destination: facts.distances.shortest.name,
         distance: nfmt(facts.distances.shortest.km, lang),

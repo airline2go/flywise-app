@@ -9,6 +9,16 @@
 // (no distance, no popularity score) simply produces no fact.
 const { localizeCity, localizeCountry } = require('./data');
 const { getLanguage } = require('./languages');
+const { pickVariant } = require('./content-variants');
+
+// [ANTI-BOILERPLATE] Pick between an answer's two phrasings (`base` and
+// `base + 'V2'`) by a stable per-entity/per-question hash, so the same page
+// always reads the same but two different entities don't share identical FAQ
+// answer wording. Falls back safely: if no V2 string exists, translate()
+// resolves the base key anyway.
+function variantKey(base, seed) {
+  return pickVariant(seed, 2) === 0 ? base : `${base}V2`;
+}
 
 // Locale-aware number formatting (1.493 in de, 1,493 in en, ١٬٤٩٣ in ar).
 function nfmt(n, lang) {
@@ -122,4 +132,4 @@ function summarizeConnections(conns, homeCountry, lang) {
   };
 }
 
-module.exports = { nfmt, listSep, buildRouteMetaMap, summarizeConnections };
+module.exports = { nfmt, listSep, buildRouteMetaMap, summarizeConnections, variantKey };

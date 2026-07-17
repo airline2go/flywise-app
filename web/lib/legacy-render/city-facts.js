@@ -8,7 +8,7 @@
 // than guessed.
 const { translate, format } = require('./translate');
 const { pickVariant } = require('./content-variants');
-const { nfmt, listSep, buildRouteMetaMap, summarizeConnections } = require('./connection-facts');
+const { nfmt, listSep, buildRouteMetaMap, summarizeConnections, variantKey } = require('./connection-facts');
 
 // [ANTI-BOILERPLATE] The old city intro was one template string shared by
 // every city that lacks an admin-authored intro_text — identical across
@@ -69,23 +69,27 @@ function computeCityFacts(city, routes, routeMetaBySlug, lang) {
 // Build the FAQ item list ({question, answer} plain text) for a city. Every
 // item is gated on the data that backs it — an item is only emitted when its
 // answer can be stated truthfully from the computed facts.
-function buildCityFaqItems(facts, cityName, countryName, lang) {
+function buildCityFaqItems(facts, cityName, countryName, lang, seed) {
   const items = [];
   const sep = listSep(lang);
+  const s = seed || cityName;
+  // Pick between an answer's two phrasings by a stable per-city/per-question
+  // hash, so two cities never share identical FAQ answer wording.
+  const av = (base) => translate(variantKey(base, `${s}:${base}`), lang);
 
   if (facts.airportCount > 0) {
     const codes = facts.airportCodes.join(sep);
     const key = facts.airportCount === 1 ? 'cityFaqAirportsAnswerSingle' : 'cityFaqAirportsAnswerMulti';
     items.push({
       question: format(translate('cityFaqAirportsQuestion', lang), { city: cityName }),
-      answer: format(translate(key, lang), { city: cityName, count: facts.airportCount, codes }),
+      answer: format(av(key), { city: cityName, count: facts.airportCount, codes }),
     });
   }
 
   if (facts.destinationCount > 0) {
     items.push({
       question: format(translate('cityFaqDestinationsQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqDestinationsAnswer', lang), {
+      answer: format(av('cityFaqDestinationsAnswer'), {
         city: cityName,
         count: nfmt(facts.destinationCount, lang),
       }),
@@ -95,7 +99,7 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
   if (facts.countryCount > 0) {
     items.push({
       question: format(translate('cityFaqCountriesQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqCountriesAnswer', lang), {
+      answer: format(av('cityFaqCountriesAnswer'), {
         city: cityName,
         count: facts.countryCount,
         countries: facts.countries.map((c) => c.name).join(sep),
@@ -106,7 +110,7 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
   if (facts.internationalCount > 0) {
     items.push({
       question: format(translate('cityFaqInternationalQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqInternationalAnswer', lang), {
+      answer: format(av('cityFaqInternationalAnswer'), {
         city: cityName,
         count: nfmt(facts.internationalCount, lang),
         countryCount: facts.countryCount,
@@ -117,7 +121,7 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
   if (facts.domesticCount > 0 && countryName) {
     items.push({
       question: format(translate('cityFaqDomesticQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqDomesticAnswer', lang), {
+      answer: format(av('cityFaqDomesticAnswer'), {
         city: cityName,
         count: nfmt(facts.domesticCount, lang),
         country: countryName,
@@ -128,7 +132,7 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
   if (facts.popularDestination) {
     items.push({
       question: format(translate('cityFaqPopularQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqPopularAnswer', lang), {
+      answer: format(av('cityFaqPopularAnswer'), {
         city: cityName,
         destination: facts.popularDestination.name,
       }),
@@ -139,21 +143,21 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
     const names = facts.topDestinations.slice(0, 5).map((d) => d.name).join(sep);
     items.push({
       question: format(translate('cityFaqTopDestinationsQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqTopDestinationsAnswer', lang), { city: cityName, destinations: names }),
+      answer: format(av('cityFaqTopDestinationsAnswer'), { city: cityName, destinations: names }),
     });
   }
 
   if (facts.distances) {
     items.push({
       question: format(translate('cityFaqAvgDistanceQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqAvgDistanceAnswer', lang), {
+      answer: format(av('cityFaqAvgDistanceAnswer'), {
         city: cityName,
         distance: nfmt(facts.distances.avg, lang),
       }),
     });
     items.push({
       question: format(translate('cityFaqLongestQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqLongestAnswer', lang), {
+      answer: format(av('cityFaqLongestAnswer'), {
         city: cityName,
         destination: facts.distances.longest.name,
         distance: nfmt(facts.distances.longest.km, lang),
@@ -161,7 +165,7 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
     });
     items.push({
       question: format(translate('cityFaqShortestQuestion', lang), { city: cityName }),
-      answer: format(translate('cityFaqShortestAnswer', lang), {
+      answer: format(av('cityFaqShortestAnswer'), {
         city: cityName,
         destination: facts.distances.shortest.name,
         distance: nfmt(facts.distances.shortest.km, lang),

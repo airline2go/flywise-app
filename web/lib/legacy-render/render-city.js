@@ -111,7 +111,7 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
   // facts/countryName computed above (needed by the intro). Each section
   // below is data-gated: it only renders when the underlying facts exist, so a
   // sparsely-connected city never shows an empty or invented block.
-  const faqItems = buildCityFaqItems(facts, cityName, countryName, lang);
+  const faqItems = buildCityFaqItems(facts, cityName, countryName, lang, city.city_slug);
 
   function statTile(valueHtml, label, sub) {
     return `<div class="city-stat"><div class="city-stat-value">${valueHtml}</div><div class="city-stat-label">${escHtml(label)}</div>${sub ? `<div class="city-stat-sub">${escHtml(sub)}</div>` : ''}</div>`;
