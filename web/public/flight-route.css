@@ -22,6 +22,14 @@
 }
 .route-price-box {
   margin-top: 18px;
+  /* [CWV-CLS] Reserve the height of the loaded price (a 2.4rem value + label)
+     so swapping the "loading" text for the live price doesn't shift the CTA
+     below it in the hero — the price box is above the fold. */
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .route-trust-signal {
   margin-top: 8px;
