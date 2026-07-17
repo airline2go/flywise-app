@@ -131,6 +131,50 @@ function buildFaqItems(route, lang) {
     });
   }
 
+  // [ROUTE-FAQ-EXPANSION] Fastest flight time — only when the minimum flight
+  // time is a persisted field AND is genuinely shorter than the average (i.e.
+  // a nonstop option pulls it below the mixed average); otherwise it would just
+  // restate the duration FAQ. Real Phase 1 data, never fabricated.
+  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
+    items.push({
+      question: format(translate('routeFaqFastestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: format(translate('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),
+    });
+  }
+
+  // [ROUTE-FAQ-EXPANSION] Nonstop vs connecting split from the real observed
+  // stop_distribution ({"0": nonstop, "1": one-stop, ...}). Only shown when the
+  // route genuinely has both nonstop and connecting options — the interesting
+  // case the yes/no direct FAQ can't quantify.
+  if (route.stop_distribution && typeof route.stop_distribution === 'object') {
+    const nonstop = Number(route.stop_distribution['0'] || 0);
+    const withStops = Object.keys(route.stop_distribution).reduce(
+      (sum, k) => (k !== '0' ? sum + Number(route.stop_distribution[k] || 0) : sum),
+      0,
+    );
+    if (nonstop > 0 && withStops > 0) {
+      items.push({
+        question: format(translate('routeFaqStopsQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+        answer: format(translate('routeFaqStopsAnswer', lang), {
+          nonstop: Number(nonstop).toLocaleString(getLanguage(lang).locale),
+          withStops: Number(withStops).toLocaleString(getLanguage(lang).locale),
+        }),
+      });
+    }
+  }
+
+  // [ROUTE-FAQ-EXPANSION] Alternative DEPARTURE airports — mirrors the existing
+  // destination alternative-airports FAQ, for the origin city. Real sibling
+  // airports from the city's own airport_codes; omitted for single-airport
+  // origins.
+  const depAltAirports = getAlternativeAirports(route.origin_city, route.origin_iata, lang);
+  if (depAltAirports.length) {
+    items.push({
+      question: format(translate('routeFaqDepAltAirportsQuestion', lang), { origin: route.origin_city }),
+      answer: format(translate('routeFaqDepAltAirportsAnswer', lang), { origin: route.origin_city, airports: depAltAirports.join(', ') }),
+    });
+  }
+
   if (route.custom_faq && route.custom_faq.length) return route.custom_faq;
   return items;
 }

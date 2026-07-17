@@ -223,5 +223,11 @@
   "airportFaqAlternativesAnswerV2": "Er zijn opties: {city} is ook bereikbaar via {airports}, wat goedkoper of handiger kan zijn.",
   "airportFaqAvgDistanceAnswerV2": "Gemiddeld legt een vlucht vanaf {code} ongeveer {distance} km af.",
   "airportFaqLongestAnswerV2": "De verste bestemming vanaf {code} is {destination}, zo'n {distance} km verderop.",
-  "airportFaqShortestAnswerV2": "De dichtstbijzijnde bestemming vanaf {code} is {destination}, slechts zo'n {distance} km verderop."
+  "airportFaqShortestAnswerV2": "De dichtstbijzijnde bestemming vanaf {code} is {destination}, slechts zo'n {distance} km verderop.",
+  "routeFaqFastestQuestion": "Wat is de kortste vliegtijd van {origin} naar {destination}?",
+  "routeFaqFastestAnswer": "De snelste vluchten op deze route duren ongeveer {duration} — meestal de non-stopopties.",
+  "routeFaqStopsQuestion": "Zijn er directe vluchten van {origin} naar {destination}?",
+  "routeFaqStopsAnswer": "Allebei komen voor: van de verbindingen die we op deze route zagen zijn er {nonstop} non-stop en {withStops} met minstens één tussenstop.",
+  "routeFaqDepAltAirportsQuestion": "Zijn er andere luchthavens in de buurt van {origin}?",
+  "routeFaqDepAltAirportsAnswer": "{origin} wordt ook bediend door {airports}, wat de moeite waard kan zijn om te vergelijken op prijs of verbindingen."
 }

@@ -223,5 +223,11 @@
   "airportFaqAlternativesAnswerV2": "هناك خيارات: يمكن الوصول إلى {city} أيضاً عبر {airports}، وقد يكون ذلك أرخص أو أكثر راحة.",
   "airportFaqAvgDistanceAnswerV2": "في المتوسط، تقطع الرحلة من {code} نحو {distance} كم.",
   "airportFaqLongestAnswerV2": "أبعد وجهة من {code} هي {destination}، على مسافة نحو {distance} كم.",
-  "airportFaqShortestAnswerV2": "أقرب وجهة من {code} هي {destination}، على مسافة نحو {distance} كم فقط."
+  "airportFaqShortestAnswerV2": "أقرب وجهة من {code} هي {destination}، على مسافة نحو {distance} كم فقط.",
+  "routeFaqFastestQuestion": "ما أسرع زمن رحلة من {origin} إلى {destination}؟",
+  "routeFaqFastestAnswer": "أسرع الرحلات على هذا المسار تستغرق نحو {duration} — عادةً الرحلات المباشرة.",
+  "routeFaqStopsQuestion": "هل توجد رحلات مباشرة من {origin} إلى {destination}؟",
+  "routeFaqStopsAnswer": "كلاهما متاح: من الرحلات التي رصدناها على هذا المسار، {nonstop} مباشرة و{withStops} بها توقف واحد على الأقل.",
+  "routeFaqDepAltAirportsQuestion": "هل توجد مطارات أخرى قرب {origin}؟",
+  "routeFaqDepAltAirportsAnswer": "تُخدَم {origin} أيضاً عبر {airports}، وقد يستحق الأمر المقارنة من حيث السعر أو الاتصال."
 }

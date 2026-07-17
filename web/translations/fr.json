@@ -223,5 +223,11 @@
   "airportFaqAlternativesAnswerV2": "Il y a des options : {city} est aussi accessible via {airports}, ce qui peut être moins cher ou plus pratique.",
   "airportFaqAvgDistanceAnswerV2": "En moyenne, un vol au départ de {code} parcourt environ {distance} km.",
   "airportFaqLongestAnswerV2": "La destination la plus lointaine au départ de {code} est {destination}, à environ {distance} km.",
-  "airportFaqShortestAnswerV2": "La destination la plus proche au départ de {code} est {destination}, à seulement {distance} km environ."
+  "airportFaqShortestAnswerV2": "La destination la plus proche au départ de {code} est {destination}, à seulement {distance} km environ.",
+  "routeFaqFastestQuestion": "Quel est le temps de vol le plus court de {origin} à {destination} ?",
+  "routeFaqFastestAnswer": "Les vols les plus rapides sur cette liaison durent environ {duration}, généralement les options sans escale.",
+  "routeFaqStopsQuestion": "Y a-t-il des vols directs de {origin} à {destination} ?",
+  "routeFaqStopsAnswer": "Les deux existent : parmi les liaisons observées sur ce trajet, {nonstop} sont sans escale et {withStops} comportent au moins une escale.",
+  "routeFaqDepAltAirportsQuestion": "Y a-t-il d'autres aéroports près de {origin} ?",
+  "routeFaqDepAltAirportsAnswer": "{origin} est aussi desservie par {airports}, à comparer pour le prix ou les correspondances."
 }

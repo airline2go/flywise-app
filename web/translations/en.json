@@ -223,5 +223,11 @@
   "airportFaqAlternativesAnswerV2": "There are options: {city} is also reachable via {airports}, which can be cheaper or more convenient.",
   "airportFaqAvgDistanceAnswerV2": "On average, a flight from {code} spans roughly {distance} km.",
   "airportFaqLongestAnswerV2": "The farthest destination from {code} is {destination}, roughly {distance} km away.",
-  "airportFaqShortestAnswerV2": "The nearest destination from {code} is {destination}, only about {distance} km away."
+  "airportFaqShortestAnswerV2": "The nearest destination from {code} is {destination}, only about {distance} km away.",
+  "routeFaqFastestQuestion": "What is the fastest flight time from {origin} to {destination}?",
+  "routeFaqFastestAnswer": "The fastest flights on this route take around {duration} — typically the nonstop options.",
+  "routeFaqStopsQuestion": "Do flights from {origin} to {destination} fly nonstop?",
+  "routeFaqStopsAnswer": "Both are available: of the connections we've seen on this route, {nonstop} are nonstop and {withStops} involve at least one stop.",
+  "routeFaqDepAltAirportsQuestion": "Are there other airports near {origin}?",
+  "routeFaqDepAltAirportsAnswer": "{origin} is also served by {airports}, which can be worth comparing for price or connections."
 }
