@@ -5,7 +5,35 @@
 // whose backing data is missing for a given airport is omitted, never guessed.
 const { getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
+const { pickVariant } = require('./content-variants');
 const { nfmt, listSep, summarizeConnections } = require('./connection-facts');
+
+// [ANTI-BOILERPLATE] Per-airport varied intro — the opening/closing sentences
+// are picked from several phrasings by a stable hash of the airport code, and
+// the middle weaves in this airport's real numbers, so no two airport pages
+// read boilerplate-identical. Data-dependent clauses are omitted when absent.
+function buildAirportIntro(airport, facts, cityName, lang) {
+  const code = airport.code;
+  const seed = code;
+  const openKeys = ['airportIntroOpenA', 'airportIntroOpenB'];
+  if (facts.destinationCount > 0) openKeys.push('airportIntroOpenC');
+  const openKey = openKeys[pickVariant(`${seed}:aintroOpen`, openKeys.length)];
+  let s = format(translate(openKey, lang), { code, city: cityName, count: nfmt(facts.destinationCount, lang) });
+
+  if (facts.destinationCount > 0 && facts.countryCount > 0) {
+    s += format(translate('airportIntroData', lang), {
+      code,
+      count: nfmt(facts.destinationCount, lang),
+      countryCount: nfmt(facts.countryCount, lang),
+    });
+  }
+  if (facts.popularDestination) {
+    s += format(translate('airportIntroPopular', lang), { code, destination: facts.popularDestination.name });
+  }
+  const closeKeys = ['airportIntroCloseA', 'airportIntroCloseB'];
+  s += translate(closeKeys[pickVariant(`${seed}:aintroClose`, closeKeys.length)], lang);
+  return s;
+}
 
 function computeAirportFacts(airport, routes, routeMetaBySlug, lang) {
   const code = airport.code;
@@ -109,6 +137,10 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
 
   if (facts.distances) {
     items.push({
+      question: format(translate('airportFaqAvgDistanceQuestion', lang), { code }),
+      answer: format(translate('airportFaqAvgDistanceAnswer', lang), { code, distance: nfmt(facts.distances.avg, lang) }),
+    });
+    items.push({
       question: format(translate('airportFaqLongestQuestion', lang), { code }),
       answer: format(translate('airportFaqLongestAnswer', lang), {
         code,
@@ -129,4 +161,4 @@ function buildAirportFaqItems(facts, code, cityName, countryName, lang) {
   return items;
 }
 
-module.exports = { computeAirportFacts, buildAirportFaqItems };
+module.exports = { computeAirportFacts, buildAirportFaqItems, buildAirportIntro };

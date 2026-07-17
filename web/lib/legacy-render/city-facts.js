@@ -7,7 +7,40 @@
 // is missing for a given city, the dependent fact/question is omitted rather
 // than guessed.
 const { translate, format } = require('./translate');
+const { pickVariant } = require('./content-variants');
 const { nfmt, listSep, buildRouteMetaMap, summarizeConnections } = require('./connection-facts');
+
+// [ANTI-BOILERPLATE] The old city intro was one template string shared by
+// every city that lacks an admin-authored intro_text — identical across
+// thousands of pages except the swapped-in name. This builds a genuinely
+// varied intro instead: the opening and closing sentences are each picked
+// from several phrasings by a stable hash of the city slug (so a given city
+// always reads the same, but different cities diverge), and the middle
+// sentences weave in that city's real numbers (destinations, countries,
+// most-popular route). Two different cities never read byte-identical, and
+// nothing is invented — data-dependent clauses are omitted when the data is
+// absent. Admin intro_text still wins outright.
+function buildCityIntro(city, facts, cityName, lang) {
+  const seed = city.city_slug || cityName;
+  const openKeys = ['cityIntroOpenA', 'cityIntroOpenB'];
+  if (facts.destinationCount > 0) openKeys.push('cityIntroOpenC');
+  const openKey = openKeys[pickVariant(`${seed}:cintroOpen`, openKeys.length)];
+  let s = format(translate(openKey, lang), { city: cityName, count: nfmt(facts.destinationCount, lang) });
+
+  if (facts.destinationCount > 0 && facts.countryCount > 0) {
+    s += format(translate('cityIntroData', lang), {
+      city: cityName,
+      count: nfmt(facts.destinationCount, lang),
+      countryCount: nfmt(facts.countryCount, lang),
+    });
+  }
+  if (facts.popularDestination) {
+    s += format(translate('cityIntroPopular', lang), { city: cityName, destination: facts.popularDestination.name });
+  }
+  const closeKeys = ['cityIntroCloseA', 'cityIntroCloseB'];
+  s += translate(closeKeys[pickVariant(`${seed}:cintroClose`, closeKeys.length)], lang);
+  return s;
+}
 
 // Reduce a city's bidirectional route list to the connection shape the shared
 // engine expects (the far endpoint of each route, plus that route's metadata).
@@ -112,6 +145,13 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
 
   if (facts.distances) {
     items.push({
+      question: format(translate('cityFaqAvgDistanceQuestion', lang), { city: cityName }),
+      answer: format(translate('cityFaqAvgDistanceAnswer', lang), {
+        city: cityName,
+        distance: nfmt(facts.distances.avg, lang),
+      }),
+    });
+    items.push({
       question: format(translate('cityFaqLongestQuestion', lang), { city: cityName }),
       answer: format(translate('cityFaqLongestAnswer', lang), {
         city: cityName,
@@ -134,4 +174,4 @@ function buildCityFaqItems(facts, cityName, countryName, lang) {
 
 // Re-export the shared helpers render-city.js / render.js import from here, so
 // their existing import sites keep working after the extraction.
-module.exports = { buildRouteMetaMap, computeCityFacts, buildCityFaqItems, nfmt };
+module.exports = { buildRouteMetaMap, computeCityFacts, buildCityFaqItems, buildCityIntro, nfmt };

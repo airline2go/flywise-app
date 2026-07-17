@@ -2,7 +2,7 @@ const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity, localizeCountry, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
-const { computeCityFacts, buildCityFaqItems, nfmt } = require('./city-facts');
+const { computeCityFacts, buildCityFaqItems, buildCityIntro, nfmt } = require('./city-facts');
 
 const CITY_CSS = `<style>
 .city-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -69,11 +69,19 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
 
   const urls = urlsFor(`city/${encodeURIComponent(city.city_slug)}`);
   const url = urls[lang];
+
+  // [CITY-FACTS] Real, per-city stats/FAQ derived from the city's routes
+  // joined against the full route-pages metadata — see city-facts.js. Computed
+  // up front because the intro below now weaves in these real numbers.
+  const meta = routeMetaBySlug || {};
+  const facts = computeCityFacts(city, routes, meta, lang);
+  const countryName = city.country_code ? localizeCountry(city.country_code, city.country_code, lang) : null;
+
   // [ADMIN-OVERRIDE-ALL-LANGS] intro_text is admin-authored per city, not
-  // per language — applies uniformly across all 7 languages rather than
-  // only overriding the German intro and silently falling back to the
-  // generated template everywhere else.
-  const introText = city.intro_text || format(translate('cityIntroTemplate', lang), { entity: cityName });
+  // per language — applies uniformly across all 7 languages. Absent that, a
+  // data-driven, per-city-varied intro (buildCityIntro) replaces the old
+  // single shared template so pages don't read boilerplate-identical.
+  const introText = city.intro_text || buildCityIntro(city, facts, cityName, lang);
 
   const countryHref = city.country_code ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
@@ -86,7 +94,6 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
 
   const fromRoutes = locRoutes.filter((r) => r.origin_city_slug === city.city_slug);
   const toRoutes = locRoutes.filter((r) => r.destination_city_slug === city.city_slug);
-  const meta = routeMetaBySlug || {};
   function routeCardHtml(r) {
     const km = meta[r.slug] && meta[r.slug].distance_km;
     const kmBadge = typeof km === 'number' && km > 0
@@ -101,12 +108,9 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
     ? `<section class="city-routes-section"><h2>${translate('flightsTo', lang)} ${escHtml(cityName)}</h2><div class="city-route-grid">${toRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
 
-  // [CITY-FACTS] Real, per-city stats/FAQ derived from the city's routes
-  // joined against the full route-pages metadata — see city-facts.js. Every
-  // section below is data-gated: it only renders when the underlying facts
-  // exist, so a sparsely-connected city never shows an empty or invented block.
-  const facts = computeCityFacts(city, routes, meta, lang);
-  const countryName = city.country_code ? localizeCountry(city.country_code, city.country_code, lang) : null;
+  // facts/countryName computed above (needed by the intro). Each section
+  // below is data-gated: it only renders when the underlying facts exist, so a
+  // sparsely-connected city never shows an empty or invented block.
   const faqItems = buildCityFaqItems(facts, cityName, countryName, lang);
 
   function statTile(valueHtml, label, sub) {

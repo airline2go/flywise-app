@@ -3,7 +3,7 @@ const { localizeCity, localizeCountry, localizeAirport } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
-const { computeAirportFacts, buildAirportFaqItems } = require('./airport-facts');
+const { computeAirportFacts, buildAirportFaqItems, buildAirportIntro } = require('./airport-facts');
 
 const AIRPORT_CSS = `<style>
 .airport-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -74,7 +74,16 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
 
   const urls = urlsFor(`airport/${encodeURIComponent(airport.code)}`);
   const url = urls[lang];
-  const introText = format(translate('airportIntroTemplate', lang), { code: airport.code, city: cityName });
+
+  // [AIRPORT-FACTS] Real, data-gated stats/FAQ from the airport's routes joined
+  // against the full route-pages metadata — see airport-facts.js. Computed up
+  // front because the intro below now weaves in these real numbers.
+  const meta = routeMetaBySlug || {};
+  const facts = computeAirportFacts(airport, routes, meta, lang);
+  const countryName = airport.country ? localizeCountry(airport.country, airport.country, lang) : null;
+  // Per-airport varied, data-driven intro replaces the old single shared
+  // template so pages don't read boilerplate-identical.
+  const introText = buildAirportIntro(airport, facts, cityName, lang);
 
   const countryHref = airport.country ? urlFor(lang, `country/${encodeURIComponent(airport.country)}`) : null;
   const cityHref = airport.city_slug ? urlFor(lang, `city/${encodeURIComponent(airport.city_slug)}`) : null;
@@ -91,7 +100,6 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
     <div class="airport-fact"><div class="airport-fact-val">${toCount}</div><div class="airport-fact-lbl">${translate('arrivalsLabel', lang)}</div></div>
   </div>`;
 
-  const meta = routeMetaBySlug || {};
   function haulLabel(r) {
     const ht = (r.haul_type != null) ? r.haul_type : (meta[r.slug] && meta[r.slug].haul_type);
     if (!ht) return '';
@@ -133,11 +141,8 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
     ? `<section class="airport-traveler-info-section"><h2>${translate('airportTravelerInfoHeading', lang)}</h2>${travelerInfoItems.join('')}</section>`
     : '';
 
-  // [AIRPORT-FACTS] Real, data-gated stats/FAQ from the airport's routes
-  // joined against the full route-pages metadata — see airport-facts.js. Each
-  // block only renders when the underlying facts exist.
-  const facts = computeAirportFacts(airport, routes, meta, lang);
-  const countryName = airport.country ? localizeCountry(airport.country, airport.country, lang) : null;
+  // facts/countryName computed above (needed by the intro). Each block below
+  // only renders when the underlying facts exist.
   const faqItems = buildAirportFaqItems(facts, airport.code, cityName, countryName, lang);
 
   function statTile(valueHtml, label, sub) {
