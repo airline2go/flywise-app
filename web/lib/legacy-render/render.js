@@ -70,7 +70,10 @@ export async function renderAirportHtml(code, lang) {
   const data = await getAirport(code);
   if (!data) return null;
   await ensureGeo();
-  return renderAirportPage(data.airport, data.routes, lang).html;
+  // Enrich the airport's (metadata-light) routes with the full route-pages
+  // list so its stats/FAQ can cite real distances, popularity, and haul type.
+  const routeMetaBySlug = buildRouteMetaMap(await listRoutePages());
+  return renderAirportPage(data.airport, data.routes, lang, routeMetaBySlug).html;
 }
 
 export async function renderAirlineHtml(code, lang) {
