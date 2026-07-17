@@ -63,7 +63,8 @@ export async function renderCountryHtml(code, lang) {
   const data = await getCountry(code);
   if (!data) return null;
   await ensureGeo();
-  return renderCountryPage(data.country, data.routes, lang).html;
+  const routeMetaBySlug = buildRouteMetaMap(await listRoutePages());
+  return renderCountryPage(data.country, data.routes, lang, routeMetaBySlug).html;
 }
 
 export async function renderAirportHtml(code, lang) {
