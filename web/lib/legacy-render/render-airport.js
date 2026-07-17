@@ -1,7 +1,9 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
-const { localizeCity, localizeAirport } = require('./data');
+const { localizeCity, localizeCountry, localizeAirport } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { nfmt } = require('./connection-facts');
+const { computeAirportFacts, buildAirportFaqItems } = require('./airport-facts');
 
 const AIRPORT_CSS = `<style>
 .airport-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -22,15 +24,34 @@ const AIRPORT_CSS = `<style>
 .airport-route-card:hover{border-color:var(--teal)}
 .airport-route-card .arrow{color:var(--teal);margin:0 4px}
 .airport-route-card .haul-tag{display:block;font-size:10.5px;color:var(--tx3);font-weight:500;margin-top:2px}
+.airport-route-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.airport-route-km{flex:none;font-family:monospace;font-size:11px;font-weight:700;color:var(--tx3);background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:2px 6px;white-space:nowrap}
+.airport-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.airport-stat{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px 12px;text-align:center}
+.airport-stat-value{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--teal);line-height:1.15}
+.airport-stat-value small{font-size:.62em;font-weight:700;color:var(--tx3);margin-inline-start:3px}
+.airport-stat-label{font-size:11.5px;color:var(--tx3);margin-top:4px}
+.airport-stat-sub{font-size:11px;color:var(--tx2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.airport-countries{margin-top:28px}
+.airport-countries h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.airport-country-grid{display:flex;flex-wrap:wrap;gap:8px}
+.airport-country-chip{display:inline-flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--bd);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none}
+.airport-country-chip:hover{border-color:var(--teal)}
+.airport-country-chip .count{font-size:11px;font-weight:700;color:var(--tx3)}
+.airport-faq{margin-top:32px}
+.airport-faq h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.airport-faq-item{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:15px 17px;margin-bottom:10px}
+.airport-faq-q{font-weight:700;font-size:14.5px;color:var(--tx);margin-bottom:6px}
+.airport-faq-a{font-size:13.5px;color:var(--tx2);line-height:1.55}
 .airport-traveler-info-section{margin-top:28px}
 .airport-traveler-info-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
 .airport-traveler-info-item{margin-bottom:14px}
 .airport-traveler-info-item h3{font-size:13px;color:var(--tx2);margin-bottom:4px}
 .airport-traveler-info-item p{font-size:13.5px;color:var(--tx);line-height:1.6}
-@media (max-width:480px){.airport-route-grid{grid-template-columns:1fr}}
+@media (max-width:480px){.airport-route-grid{grid-template-columns:1fr}.airport-stats{grid-template-columns:1fr}}
 </style>`;
 
-function renderAirportPage(airport, routes, lang) {
+function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
   const cityName = localizeCity(airport.city, airport.code, lang);
   const airportName = localizeAirport(airport, lang) || airport.code;
   const locRoutes = routes.map((r) => Object.assign({}, r, {
@@ -70,13 +91,17 @@ function renderAirportPage(airport, routes, lang) {
     <div class="airport-fact"><div class="airport-fact-val">${toCount}</div><div class="airport-fact-lbl">${translate('arrivalsLabel', lang)}</div></div>
   </div>`;
 
+  const meta = routeMetaBySlug || {};
   function haulLabel(r) {
-    if (!r.haul_type) return '';
-    return r.haul_type === 'long-haul' ? translate('longHaulTag', lang) : translate('shortHaulTag', lang);
+    const ht = (r.haul_type != null) ? r.haul_type : (meta[r.slug] && meta[r.slug].haul_type);
+    if (!ht) return '';
+    return ht === 'long-haul' ? translate('longHaulTag', lang) : translate('shortHaulTag', lang);
   }
   function routeCardHtml(r) {
     const hl = haulLabel(r);
-    return `<a class="airport-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}${hl ? `<span class="haul-tag">${hl}</span>` : ''}</a>`;
+    const km = meta[r.slug] && meta[r.slug].distance_km;
+    const kmBadge = typeof km === 'number' && km > 0 ? `<span class="airport-route-km">${nfmt(km, lang)} km</span>` : '';
+    return `<a class="airport-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}"><span class="airport-route-top"><span>${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</span>${kmBadge}</span>${hl ? `<span class="haul-tag">${hl}</span>` : ''}</a>`;
   }
 
   const fromRoutes = locRoutes.filter((r) => r.origin_iata === airport.code);
@@ -108,6 +133,30 @@ function renderAirportPage(airport, routes, lang) {
     ? `<section class="airport-traveler-info-section"><h2>${translate('airportTravelerInfoHeading', lang)}</h2>${travelerInfoItems.join('')}</section>`
     : '';
 
+  // [AIRPORT-FACTS] Real, data-gated stats/FAQ from the airport's routes
+  // joined against the full route-pages metadata — see airport-facts.js. Each
+  // block only renders when the underlying facts exist.
+  const facts = computeAirportFacts(airport, routes, meta, lang);
+  const countryName = airport.country ? localizeCountry(airport.country, airport.country, lang) : null;
+  const faqItems = buildAirportFaqItems(facts, airport.code, cityName, countryName, lang);
+
+  function statTile(valueHtml, label, sub) {
+    return `<div class="airport-stat"><div class="airport-stat-value">${valueHtml}</div><div class="airport-stat-label">${escHtml(label)}</div>${sub ? `<div class="airport-stat-sub">${escHtml(sub)}</div>` : ''}</div>`;
+  }
+  const statTiles = [];
+  if (facts.destinationCount > 0) statTiles.push(statTile(nfmt(facts.destinationCount, lang), translate('cityStatDestinations', lang)));
+  if (facts.countryCount > 0) statTiles.push(statTile(nfmt(facts.countryCount, lang), translate('cityStatCountries', lang)));
+  if (facts.distances) statTiles.push(statTile(`${nfmt(facts.distances.longest.km, lang)}<small>km</small>`, translate('cityStatLongest', lang), facts.distances.longest.name));
+  const statsHtml = statTiles.length >= 2 ? `<div class="airport-stats">${statTiles.join('')}</div>` : '';
+
+  const countriesHtml = facts.countries.length >= 2
+    ? `<section class="airport-countries"><h2>${escHtml(format(translate('airportSectionCountries', lang), { code: airport.code }))}</h2><div class="airport-country-grid">${facts.countries.map((c) => `<a class="airport-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+    : '';
+
+  const faqHtml = faqItems.length
+    ? `<section class="airport-faq"><h2>${translate('frequentlyAskedQuestions', lang)}</h2>${faqItems.map((f) => `<div class="airport-faq-item"><div class="airport-faq-q">${escHtml(f.question)}</div><div class="airport-faq-a">${escHtml(f.answer)}</div></div>`).join('')}</section>`
+    : '';
+
   const mainContent = `<main id="airport-main">
   <div id="airport-content">
 ${breadcrumbHtml}
@@ -118,10 +167,13 @@ ${breadcrumbHtml}
   <div class="airport-hero-sub">${translate('airportWord', lang)}</div>
   ${factsHtml}
 </div>
+${statsHtml}
 <section><p>${escHtml(introText)}</p></section>
 ${travelerInfoHtml}
 ${fromSectionHtml}
 ${toSectionHtml}
+${countriesHtml}
+${faqHtml}
   </div>
 </main>`;
 
@@ -149,7 +201,28 @@ ${toSectionHtml}
   // (matching render-flight-route.js) instead of nested under Airport.breadcrumb.
   const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbList };
 
-  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${AIRPORT_CSS}`;
+  // [FAQ-SCHEMA] Standalone FAQPage from the same data-gated FAQ items shown on
+  // the page (1:1), plus an ItemList of the popularity-ranked destinations as
+  // internal links — both omitted when there's nothing real to list.
+  const faqSchema = faqItems.length
+    ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })) }
+    : null;
+  const itemListSchema = facts.topDestinations.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: format(translate('airportSectionTopDestinations', lang), { code: airport.code }),
+        itemListElement: facts.topDestinations.map((d, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: d.name,
+          url: urlFor(lang, `city/${encodeURIComponent(d.slug)}`),
+        })),
+      }
+    : null;
+  const extraSchemaHtml = [faqSchema, itemListSchema].filter(Boolean).map((s) => jsonLdScript(s)).join('\n');
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}${extraSchemaHtml ? '\n' + extraSchemaHtml : ''}\n${AIRPORT_CSS}`;
 
   const html = renderShell({
     lang,
