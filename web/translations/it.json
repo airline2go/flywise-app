@@ -234,5 +234,16 @@
   "howItWorksLabel": "Come funziona Airpiv",
   "dataSourcesLabel": "Fonti dei dati",
   "methodologyLabel": "Metodologia dei dati di volo",
-  "editorialPolicyLabel": "Linee guida editoriali"
+  "editorialPolicyLabel": "Linee guida editoriali",
+  "routeFactsHeading": "Dati della rotta",
+  "routeFactDistance": "Distanza",
+  "routeFactAvgDuration": "Durata media",
+  "routeFactFastest": "Volo più veloce",
+  "routeFactAirlines": "Compagnie",
+  "routeFactNonstopShare": "Quota senza scalo",
+  "routeStopsBreakdownLabel": "Collegamenti tipici",
+  "routeStopsNonstop": "{count} senza scalo",
+  "routeStopsOneStop": "{count} con 1 scalo",
+  "routeStopsTwoPlus": "{count} con 2+ scali",
+  "routeDataUpdated": "Dati di volo aggiornati: {date}"
 }

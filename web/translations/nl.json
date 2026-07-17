@@ -234,5 +234,16 @@
   "howItWorksLabel": "Hoe Airpiv werkt",
   "dataSourcesLabel": "Gegevensbronnen",
   "methodologyLabel": "Methodologie vluchtgegevens",
-  "editorialPolicyLabel": "Redactioneel beleid"
+  "editorialPolicyLabel": "Redactioneel beleid",
+  "routeFactsHeading": "Routegegevens",
+  "routeFactDistance": "Afstand",
+  "routeFactAvgDuration": "Gem. vliegtijd",
+  "routeFactFastest": "Snelste vlucht",
+  "routeFactAirlines": "Maatschappijen",
+  "routeFactNonstopShare": "Aandeel non-stop",
+  "routeStopsBreakdownLabel": "Gebruikelijke verbindingen",
+  "routeStopsNonstop": "{count} non-stop",
+  "routeStopsOneStop": "{count} met 1 tussenstop",
+  "routeStopsTwoPlus": "{count} met 2+ tussenstops",
+  "routeDataUpdated": "Vluchtgegevens laatst bijgewerkt: {date}"
 }
