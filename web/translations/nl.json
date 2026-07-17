@@ -229,5 +229,10 @@
   "routeFaqStopsQuestion": "Zijn er directe vluchten van {origin} naar {destination}?",
   "routeFaqStopsAnswer": "Allebei komen voor: van de verbindingen die we op deze route zagen zijn er {nonstop} non-stop en {withStops} met minstens één tussenstop.",
   "routeFaqDepAltAirportsQuestion": "Zijn er andere luchthavens in de buurt van {origin}?",
-  "routeFaqDepAltAirportsAnswer": "{origin} wordt ook bediend door {airports}, wat de moeite waard kan zijn om te vergelijken op prijs of verbindingen."
+  "routeFaqDepAltAirportsAnswer": "{origin} wordt ook bediend door {airports}, wat de moeite waard kan zijn om te vergelijken op prijs of verbindingen.",
+  "transparencyLabel": "Transparantie",
+  "howItWorksLabel": "Hoe Airpiv werkt",
+  "dataSourcesLabel": "Gegevensbronnen",
+  "methodologyLabel": "Methodologie vluchtgegevens",
+  "editorialPolicyLabel": "Redactioneel beleid"
 }

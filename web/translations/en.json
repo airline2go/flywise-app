@@ -229,5 +229,10 @@
   "routeFaqStopsQuestion": "Do flights from {origin} to {destination} fly nonstop?",
   "routeFaqStopsAnswer": "Both are available: of the connections we've seen on this route, {nonstop} are nonstop and {withStops} involve at least one stop.",
   "routeFaqDepAltAirportsQuestion": "Are there other airports near {origin}?",
-  "routeFaqDepAltAirportsAnswer": "{origin} is also served by {airports}, which can be worth comparing for price or connections."
+  "routeFaqDepAltAirportsAnswer": "{origin} is also served by {airports}, which can be worth comparing for price or connections.",
+  "transparencyLabel": "Transparency",
+  "howItWorksLabel": "How Airpiv works",
+  "dataSourcesLabel": "Data sources",
+  "methodologyLabel": "Flight data methodology",
+  "editorialPolicyLabel": "Editorial policy"
 }
