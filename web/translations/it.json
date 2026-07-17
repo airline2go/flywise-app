@@ -229,5 +229,10 @@
   "routeFaqStopsQuestion": "Ci sono voli diretti da {origin} a {destination}?",
   "routeFaqStopsAnswer": "Ci sono entrambi: dei collegamenti osservati su questa rotta, {nonstop} sono senza scalo e {withStops} prevedono almeno uno scalo.",
   "routeFaqDepAltAirportsQuestion": "Ci sono altri aeroporti vicino a {origin}?",
-  "routeFaqDepAltAirportsAnswer": "{origin} è servita anche da {airports}, da confrontare per prezzo o coincidenze."
+  "routeFaqDepAltAirportsAnswer": "{origin} è servita anche da {airports}, da confrontare per prezzo o coincidenze.",
+  "transparencyLabel": "Trasparenza",
+  "howItWorksLabel": "Come funziona Airpiv",
+  "dataSourcesLabel": "Fonti dei dati",
+  "methodologyLabel": "Metodologia dei dati di volo",
+  "editorialPolicyLabel": "Linee guida editoriali"
 }

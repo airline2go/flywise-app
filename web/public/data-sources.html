@@ -6,16 +6,16 @@
 <script src="/analytics.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Über uns | Airpiv</title>
-<meta name="description" content="Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse. Erfahre mehr über uns.">
+<title>Datenquellen | Airpiv</title>
+<meta name="description" content="Woher die Daten von Airpiv stammen: Flugverfügbarkeit und Preise in Echtzeit von Airline- und Aggregator-Schnittstellen, sowie gepflegte Referenzdaten zu Strecken, Flughäfen und Städten.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://airpiv.com/about.html">
+<link rel="canonical" href="https://airpiv.com/data-sources.html">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Über Airpiv">
-<meta property="og:description" content="Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse.">
+<meta property="og:title" content="Datenquellen | Airpiv">
+<meta property="og:description" content="Woher die Daten von Airpiv stammen: Flugverfügbarkeit und Preise in Echtzeit von Airline- und Aggregator-Schnittstellen, sowie gepflegte Referenzdaten zu Strecken, Flughäfen und Städten.">
 <meta property="og:image" content="https://airpiv.com/images/og-image.png">
-<meta property="og:url" content="https://airpiv.com/about.html">
+<meta property="og:url" content="https://airpiv.com/data-sources.html">
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -25,10 +25,11 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "AboutPage",
-  "@id": "https://airpiv.com/about.html",
-  "url": "https://airpiv.com/about.html",
-  "name": "Über Airpiv",
+  "@type": "WebPage",
+  "@id": "https://airpiv.com/data-sources.html",
+  "url": "https://airpiv.com/data-sources.html",
+  "name": "Datenquellen",
+  "description": "Woher die Daten von Airpiv stammen: Flugverfügbarkeit und Preise in Echtzeit von Airline- und Aggregator-Schnittstellen, sowie gepflegte Referenzdaten zu Strecken, Flughäfen und Städten.",
   "isPartOf": { "@id": "https://airpiv.com/#website" },
   "about": { "@id": "https://airpiv.com/#organization" },
   "inLanguage": "de-DE"
@@ -51,35 +52,24 @@
 
 <main>
   <a href="/" class="back-link">← Zurück zur Startseite</a>
-  <h1>Über Airpiv</h1>
-  <p class="sub">Wer wir sind und wofür wir stehen</p>
-
+  <h1>Datenquellen</h1>
+  <p class="sub">Woher unsere Daten kommen — und wie aktuell sie sind</p>
   <section>
-    <h2>✈️ Wer wir sind</h2>
-    <p>Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse.</p>
+    <h2>🛫 Flugverfügbarkeit & Preise</h2>
+    <p>Verfügbarkeit und Preise werden im Moment deiner Suche live über die Schnittstellen von Airlines und Reise-Aggregatoren abgefragt. Sie werden nicht als Momentaufnahme gespeichert, weil sich Flugpreise laufend ändern.</p>
   </section>
-
   <section>
-    <h2>📊 Unsere Zahlen</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:400px">
-      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
-        <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal)">600+</div>
-        <div style="font-size:12px;color:var(--tx3);margin-top:4px">Airlines</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
-        <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal)">150+</div>
-        <div style="font-size:12px;color:var(--tx3);margin-top:4px">Länder</div>
-      </div>
-    </div>
+    <h2>🗺️ Referenzdaten zu Strecken, Flughäfen & Städten</h2>
+    <p>Strukturierte Referenzdaten — welche Flughäfen es gibt, welche Stadt sie bedienen, in welchem Land sie liegen und welche Strecken existieren — pflegen wir in unserer eigenen Datenbank. Diese Daten bilden das Gerüst für unsere Strecken-, Flughafen- und Städteseiten.</p>
   </section>
-
   <section>
-    <h2>💬 Kundenbewertungen</h2>
-    <div style="background:var(--bg2);border-radius:12px;padding:24px;text-align:center;color:var(--tx3)">
-      <div style="font-size:2rem;margin-bottom:8px">⭐</div>
-      <div style="font-size:14px;font-weight:600;color:var(--tx)">Sei der Erste, der uns bewertet!</div>
-      <div style="font-size:13px;margin-top:6px">Nach deiner Buchung kannst du deine Erfahrung teilen.</div>
-    </div>
+    <h2>📈 Streckenstatistiken</h2>
+    <p>Kennzahlen auf den Streckenseiten leiten wir aus beobachteten Flugdaten und den Referenzdaten ab, darunter:</p>
+    <ul><li>die Entfernung zwischen den Flughäfen,</li><li>typische und kürzeste beobachtete Flugdauer,</li><li>die Anzahl der auf der Strecke aktiven Airlines,</li><li>das Verhältnis von Nonstop- zu Umsteigeverbindungen.</li></ul>
+  </section>
+  <section>
+    <h2>🔄 Aktualität</h2>
+    <p>Preise sind bei jeder Suche live. Die Referenz- und Statistikdaten werden regelmäßig aktualisiert, damit die Inhalte den aktuellen Streckenbestand widerspiegeln. Details zur Berechnung findest du in unserer <a href="/methodology.html">Flugdaten-Methodik</a>.</p>
   </section>
 </main>
 

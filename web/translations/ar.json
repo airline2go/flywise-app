@@ -229,5 +229,10 @@
   "routeFaqStopsQuestion": "هل توجد رحلات مباشرة من {origin} إلى {destination}؟",
   "routeFaqStopsAnswer": "كلاهما متاح: من الرحلات التي رصدناها على هذا المسار، {nonstop} مباشرة و{withStops} بها توقف واحد على الأقل.",
   "routeFaqDepAltAirportsQuestion": "هل توجد مطارات أخرى قرب {origin}؟",
-  "routeFaqDepAltAirportsAnswer": "تُخدَم {origin} أيضاً عبر {airports}، وقد يستحق الأمر المقارنة من حيث السعر أو الاتصال."
+  "routeFaqDepAltAirportsAnswer": "تُخدَم {origin} أيضاً عبر {airports}، وقد يستحق الأمر المقارنة من حيث السعر أو الاتصال.",
+  "transparencyLabel": "الشفافية",
+  "howItWorksLabel": "كيف يعمل Airpiv",
+  "dataSourcesLabel": "مصادر البيانات",
+  "methodologyLabel": "منهجية بيانات الطيران",
+  "editorialPolicyLabel": "السياسة التحريرية"
 }
