@@ -1,7 +1,8 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
-const { localizeCity, getAlternativeAirports } = require('./data');
+const { localizeCity, localizeCountry, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { computeCityFacts, buildCityFaqItems, nfmt } = require('./city-facts');
 
 const CITY_CSS = `<style>
 .city-hero{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:32px 24px;margin:24px 0;text-align:center}
@@ -19,10 +20,29 @@ const CITY_CSS = `<style>
 .city-route-card{display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;font-size:13.5px;font-weight:600;color:var(--tx);text-decoration:none}
 .city-route-card:hover{border-color:var(--teal)}
 .city-route-card .arrow{color:var(--teal);margin:0 4px}
-@media (max-width:480px){.city-route-grid{grid-template-columns:1fr}}
+.city-route-card .city-route-name{flex:1;min-width:0}
+.city-route-km{flex:none;font-family:monospace;font-size:11px;font-weight:700;color:var(--tx3);background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:2px 6px;margin-inline-start:8px;white-space:nowrap}
+.city-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.city-stat{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px 12px;text-align:center}
+.city-stat-value{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--teal);line-height:1.15}
+.city-stat-value small{font-size:.62em;font-weight:700;color:var(--tx3);margin-inline-start:3px}
+.city-stat-label{font-size:11.5px;color:var(--tx3);margin-top:4px}
+.city-stat-sub{font-size:11px;color:var(--tx2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.city-countries{margin-top:28px}
+.city-countries h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.city-country-grid{display:flex;flex-wrap:wrap;gap:8px}
+.city-country-chip{display:inline-flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--bd);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none}
+.city-country-chip:hover{border-color:var(--teal)}
+.city-country-chip .count{font-size:11px;font-weight:700;color:var(--tx3)}
+.city-faq{margin-top:32px}
+.city-faq h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.city-faq-item{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:15px 17px;margin-bottom:10px}
+.city-faq-q{font-weight:700;font-size:14.5px;color:var(--tx);margin-bottom:6px}
+.city-faq-a{font-size:13.5px;color:var(--tx2);line-height:1.55}
+@media (max-width:480px){.city-route-grid{grid-template-columns:1fr}.city-stats{grid-template-columns:repeat(2,1fr)}}
 </style>`;
 
-function renderCityPage(city, routes, lang) {
+function renderCityPage(city, routes, lang, routeMetaBySlug) {
   const cityName = localizeCity(city.name, city.airport_codes && city.airport_codes[0], lang);
   const locRoutes = routes.map((r) => Object.assign({}, r, {
     origin_city: localizeCity(r.origin_city, r.origin_iata, lang),
@@ -66,14 +86,45 @@ function renderCityPage(city, routes, lang) {
 
   const fromRoutes = locRoutes.filter((r) => r.origin_city_slug === city.city_slug);
   const toRoutes = locRoutes.filter((r) => r.destination_city_slug === city.city_slug);
+  const meta = routeMetaBySlug || {};
   function routeCardHtml(r) {
-    return `<a class="city-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</a>`;
+    const km = meta[r.slug] && meta[r.slug].distance_km;
+    const kmBadge = typeof km === 'number' && km > 0
+      ? `<span class="city-route-km">${nfmt(km, lang)} km</span>`
+      : '';
+    return `<a class="city-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}"><span class="city-route-name">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</span>${kmBadge}</a>`;
   }
   const fromSectionHtml = fromRoutes.length
     ? `<section class="city-routes-section"><h2>${translate('flightsFrom', lang)} ${escHtml(cityName)}</h2><div class="city-route-grid">${fromRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
   const toSectionHtml = toRoutes.length
     ? `<section class="city-routes-section"><h2>${translate('flightsTo', lang)} ${escHtml(cityName)}</h2><div class="city-route-grid">${toRoutes.map(routeCardHtml).join('')}</div></section>`
+    : '';
+
+  // [CITY-FACTS] Real, per-city stats/FAQ derived from the city's routes
+  // joined against the full route-pages metadata — see city-facts.js. Every
+  // section below is data-gated: it only renders when the underlying facts
+  // exist, so a sparsely-connected city never shows an empty or invented block.
+  const facts = computeCityFacts(city, routes, meta, lang);
+  const countryName = city.country_code ? localizeCountry(city.country_code, city.country_code, lang) : null;
+  const faqItems = buildCityFaqItems(facts, cityName, countryName, lang);
+
+  function statTile(valueHtml, label, sub) {
+    return `<div class="city-stat"><div class="city-stat-value">${valueHtml}</div><div class="city-stat-label">${escHtml(label)}</div>${sub ? `<div class="city-stat-sub">${escHtml(sub)}</div>` : ''}</div>`;
+  }
+  const statTiles = [];
+  if (facts.airportCount > 0) statTiles.push(statTile(nfmt(facts.airportCount, lang), translate('cityStatAirports', lang), facts.airportCodes.join(' · ')));
+  if (facts.destinationCount > 0) statTiles.push(statTile(nfmt(facts.destinationCount, lang), translate('cityStatDestinations', lang)));
+  if (facts.countryCount > 0) statTiles.push(statTile(nfmt(facts.countryCount, lang), translate('cityStatCountries', lang)));
+  if (facts.distances) statTiles.push(statTile(`${nfmt(facts.distances.longest.km, lang)}<small>km</small>`, translate('cityStatLongest', lang), facts.distances.longest.name));
+  const statsHtml = statTiles.length >= 2 ? `<div class="city-stats">${statTiles.join('')}</div>` : '';
+
+  const countriesHtml = facts.countries.length >= 2
+    ? `<section class="city-countries"><h2>${escHtml(format(translate('citySectionCountries', lang), { city: cityName }))}</h2><div class="city-country-grid">${facts.countries.map((c) => `<a class="city-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+    : '';
+
+  const faqHtml = faqItems.length
+    ? `<section class="city-faq"><h2>${translate('frequentlyAskedQuestions', lang)}</h2>${faqItems.map((f) => `<div class="city-faq-item"><div class="city-faq-q">${escHtml(f.question)}</div><div class="city-faq-a">${escHtml(f.answer)}</div></div>`).join('')}</section>`
     : '';
 
   const routesWord = locRoutes.length === 1 ? translate('routeWordSingular', lang) : translate('routeWordPlural', lang);
@@ -86,9 +137,12 @@ ${breadcrumbHtml}
   <div class="city-hero-sub">${locRoutes.length} ${translate('availableWord', lang)} ${routesWord}</div>
   ${airportsHtml}
 </div>
+${statsHtml}
 <section><p>${escHtml(introText)}</p></section>
 ${fromSectionHtml}
 ${toSectionHtml}
+${countriesHtml}
+${faqHtml}
   </div>
 </main>`;
 
@@ -112,13 +166,39 @@ ${toSectionHtml}
   // results tooling actually looks for.
   const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbList };
 
-  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${CITY_CSS}`;
+  // [FAQ-SCHEMA] Standalone FAQPage block from the same data-gated FAQ items
+  // rendered on the page — every Question maps 1:1 to a visible Q/A, so the
+  // structured data never claims content the page doesn't show.
+  const faqSchema = faqItems.length
+    ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })) }
+    : null;
 
-  // [THIN-CONTENT-NOINDEX] A city with at most one route and no admin-
-  // written intro has nothing but a generated one-line template and a
-  // single link — not enough unique content to be worth indexing. Still
-  // `follow` so link equity flows through to the (single) route it links.
-  const robotsContent = (locRoutes.length <= 1 && !city.intro_text) ? 'noindex, follow' : 'index, follow';
+  // [ITEMLIST-SCHEMA] The popularity-ranked destinations, exposed as an
+  // ItemList of internal links (only when a real demand signal ranked them).
+  const itemListSchema = facts.topDestinations.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: format(translate('citySectionTopDestinations', lang), { city: cityName }),
+        itemListElement: facts.topDestinations.map((d, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: d.name,
+          url: urlFor(lang, `city/${encodeURIComponent(d.slug)}`),
+        })),
+      }
+    : null;
+
+  const extraSchemaHtml = [faqSchema, itemListSchema].filter(Boolean).map((s) => jsonLdScript(s)).join('\n');
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}${extraSchemaHtml ? '\n' + extraSchemaHtml : ''}\n${CITY_CSS}`;
+
+  // [THIN-CONTENT-NOINDEX] A city that connects to at most one distinct
+  // destination and has no admin-written intro is thin — the generated FAQ for
+  // it is largely templated (same shape as every other single-destination
+  // city), so it must not flip such a page to index. Cities with real
+  // connectivity (2+ destinations) carry genuinely distinct stats/FAQ and are
+  // indexed. Always `follow` so link equity flows through either way.
+  const robotsContent = (facts.destinationCount <= 1 && !city.intro_text) ? 'noindex, follow' : 'index, follow';
 
   const html = renderShell({
     lang,

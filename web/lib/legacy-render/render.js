@@ -11,6 +11,7 @@
 import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
 import cityMod from './render-city.js';
+import cityFactsMod from './city-facts.js';
 import countryMod from './render-country.js';
 import airportMod from './render-airport.js';
 import airlineMod from './render-airline.js';
@@ -19,6 +20,7 @@ import blogPostMod from './render-blog-post.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
+const { buildRouteMetaMap } = cityFactsMod;
 const { renderCountryPage } = countryMod;
 const { renderAirportPage } = airportMod;
 const { renderAirlinePage } = airlineMod;
@@ -50,7 +52,11 @@ export async function renderCityHtml(slug, lang) {
   const data = await getCity(slug);
   if (!data) return null;
   await ensureGeo();
-  return renderCityPage(data.city, data.routes, lang).html;
+  // Enrich the city's (metadata-light) routes with the full route-pages list
+  // so the page's stats/FAQ can cite real distances, popularity, and airline
+  // counts. Same cached list the sitemap/related-routes already fetch.
+  const routeMetaBySlug = buildRouteMetaMap(await listRoutePages());
+  return renderCityPage(data.city, data.routes, lang, routeMetaBySlug).html;
 }
 
 export async function renderCountryHtml(code, lang) {
