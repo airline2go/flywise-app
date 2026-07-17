@@ -44,6 +44,14 @@ function localizeCity(name, iata, lang) {
   return resolveTranslation(city && city.translations, lang, name);
 }
 
+// Resolve an IATA code to the city_slug of the city it serves (via the
+// IATA_TO_SLUG table setGeoData() built). Used where only an airport code is
+// available (e.g. the route-pages list carries IATA but no city_slug) and a
+// link to the city page is needed.
+function slugForIata(iata) {
+  return (iata && IATA_TO_SLUG[iata]) || null;
+}
+
 function localizeCountry(name, code, lang) {
   const country = code && COUNTRY_BY_CODE[code];
   return resolveTranslation(country && country.translations, lang, name);
@@ -159,6 +167,6 @@ function citiesToCountries(cities, lang) {
 module.exports = {
   setGeoData,
   localizeCity, localizeCountry, localizeAirport,
-  getAlternativeAirports, buildIataNameMap,
+  getAlternativeAirports, buildIataNameMap, slugForIata,
   KNOWN_CITIES, detectCitiesInText, citiesToCountries,
 };
