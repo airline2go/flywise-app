@@ -46,6 +46,41 @@ function buildPopularRoutesHtml(post, allRoutes, lang) {
   return `<div class="post-routes"><h2>${heading}</h2><div class="post-routes-grid">${cards}</div></div>`;
 }
 
+// [MENTIONED-DESTINATIONS] Internal links from a blog post to the CITY pages
+// of the destinations it mentions — the popular-routes block above only links
+// flight routes, leaving the city entity pages unlinked from the blog. Cities
+// are detected in the post text (same detector as the routes block) and
+// resolved to real city pages via the route list's city_slug, so we only ever
+// link a city that actually has a page. Blog is DE/EN-only, so the two hrefs
+// are inline like the rest of this file.
+function buildMentionedDestinationsHtml(post, allRoutes, lang) {
+  const de = lang !== 'en';
+  const { localizeCity, slugForIata } = require('./data');
+  const detected = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
+  if (!detected.length || !allRoutes || !allRoutes.length) return '';
+  const detLower = detected.map((c) => c.toLowerCase());
+  // The route-pages list carries IATA but no city_slug, so resolve the slug
+  // from the airport code via slugForIata (populated by setGeoData).
+  const bySlug = new Map();
+  for (const r of allRoutes) {
+    for (const side of [['origin_city', 'origin_iata'], ['destination_city', 'destination_iata']]) {
+      const name = r[side[0]];
+      const iata = r[side[1]];
+      if (!name || !detLower.includes(name.toLowerCase())) continue;
+      const slug = slugForIata(iata);
+      if (slug && !bySlug.has(slug)) bySlug.set(slug, { slug, iata, name });
+    }
+  }
+  const dests = [...bySlug.values()].slice(0, 6);
+  if (!dests.length) return '';
+  const cityHrefBase = de ? '/city/' : '/en/city/';
+  const heading = de ? '🌍 Reiseziele im Artikel' : '🌍 Destinations in this article';
+  const chips = dests
+    .map((d) => `<a class="post-route-link" href="${cityHrefBase}${encodeURIComponent(d.slug)}">${escHtml(localizeCity(d.name, d.iata, lang))}</a>`)
+    .join('');
+  return `<div class="post-routes"><h2>${heading}</h2><div class="post-routes-grid">${chips}</div></div>`;
+}
+
 // [SIMILAR-POSTS] Same tiered matching (same city > same country > recency
 // fallback) as loadSimilarPosts(), computed at build time from the full
 // post list for this language.
@@ -204,6 +239,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
     `<button class="post-share-btn post-copy-btn" onclick="copyPostLink(this)" aria-label="${de ? 'Link kopieren' : 'Copy link'}"><span class="post-copy-toast">${de ? 'Kopiert!' : 'Copied!'}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>`;
 
   const popularRoutesHtml = buildPopularRoutesHtml(post, allRoutes, lang);
+  const mentionedDestinationsHtml = buildMentionedDestinationsHtml(post, allRoutes, lang);
   const similarPostsHtml = buildSimilarPostsHtml(post, allPosts, lang);
 
   const blogHref = de ? '/blog.html' : '/en/blog';
@@ -241,6 +277,7 @@ ${cover}
 ${tocHtml}
 <div class="post-body" id="post-body">${processedBody}</div>
 ${popularRoutesHtml}
+${mentionedDestinationsHtml}
 ${faqHtml}
 <div class="post-author">
   <div class="post-author-av">${escHtml(authorInitial)}</div>
