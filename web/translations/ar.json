@@ -234,5 +234,16 @@
   "howItWorksLabel": "كيف يعمل Airpiv",
   "dataSourcesLabel": "مصادر البيانات",
   "methodologyLabel": "منهجية بيانات الطيران",
-  "editorialPolicyLabel": "السياسة التحريرية"
+  "editorialPolicyLabel": "السياسة التحريرية",
+  "routeFactsHeading": "بيانات المسار",
+  "routeFactDistance": "المسافة",
+  "routeFactAvgDuration": "متوسط مدة الرحلة",
+  "routeFactFastest": "أسرع رحلة",
+  "routeFactAirlines": "شركات الطيران",
+  "routeFactNonstopShare": "نسبة المباشر",
+  "routeStopsBreakdownLabel": "الرحلات المعتادة",
+  "routeStopsNonstop": "{count} مباشرة",
+  "routeStopsOneStop": "{count} بتوقف واحد",
+  "routeStopsTwoPlus": "{count} بتوقفين أو أكثر",
+  "routeDataUpdated": "آخر تحديث لبيانات الطيران: {date}"
 }

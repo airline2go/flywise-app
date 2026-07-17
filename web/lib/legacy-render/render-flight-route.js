@@ -223,6 +223,53 @@ function buildBestTimeHtml(route, lang) {
 // The section CSS is inlined (imported as a bundled string, not fetched via a
 // <link>) so the page's LCP element — the hero card it styles — paints with
 // the HTML instead of waiting on a second render-blocking round-trip.
+// [ROUTE-FACTS] Server-rendered "route facts" section — surfaces the route's
+// real intelligence (distance, average & fastest flight time, airline count,
+// nonstop share, the nonstop/1-stop/2+-stop breakdown, and a data-freshness
+// line) as visible, crawlable content instead of leaving it only inside FAQ
+// text or the client-only live widget. Reuses the existing .route-insight-*
+// card styles. Every card/line is data-gated; the whole section is omitted
+// unless at least two facts are available, and nothing is fabricated.
+function buildRouteFactsHtml(route, lang) {
+  const loc = getLanguage(lang).locale;
+  const small = (t) => `<small style="font-size:.6em;font-weight:700;color:var(--tx3);margin-inline-start:2px">${t}</small>`;
+  const card = (valHtml, lbl) => `<div class="route-insight-card"><div class="route-insight-val">${valHtml}</div><div class="route-insight-lbl">${escHtml(lbl)}</div></div>`;
+
+  const cards = [];
+  if (route.distance_km != null) cards.push(card(`${route.distance_km.toLocaleString(loc)}${small('km')}`, translate('routeFactDistance', lang)));
+  if (route.avg_duration_min != null) cards.push(card(formatHoursMinutes(route.avg_duration_min, lang), translate('routeFactAvgDuration', lang)));
+  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
+    cards.push(card(formatHoursMinutes(route.min_duration_min, lang), translate('routeFactFastest', lang)));
+  }
+  if (route.airline_count != null && route.airline_count > 0) cards.push(card(route.airline_count.toLocaleString(loc), translate('routeFactAirlines', lang)));
+
+  let breakdownHtml = '';
+  const sd = route.stop_distribution;
+  if (sd && typeof sd === 'object') {
+    const nonstop = Number(sd['0'] || 0);
+    const oneStop = Number(sd['1'] || 0);
+    const twoPlus = Object.keys(sd).reduce((s, k) => (Number(k) >= 2 ? s + Number(sd[k] || 0) : s), 0);
+    const total = nonstop + oneStop + twoPlus;
+    if (total > 0) {
+      cards.push(card(`${Math.round((nonstop / total) * 100)}${small('%')}`, translate('routeFactNonstopShare', lang)));
+      const parts = [];
+      if (nonstop > 0) parts.push(format(translate('routeStopsNonstop', lang), { count: nonstop.toLocaleString(loc) }));
+      if (oneStop > 0) parts.push(format(translate('routeStopsOneStop', lang), { count: oneStop.toLocaleString(loc) }));
+      if (twoPlus > 0) parts.push(format(translate('routeStopsTwoPlus', lang), { count: twoPlus.toLocaleString(loc) }));
+      breakdownHtml = `<div class="route-facts-note"><span class="route-facts-note-lbl">${escHtml(translate('routeStopsBreakdownLabel', lang))}:</span> ${escHtml(parts.join(' · '))}</div>`;
+    }
+  }
+
+  if (cards.length < 2) return '';
+
+  const updatedAt = route.insights_updated_at || (route.intelligence && route.intelligence.operational && route.intelligence.operational.updatedAt);
+  const freshHtml = updatedAt
+    ? `<div class="route-facts-note">${escHtml(format(translate('routeDataUpdated', lang), { date: String(updatedAt).slice(0, 10) }))}</div>`
+    : '';
+
+  return `<section class="route-facts-section"><h2>${translate('routeFactsHeading', lang)}</h2><div class="route-insights-grid">${cards.join('')}</div>${breakdownHtml}${freshHtml}</section>`;
+}
+
 const FLIGHT_ROUTE_CSS = require('./flight-route-css');
 const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}</style>`;
 
@@ -386,6 +433,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     : '';
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
+  const routeFactsHtml = buildRouteFactsHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
@@ -407,6 +455,7 @@ ${breadcrumbHtml}
   <a href="${bookingUrl}" class="route-cta">${translate('searchFlightsNow', lang)}</a>
 </div>
 <section><p>${escHtml(introText)}</p></section>
+${routeFactsHtml}
 ${bestTimeHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}
