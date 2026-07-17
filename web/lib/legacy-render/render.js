@@ -81,7 +81,8 @@ export async function renderAirlineHtml(code, lang) {
   const data = await getAirline(code);
   if (!data) return null;
   await ensureGeo();
-  return renderAirlinePage(data.airline, data.routes, lang, data.mostUsedRoutes || []).html;
+  const routeMetaBySlug = buildRouteMetaMap(await listRoutePages());
+  return renderAirlinePage(data.airline, data.routes, lang, data.mostUsedRoutes || [], routeMetaBySlug).html;
 }
 
 export async function renderFlightRouteHtml(slug, lang) {
