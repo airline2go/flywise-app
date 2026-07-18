@@ -164,5 +164,6 @@
   "trendStable": "مستقر",
   "metricBasedOnSamples": "استناداً إلى {count} فحص سعر حديث",
   "transparencyPageLabel": "نظرة عامة على الشفافية",
-  "metricNonstopShare": "نسبة الرحلات المباشرة"
+  "metricNonstopShare": "نسبة الرحلات المباشرة",
+  "airlinesOnRouteHeading": "شركات الطيران على هذا المسار"
 }

@@ -164,5 +164,6 @@
   "trendStable": "Stabiel",
   "metricBasedOnSamples": "Op basis van {count} recente prijscontroles",
   "transparencyPageLabel": "Transparantie-overzicht",
-  "metricNonstopShare": "Aandeel non-stop"
+  "metricNonstopShare": "Aandeel non-stop",
+  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route"
 }

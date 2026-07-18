@@ -493,6 +493,16 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const moreFromOriginHtml = cityRouteSectionHtml(cityLinks && cityLinks.fromOrigin, translate('flightsFrom', lang), route.origin_city);
   const moreToDestinationHtml = cityRouteSectionHtml(cityLinks && cityLinks.toDestination, translate('flightsTo', lang), route.destination_city);
 
+  // [AIRLINE-SECTION] Real airlines observed on this route (route.airlines
+  // from content.routes.js), each linking to its own airline page — durable
+  // internal linking (SEO) + genuinely per-route content. Omitted when the
+  // route has no observed airlines yet.
+  const airlinesHtml = (route.airlines && route.airlines.length)
+    ? `<section class="route-airlines-section"><h2>${translate('airlinesOnRouteHeading', lang)}</h2><div class="airport-info-grid">${
+      route.airlines.map((a) => `<a class="airport-info-card" href="${pathFor(lang, `airline/${encodeURIComponent(a.iata_code)}`)}"><span class="airport-info-code">${escHtml(a.iata_code)}</span><span class="airport-info-city">${escHtml(a.name || a.iata_code)}</span></a>`).join('')
+    }</div></section>`
+    : '';
+
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const metricsHtml = buildMetricsHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
@@ -521,6 +531,7 @@ ${bestTimeHtml}
 ${metricsHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}
+${airlinesHtml}
 <section id="route-insights-section"></section>
 <section class="route-faq">
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
