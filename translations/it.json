@@ -149,5 +149,9 @@
   "howItWorksLabel": "Come funziona",
   "routeTrustHeading": "Dati e trasparenza",
   "dataLastUpdatedFullLabel": "Dati di volo aggiornati al",
-  "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:"
+  "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:",
+  "routeFaqFastestQuestion": "Qual è la connessione più veloce da {origin} a {destination}?",
+  "routeFaqFastestAnswer": "Il tempo di viaggio totale più breve che abbiamo osservato su questa tratta è di {duration}.",
+  "routeFaqPopularQuestion": "{origin} verso {destination} è una tratta popolare?",
+  "routeFaqPopularAnswer": "Sì, è una delle tratte più cercate e prenotate su Airpiv, quindi tariffe e disponibilità tendono a essere competitive."
 }

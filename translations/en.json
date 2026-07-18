@@ -149,5 +149,9 @@
   "howItWorksLabel": "How it works",
   "routeTrustHeading": "Data & transparency",
   "dataLastUpdatedFullLabel": "Flight data last updated",
-  "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:"
+  "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:",
+  "routeFaqFastestQuestion": "What is the fastest connection from {origin} to {destination}?",
+  "routeFaqFastestAnswer": "The shortest total travel time we have observed on this route is {duration}.",
+  "routeFaqPopularQuestion": "Is {origin} to {destination} a popular route?",
+  "routeFaqPopularAnswer": "Yes — this is one of the more frequently searched and booked routes on Airpiv, so fares and availability tend to be competitive."
 }

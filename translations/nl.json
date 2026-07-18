@@ -149,5 +149,9 @@
   "howItWorksLabel": "Hoe het werkt",
   "routeTrustHeading": "Gegevens & transparantie",
   "dataLastUpdatedFullLabel": "Vluchtgegevens laatst bijgewerkt",
-  "routeDataMethodologyText": "Vluchttijden, tussenstops en luchtvaartmaatschappijen op deze pagina worden samengesteld uit echte aanbiedingen van luchtvaartmaatschappijen via onze gegevensproviders en regelmatig bijgewerkt. Ontdek hoe wij deze gegevens verzamelen en verifiëren:"
+  "routeDataMethodologyText": "Vluchttijden, tussenstops en luchtvaartmaatschappijen op deze pagina worden samengesteld uit echte aanbiedingen van luchtvaartmaatschappijen via onze gegevensproviders en regelmatig bijgewerkt. Ontdek hoe wij deze gegevens verzamelen en verifiëren:",
+  "routeFaqFastestQuestion": "Wat is de snelste verbinding van {origin} naar {destination}?",
+  "routeFaqFastestAnswer": "De kortste totale reistijd die we op deze route hebben waargenomen is {duration}.",
+  "routeFaqPopularQuestion": "Is {origin} naar {destination} een populaire route?",
+  "routeFaqPopularAnswer": "Ja — dit is een van de meest gezochte en geboekte routes op Airpiv, dus tarieven en beschikbaarheid zijn meestal concurrerend."
 }

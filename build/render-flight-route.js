@@ -131,6 +131,28 @@ function buildFaqItems(route, lang) {
     });
   }
 
+  // [CONTENT-VARIATION-4] Fastest-connection FAQ — a distinct long-tail query
+  // ("fastest flight X to Y") answered from the persisted min_duration_min
+  // (the shortest itinerary actually seen), separate from the duration FAQ's
+  // average. Omitted when unknown, never fabricated.
+  if (route.min_duration_min != null) {
+    items.push({
+      question: format(translate('routeFaqFastestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: format(translate('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),
+    });
+  }
+
+  // [CONTENT-VARIATION-4] Popularity FAQ — only added when route intelligence
+  // has HIGH confidence that this is a genuinely popular route (same signal
+  // buildDynamicIntro() uses). Never added on a guess: an unknown or
+  // low/medium confidence route simply omits this question.
+  if (route.route_score_confidence === 'high') {
+    items.push({
+      question: format(translate('routeFaqPopularQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: translate('routeFaqPopularAnswer', lang),
+    });
+  }
+
   if (route.custom_faq && route.custom_faq.length) return route.custom_faq;
   return items;
 }
@@ -433,7 +455,27 @@ ${relatedRoutesHtml}
     arrivalAirport: { '@type': 'Airport', iataCode: route.destination_iata, name: route.destination_city },
   };
 
-  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n${ROUTE_HEAD_EXTRA_STATIC}`;
+  // [ITEMLIST-SCHEMA] Structured ItemList for the "similar routes" block, so
+  // search engines see the curated set of related route pages as an ordered
+  // list of linked items (matching the visible related-routes section) — not
+  // just anchor tags. Emitted only when there are related routes to list.
+  const relatedItemListSchema = (relatedRoutes && relatedRoutes.length)
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: translate('similarFlightRoutes', lang),
+      numberOfItems: relatedRoutes.length,
+      itemListElement: relatedRoutes.map((r, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: urlFor(lang, `flights/${encodeURIComponent(r.slug)}`),
+        name: `${localizeCity(r.origin_city, r.origin_iata, lang)} → ${localizeCity(r.destination_city, r.destination_iata, lang)}`,
+      })),
+    }
+    : null;
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n`
+    + `${relatedItemListSchema ? jsonLdScript(relatedItemListSchema) + '\n' : ''}${ROUTE_HEAD_EXTRA_STATIC}`;
 
   const html = renderShell({
     lang,
