@@ -42,7 +42,7 @@
   "airlinesFlyingThisRoute": "Fliegende Airlines:",
   "hoursAbbrev": "Std",
   "minutesAbbrev": "Min",
-  "routeTitleTemplate": "Flüge von {origin} nach {destination}",
+  "routeTitleTemplate": "Günstige Flüge {origin} nach {destination} | Vergleichen & Sparen",
   "routeDescriptionTemplate": "Günstige Flüge von {origin} ({originCode}) nach {destination} ({destCode}) finden und buchen — Preise vergleichen mit Airpiv.",
   "routeIntroOpeningLongHaul": "Auf der Suche nach einem Flug von {origin} nach {destination}?",
   "routeIntroOpeningShortHaul": "Du planst eine Reise von {origin} nach {destination}?",

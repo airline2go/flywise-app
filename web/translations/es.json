@@ -42,7 +42,7 @@
   "airlinesFlyingThisRoute": "Aerolíneas que operan esta ruta:",
   "hoursAbbrev": "h",
   "minutesAbbrev": "min",
-  "routeTitleTemplate": "Vuelos de {origin} a {destination}",
+  "routeTitleTemplate": "Vuelos baratos {origin} a {destination} | Compara y Ahorra",
   "routeDescriptionTemplate": "Encuentra y reserva vuelos baratos de {origin} ({originCode}) a {destination} ({destCode}) — compara precios con Airpiv.",
   "routeIntroOpeningLongHaul": "¿Buscas un vuelo de {origin} a {destination}?",
   "routeIntroOpeningShortHaul": "¿Estás planeando un viaje de {origin} a {destination}?",
