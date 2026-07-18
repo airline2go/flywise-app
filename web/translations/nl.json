@@ -289,5 +289,12 @@
   "airlineFaqLongestAnswer": "De langste route van {airline} is {route}, ongeveer {distance} km.",
   "airlineStatRoutes": "Routes",
   "airlineSectionDestinations": "Bestemmingen van {airline}",
-  "airlineSectionReach": "Landen waar {airline} naartoe vliegt"
+  "airlineSectionReach": "Landen waar {airline} naartoe vliegt",
+  "routeIntroDistanceMediumHaul": " De route beslaat ongeveer {distance} km — een middellange vlucht van enkele uren.",
+  "routeFaqDistanceAnswerMediumHaul": "De afstand is ongeveer {distance} km — een middellange vlucht.",
+  "routeFaqBestTimeAnswerMediumHaul": "Deze middellange route is meestal het goedkoopst in het tussenseizoen (april–mei, september–oktober) en doordeweeks; 4–8 weken vooraf boeken geeft doorgaans de beste tarieven.",
+  "routeBestTimeBodyMediumHaul": "Voor middellange routes zoals {origin} → {destination} geeft ongeveer 4–8 weken vooraf boeken meestal de beste tarieven — prijzen stijgen vaak in de laatste 2–3 weken voor vertrek. Reizen in het tussenseizoen en doordeweeks (dinsdag/woensdag) is meestal goedkoper dan in de zomerpiek, op feestdagen of in het weekend.",
+  "routeBestTimeBodyDomesticMediumHaul": "Voor een binnenlandse route van middellange afstand zoals {origin} → {destination} is 3–6 weken vooraf boeken meestal genoeg, en doordeweekse vertrekken (dinsdag/woensdag) zijn doorgaans het goedkoopst; prijzen trekken aan in de laatste weken voor vertrek.",
+  "mediumHaulFlightLabel": "Middellangeafstandsvlucht",
+  "mediumHaulTag": "Middellangeafstand"
 }

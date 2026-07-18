@@ -289,5 +289,12 @@
   "airlineFaqLongestAnswer": "{airline}'s longest route is {route}, about {distance} km.",
   "airlineStatRoutes": "Routes",
   "airlineSectionDestinations": "Destinations {airline} flies to",
-  "airlineSectionReach": "Countries {airline} flies to"
+  "airlineSectionReach": "Countries {airline} flies to",
+  "routeIntroDistanceMediumHaul": " The route covers roughly {distance} km — a medium-haul flight of a few hours.",
+  "routeFaqDistanceAnswerMediumHaul": "The distance is roughly {distance} km — a medium-haul flight.",
+  "routeFaqBestTimeAnswerMediumHaul": "This medium-haul route is usually cheapest in the shoulder season (April–May, September–October) and on midweek flights; booking 4–8 weeks ahead tends to give the best fares.",
+  "routeBestTimeBodyMediumHaul": "For medium-haul routes like {origin} → {destination}, booking around 4–8 weeks ahead usually gives the best fares — prices tend to climb in the final 2–3 weeks before departure. Travelling in the shoulder season and midweek (Tuesday/Wednesday) is typically cheaper than peak summer, holidays or weekends.",
+  "routeBestTimeBodyDomesticMediumHaul": "For a medium-distance domestic route like {origin} → {destination}, booking 3–6 weeks ahead is usually enough, and midweek departures (Tuesday/Wednesday) tend to be the cheapest — prices firm up in the last couple of weeks before departure.",
+  "mediumHaulFlightLabel": "Medium-haul flight",
+  "mediumHaulTag": "Medium-haul"
 }
