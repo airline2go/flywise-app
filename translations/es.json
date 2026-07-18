@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "Basado en {count} consultas de precio recientes",
   "transparencyPageLabel": "Resumen de transparencia",
   "metricNonstopShare": "Porcentaje sin escalas",
-  "airlinesOnRouteHeading": "Aerolíneas en esta ruta"
+  "airlinesOnRouteHeading": "Aerolíneas en esta ruta",
+  "routeFaqAirlineAnswerSingleNamed": "Esta ruta la opera actualmente {name}.",
+  "routeFaqAirlineAnswerNamed": "Actualmente {count} aerolíneas operan esta ruta: {names}.",
+  "routeFaqStopoverQuestion": "¿Es mejor volar directo o con escala de {origin} a {destination}?",
+  "routeFaqStopoverAnswerAllDirect": "Todos los itinerarios de esta ruta son directos, así que no hay motivo para añadir una escala.",
+  "routeFaqStopoverAnswerDirectAvailable": "Hay vuelos directos en esta ruta. Dada la duración, volar directo suele ser la mejor opción; una escala tiene sentido sobre todo si reduce notablemente el precio.",
+  "routeFaqStopoverAnswerNoDirect": "Esta ruta no tiene vuelos directos, por lo que todo itinerario incluye al menos una escala. Compara las conexiones por tiempo total de viaje y precio."
 }

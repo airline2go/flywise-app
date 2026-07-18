@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "Op basis van {count} recente prijscontroles",
   "transparencyPageLabel": "Transparantie-overzicht",
   "metricNonstopShare": "Aandeel non-stop",
-  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route"
+  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route",
+  "routeFaqAirlineAnswerSingleNamed": "Deze route wordt momenteel uitgevoerd door {name}.",
+  "routeFaqAirlineAnswerNamed": "Momenteel voeren {count} maatschappijen deze route uit: {names}.",
+  "routeFaqStopoverQuestion": "Kun je beter direct vliegen of met een tussenstop van {origin} naar {destination}?",
+  "routeFaqStopoverAnswerAllDirect": "Alle routes hierop zijn direct, dus een tussenstop toevoegen heeft geen zin.",
+  "routeFaqStopoverAnswerDirectAvailable": "Er zijn directe vluchten op deze route. Gezien de vluchttijd is direct vliegen meestal de betere keuze; een tussenstop is vooral zinvol als die de prijs flink verlaagt.",
+  "routeFaqStopoverAnswerNoDirect": "Deze route heeft geen directe vluchten, dus elke reis heeft minstens één tussenstop. Vergelijk verbindingen op totale reistijd en prijs."
 }

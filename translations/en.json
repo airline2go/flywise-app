@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "Based on {count} recent price checks",
   "transparencyPageLabel": "Transparency overview",
   "metricNonstopShare": "Nonstop share",
-  "airlinesOnRouteHeading": "Airlines flying this route"
+  "airlinesOnRouteHeading": "Airlines flying this route",
+  "routeFaqAirlineAnswerSingleNamed": "This route is currently operated by {name}.",
+  "routeFaqAirlineAnswerNamed": "Currently {count} airlines operate this route: {names}.",
+  "routeFaqStopoverQuestion": "Is it better to fly direct or take a stopover from {origin} to {destination}?",
+  "routeFaqStopoverAnswerAllDirect": "All itineraries on this route are direct, so there is no reason to add a stop.",
+  "routeFaqStopoverAnswerDirectAvailable": "Direct flights are available on this route. Given the flight time, flying direct is usually the better choice — a stopover mainly makes sense when it noticeably lowers the price.",
+  "routeFaqStopoverAnswerNoDirect": "This route has no direct flights, so every itinerary includes at least one stop. Compare connections by total travel time and price."
 }
