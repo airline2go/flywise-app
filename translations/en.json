@@ -134,5 +134,10 @@
   "airportDistanceCityCenterValueTemplate": "About {distance} km from downtown",
   "airportTransitOptionsLabel": "Getting there",
   "airportTerminalInfoLabel": "Terminals",
-  "airportTravelerTipsLabel": "Traveler tips"
+  "airportTravelerTipsLabel": "Traveler tips",
+  "cityStatAirports": "Airports",
+  "cityStatDestinations": "Destinations",
+  "cityStatCountries": "Countries",
+  "cityStatLongestFlight": "Longest flight",
+  "cityCountriesServedHeading": "Countries you can reach from {entity}"
 }

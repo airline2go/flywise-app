@@ -134,5 +134,10 @@
   "airportDistanceCityCenterValueTemplate": "Ongeveer {distance} km van het centrum",
   "airportTransitOptionsLabel": "Hoe kom je er",
   "airportTerminalInfoLabel": "Terminals",
-  "airportTravelerTipsLabel": "Reizigerstips"
+  "airportTravelerTipsLabel": "Reizigerstips",
+  "cityStatAirports": "Luchthavens",
+  "cityStatDestinations": "Bestemmingen",
+  "cityStatCountries": "Landen",
+  "cityStatLongestFlight": "Langste vlucht",
+  "cityCountriesServedHeading": "Landen die je vanaf {entity} kunt bereiken"
 }
