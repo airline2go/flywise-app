@@ -171,5 +171,6 @@
   "routeFaqStopoverQuestion": "Vaut-il mieux voler direct ou avec escale de {origin} à {destination} ?",
   "routeFaqStopoverAnswerAllDirect": "Tous les itinéraires de cette ligne sont directs — inutile d’ajouter une escale.",
   "routeFaqStopoverAnswerDirectAvailable": "Des vols directs existent sur cette ligne. Vu la durée, le vol direct est généralement le meilleur choix ; une escale se justifie surtout si elle réduit nettement le prix.",
-  "routeFaqStopoverAnswerNoDirect": "Cette ligne n’a pas de vols directs : chaque itinéraire comporte au moins une escale. Comparez les correspondances selon le temps de trajet total et le prix."
+  "routeFaqStopoverAnswerNoDirect": "Cette ligne n’a pas de vols directs : chaque itinéraire comporte au moins une escale. Comparez les correspondances selon le temps de trajet total et le prix.",
+  "metricUpdatedOn": "Prix mis à jour le {date}"
 }

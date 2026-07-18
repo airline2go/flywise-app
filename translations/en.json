@@ -171,5 +171,6 @@
   "routeFaqStopoverQuestion": "Is it better to fly direct or take a stopover from {origin} to {destination}?",
   "routeFaqStopoverAnswerAllDirect": "All itineraries on this route are direct, so there is no reason to add a stop.",
   "routeFaqStopoverAnswerDirectAvailable": "Direct flights are available on this route. Given the flight time, flying direct is usually the better choice — a stopover mainly makes sense when it noticeably lowers the price.",
-  "routeFaqStopoverAnswerNoDirect": "This route has no direct flights, so every itinerary includes at least one stop. Compare connections by total travel time and price."
+  "routeFaqStopoverAnswerNoDirect": "This route has no direct flights, so every itinerary includes at least one stop. Compare connections by total travel time and price.",
+  "metricUpdatedOn": "Prices updated {date}"
 }
