@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED — NOT the production renderer. The live site renders this
+// page type from web/lib/legacy-render/ (Next.js). Edit there + web/translations/,
+// not here. This copy is retained only for the non-blocking build-check CI
+// smoke test; its output is not deployed. See build/README.md.
 const { parse } = require('node-html-parser');
 const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { detectCitiesInText, citiesToCountries } = require('./data');
