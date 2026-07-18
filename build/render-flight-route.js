@@ -231,6 +231,16 @@ function formatPrice(value, currency, lang) {
   }
 }
 
+// Localized calendar date for a stored ISO timestamp, or null when the value
+// is missing/unparseable — so a "last updated" line is shown only for a real
+// timestamp, never a fabricated one.
+function formatDateOrNull(iso, lang) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(getLanguage(lang).locale, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function buildMetricsHtml(route, lang) {
   const currency = route.price_currency || 'EUR';
   const cards = [];
@@ -267,9 +277,16 @@ function buildMetricsHtml(route, lang) {
 
   if (!cards.length) return '';
 
-  const footnote = route.price_sample_count != null && route.price_sample_count > 0
-    ? `<p class="route-metric-note">${format(translate('metricBasedOnSamples', lang), { count: route.price_sample_count.toLocaleString(getLanguage(lang).locale) })}</p>`
-    : '';
+  // [PER-SECTION-FRESHNESS] Show when THIS section's data was last refreshed,
+  // from the real price_updated_at timestamp (omitted when absent). Combined
+  // with the sample-count note into one footnote line.
+  const noteParts = [];
+  if (route.price_sample_count != null && route.price_sample_count > 0) {
+    noteParts.push(format(translate('metricBasedOnSamples', lang), { count: route.price_sample_count.toLocaleString(getLanguage(lang).locale) }));
+  }
+  const priceDate = formatDateOrNull(route.price_updated_at, lang);
+  if (priceDate) noteParts.push(format(translate('metricUpdatedOn', lang), { date: priceDate }));
+  const footnote = noteParts.length ? `<p class="route-metric-note">${escHtml(noteParts.join(' · '))}</p>` : '';
 
   return `<section class="route-metrics-section"><h2>${translate('routeMetricsHeading', lang)}</h2>` +
     `<div class="route-metrics-grid">${cards.join('')}</div>${footnote}</section>`;
