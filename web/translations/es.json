@@ -296,5 +296,6 @@
   "routeBestTimeBodyMediumHaul": "Para rutas de media distancia como {origin} → {destination}, reservar con unas 4–8 semanas de antelación suele dar las mejores tarifas: los precios tienden a subir en las últimas 2–3 semanas antes de la salida. Viajar en temporada media y entre semana (martes/miércoles) suele ser más barato que en pleno verano, festivos o fines de semana.",
   "routeBestTimeBodyDomesticMediumHaul": "Para una ruta nacional de media distancia como {origin} → {destination}, reservar con 3–6 semanas suele bastar, y las salidas entre semana (martes/miércoles) suelen ser las más baratas; los precios se firman en las últimas semanas antes de la salida.",
   "mediumHaulFlightLabel": "Vuelo de media distancia",
-  "mediumHaulTag": "Media distancia"
+  "mediumHaulTag": "Media distancia",
+  "airlinesOnRouteHeading": "Aerolíneas en esta ruta"
 }

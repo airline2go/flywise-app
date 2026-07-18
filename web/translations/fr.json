@@ -296,5 +296,6 @@
   "routeBestTimeBodyMediumHaul": "Pour les lignes moyen-courriers comme {origin} → {destination}, réserver environ 4 à 8 semaines à l’avance donne généralement les meilleurs tarifs — les prix montent souvent dans les 2 à 3 dernières semaines avant le départ. Voyager en moyenne saison et en semaine (mardi/mercredi) est généralement moins cher qu’en plein été, les jours fériés ou le week-end.",
   "routeBestTimeBodyDomesticMediumHaul": "Pour une ligne intérieure de moyenne distance comme {origin} → {destination}, réserver 3 à 6 semaines à l’avance suffit généralement, et les départs en semaine (mardi/mercredi) sont souvent les moins chers ; les prix se raffermissent dans les dernières semaines avant le départ.",
   "mediumHaulFlightLabel": "Vol moyen-courrier",
-  "mediumHaulTag": "Moyen-courrier"
+  "mediumHaulTag": "Moyen-courrier",
+  "airlinesOnRouteHeading": "Compagnies sur cette ligne"
 }

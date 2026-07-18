@@ -296,5 +296,6 @@
   "routeBestTimeBodyMediumHaul": "Voor middellange routes zoals {origin} → {destination} geeft ongeveer 4–8 weken vooraf boeken meestal de beste tarieven — prijzen stijgen vaak in de laatste 2–3 weken voor vertrek. Reizen in het tussenseizoen en doordeweeks (dinsdag/woensdag) is meestal goedkoper dan in de zomerpiek, op feestdagen of in het weekend.",
   "routeBestTimeBodyDomesticMediumHaul": "Voor een binnenlandse route van middellange afstand zoals {origin} → {destination} is 3–6 weken vooraf boeken meestal genoeg, en doordeweekse vertrekken (dinsdag/woensdag) zijn doorgaans het goedkoopst; prijzen trekken aan in de laatste weken voor vertrek.",
   "mediumHaulFlightLabel": "Middellangeafstandsvlucht",
-  "mediumHaulTag": "Middellangeafstand"
+  "mediumHaulTag": "Middellangeafstand",
+  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route"
 }
