@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+// ⚠️ DEPRECATED — NOT the production build. The live site renders route/city/
+// country/airport/airline/blog pages from the Next.js app in web/ (see
+// web/lib/legacy-render/). This standalone SSG is retained only for the
+// non-blocking build-check CI smoke test; its output is not deployed. Edit
+// web/lib/legacy-render/* + web/translations/* to change production. See
+// build/README.md.
+//
 // [SSG-BUILD] Generates fully-rendered, SEO-complete HTML for every
 // city/country/airport/flight-route/blog-post page at deploy time — see
 // README.md and the project plan for why (client-side-injected SEO content
