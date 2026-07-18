@@ -172,5 +172,10 @@
   "routeFaqStopoverAnswerAllDirect": "Tutti gli itinerari su questa tratta sono diretti, quindi non c’è motivo di aggiungere uno scalo.",
   "routeFaqStopoverAnswerDirectAvailable": "Su questa tratta ci sono voli diretti. Vista la durata, il volo diretto è di solito la scelta migliore; uno scalo conviene soprattutto se riduce sensibilmente il prezzo.",
   "routeFaqStopoverAnswerNoDirect": "Questa tratta non ha voli diretti, quindi ogni itinerario prevede almeno uno scalo. Confronta le coincidenze per tempo di viaggio totale e prezzo.",
-  "metricUpdatedOn": "Prezzi aggiornati il {date}"
+  "metricUpdatedOn": "Prezzi aggiornati il {date}",
+  "routeIntroDistanceMediumHaul": " La tratta copre circa {distance} km — un volo a medio raggio di qualche ora.",
+  "routeFaqDistanceAnswerMediumHaul": "La distanza è di circa {distance} km — un volo a medio raggio.",
+  "routeFaqBestTimeAnswerMediumHaul": "Questa tratta a medio raggio è di solito più economica in bassa stagione (aprile–maggio, settembre–ottobre) e infrasettimanale; prenotare con 4–8 settimane di anticipo tende a dare le tariffe migliori.",
+  "routeBestTimeBodyMediumHaul": "Per tratte a medio raggio come {origin} → {destination}, prenotare con circa 4–8 settimane di anticipo dà di solito le tariffe migliori — i prezzi tendono a salire nelle ultime 2–3 settimane prima della partenza. Viaggiare in bassa stagione e infrasettimanale (martedì/mercoledì) è di solito più economico dell’alta estate, dei festivi o dei weekend.",
+  "routeBestTimeBodyDomesticMediumHaul": "Per una tratta nazionale di media distanza come {origin} → {destination}, prenotare con 3–6 settimane basta di solito, e le partenze infrasettimanali (martedì/mercoledì) tendono a essere le più economiche; i prezzi si consolidano nelle ultime settimane prima della partenza."
 }

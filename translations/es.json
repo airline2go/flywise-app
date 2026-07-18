@@ -172,5 +172,10 @@
   "routeFaqStopoverAnswerAllDirect": "Todos los itinerarios de esta ruta son directos, así que no hay motivo para añadir una escala.",
   "routeFaqStopoverAnswerDirectAvailable": "Hay vuelos directos en esta ruta. Dada la duración, volar directo suele ser la mejor opción; una escala tiene sentido sobre todo si reduce notablemente el precio.",
   "routeFaqStopoverAnswerNoDirect": "Esta ruta no tiene vuelos directos, por lo que todo itinerario incluye al menos una escala. Compara las conexiones por tiempo total de viaje y precio.",
-  "metricUpdatedOn": "Precios actualizados el {date}"
+  "metricUpdatedOn": "Precios actualizados el {date}",
+  "routeIntroDistanceMediumHaul": " La ruta cubre unos {distance} km — un vuelo de media distancia de unas horas.",
+  "routeFaqDistanceAnswerMediumHaul": "La distancia es de unos {distance} km — un vuelo de media distancia.",
+  "routeFaqBestTimeAnswerMediumHaul": "Esta ruta de media distancia suele ser más barata en temporada media (abril–mayo, septiembre–octubre) y entre semana; reservar con 4–8 semanas de antelación suele dar las mejores tarifas.",
+  "routeBestTimeBodyMediumHaul": "Para rutas de media distancia como {origin} → {destination}, reservar con unas 4–8 semanas de antelación suele dar las mejores tarifas: los precios tienden a subir en las últimas 2–3 semanas antes de la salida. Viajar en temporada media y entre semana (martes/miércoles) suele ser más barato que en pleno verano, festivos o fines de semana.",
+  "routeBestTimeBodyDomesticMediumHaul": "Para una ruta nacional de media distancia como {origin} → {destination}, reservar con 3–6 semanas suele bastar, y las salidas entre semana (martes/miércoles) suelen ser las más baratas; los precios se firman en las últimas semanas antes de la salida."
 }

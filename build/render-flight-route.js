@@ -20,19 +20,31 @@ const { pickVariant } = require('./content-variants');
 // routes sharing every other dimension above don't read byte-identical.
 // Every new clause is independently omitted when its underlying signal
 // is unknown (null) — never fabricated.
+// [HAUL-3-TIER] Suffix for haul-typed translation keys. A medium-haul route
+// (1500–4000 km) must not be described as a "short-haul hop" or a "long-haul
+// flight" — it gets its own MediumHaul phrasing. Keys without a MediumHaul
+// variant intentionally keep the binary short/long split (e.g. the intro
+// opening and closing, which never assert the haul distance).
+function haulSuffix(r) {
+  return r.haul_type === 'long-haul' ? 'LongHaul' : (r.haul_type === 'medium-haul' ? 'MediumHaul' : 'ShortHaul');
+}
+
 function buildDynamicIntro(r, lang) {
   const hasDistance = r.distance_km != null;
   const isLongHaul = r.haul_type === 'long-haul';
   const isDomestic = !!(r.origin_country && r.destination_country && r.origin_country === r.destination_country);
   const distanceStr = hasDistance ? r.distance_km.toLocaleString(getLanguage(lang).locale) : null;
 
+  // Opening/closing never state the haul distance, so they keep the binary
+  // short/long split (medium falls to the short, distance-neutral wording).
   const openingKey = isDomestic
     ? (isLongHaul ? 'routeIntroOpeningDomesticLongHaul' : 'routeIntroOpeningDomesticShortHaul')
     : (isLongHaul ? 'routeIntroOpeningLongHaul' : 'routeIntroOpeningShortHaul');
   const opening = format(translate(openingKey, lang), { origin: r.origin_city, destination: r.destination_city });
 
+  // The distance phrase DOES assert the haul category, so it is three-way.
   const distancePhrase = hasDistance
-    ? format(translate(isLongHaul ? 'routeIntroDistanceLongHaul' : 'routeIntroDistanceShortHaul', lang), { distance: distanceStr })
+    ? format(translate(`routeIntroDistance${haulSuffix(r)}`, lang), { distance: distanceStr })
     : '';
 
   const closingVariantKeys = isLongHaul
@@ -65,7 +77,7 @@ function buildFaqItems(route, lang) {
   const haulQuestion = route.distance_km != null
     ? {
       question: format(translate('routeFaqDistanceQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: format(translate(route.haul_type === 'long-haul' ? 'routeFaqDistanceAnswerLongHaul' : 'routeFaqDistanceAnswerShortHaul', lang), { distance: route.distance_km.toLocaleString(getLanguage(lang).locale) }),
+      answer: format(translate(`routeFaqDistanceAnswer${haulSuffix(route)}`, lang), { distance: route.distance_km.toLocaleString(getLanguage(lang).locale) }),
     }
     : {
       question: format(translate('routeFaqAirportQuestion', lang), { destination: route.destination_city }),
@@ -74,7 +86,7 @@ function buildFaqItems(route, lang) {
   const bestTimeFaqItem = route.distance_km != null
     ? {
       question: format(translate('routeFaqBestTimeQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: translate(route.haul_type === 'long-haul' ? 'routeFaqBestTimeAnswerLongHaul' : 'routeFaqBestTimeAnswerShortHaul', lang),
+      answer: translate(`routeFaqBestTimeAnswer${haulSuffix(route)}`, lang),
     }
     : {
       question: format(translate('routeFaqCheapestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
@@ -190,9 +202,10 @@ function buildBestTimeHtml(route, lang) {
   if (route.distance_km == null) return '';
   const isLongHaul = route.haul_type === 'long-haul';
   const isDomestic = !!(route.origin_country && route.destination_country && route.origin_country === route.destination_country);
+  // Body text names the haul category, so it is three-way (domestic + not).
   const bodyKey = isDomestic
-    ? (isLongHaul ? 'routeBestTimeBodyDomesticLongHaul' : 'routeBestTimeBodyDomesticShortHaul')
-    : (isLongHaul ? 'routeBestTimeBodyLongHaul' : 'routeBestTimeBodyShortHaul');
+    ? `routeBestTimeBodyDomestic${haulSuffix(route)}`
+    : `routeBestTimeBody${haulSuffix(route)}`;
   const body = format(translate(bodyKey, lang), { origin: escHtml(route.origin_city), destination: escHtml(route.destination_city) });
   const bookingWindow = translate(isLongHaul ? 'routeBestTimeWindowLongHaul' : 'routeBestTimeWindowShortHaul', lang);
 

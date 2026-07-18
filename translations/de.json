@@ -172,5 +172,10 @@
   "routeFaqStopoverAnswerAllDirect": "Alle Verbindungen auf dieser Strecke sind Direktflüge — ein Zwischenstopp lohnt sich hier nicht.",
   "routeFaqStopoverAnswerDirectAvailable": "Auf dieser Strecke gibt es Direktflüge. Angesichts der Flugdauer ist ein Direktflug meist die bessere Wahl — ein Zwischenstopp lohnt sich vor allem, wenn er den Preis deutlich senkt.",
   "routeFaqStopoverAnswerNoDirect": "Auf dieser Strecke gibt es keine Direktflüge, jede Verbindung hat mindestens einen Stopp. Vergleiche Verbindungen nach Gesamtreisezeit und Preis.",
-  "metricUpdatedOn": "Preise aktualisiert am {date}"
+  "metricUpdatedOn": "Preise aktualisiert am {date}",
+  "routeIntroDistanceMediumHaul": " Die Strecke misst rund {distance} km — ein Mittelstreckenflug von einigen Stunden.",
+  "routeFaqDistanceAnswerMediumHaul": "Die Entfernung beträgt rund {distance} km — ein Mittelstreckenflug.",
+  "routeFaqBestTimeAnswerMediumHaul": "Diese Mittelstrecke ist meist in der Nebensaison (April–Mai, September–Oktober) und unter der Woche am günstigsten; eine Buchung 4–8 Wochen im Voraus bringt in der Regel die besten Preise.",
+  "routeBestTimeBodyMediumHaul": "Für Mittelstrecken wie {origin} → {destination} bringt eine Buchung rund 4–8 Wochen im Voraus meist die besten Preise — in den letzten 2–3 Wochen vor Abflug ziehen die Preise oft an. Reisen in der Nebensaison und unter der Woche (Dienstag/Mittwoch) ist meist günstiger als im Hochsommer, an Feiertagen oder am Wochenende.",
+  "routeBestTimeBodyDomesticMediumHaul": "Für eine mittellange Inlandsstrecke wie {origin} → {destination} reicht eine Buchung 3–6 Wochen im Voraus meist aus, und Abflüge unter der Woche (Dienstag/Mittwoch) sind in der Regel am günstigsten — in den letzten Wochen vor Abflug ziehen die Preise an."
 }
