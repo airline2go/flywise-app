@@ -85,6 +85,22 @@ export async function renderAirlineHtml(code, lang) {
   return renderAirlinePage(data.airline, data.routes, lang, data.mostUsedRoutes || [], routeMetaBySlug).html;
 }
 
+// [INTERNAL-LINKING] "More flights from this origin / to this destination"
+// link sets — distinct from the scored `related` list. Excludes the current
+// route and its exact reverse, and dedupes against the related slugs already
+// shown so no card appears twice. Mirrors build/generate-pages.js.
+const CITY_ROUTE_LINK_LIMIT = 10;
+function computeCityRouteLinks(route, routeList, relatedSlugs) {
+  const isReverse = (r) => r.origin_city === route.destination_city && r.destination_city === route.origin_city;
+  const pick = (predicate) => routeList
+    .filter((r) => r.slug !== route.slug && !isReverse(r) && !relatedSlugs.has(r.slug) && predicate(r))
+    .slice(0, CITY_ROUTE_LINK_LIMIT);
+  return {
+    fromOrigin: pick((r) => r.origin_city === route.origin_city),
+    toDestination: pick((r) => r.destination_city === route.destination_city),
+  };
+}
+
 export async function renderFlightRouteHtml(slug, lang) {
   const routeRaw = await getRoutePage(slug);
   if (!routeRaw) return null;
@@ -94,7 +110,8 @@ export async function renderFlightRouteHtml(slug, lang) {
   // /related endpoint — so the "Similar flight routes" section matches 1:1.
   const routeList = await listRoutePages();
   const related = computeRelatedRoutes(routeRaw, routeList);
-  return renderFlightRoutePage(routeRaw, lang, related).html;
+  const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
+  return renderFlightRoutePage(routeRaw, lang, related, cityLinks).html;
 }
 
 export async function renderBlogPostHtml(slug, lang) {

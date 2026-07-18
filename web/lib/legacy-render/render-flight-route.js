@@ -283,7 +283,13 @@ function buildRouteFactsHtml(route, lang) {
 }
 
 const FLIGHT_ROUTE_CSS = require('./flight-route-css');
-const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}</style>`;
+// [INTERNAL-LINKING] Styles for the hero city links and the "flights from/to"
+// sections added to the live renderer — appended to the inlined route CSS.
+const INTERNAL_LINK_CSS = `.route-hero-cities a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35)}`
+  + `.route-hero-cities a:hover{border-bottom-color:#fff}`
+  + `.route-citylinks-section{margin-top:28px}`
+  + `.route-citylinks-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}`;
+const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
 // and average-duration insights are genuinely live data from Duffel/Redis —
@@ -376,7 +382,7 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 </script>`;
 }
 
-function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
@@ -456,6 +462,30 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     }).join('')}</div></section>`
     : '';
 
+  // [INTERNAL-LINKING] Hero city names link to their city pages (were plain
+  // text). Falls back to plain text when a city has no slug.
+  const originCityNode = route.origin_city_slug
+    ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.origin_city_slug)}`)}">${escHtml(route.origin_city)}</a>`
+    : `<span>${escHtml(route.origin_city)}</span>`;
+  const destCityNode = route.destination_city_slug
+    ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`)}">${escHtml(route.destination_city)}</a>`
+    : `<span>${escHtml(route.destination_city)}</span>`;
+
+  // [INTERNAL-LINKING] "Flights from {origin}" / "Flights to {destination}"
+  // link sections from the build-time city-route groupings (render.js),
+  // pushing internal links per page toward the 20–30 target. Omitted empty.
+  function cityRouteSectionHtml(routes, headingLabel, cityName) {
+    if (!routes || !routes.length) return '';
+    const cards = routes.map((r) => {
+      const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
+      const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
+      return `<a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
+    }).join('');
+    return `<section class="route-citylinks-section"><h2>${headingLabel} ${escHtml(cityName)}</h2><div class="related-routes-grid">${cards}</div></section>`;
+  }
+  const moreFromOriginHtml = cityRouteSectionHtml(cityLinks && cityLinks.fromOrigin, translate('flightsFrom', lang), route.origin_city);
+  const moreToDestinationHtml = cityRouteSectionHtml(cityLinks && cityLinks.toDestination, translate('flightsTo', lang), route.destination_city);
+
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
@@ -474,9 +504,9 @@ ${breadcrumbHtml}
 <h1>${escHtml(heading)}</h1>
 <div class="route-hero">
   <div class="route-hero-cities">
-    <span>${escHtml(route.origin_city)}</span>
+    ${originCityNode}
     <span class="route-hero-arrow">✈</span>
-    <span>${escHtml(route.destination_city)}</span>
+    ${destCityNode}
   </div>
   ${distanceHtml}
   <div class="route-price-box" id="route-price-box">
@@ -497,6 +527,8 @@ ${airlinesHtml}
   ${faqHtml}
 </section>
 ${relatedRoutesHtml}
+${moreFromOriginHtml}
+${moreToDestinationHtml}
   </div>
 </main>`;
 
@@ -526,7 +558,26 @@ ${relatedRoutesHtml}
     arrivalAirport: { '@type': 'Airport', iataCode: route.destination_iata, name: route.destination_city },
   };
 
-  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n${ROUTE_HEAD_EXTRA_STATIC}`;
+  // [ITEMLIST-SCHEMA] Structured ItemList mirroring the visible "similar
+  // routes" section — an ordered list of linked route pages for search
+  // engines. Emitted only when there are related routes.
+  const relatedItemListSchema = (relatedRoutes && relatedRoutes.length)
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: translate('similarFlightRoutes', lang),
+      numberOfItems: relatedRoutes.length,
+      itemListElement: relatedRoutes.map((r, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: urlFor(lang, `flights/${encodeURIComponent(r.slug)}`),
+        name: `${localizeCity(r.origin_city, r.origin_iata, lang)} → ${localizeCity(r.destination_city, r.destination_iata, lang)}`,
+      })),
+    }
+    : null;
+
+  const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n`
+    + `${relatedItemListSchema ? jsonLdScript(relatedItemListSchema) + '\n' : ''}${ROUTE_HEAD_EXTRA_STATIC}`;
 
   const html = renderShell({
     lang,
