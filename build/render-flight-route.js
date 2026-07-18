@@ -99,11 +99,33 @@ function buildFaqItems(route, lang) {
   // [CONTENT-VARIATION-2] New — varies FAQ content based on the route's
   // actual airline data (Phase 1), rather than a fixed question set.
   if (route.airline_count != null && route.airline_count > 0) {
+    // [CONTENT-VARIATION-5] When the real carrier names are available at build
+    // time (route.airlines, from content.routes.js), name them in the answer
+    // — more useful and more unique per route than a bare count. Falls back
+    // to the count-only wording when names aren't available.
+    const names = (route.airlines || []).map((a) => a.name).filter(Boolean).slice(0, 6);
+    let answer;
+    if (names.length && route.airline_count === 1) answer = format(translate('routeFaqAirlineAnswerSingleNamed', lang), { name: names[0] });
+    else if (names.length) answer = format(translate('routeFaqAirlineAnswerNamed', lang), { count: route.airline_count, names: names.join(', ') });
+    else if (route.airline_count === 1) answer = translate('routeFaqAirlineAnswerSingle', lang);
+    else answer = format(translate('routeFaqAirlineAnswerMulti', lang), { count: route.airline_count });
     items.push({
       question: format(translate('routeFaqAirlineQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: route.airline_count === 1
-        ? translate('routeFaqAirlineAnswerSingle', lang)
-        : format(translate('routeFaqAirlineAnswerMulti', lang), { count: route.airline_count }),
+      answer,
+    });
+  }
+
+  // [CONTENT-VARIATION-5] Direct-vs-stopover FAQ — a real traveler question,
+  // answered from the route's own persisted direct/all_direct signals (never
+  // generic). Distinct from the plain "are there direct flights" FAQ: this
+  // one advises on the trade-off. Omitted when the signal is unknown.
+  if (route.direct_flight_available != null) {
+    const stopoverKey = route.all_direct
+      ? 'routeFaqStopoverAnswerAllDirect'
+      : (route.direct_flight_available ? 'routeFaqStopoverAnswerDirectAvailable' : 'routeFaqStopoverAnswerNoDirect');
+    items.push({
+      question: format(translate('routeFaqStopoverQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
+      answer: translate(stopoverKey, lang),
     });
   }
 

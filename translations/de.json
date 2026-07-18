@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "Basierend auf {count} aktuellen Preisabfragen",
   "transparencyPageLabel": "Transparenz-Übersicht",
   "metricNonstopShare": "Nonstop-Anteil",
-  "airlinesOnRouteHeading": "Airlines auf dieser Strecke"
+  "airlinesOnRouteHeading": "Airlines auf dieser Strecke",
+  "routeFaqAirlineAnswerSingleNamed": "Diese Strecke wird derzeit von {name} bedient.",
+  "routeFaqAirlineAnswerNamed": "Derzeit bedienen {count} Airlines diese Strecke: {names}.",
+  "routeFaqStopoverQuestion": "Direkt fliegen oder mit Zwischenstopp von {origin} nach {destination}?",
+  "routeFaqStopoverAnswerAllDirect": "Alle Verbindungen auf dieser Strecke sind Direktflüge — ein Zwischenstopp lohnt sich hier nicht.",
+  "routeFaqStopoverAnswerDirectAvailable": "Auf dieser Strecke gibt es Direktflüge. Angesichts der Flugdauer ist ein Direktflug meist die bessere Wahl — ein Zwischenstopp lohnt sich vor allem, wenn er den Preis deutlich senkt.",
+  "routeFaqStopoverAnswerNoDirect": "Auf dieser Strecke gibt es keine Direktflüge, jede Verbindung hat mindestens einen Stopp. Vergleiche Verbindungen nach Gesamtreisezeit und Preis."
 }

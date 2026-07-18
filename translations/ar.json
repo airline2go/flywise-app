@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "استناداً إلى {count} فحص سعر حديث",
   "transparencyPageLabel": "نظرة عامة على الشفافية",
   "metricNonstopShare": "نسبة الرحلات المباشرة",
-  "airlinesOnRouteHeading": "شركات الطيران على هذا المسار"
+  "airlinesOnRouteHeading": "شركات الطيران على هذا المسار",
+  "routeFaqAirlineAnswerSingleNamed": "يُشغّل هذا المسار حالياً {name}.",
+  "routeFaqAirlineAnswerNamed": "يُشغّل هذا المسار حالياً {count} شركات: {names}.",
+  "routeFaqStopoverQuestion": "هل الأفضل رحلة مباشرة أم بتوقّف من {origin} إلى {destination}؟",
+  "routeFaqStopoverAnswerAllDirect": "كل الرحلات على هذا المسار مباشرة، فلا داعي لإضافة توقّف.",
+  "routeFaqStopoverAnswerDirectAvailable": "تتوفّر رحلات مباشرة على هذا المسار. نظراً لمدة الرحلة، غالباً ما يكون الطيران المباشر الخيار الأفضل — والتوقّف يفيد أساساً عندما يخفّض السعر بوضوح.",
+  "routeFaqStopoverAnswerNoDirect": "لا توجد رحلات مباشرة على هذا المسار، فكل رحلة تتضمّن توقّفاً واحداً على الأقل. قارن الرحلات حسب إجمالي وقت السفر والسعر."
 }

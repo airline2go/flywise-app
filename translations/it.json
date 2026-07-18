@@ -165,5 +165,11 @@
   "metricBasedOnSamples": "In base a {count} rilevazioni di prezzo recenti",
   "transparencyPageLabel": "Panoramica sulla trasparenza",
   "metricNonstopShare": "Quota voli diretti",
-  "airlinesOnRouteHeading": "Compagnie su questa tratta"
+  "airlinesOnRouteHeading": "Compagnie su questa tratta",
+  "routeFaqAirlineAnswerSingleNamed": "Questa tratta è attualmente operata da {name}.",
+  "routeFaqAirlineAnswerNamed": "Attualmente {count} compagnie operano questa tratta: {names}.",
+  "routeFaqStopoverQuestion": "Meglio volare diretto o con scalo da {origin} a {destination}?",
+  "routeFaqStopoverAnswerAllDirect": "Tutti gli itinerari su questa tratta sono diretti, quindi non c’è motivo di aggiungere uno scalo.",
+  "routeFaqStopoverAnswerDirectAvailable": "Su questa tratta ci sono voli diretti. Vista la durata, il volo diretto è di solito la scelta migliore; uno scalo conviene soprattutto se riduce sensibilmente il prezzo.",
+  "routeFaqStopoverAnswerNoDirect": "Questa tratta non ha voli diretti, quindi ogni itinerario prevede almeno uno scalo. Confronta le coincidenze per tempo di viaggio totale e prezzo."
 }
