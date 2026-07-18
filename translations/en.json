@@ -162,5 +162,7 @@
   "trendDown": "Falling",
   "trendUp": "Rising",
   "trendStable": "Stable",
-  "metricBasedOnSamples": "Based on {count} recent price checks"
+  "metricBasedOnSamples": "Based on {count} recent price checks",
+  "transparencyPageLabel": "Transparency overview",
+  "metricNonstopShare": "Nonstop share"
 }

@@ -162,5 +162,7 @@
   "trendDown": "A la baja",
   "trendUp": "Al alza",
   "trendStable": "Estable",
-  "metricBasedOnSamples": "Basado en {count} consultas de precio recientes"
+  "metricBasedOnSamples": "Basado en {count} consultas de precio recientes",
+  "transparencyPageLabel": "Resumen de transparencia",
+  "metricNonstopShare": "Porcentaje sin escalas"
 }

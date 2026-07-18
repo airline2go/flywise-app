@@ -224,6 +224,19 @@ function buildMetricsHtml(route, lang) {
   if (route.itinerary_count != null && route.itinerary_count > 0) {
     cards.push(`<div class="route-metric"><div class="route-metric-val">${route.itinerary_count.toLocaleString(getLanguage(lang).locale)}</div><div class="route-metric-lbl">${translate('metricAvailableItineraries', lang)}</div></div>`);
   }
+  // [ROUTE-CONTENT-DIVERSITY] Nonstop share — a genuinely route-specific
+  // figure (e.g. the spec's "Nonstop share only 4%") derived from the real
+  // stop_distribution histogram (key '0' = nonstop itineraries). Rendered
+  // only when the histogram has a positive total; never estimated.
+  if (route.stop_distribution && typeof route.stop_distribution === 'object') {
+    const dist = route.stop_distribution;
+    const total = Object.values(dist).reduce((a, b) => a + (Number(b) || 0), 0);
+    if (total > 0) {
+      const nonstop = Number(dist['0'] || dist[0] || 0);
+      const pct = Math.round((nonstop / total) * 100);
+      cards.push(`<div class="route-metric"><div class="route-metric-val">${pct}%</div><div class="route-metric-lbl">${translate('metricNonstopShare', lang)}</div></div>`);
+    }
+  }
   if (route.price_trend === 'down' || route.price_trend === 'up' || route.price_trend === 'stable') {
     const arrow = route.price_trend === 'down' ? '↓' : route.price_trend === 'up' ? '↑' : '→';
     const trendLabel = translate(route.price_trend === 'down' ? 'trendDown' : route.price_trend === 'up' ? 'trendUp' : 'trendStable', lang);
@@ -245,6 +258,7 @@ function buildTrustHtml(route, lang) {
     ['/methodology.html', translate('methodologyLabel', lang)],
     ['/data-sources.html', translate('dataSourcesLabel', lang)],
     ['/editorial-policy.html', translate('editorialPolicyLabel', lang)],
+    ['/transparency.html', translate('transparencyPageLabel', lang)],
   ].map(([href, label]) => `<a href="${href}">${escHtml(label)}</a>`).join('');
 
   let updatedLine = '';
