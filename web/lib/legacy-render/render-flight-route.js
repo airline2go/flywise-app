@@ -417,6 +417,15 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     ? `<section class="airport-info-section"><h2>${translate('alternativeAirportsIn', lang)} ${escHtml(route.destination_city)}</h2><div class="airport-info-grid">${altAirports.map((code) => `<a class="airport-info-card" href="${pathFor(lang, `airport/${encodeURIComponent(code)}`)}"><span class="airport-info-code">${escHtml(code)}</span><span class="airport-info-city">${escHtml(route.destination_city)}</span></a>`).join('')}</div></section>`
     : '';
 
+  // [AIRLINE-SECTION] Real carriers observed on this route (route.airlines,
+  // from content.routes.js's route_airlines->airlines join), each linking to
+  // its own airline page — durable internal linking + per-route content.
+  // Omitted when the route has no observed airlines yet; reuses the existing
+  // airport-info-grid styling.
+  const airlinesHtml = (route.airlines && route.airlines.length)
+    ? `<section class="airport-info-section"><h2>${translate('airlinesOnRouteHeading', lang)}</h2><div class="airport-info-grid">${route.airlines.map((a) => `<a class="airport-info-card" href="${pathFor(lang, `airline/${encodeURIComponent(a.iata_code)}`)}"><span class="airport-info-code">${escHtml(a.iata_code)}</span><span class="airport-info-city">${escHtml(a.name || a.iata_code)}</span></a>`).join('')}</div></section>`
+    : '';
+
   let distanceHtml = '';
   if (route.distance_km != null) {
     const haulLabelKey = route.haul_type === 'long-haul' ? 'longHaulFlightLabel'
@@ -481,6 +490,7 @@ ${routeFactsHtml}
 ${bestTimeHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}
+${airlinesHtml}
 <section id="route-insights-section"></section>
 <section class="route-faq">
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
