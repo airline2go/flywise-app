@@ -134,5 +134,10 @@
   "airportDistanceCityCenterValueTemplate": "Environ {distance} km du centre-ville",
   "airportTransitOptionsLabel": "Comment s'y rendre",
   "airportTerminalInfoLabel": "Terminaux",
-  "airportTravelerTipsLabel": "Conseils aux voyageurs"
+  "airportTravelerTipsLabel": "Conseils aux voyageurs",
+  "cityStatAirports": "Aéroports",
+  "cityStatDestinations": "Destinations",
+  "cityStatCountries": "Pays",
+  "cityStatLongestFlight": "Vol le plus long",
+  "cityCountriesServedHeading": "Pays accessibles depuis {entity}"
 }
