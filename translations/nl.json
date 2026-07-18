@@ -141,5 +141,13 @@
   "cityStatLongestFlight": "Langste vlucht",
   "cityCountriesServedHeading": "Landen die je vanaf {entity} kunt bereiken",
   "mediumHaulTag": "Middellangeafstand",
-  "mediumHaulFlightLabel": "Middellangeafstandsvlucht"
+  "mediumHaulFlightLabel": "Middellangeafstandsvlucht",
+  "transparencyLabel": "Transparantie",
+  "methodologyLabel": "Waar onze gegevens vandaan komen",
+  "dataSourcesLabel": "Gegevensbronnen",
+  "editorialPolicyLabel": "Redactioneel beleid",
+  "howItWorksLabel": "Hoe het werkt",
+  "routeTrustHeading": "Gegevens & transparantie",
+  "dataLastUpdatedFullLabel": "Vluchtgegevens laatst bijgewerkt",
+  "routeDataMethodologyText": "Vluchttijden, tussenstops en luchtvaartmaatschappijen op deze pagina worden samengesteld uit echte aanbiedingen van luchtvaartmaatschappijen via onze gegevensproviders en regelmatig bijgewerkt. Ontdek hoe wij deze gegevens verzamelen en verifiëren:"
 }

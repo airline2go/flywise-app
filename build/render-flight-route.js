@@ -165,9 +165,44 @@ function buildBestTimeHtml(route, lang) {
     `<p>${body}${tip ? ` ${tip}` : ''} ${closing}</p></section>`;
 }
 
+// [E-E-A-T] Trust section on the route page itself: shows when this route's
+// flight data was last refreshed (from the persisted insights_updated_at
+// Phase 1 field — a real timestamp, omitted when unknown, never faked) and
+// links to the methodology / data-sources / editorial-policy pages. The same
+// pages are linked site-wide from the footer (shell.js); surfacing them
+// in-context on the route page — next to a concrete "last updated" date — is
+// the signal search engines actually weigh for a data-driven page.
+function buildTrustHtml(route, lang) {
+  const links = [
+    ['/methodology.html', translate('methodologyLabel', lang)],
+    ['/data-sources.html', translate('dataSourcesLabel', lang)],
+    ['/editorial-policy.html', translate('editorialPolicyLabel', lang)],
+  ].map(([href, label]) => `<a href="${href}">${escHtml(label)}</a>`).join('');
+
+  let updatedLine = '';
+  if (route.insights_updated_at) {
+    const d = new Date(route.insights_updated_at);
+    if (!Number.isNaN(d.getTime())) {
+      const dateStr = d.toLocaleDateString(getLanguage(lang).locale, { year: 'numeric', month: 'long', day: 'numeric' });
+      updatedLine = `<p class="route-data-updated">📅 ${escHtml(translate('dataLastUpdatedFullLabel', lang))}: <time datetime="${d.toISOString().slice(0, 10)}">${escHtml(dateStr)}</time></p>`;
+    }
+  }
+
+  return `<section class="route-eeat"><h2>${translate('routeTrustHeading', lang)}</h2>${updatedLine}` +
+    `<p>${escHtml(translate('routeDataMethodologyText', lang))}</p>` +
+    `<p class="route-eeat-links">${links}</p></section>`;
+}
+
 // Organization schema is now injected uniformly for every page by shell.js's
 // renderShell() — no longer duplicated per render-*.js file.
-const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css">`;
+const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css">` +
+  `<style>.route-eeat{margin-top:28px;padding:16px 18px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px}` +
+  `.route-eeat h2{font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--tx);margin-bottom:8px}` +
+  `.route-eeat p{font-size:13.5px;color:var(--tx3);line-height:1.55}` +
+  `.route-data-updated{margin-bottom:8px}` +
+  `.route-eeat-links{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}` +
+  `.route-eeat-links a{color:var(--teal);text-decoration:none;font-weight:600}` +
+  `.route-eeat-links a:hover{text-decoration:underline}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
 // and average-duration insights are genuinely live data from Duffel/Redis —
@@ -337,6 +372,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     : '';
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
+  const trustHtml = buildTrustHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
@@ -366,6 +402,7 @@ ${altAirportsHtml}
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
   ${faqHtml}
 </section>
+${trustHtml}
 ${relatedRoutesHtml}
   </div>
 </main>`;

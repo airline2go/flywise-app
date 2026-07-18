@@ -141,5 +141,13 @@
   "cityStatLongestFlight": "أطول رحلة",
   "cityCountriesServedHeading": "الدول التي يمكنك الوصول إليها من {entity}",
   "mediumHaulTag": "رحلة متوسطة المدى",
-  "mediumHaulFlightLabel": "رحلة متوسطة المدى"
+  "mediumHaulFlightLabel": "رحلة متوسطة المدى",
+  "transparencyLabel": "الشفافية",
+  "methodologyLabel": "من أين نحصل على بياناتنا",
+  "dataSourcesLabel": "مصادر البيانات",
+  "editorialPolicyLabel": "السياسة التحريرية",
+  "howItWorksLabel": "كيف تعمل",
+  "routeTrustHeading": "البيانات والشفافية",
+  "dataLastUpdatedFullLabel": "آخر تحديث لبيانات الرحلات",
+  "routeDataMethodologyText": "أوقات الرحلات والتوقّفات وشركات الطيران المعروضة هنا مجمّعة من عروض طيران حقيقية عبر مزوّدي البيانات لدينا وتُحدَّث بانتظام. تعرّف على كيفية مصدرنا وتحقّقنا من هذه البيانات:"
 }
