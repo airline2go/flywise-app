@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "Per una tratta nazionale di media distanza come {origin} → {destination}, prenotare con 3–6 settimane basta di solito, e le partenze infrasettimanali (martedì/mercoledì) tendono a essere le più economiche; i prezzi si consolidano nelle ultime settimane prima della partenza.",
   "mediumHaulFlightLabel": "Volo a medio raggio",
   "mediumHaulTag": "Medio raggio",
-  "airlinesOnRouteHeading": "Compagnie su questa tratta"
+  "airlinesOnRouteHeading": "Compagnie su questa tratta",
+  "routeTrustHeading": "Dati e trasparenza",
+  "transparencyPageLabel": "Panoramica sulla trasparenza",
+  "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:"
 }

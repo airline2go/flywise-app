@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "For a medium-distance domestic route like {origin} → {destination}, booking 3–6 weeks ahead is usually enough, and midweek departures (Tuesday/Wednesday) tend to be the cheapest — prices firm up in the last couple of weeks before departure.",
   "mediumHaulFlightLabel": "Medium-haul flight",
   "mediumHaulTag": "Medium-haul",
-  "airlinesOnRouteHeading": "Airlines flying this route"
+  "airlinesOnRouteHeading": "Airlines flying this route",
+  "routeTrustHeading": "Data & transparency",
+  "transparencyPageLabel": "Transparency overview",
+  "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:"
 }

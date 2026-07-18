@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "Para una ruta nacional de media distancia como {origin} → {destination}, reservar con 3–6 semanas suele bastar, y las salidas entre semana (martes/miércoles) suelen ser las más baratas; los precios se firman en las últimas semanas antes de la salida.",
   "mediumHaulFlightLabel": "Vuelo de media distancia",
   "mediumHaulTag": "Media distancia",
-  "airlinesOnRouteHeading": "Aerolíneas en esta ruta"
+  "airlinesOnRouteHeading": "Aerolíneas en esta ruta",
+  "routeTrustHeading": "Datos y transparencia",
+  "transparencyPageLabel": "Resumen de transparencia",
+  "routeDataMethodologyText": "Los horarios, escalas y aerolíneas que se muestran aquí se agregan a partir de ofertas reales de aerolíneas a través de nuestros proveedores de datos y se actualizan con regularidad. Descubre cómo obtenemos y verificamos estos datos:"
 }

@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "Voor een binnenlandse route van middellange afstand zoals {origin} → {destination} is 3–6 weken vooraf boeken meestal genoeg, en doordeweekse vertrekken (dinsdag/woensdag) zijn doorgaans het goedkoopst; prijzen trekken aan in de laatste weken voor vertrek.",
   "mediumHaulFlightLabel": "Middellangeafstandsvlucht",
   "mediumHaulTag": "Middellangeafstand",
-  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route"
+  "airlinesOnRouteHeading": "Luchtvaartmaatschappijen op deze route",
+  "routeTrustHeading": "Gegevens & transparantie",
+  "transparencyPageLabel": "Transparantie-overzicht",
+  "routeDataMethodologyText": "Vluchttijden, tussenstops en luchtvaartmaatschappijen op deze pagina worden samengesteld uit echte aanbiedingen van luchtvaartmaatschappijen via onze gegevensproviders en regelmatig bijgewerkt. Ontdek hoe wij deze gegevens verzamelen en verifiëren:"
 }
