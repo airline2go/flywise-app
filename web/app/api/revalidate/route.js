@@ -23,6 +23,36 @@ const BASE_PATH = {
   blog: 'blog',
 };
 
+// [INDEXNOW] Public site origin + IndexNow key. The key is intentionally
+// public — ownership is proven by hosting the same value at
+// /{key}.txt (see public/a47b14935285b55b6ce1f3786e81262f.txt). Pinging
+// IndexNow tells participating search engines (Bing, Yandex, …) about a
+// changed URL immediately, instead of waiting for the next organic crawl.
+const SITE_ORIGIN = 'https://airpiv.com';
+const INDEXNOW_KEY = 'a47b14935285b55b6ce1f3786e81262f';
+
+// Fire an IndexNow submission for the given absolute paths. Best-effort:
+// awaited so the serverless function doesn't get frozen before the request
+// leaves, but any failure is swallowed so it can never break revalidation.
+async function pingIndexNow(paths) {
+  if (!paths.length) return;
+  const urlList = paths.map((p) => `${SITE_ORIGIN}${p}`);
+  try {
+    await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        host: 'airpiv.com',
+        key: INDEXNOW_KEY,
+        keyLocation: `${SITE_ORIGIN}/${INDEXNOW_KEY}.txt`,
+        urlList,
+      }),
+    });
+  } catch {
+    // best-effort: indexing notification must never fail the revalidation
+  }
+}
+
 export async function POST(request) {
   const secret = process.env.REVALIDATE_SECRET;
   if (!secret) {
@@ -58,5 +88,9 @@ export async function POST(request) {
   const uniquePaths = [...new Set(paths)];
   uniquePaths.forEach((p) => revalidatePath(p));
 
-  return NextResponse.json({ revalidated: true, paths: uniquePaths });
+  // Notify IndexNow so search engines pick up the change immediately, not
+  // only on the next crawl. Awaited but non-fatal (see pingIndexNow).
+  await pingIndexNow(uniquePaths);
+
+  return NextResponse.json({ revalidated: true, paths: uniquePaths, indexNowNotified: uniquePaths.length });
 }
