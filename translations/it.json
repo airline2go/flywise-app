@@ -164,5 +164,6 @@
   "trendStable": "Stabile",
   "metricBasedOnSamples": "In base a {count} rilevazioni di prezzo recenti",
   "transparencyPageLabel": "Panoramica sulla trasparenza",
-  "metricNonstopShare": "Quota voli diretti"
+  "metricNonstopShare": "Quota voli diretti",
+  "airlinesOnRouteHeading": "Compagnie su questa tratta"
 }

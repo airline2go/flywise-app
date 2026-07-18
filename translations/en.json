@@ -164,5 +164,6 @@
   "trendStable": "Stable",
   "metricBasedOnSamples": "Based on {count} recent price checks",
   "transparencyPageLabel": "Transparency overview",
-  "metricNonstopShare": "Nonstop share"
+  "metricNonstopShare": "Nonstop share",
+  "airlinesOnRouteHeading": "Airlines flying this route"
 }
