@@ -42,7 +42,7 @@
   "airlinesFlyingThisRoute": "Maatschappijen die deze route vliegen:",
   "hoursAbbrev": "u",
   "minutesAbbrev": "min",
-  "routeTitleTemplate": "Vluchten van {origin} naar {destination}",
+  "routeTitleTemplate": "Goedkope vluchten {origin} naar {destination} | Vergelijk & Bespaar",
   "routeDescriptionTemplate": "Vind en boek goedkope vluchten van {origin} ({originCode}) naar {destination} ({destCode}) — vergelijk prijzen met Airpiv.",
   "routeIntroOpeningLongHaul": "Op zoek naar een vlucht van {origin} naar {destination}?",
   "routeIntroOpeningShortHaul": "Plan je een reis van {origin} naar {destination}?",

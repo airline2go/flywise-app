@@ -42,7 +42,7 @@
   "airlinesFlyingThisRoute": "شركات الطيران المشغّلة لهذا الخط:",
   "hoursAbbrev": "س",
   "minutesAbbrev": "د",
-  "routeTitleTemplate": "رحلات من {origin} إلى {destination}",
+  "routeTitleTemplate": "رحلات رخيصة من {origin} إلى {destination} | قارن ووفّر",
   "routeDescriptionTemplate": "ابحث واحجز رحلات رخيصة من {origin} ({originCode}) إلى {destination} ({destCode}) — قارن الأسعار مع Airpiv.",
   "routeIntroOpeningLongHaul": "تبحث عن رحلة من {origin} إلى {destination}؟",
   "routeIntroOpeningShortHaul": "تخطط لرحلة من {origin} إلى {destination}؟",

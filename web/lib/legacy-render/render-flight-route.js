@@ -437,10 +437,17 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
   const faqItems = buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
+  // [CTR-TITLE] The <title>/og:title carry the "… | Compare & Save" call to
+  // action for the search snippet, but the visible <h1> uses just the clean
+  // heading before the pipe (e.g. "Cheap flights Frankfurt to Barcelona"),
+  // since a CTA reads oddly as an on-page heading. Splitting on " | " is safe:
+  // the generated template has exactly one, and an admin custom_title rarely
+  // does (and still renders fine either way).
+  const heading = String(title).split(' | ')[0];
   const mainContent = `<main id="route-main">
   <div id="route-content">
 ${breadcrumbHtml}
-<h1>${escHtml(title)}</h1>
+<h1>${escHtml(heading)}</h1>
 <div class="route-hero">
   <div class="route-hero-cities">
     <span>${escHtml(route.origin_city)}</span>
@@ -498,7 +505,12 @@ ${relatedRoutesHtml}
 
   const html = renderShell({
     lang,
-    title: `${title} | Airpiv`,
+    // [CTR-TITLE] The route title template already ends in a "| Compare &
+    // Save"-style call to action (see routeTitleTemplate); appending "| Airpiv"
+    // on top would push past Google's title width and waste the space the
+    // pipe-separated CTA was chosen to save. Brand stays in og:site_name,
+    // the description, and every other page type's title.
+    title,
     description,
     canonicalUrl: url,
     urls,
@@ -507,7 +519,7 @@ ${relatedRoutesHtml}
     scripts: buildLiveScript(route, lang),
   });
 
-  return { html, seo: { title: `${title} | Airpiv`, description, canonicalUrl: url, schema } };
+  return { html, seo: { title, description, canonicalUrl: url, schema } };
 }
 
 module.exports = { renderFlightRoutePage };
