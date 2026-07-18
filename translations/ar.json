@@ -139,5 +139,7 @@
   "cityStatDestinations": "الوجهات",
   "cityStatCountries": "الدول",
   "cityStatLongestFlight": "أطول رحلة",
-  "cityCountriesServedHeading": "الدول التي يمكنك الوصول إليها من {entity}"
+  "cityCountriesServedHeading": "الدول التي يمكنك الوصول إليها من {entity}",
+  "mediumHaulTag": "رحلة متوسطة المدى",
+  "mediumHaulFlightLabel": "رحلة متوسطة المدى"
 }

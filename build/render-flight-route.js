@@ -303,7 +303,15 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
 
   let distanceHtml = '';
   if (route.distance_km != null) {
-    const haulLabel = route.haul_type === 'long-haul' ? translate('longHaulFlightLabel', lang) : translate('shortHaulFlightLabel', lang);
+    // [HAUL-3-TIER] Three-way label so a medium-haul route (1500–4000 km) is
+    // shown as "Mittelstrecke", not mislabeled short/long. Prose/FAQ branches
+    // elsewhere key off `haul_type === 'long-haul'` and so already treat a
+    // medium-haul route as non-long-haul (short-haul phrasing) — only this
+    // explicit distance badge needs the dedicated middle label.
+    const haulLabelKey = route.haul_type === 'long-haul' ? 'longHaulFlightLabel'
+      : route.haul_type === 'medium-haul' ? 'mediumHaulFlightLabel'
+        : 'shortHaulFlightLabel';
+    const haulLabel = translate(haulLabelKey, lang);
     distanceHtml = `<div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px">📏 ${route.distance_km.toLocaleString(getLanguage(lang).locale)} km · ${haulLabel}</div>`;
   }
 
