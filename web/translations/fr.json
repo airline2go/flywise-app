@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "Pour une ligne intérieure de moyenne distance comme {origin} → {destination}, réserver 3 à 6 semaines à l’avance suffit généralement, et les départs en semaine (mardi/mercredi) sont souvent les moins chers ; les prix se raffermissent dans les dernières semaines avant le départ.",
   "mediumHaulFlightLabel": "Vol moyen-courrier",
   "mediumHaulTag": "Moyen-courrier",
-  "airlinesOnRouteHeading": "Compagnies sur cette ligne"
+  "airlinesOnRouteHeading": "Compagnies sur cette ligne",
+  "routeTrustHeading": "Données et transparence",
+  "transparencyPageLabel": "Aperçu de la transparence",
+  "routeDataMethodologyText": "Les horaires, escales et compagnies affichés ici sont agrégés à partir d’offres réelles de compagnies aériennes via nos fournisseurs de données et actualisés régulièrement. Découvrez comment nous obtenons et vérifions ces données :"
 }

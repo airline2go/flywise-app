@@ -282,13 +282,36 @@ function buildRouteFactsHtml(route, lang) {
   return `<section class="route-facts-section"><h2>${translate('routeFactsHeading', lang)}</h2><div class="route-insights-grid">${cards.join('')}</div>${breakdownHtml}${freshHtml}</section>`;
 }
 
+// [E-E-A-T] In-context trust section: a short data-methodology note plus
+// links to the methodology / data-sources / editorial-policy / transparency
+// pages, right next to the route's data. The "last updated" date is NOT
+// repeated here — the route-facts section already shows it — so this section
+// stays focused on sourcing/trust links, no duplication.
+function buildTrustHtml(route, lang) {
+  const links = [
+    ['/methodology.html', translate('methodologyLabel', lang)],
+    ['/data-sources.html', translate('dataSourcesLabel', lang)],
+    ['/editorial-policy.html', translate('editorialPolicyLabel', lang)],
+    ['/transparency.html', translate('transparencyPageLabel', lang)],
+  ].map(([href, label]) => `<a href="${href}">${escHtml(label)}</a>`).join('');
+  return `<section class="route-eeat"><h2>${translate('routeTrustHeading', lang)}</h2>`
+    + `<p>${escHtml(translate('routeDataMethodologyText', lang))}</p>`
+    + `<p class="route-eeat-links">${links}</p></section>`;
+}
+
 const FLIGHT_ROUTE_CSS = require('./flight-route-css');
 // [INTERNAL-LINKING] Styles for the hero city links and the "flights from/to"
 // sections added to the live renderer — appended to the inlined route CSS.
 const INTERNAL_LINK_CSS = `.route-hero-cities a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35)}`
   + `.route-hero-cities a:hover{border-bottom-color:#fff}`
   + `.route-citylinks-section{margin-top:28px}`
-  + `.route-citylinks-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}`;
+  + `.route-citylinks-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}`
+  + `.route-eeat{margin-top:28px;padding:16px 18px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px}`
+  + `.route-eeat h2{font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--tx);margin-bottom:8px}`
+  + `.route-eeat p{font-size:13.5px;color:var(--tx3);line-height:1.55}`
+  + `.route-eeat-links{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}`
+  + `.route-eeat-links a{color:var(--teal);text-decoration:none;font-weight:600}`
+  + `.route-eeat-links a:hover{text-decoration:underline}`;
 const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
@@ -488,6 +511,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
+  const trustHtml = buildTrustHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
@@ -526,6 +550,7 @@ ${airlinesHtml}
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
   ${faqHtml}
 </section>
+${trustHtml}
 ${relatedRoutesHtml}
 ${moreFromOriginHtml}
 ${moreToDestinationHtml}

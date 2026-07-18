@@ -297,5 +297,8 @@
   "routeBestTimeBodyDomesticMediumHaul": "Für eine mittellange Inlandsstrecke wie {origin} → {destination} reicht eine Buchung 3–6 Wochen im Voraus meist aus, und Abflüge unter der Woche (Dienstag/Mittwoch) sind in der Regel am günstigsten — in den letzten Wochen vor Abflug ziehen die Preise an.",
   "mediumHaulFlightLabel": "Mittelstreckenflug",
   "mediumHaulTag": "Mittelstrecke",
-  "airlinesOnRouteHeading": "Airlines auf dieser Strecke"
+  "airlinesOnRouteHeading": "Airlines auf dieser Strecke",
+  "routeTrustHeading": "Daten & Transparenz",
+  "transparencyPageLabel": "Transparenz-Übersicht",
+  "routeDataMethodologyText": "Flugzeiten, Stopps und Airlines auf dieser Seite werden aus echten Airline-Angeboten über unsere Datenanbieter zusammengeführt und regelmäßig aktualisiert. Erfahre, wie wir diese Daten beziehen und prüfen:"
 }
