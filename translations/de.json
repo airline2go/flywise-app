@@ -141,5 +141,13 @@
   "cityStatLongestFlight": "Längster Flug",
   "cityCountriesServedHeading": "Länder, die du von {entity} aus erreichst",
   "mediumHaulTag": "Mittelstrecke",
-  "mediumHaulFlightLabel": "Mittelstreckenflug"
+  "mediumHaulFlightLabel": "Mittelstreckenflug",
+  "transparencyLabel": "Transparenz",
+  "methodologyLabel": "Woher unsere Daten stammen",
+  "dataSourcesLabel": "Datenquellen",
+  "editorialPolicyLabel": "Redaktionsrichtlinie",
+  "howItWorksLabel": "So funktioniert es",
+  "routeTrustHeading": "Daten & Transparenz",
+  "dataLastUpdatedFullLabel": "Flugdaten zuletzt aktualisiert",
+  "routeDataMethodologyText": "Flugzeiten, Stopps und Airlines auf dieser Seite werden aus echten Airline-Angeboten über unsere Datenanbieter zusammengeführt und regelmäßig aktualisiert. Erfahre, wie wir diese Daten beziehen und prüfen:"
 }

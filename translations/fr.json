@@ -141,5 +141,13 @@
   "cityStatLongestFlight": "Vol le plus long",
   "cityCountriesServedHeading": "Pays accessibles depuis {entity}",
   "mediumHaulTag": "Moyen-courrier",
-  "mediumHaulFlightLabel": "Vol moyen-courrier"
+  "mediumHaulFlightLabel": "Vol moyen-courrier",
+  "transparencyLabel": "Transparence",
+  "methodologyLabel": "D’où proviennent nos données",
+  "dataSourcesLabel": "Sources de données",
+  "editorialPolicyLabel": "Politique éditoriale",
+  "howItWorksLabel": "Comment ça marche",
+  "routeTrustHeading": "Données et transparence",
+  "dataLastUpdatedFullLabel": "Données de vol mises à jour le",
+  "routeDataMethodologyText": "Les horaires, escales et compagnies affichés ici sont agrégés à partir d’offres réelles de compagnies aériennes via nos fournisseurs de données et actualisés régulièrement. Découvrez comment nous obtenons et vérifions ces données :"
 }
