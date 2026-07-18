@@ -172,5 +172,10 @@
   "routeFaqStopoverAnswerAllDirect": "Tous les itinéraires de cette ligne sont directs — inutile d’ajouter une escale.",
   "routeFaqStopoverAnswerDirectAvailable": "Des vols directs existent sur cette ligne. Vu la durée, le vol direct est généralement le meilleur choix ; une escale se justifie surtout si elle réduit nettement le prix.",
   "routeFaqStopoverAnswerNoDirect": "Cette ligne n’a pas de vols directs : chaque itinéraire comporte au moins une escale. Comparez les correspondances selon le temps de trajet total et le prix.",
-  "metricUpdatedOn": "Prix mis à jour le {date}"
+  "metricUpdatedOn": "Prix mis à jour le {date}",
+  "routeIntroDistanceMediumHaul": " La ligne couvre environ {distance} km — un vol moyen-courrier de quelques heures.",
+  "routeFaqDistanceAnswerMediumHaul": "La distance est d’environ {distance} km — un vol moyen-courrier.",
+  "routeFaqBestTimeAnswerMediumHaul": "Cette ligne moyen-courrier est généralement moins chère en moyenne saison (avril–mai, septembre–octobre) et en semaine ; réserver 4 à 8 semaines à l’avance donne souvent les meilleurs tarifs.",
+  "routeBestTimeBodyMediumHaul": "Pour les lignes moyen-courriers comme {origin} → {destination}, réserver environ 4 à 8 semaines à l’avance donne généralement les meilleurs tarifs — les prix montent souvent dans les 2 à 3 dernières semaines avant le départ. Voyager en moyenne saison et en semaine (mardi/mercredi) est généralement moins cher qu’en plein été, les jours fériés ou le week-end.",
+  "routeBestTimeBodyDomesticMediumHaul": "Pour une ligne intérieure de moyenne distance comme {origin} → {destination}, réserver 3 à 6 semaines à l’avance suffit généralement, et les départs en semaine (mardi/mercredi) sont souvent les moins chers ; les prix se raffermissent dans les dernières semaines avant le départ."
 }
