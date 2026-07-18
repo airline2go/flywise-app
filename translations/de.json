@@ -162,5 +162,7 @@
   "trendDown": "Fallend",
   "trendUp": "Steigend",
   "trendStable": "Stabil",
-  "metricBasedOnSamples": "Basierend auf {count} aktuellen Preisabfragen"
+  "metricBasedOnSamples": "Basierend auf {count} aktuellen Preisabfragen",
+  "transparencyPageLabel": "Transparenz-Übersicht",
+  "metricNonstopShare": "Nonstop-Anteil"
 }

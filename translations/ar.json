@@ -162,5 +162,7 @@
   "trendDown": "منخفض",
   "trendUp": "مرتفع",
   "trendStable": "مستقر",
-  "metricBasedOnSamples": "استناداً إلى {count} فحص سعر حديث"
+  "metricBasedOnSamples": "استناداً إلى {count} فحص سعر حديث",
+  "transparencyPageLabel": "نظرة عامة على الشفافية",
+  "metricNonstopShare": "نسبة الرحلات المباشرة"
 }

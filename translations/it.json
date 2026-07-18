@@ -162,5 +162,7 @@
   "trendDown": "In calo",
   "trendUp": "In aumento",
   "trendStable": "Stabile",
-  "metricBasedOnSamples": "In base a {count} rilevazioni di prezzo recenti"
+  "metricBasedOnSamples": "In base a {count} rilevazioni di prezzo recenti",
+  "transparencyPageLabel": "Panoramica sulla trasparenza",
+  "metricNonstopShare": "Quota voli diretti"
 }

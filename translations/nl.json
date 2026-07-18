@@ -162,5 +162,7 @@
   "trendDown": "Dalend",
   "trendUp": "Stijgend",
   "trendStable": "Stabiel",
-  "metricBasedOnSamples": "Op basis van {count} recente prijscontroles"
+  "metricBasedOnSamples": "Op basis van {count} recente prijscontroles",
+  "transparencyPageLabel": "Transparantie-overzicht",
+  "metricNonstopShare": "Aandeel non-stop"
 }

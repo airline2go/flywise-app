@@ -17,6 +17,7 @@ const METHODOLOGY_HREF = '/methodology.html';
 const DATA_SOURCES_HREF = '/data-sources.html';
 const EDITORIAL_POLICY_HREF = '/editorial-policy.html';
 const HOW_IT_WORKS_HREF = '/how-it-works.html';
+const TRANSPARENCY_HREF = '/transparency.html';
 
 function escHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -134,7 +135,7 @@ ${bodySuffix}
     <div><div class="flo"><span style="display:inline-flex;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#12C7B0,#0A9384);align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 64 64" fill="none"><path d="M32 14 L46 46 L32 38 L18 46 Z" fill="#0A1822"/></svg></span>Air<span style="color:var(--teal)">piv</span></div><p class="fdes">${s.footerTagline}</p></div>
     <div class="fcol"><h4>${s.companyLabel}</h4><ul><li><a href="${ABOUT_HREF}">${s.aboutLabel}</a></li><li><a href="${BLOG_HREF}">${s.blogLabel}</a></li></ul></div>
     <div class="fcol"><h4>${s.supportLabel}</h4><ul><li><a href="${CONTACT_HREF}">${s.contactLabel}</a></li><li><a href="${PRIVACY_HREF}">${s.privacyLabel}</a></li><li><a href="${TERMS_HREF}">${s.termsLabel}</a></li></ul></div>
-    <div class="fcol"><h4>${s.transparencyLabel}</h4><ul><li><a href="${METHODOLOGY_HREF}">${s.methodologyLabel}</a></li><li><a href="${DATA_SOURCES_HREF}">${s.dataSourcesLabel}</a></li><li><a href="${EDITORIAL_POLICY_HREF}">${s.editorialPolicyLabel}</a></li><li><a href="${HOW_IT_WORKS_HREF}">${s.howItWorksLabel}</a></li></ul></div>
+    <div class="fcol"><h4>${s.transparencyLabel}</h4><ul><li><a href="${TRANSPARENCY_HREF}">${s.transparencyPageLabel}</a></li><li><a href="${METHODOLOGY_HREF}">${s.methodologyLabel}</a></li><li><a href="${DATA_SOURCES_HREF}">${s.dataSourcesLabel}</a></li><li><a href="${EDITORIAL_POLICY_HREF}">${s.editorialPolicyLabel}</a></li><li><a href="${HOW_IT_WORKS_HREF}">${s.howItWorksLabel}</a></li></ul></div>
   </div>
   <div class="fbot"><p>${s.copyright}</p></div>
 </div></footer>
