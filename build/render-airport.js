@@ -72,7 +72,11 @@ function renderAirportPage(airport, routes, lang) {
 
   function haulLabel(r) {
     if (!r.haul_type) return '';
-    return r.haul_type === 'long-haul' ? translate('longHaulTag', lang) : translate('shortHaulTag', lang);
+    // [HAUL-3-TIER] Distinct middle tag for medium-haul (1500–4000 km) routes.
+    const key = r.haul_type === 'long-haul' ? 'longHaulTag'
+      : r.haul_type === 'medium-haul' ? 'mediumHaulTag'
+        : 'shortHaulTag';
+    return translate(key, lang);
   }
   function routeCardHtml(r) {
     const hl = haulLabel(r);

@@ -139,5 +139,7 @@
   "cityStatDestinations": "Destinos",
   "cityStatCountries": "Países",
   "cityStatLongestFlight": "Vuelo más largo",
-  "cityCountriesServedHeading": "Países a los que puedes volar desde {entity}"
+  "cityCountriesServedHeading": "Países a los que puedes volar desde {entity}",
+  "mediumHaulTag": "Media distancia",
+  "mediumHaulFlightLabel": "Vuelo de media distancia"
 }

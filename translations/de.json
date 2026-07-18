@@ -139,5 +139,7 @@
   "cityStatDestinations": "Reiseziele",
   "cityStatCountries": "Länder",
   "cityStatLongestFlight": "Längster Flug",
-  "cityCountriesServedHeading": "Länder, die du von {entity} aus erreichst"
+  "cityCountriesServedHeading": "Länder, die du von {entity} aus erreichst",
+  "mediumHaulTag": "Mittelstrecke",
+  "mediumHaulFlightLabel": "Mittelstreckenflug"
 }
