@@ -280,6 +280,10 @@ const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css"
   `.route-metric-trend-down .route-metric-val{color:#12C7B0}` +
   `.route-metric-trend-up .route-metric-val{color:#e2504a}` +
   `.route-metric-note{color:var(--tx3);font-size:12px;margin-top:10px}` +
+  `.route-hero-cities a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35)}` +
+  `.route-hero-cities a:hover{border-bottom-color:#fff}` +
+  `.route-citylinks-section{margin-top:28px}` +
+  `.route-citylinks-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}` +
   `@media (max-width:480px){.route-metrics-grid{gap:10px}}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
@@ -373,7 +377,7 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 </script>`;
 }
 
-function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
@@ -449,6 +453,32 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     }).join('')}</div></section>`
     : '';
 
+  // [INTERNAL-LINKING] Hero city names become links to their city pages —
+  // two of the most prominent data points on the page were previously plain
+  // text. Falls back to plain text only when a city has no slug to link to.
+  const originCityNode = route.origin_city_slug
+    ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.origin_city_slug)}`)}">${escHtml(route.origin_city)}</a>`
+    : `<span>${escHtml(route.origin_city)}</span>`;
+  const destCityNode = route.destination_city_slug
+    ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`)}">${escHtml(route.destination_city)}</a>`
+    : `<span>${escHtml(route.destination_city)}</span>`;
+
+  // [INTERNAL-LINKING] "More flights from {origin}" / "More flights to
+  // {destination}" — dedicated internal-link sections built from the
+  // build-time city-route groupings (generate-pages.js), pushing the page
+  // well toward the 20–30 internal-links target. Each omitted when empty.
+  function cityRouteSectionHtml(routes, headingLabel, cityName) {
+    if (!routes || !routes.length) return '';
+    const cards = routes.map((r) => {
+      const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
+      const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
+      return `<a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
+    }).join('');
+    return `<section class="route-citylinks-section"><h2>${headingLabel} ${escHtml(cityName)}</h2><div class="related-routes-grid">${cards}</div></section>`;
+  }
+  const moreFromOriginHtml = cityRouteSectionHtml(cityLinks && cityLinks.fromOrigin, translate('flightsFrom', lang), route.origin_city);
+  const moreToDestinationHtml = cityRouteSectionHtml(cityLinks && cityLinks.toDestination, translate('flightsTo', lang), route.destination_city);
+
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const metricsHtml = buildMetricsHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
@@ -461,9 +491,9 @@ ${breadcrumbHtml}
 <h1>${escHtml(title)}</h1>
 <div class="route-hero">
   <div class="route-hero-cities">
-    <span>${escHtml(route.origin_city)}</span>
+    ${originCityNode}
     <span class="route-hero-arrow">✈</span>
-    <span>${escHtml(route.destination_city)}</span>
+    ${destCityNode}
   </div>
   ${distanceHtml}
   <div class="route-price-box" id="route-price-box">
@@ -484,6 +514,8 @@ ${altAirportsHtml}
 </section>
 ${trustHtml}
 ${relatedRoutesHtml}
+${moreFromOriginHtml}
+${moreToDestinationHtml}
   </div>
 </main>`;
 

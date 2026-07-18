@@ -213,6 +213,25 @@ function computeRelatedRoutes(route, routeList) {
     .map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
 }
 
+// [INTERNAL-LINKING] Dedicated "more flights from this origin city" and
+// "more flights to this destination city" link sets — distinct from the
+// scored `related` list (which mixes several relations and is capped low).
+// These deliberately maximize contextual internal links per route page
+// toward the 20–30/page target. Excludes the current route and its exact
+// reverse; deduped against the `related` slugs already shown so the same
+// card never appears twice on one page.
+const CITY_ROUTE_LINK_LIMIT = 10;
+function computeCityRouteLinks(route, routeList, relatedSlugs) {
+  const isReverse = (r) => r.origin_city === route.destination_city && r.destination_city === route.origin_city;
+  const pick = (predicate) => routeList
+    .filter((r) => r.slug !== route.slug && !isReverse(r) && !relatedSlugs.has(r.slug) && predicate(r))
+    .slice(0, CITY_ROUTE_LINK_LIMIT);
+  return {
+    fromOrigin: pick((r) => r.origin_city === route.origin_city),
+    toDestination: pick((r) => r.destination_city === route.destination_city),
+  };
+}
+
 async function generateFlightRoutes(routeList) {
   await mapWithConcurrency(routeList, CONCURRENCY, async (r) => {
     const slug = r.slug;
@@ -220,8 +239,9 @@ async function generateFlightRoutes(routeList) {
       const detail = await fetchWithRetry(`${PROXY}/route-pages/${encodeURIComponent(slug)}`, { retries: 3, timeoutMs: 15000 });
       if (!detail.ok || !detail.route) throw new Error('unexpected response shape');
       const related = computeRelatedRoutes(detail.route, routeList);
+      const cityLinks = computeCityRouteLinks(detail.route, routeList, new Set(related.map((x) => x.slug)));
       LANGUAGES.forEach((l) => {
-        const { html, seo } = renderFlightRoutePage(detail.route, l.code, related);
+        const { html, seo } = renderFlightRoutePage(detail.route, l.code, related, cityLinks);
         const prefix = pathPrefix(l.code);
         writeIfValid(`${prefix ? prefix + '/' : ''}flights/${slug}`, html, seo.canonicalUrl, 'flights', l.code);
       });
