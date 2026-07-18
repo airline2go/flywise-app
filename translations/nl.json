@@ -153,5 +153,14 @@
   "routeFaqFastestQuestion": "Wat is de snelste verbinding van {origin} naar {destination}?",
   "routeFaqFastestAnswer": "De kortste totale reistijd die we op deze route hebben waargenomen is {duration}.",
   "routeFaqPopularQuestion": "Is {origin} naar {destination} een populaire route?",
-  "routeFaqPopularAnswer": "Ja — dit is een van de meest gezochte en geboekte routes op Airpiv, dus tarieven en beschikbaarheid zijn meestal concurrerend."
+  "routeFaqPopularAnswer": "Ja — dit is een van de meest gezochte en geboekte routes op Airpiv, dus tarieven en beschikbaarheid zijn meestal concurrerend.",
+  "routeMetricsHeading": "Prijs & beschikbaarheid",
+  "metricCheapestFare": "Goedkoopste gevonden tarief",
+  "metricTypicalRange": "Gebruikelijke prijsklasse",
+  "metricAvailableItineraries": "Beschikbare routes",
+  "metricPriceTrend": "Prijstrend",
+  "trendDown": "Dalend",
+  "trendUp": "Stijgend",
+  "trendStable": "Stabiel",
+  "metricBasedOnSamples": "Op basis van {count} recente prijscontroles"
 }

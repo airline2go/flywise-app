@@ -194,6 +194,52 @@ function buildBestTimeHtml(route, lang) {
 // pages are linked site-wide from the footer (shell.js); surfacing them
 // in-context on the route page — next to a concrete "last updated" date — is
 // the signal search engines actually weigh for a data-driven page.
+// [ECONOMIC-INTELLIGENCE] Route metrics block — real observed price/
+// availability figures persisted by the server's price-history phase
+// (price_min/avg/max, itinerary_count, price_trend). Every card renders
+// only when its own field is present; the whole section is omitted when a
+// route has no economic data yet (a freshly-created route), so nothing is
+// ever fabricated. Prices are formatted per the viewer's locale + the
+// observed currency.
+function formatPrice(value, currency, lang) {
+  try {
+    return new Intl.NumberFormat(getLanguage(lang).locale, { style: 'currency', currency: currency || 'EUR', maximumFractionDigits: 0 }).format(value);
+  } catch (e) {
+    return `${Math.round(value)} ${currency || 'EUR'}`;
+  }
+}
+
+function buildMetricsHtml(route, lang) {
+  const currency = route.price_currency || 'EUR';
+  const cards = [];
+
+  if (route.price_min != null) {
+    cards.push(`<div class="route-metric"><div class="route-metric-val">${escHtml(formatPrice(route.price_min, currency, lang))}</div><div class="route-metric-lbl">${translate('metricCheapestFare', lang)}</div></div>`);
+  }
+  // Typical range only when we have a genuine spread (min != max); a single
+  // observation isn't a "range".
+  if (route.price_min != null && route.price_max != null && route.price_max > route.price_min) {
+    cards.push(`<div class="route-metric"><div class="route-metric-val">${escHtml(formatPrice(route.price_min, currency, lang))} – ${escHtml(formatPrice(route.price_max, currency, lang))}</div><div class="route-metric-lbl">${translate('metricTypicalRange', lang)}</div></div>`);
+  }
+  if (route.itinerary_count != null && route.itinerary_count > 0) {
+    cards.push(`<div class="route-metric"><div class="route-metric-val">${route.itinerary_count.toLocaleString(getLanguage(lang).locale)}</div><div class="route-metric-lbl">${translate('metricAvailableItineraries', lang)}</div></div>`);
+  }
+  if (route.price_trend === 'down' || route.price_trend === 'up' || route.price_trend === 'stable') {
+    const arrow = route.price_trend === 'down' ? '↓' : route.price_trend === 'up' ? '↑' : '→';
+    const trendLabel = translate(route.price_trend === 'down' ? 'trendDown' : route.price_trend === 'up' ? 'trendUp' : 'trendStable', lang);
+    cards.push(`<div class="route-metric route-metric-trend-${route.price_trend}"><div class="route-metric-val">${arrow} ${escHtml(trendLabel)}</div><div class="route-metric-lbl">${translate('metricPriceTrend', lang)}</div></div>`);
+  }
+
+  if (!cards.length) return '';
+
+  const footnote = route.price_sample_count != null && route.price_sample_count > 0
+    ? `<p class="route-metric-note">${format(translate('metricBasedOnSamples', lang), { count: route.price_sample_count.toLocaleString(getLanguage(lang).locale) })}</p>`
+    : '';
+
+  return `<section class="route-metrics-section"><h2>${translate('routeMetricsHeading', lang)}</h2>` +
+    `<div class="route-metrics-grid">${cards.join('')}</div>${footnote}</section>`;
+}
+
 function buildTrustHtml(route, lang) {
   const links = [
     ['/methodology.html', translate('methodologyLabel', lang)],
@@ -224,7 +270,17 @@ const ROUTE_HEAD_EXTRA_STATIC = `<link rel="stylesheet" href="/flight-route.css"
   `.route-data-updated{margin-bottom:8px}` +
   `.route-eeat-links{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}` +
   `.route-eeat-links a{color:var(--teal);text-decoration:none;font-weight:600}` +
-  `.route-eeat-links a:hover{text-decoration:underline}</style>`;
+  `.route-eeat-links a:hover{text-decoration:underline}` +
+  `.route-metrics-section{margin-top:28px}` +
+  `.route-metrics-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}` +
+  `.route-metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}` +
+  `.route-metric{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px;text-align:center}` +
+  `.route-metric-val{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--teal);line-height:1.15}` +
+  `.route-metric-lbl{color:var(--tx3);font-size:12.5px;margin-top:5px}` +
+  `.route-metric-trend-down .route-metric-val{color:#12C7B0}` +
+  `.route-metric-trend-up .route-metric-val{color:#e2504a}` +
+  `.route-metric-note{color:var(--tx3);font-size:12px;margin-top:10px}` +
+  `@media (max-width:480px){.route-metrics-grid{gap:10px}}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
 // and average-duration insights are genuinely live data from Duffel/Redis —
@@ -394,6 +450,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes) {
     : '';
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
+  const metricsHtml = buildMetricsHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
   const faqItems = buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
@@ -417,6 +474,7 @@ ${breadcrumbHtml}
 </div>
 <section><p>${escHtml(introText)}</p></section>
 ${bestTimeHtml}
+${metricsHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}
 <section id="route-insights-section"></section>

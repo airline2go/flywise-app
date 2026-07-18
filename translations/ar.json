@@ -153,5 +153,14 @@
   "routeFaqFastestQuestion": "ما هو أسرع اتصال من {origin} إلى {destination}؟",
   "routeFaqFastestAnswer": "أقصر زمن سفر إجمالي رصدناه على هذا المسار هو {duration}.",
   "routeFaqPopularQuestion": "هل مسار {origin} إلى {destination} شائع؟",
-  "routeFaqPopularAnswer": "نعم — هذا من أكثر المسارات بحثاً وحجزاً على Airpiv، لذا تكون الأسعار والتوفّر تنافسية عادةً."
+  "routeFaqPopularAnswer": "نعم — هذا من أكثر المسارات بحثاً وحجزاً على Airpiv، لذا تكون الأسعار والتوفّر تنافسية عادةً.",
+  "routeMetricsHeading": "الأسعار والتوفّر",
+  "metricCheapestFare": "أرخص سعر تم إيجاده",
+  "metricTypicalRange": "نطاق السعر المعتاد",
+  "metricAvailableItineraries": "الرحلات المتاحة",
+  "metricPriceTrend": "اتجاه السعر",
+  "trendDown": "منخفض",
+  "trendUp": "مرتفع",
+  "trendStable": "مستقر",
+  "metricBasedOnSamples": "استناداً إلى {count} فحص سعر حديث"
 }

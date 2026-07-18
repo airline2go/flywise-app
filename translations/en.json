@@ -153,5 +153,14 @@
   "routeFaqFastestQuestion": "What is the fastest connection from {origin} to {destination}?",
   "routeFaqFastestAnswer": "The shortest total travel time we have observed on this route is {duration}.",
   "routeFaqPopularQuestion": "Is {origin} to {destination} a popular route?",
-  "routeFaqPopularAnswer": "Yes — this is one of the more frequently searched and booked routes on Airpiv, so fares and availability tend to be competitive."
+  "routeFaqPopularAnswer": "Yes — this is one of the more frequently searched and booked routes on Airpiv, so fares and availability tend to be competitive.",
+  "routeMetricsHeading": "Price & availability",
+  "metricCheapestFare": "Cheapest fare found",
+  "metricTypicalRange": "Typical price range",
+  "metricAvailableItineraries": "Available itineraries",
+  "metricPriceTrend": "Price trend",
+  "trendDown": "Falling",
+  "trendUp": "Rising",
+  "trendStable": "Stable",
+  "metricBasedOnSamples": "Based on {count} recent price checks"
 }
