@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Bu rotada uçan havayolları",
   "routeTrustHeading": "Veri & şeffaflık",
   "transparencyPageLabel": "Şeffaflık genel bakışı",
-  "routeDataMethodologyText": "Burada gösterilen uçuş süreleri, aktarmalar ve havayolları, veri sağlayıcılarımız aracılığıyla gerçek havayolu tekliflerinden derlenir ve düzenli olarak yenilenir. Bu verileri nasıl edindiğimizi ve doğruladığımızı öğrenin:"
+  "routeDataMethodologyText": "Burada gösterilen uçuş süreleri, aktarmalar ve havayolları, veri sağlayıcılarımız aracılığıyla gerçek havayolu tekliflerinden derlenir ve düzenli olarak yenilenir. Bu verileri nasıl edindiğimizi ve doğruladığımızı öğrenin:",
+  "heroBadgeLivePrices": "Canlı fiyatlar",
+  "heroBadgeNoHiddenFees": "Gizli ücret yok",
+  "heroBadgeAirlines": "600+ havayolu"
 }

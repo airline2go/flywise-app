@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Aerolíneas en esta ruta",
   "routeTrustHeading": "Datos y transparencia",
   "transparencyPageLabel": "Resumen de transparencia",
-  "routeDataMethodologyText": "Los horarios, escalas y aerolíneas que se muestran aquí se agregan a partir de ofertas reales de aerolíneas a través de nuestros proveedores de datos y se actualizan con regularidad. Descubre cómo obtenemos y verificamos estos datos:"
+  "routeDataMethodologyText": "Los horarios, escalas y aerolíneas que se muestran aquí se agregan a partir de ofertas reales de aerolíneas a través de nuestros proveedores de datos y se actualizan con regularidad. Descubre cómo obtenemos y verificamos estos datos:",
+  "heroBadgeLivePrices": "Precios en vivo",
+  "heroBadgeNoHiddenFees": "Sin cargos ocultos",
+  "heroBadgeAirlines": "600+ aerolíneas"
 }

@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Airlines auf dieser Strecke",
   "routeTrustHeading": "Daten & Transparenz",
   "transparencyPageLabel": "Transparenz-Übersicht",
-  "routeDataMethodologyText": "Flugzeiten, Stopps und Airlines auf dieser Seite werden aus echten Airline-Angeboten über unsere Datenanbieter zusammengeführt und regelmäßig aktualisiert. Erfahre, wie wir diese Daten beziehen und prüfen:"
+  "routeDataMethodologyText": "Flugzeiten, Stopps und Airlines auf dieser Seite werden aus echten Airline-Angeboten über unsere Datenanbieter zusammengeführt und regelmäßig aktualisiert. Erfahre, wie wir diese Daten beziehen und prüfen:",
+  "heroBadgeLivePrices": "Live-Preise",
+  "heroBadgeNoHiddenFees": "Keine versteckten Gebühren",
+  "heroBadgeAirlines": "600+ Airlines"
 }
