@@ -19,6 +19,7 @@ const LANGUAGES = [
   { code: 'fr', name: 'Français', locale: 'fr-FR', direction: 'ltr' },
   { code: 'it', name: 'Italiano', locale: 'it-IT', direction: 'ltr' },
   { code: 'nl', name: 'Nederlands', locale: 'nl-NL', direction: 'ltr' },
+  { code: 'tr', name: 'Türkçe', locale: 'tr-TR', direction: 'ltr' },
 ];
 
 // German is the platform's original/default language and keeps its

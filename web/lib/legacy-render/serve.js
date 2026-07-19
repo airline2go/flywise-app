@@ -9,7 +9,7 @@ export function htmlResponse(html) {
 // unprefixed root, so it is intentionally NOT here — /de/city/… must 404 like
 // production, as must any unknown prefix (/zz/…). Route Handlers aren't wrapped
 // by [lang]/layout.js, so each localized handler validates the prefix itself.
-export const PREFIXED_LANGS = new Set(['en', 'ar', 'es', 'fr', 'it', 'nl']);
+export const PREFIXED_LANGS = new Set(['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr']);
 
 export function isPrefixedLang(lang) {
   return PREFIXED_LANGS.has(lang);
