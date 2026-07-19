@@ -303,5 +303,22 @@
   "routeDataMethodologyText": "Burada gösterilen uçuş süreleri, aktarmalar ve havayolları, veri sağlayıcılarımız aracılığıyla gerçek havayolu tekliflerinden derlenir ve düzenli olarak yenilenir. Bu verileri nasıl edindiğimizi ve doğruladığımızı öğrenin:",
   "heroBadgeLivePrices": "Canlı fiyatlar",
   "heroBadgeNoHiddenFees": "Gizli ücret yok",
-  "heroBadgeAirlines": "600+ havayolu"
+  "heroBadgeAirlines": "600+ havayolu",
+  "whyAirpivHeading": "Neden Airpiv?",
+  "whyAirpivTransparentData": "Şeffaf veriler",
+  "whyAirpivDailyUpdates": "Her gün güncellenir",
+  "whyAirpivEditoriallyChecked": "Editör tarafından kontrol edildi",
+  "savingTipsHeading": "Tasarruf ipuçları",
+  "savingTipEarly": "Erken rezervasyon yapın",
+  "savingTipFlexibleDates": "Esnek tarihler seçin",
+  "savingTipMidweek": "Salı veya Çarşamba uçun",
+  "savingTipCompareDirect": "Direkt uçuşları karşılaştırın",
+  "savingTipCheckBaggage": "Bagajı kontrol edin",
+  "savingTipAltAirports": "Alternatif havalimanlarını değerlendirin",
+  "savingTipPriceAlert": "Fiyat alarmı kullanın",
+  "savingTipOffSeason": "Sezon dışını tercih edin",
+  "eeatTeam": "Airpiv Yayın Ekibi",
+  "eeatReviewedLabel": "Son editör kontrolü",
+  "eeatReadingTimeTemplate": "{min} dk okuma",
+  "eeatLastDataUpdateLabel": "Son veri güncellemesi"
 }

@@ -49,6 +49,23 @@ function jsonLdScript(schema) {
 // all 5 entity types instead of ad hoc per render-*.js file.
 const ORGANIZATION_SCHEMA = { '@context': 'https://schema.org', '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' };
 
+// [WEBSITE-SEARCHACTION] WebSite schema with the Google sitelinks-searchbox
+// SearchAction — previously only the static home (index.html) declared it, so
+// the entity pages (city/country/airport/airline/route/blog) had no WebSite
+// node. Injected once here into every shell-rendered page, using the exact same
+// query target the home already exposes (app.js handles /?q=...).
+const WEBSITE_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Airpiv',
+  url: 'https://airpiv.com',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://airpiv.com/?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 // [OG-LOCALE] schema.org locale tags (BCP-47-ish og:locale values) per
 // language — og:locale was previously absent entirely, which link
 // previews/crawlers use to pick the right localized rendering.
@@ -110,6 +127,7 @@ ${hreflangHtml}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/shared-layout.css">
 ${jsonLdScript(ORGANIZATION_SCHEMA)}
+${jsonLdScript(WEBSITE_SCHEMA)}
 ${headExtra}
 </head>
 <body>

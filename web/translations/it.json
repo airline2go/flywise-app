@@ -303,5 +303,22 @@
   "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:",
   "heroBadgeLivePrices": "Prezzi in tempo reale",
   "heroBadgeNoHiddenFees": "Nessun costo nascosto",
-  "heroBadgeAirlines": "600+ compagnie"
+  "heroBadgeAirlines": "600+ compagnie",
+  "whyAirpivHeading": "Perché Airpiv?",
+  "whyAirpivTransparentData": "Dati trasparenti",
+  "whyAirpivDailyUpdates": "Aggiornato ogni giorno",
+  "whyAirpivEditoriallyChecked": "Verificato dalla redazione",
+  "savingTipsHeading": "Consigli per risparmiare",
+  "savingTipEarly": "Prenota in anticipo",
+  "savingTipFlexibleDates": "Scegli date flessibili",
+  "savingTipMidweek": "Vola di martedì o mercoledì",
+  "savingTipCompareDirect": "Confronta i voli diretti",
+  "savingTipCheckBaggage": "Controlla i bagagli",
+  "savingTipAltAirports": "Valuta aeroporti alternativi",
+  "savingTipPriceAlert": "Usa gli avvisi di prezzo",
+  "savingTipOffSeason": "Preferisci la bassa stagione",
+  "eeatTeam": "Redazione Airpiv",
+  "eeatReviewedLabel": "Ultima verifica redazionale",
+  "eeatReadingTimeTemplate": "{min} min di lettura",
+  "eeatLastDataUpdateLabel": "Ultimo aggiornamento dati"
 }
