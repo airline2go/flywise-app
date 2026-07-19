@@ -31,28 +31,20 @@ function airportCodesFromRoutes(routes) {
   return [...set];
 }
 
-// [BLOG-STAYS-DE-EN] Blog posts are independently-authored per language via
-// separate endpoints (/blog-posts = de, /blog-posts-en = en) — only these two
-// languages have a blog, matching the old generateBlogPosts() dual-write. Any
-// other language contributes no blog URLs.
-function blogLangSource(lang) {
-  if (lang === 'de') return 'de';
-  if (lang === 'en') return 'en';
-  return null;
-}
-
 // Build the full ordered list of absolute URLs for one language's sitemap.
 // Order mirrors the old build's generation order (city, country, airport,
 // airline, flights, blog) — sitemap ordering is not significant to crawlers,
 // but keeping it identical makes diffs against the old files trivial.
 export async function buildUrlsForLang(lang) {
-  const blogSrc = blogLangSource(lang);
+  // [MULTILANG-BLOG] Every language now has a blog — listBlogPosts(lang) returns
+  // that language's own slugs (German from the base list, others from
+  // blog_post_translations). Was previously de/en-only.
   const [cities, countries, airlines, routes, blogPosts] = await Promise.all([
     listCities(),
     listCountries(),
     listAirlines(),
     listRoutePages(),
-    blogSrc ? listBlogPosts(blogSrc) : Promise.resolve([]),
+    listBlogPosts(lang),
   ]);
 
   const urls = [];
