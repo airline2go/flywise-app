@@ -12,6 +12,7 @@ const DICTS = {
   fr: require('../../translations/fr.json'),
   it: require('../../translations/it.json'),
   nl: require('../../translations/nl.json'),
+  tr: require('../../translations/tr.json'),
 };
 // Guard: keep the DICTS map in lock-step with the canonical language list.
 LANGUAGE_CODES.forEach((code) => {
