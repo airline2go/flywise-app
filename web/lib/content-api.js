@@ -75,8 +75,11 @@ async function listRoutePages() {
   return data.routes || [];
 }
 
+// [MULTILANG-BLOG] German (the source) reads the base list; every other
+// language reads its translated rows via ?lang=xx (served from
+// blog_post_translations). Replaces the old de/en-only split.
 async function listBlogPosts(lang) {
-  const path = lang === 'en' ? '/blog-posts-en' : '/blog-posts';
+  const path = lang && lang !== 'de' ? `/blog-posts?lang=${encodeURIComponent(lang)}` : '/blog-posts';
   const data = await fetchJSON(path);
   return data.posts || [];
 }
@@ -119,7 +122,8 @@ async function getRelatedRoutes(slug) {
 }
 
 async function getBlogPost(slug, lang) {
-  const path = lang === 'en' ? `/blog-posts-en/${encodeURIComponent(slug)}` : `/blog-posts/${encodeURIComponent(slug)}`;
+  const base = `/blog-posts/${encodeURIComponent(slug)}`;
+  const path = lang && lang !== 'de' ? `${base}?lang=${encodeURIComponent(lang)}` : base;
   const data = await fetchJSON(path);
   return data.post || null;
 }

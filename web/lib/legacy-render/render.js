@@ -10,6 +10,7 @@
 // revalidation of the underlying data.
 import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
+import { localizeLinks } from '../link-localize.mjs';
 import cityMod from './render-city.js';
 import cityFactsMod from './city-facts.js';
 import countryMod from './render-country.js';
@@ -115,14 +116,15 @@ export async function renderFlightRouteHtml(slug, lang) {
 }
 
 export async function renderBlogPostHtml(slug, lang) {
-  // Blog content is DE/EN-only (independently authored per language); the
-  // other five prefixed languages 404 here even though they're valid site
-  // languages elsewhere — matches the original build, which only rendered
-  // blog posts for 'de' and 'en'.
-  if (lang !== 'de' && lang !== 'en') return null;
+  // [MULTILANG-BLOG] Every site language now has a blog: German is the source
+  // (blog_posts), the rest come from blog_post_translations via getBlogPost()'s
+  // ?lang fetch. A language with no translation for this slug simply 404s.
   const post = await getBlogPost(slug, lang);
   if (!post) return null;
   await ensureGeo();
   const [allRoutes, allPosts] = await Promise.all([listRoutePages(), listBlogPosts(lang)]);
-  return renderBlogPostPage(post, allRoutes, allPosts, lang).html;
+  // [MULTILANG-LINKS] Localize internal entity links in the article body to the
+  // current language prefix (one canonical set of links serves every language).
+  const localized = Object.assign({}, post, { content: localizeLinks(post.content, lang) });
+  return renderBlogPostPage(localized, allRoutes, allPosts, lang).html;
 }
