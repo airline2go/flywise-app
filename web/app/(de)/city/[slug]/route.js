@@ -4,7 +4,7 @@
 // root layout wrapping it.
 import { renderCityHtml } from '@/lib/legacy-render/render';
 
-export const revalidate = 3600;
+export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
 
 // On-demand generation: nothing prebuilt at deploy, each slug renders on its
