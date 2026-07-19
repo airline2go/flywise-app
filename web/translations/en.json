@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Airlines flying this route",
   "routeTrustHeading": "Data & transparency",
   "transparencyPageLabel": "Transparency overview",
-  "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:"
+  "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:",
+  "heroBadgeLivePrices": "Live prices",
+  "heroBadgeNoHiddenFees": "No hidden fees",
+  "heroBadgeAirlines": "600+ airlines"
 }

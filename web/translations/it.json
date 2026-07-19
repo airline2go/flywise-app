@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Compagnie su questa tratta",
   "routeTrustHeading": "Dati e trasparenza",
   "transparencyPageLabel": "Panoramica sulla trasparenza",
-  "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:"
+  "routeDataMethodologyText": "Orari, scali e compagnie mostrati qui sono aggregati da offerte reali delle compagnie aeree tramite i nostri fornitori di dati e aggiornati regolarmente. Scopri come raccogliamo e verifichiamo questi dati:",
+  "heroBadgeLivePrices": "Prezzi in tempo reale",
+  "heroBadgeNoHiddenFees": "Nessun costo nascosto",
+  "heroBadgeAirlines": "600+ compagnie"
 }

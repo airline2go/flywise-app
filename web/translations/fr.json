@@ -300,5 +300,8 @@
   "airlinesOnRouteHeading": "Compagnies sur cette ligne",
   "routeTrustHeading": "Données et transparence",
   "transparencyPageLabel": "Aperçu de la transparence",
-  "routeDataMethodologyText": "Les horaires, escales et compagnies affichés ici sont agrégés à partir d’offres réelles de compagnies aériennes via nos fournisseurs de données et actualisés régulièrement. Découvrez comment nous obtenons et vérifions ces données :"
+  "routeDataMethodologyText": "Les horaires, escales et compagnies affichés ici sont agrégés à partir d’offres réelles de compagnies aériennes via nos fournisseurs de données et actualisés régulièrement. Découvrez comment nous obtenons et vérifions ces données :",
+  "heroBadgeLivePrices": "Prix en direct",
+  "heroBadgeNoHiddenFees": "Aucuns frais cachés",
+  "heroBadgeAirlines": "600+ compagnies"
 }

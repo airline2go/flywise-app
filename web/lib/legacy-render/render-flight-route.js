@@ -304,6 +304,8 @@ const FLIGHT_ROUTE_CSS = require('./flight-route-css');
 // sections added to the live renderer — appended to the inlined route CSS.
 const INTERNAL_LINK_CSS = `.route-hero-cities a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35)}`
   + `.route-hero-cities a:hover{border-bottom-color:#fff}`
+  + `.route-hero-badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 2px}`
+  + `.route-hero-badges span{font-size:12px;color:rgba(255,255,255,.92);background:rgba(255,255,255,.12);padding:4px 10px;border-radius:999px;white-space:nowrap}`
   + `.route-citylinks-section{margin-top:28px}`
   + `.route-citylinks-section h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}`
   + `.route-eeat{margin-top:28px;padding:16px 18px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px}`
@@ -532,6 +534,7 @@ ${breadcrumbHtml}
     <span class="route-hero-arrow">✈</span>
     ${destCityNode}
   </div>
+  <div class="route-hero-badges"><span>✓ ${translate('heroBadgeLivePrices', lang)}</span><span>✓ ${translate('heroBadgeNoHiddenFees', lang)}</span><span>✓ ${translate('heroBadgeAirlines', lang)}</span></div>
   ${distanceHtml}
   <div class="route-price-box" id="route-price-box">
     <div style="color:rgba(255,255,255,.5);font-size:13px">${translate('loadingPrice', lang)}</div>
