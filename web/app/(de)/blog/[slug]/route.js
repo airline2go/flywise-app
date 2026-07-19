@@ -3,7 +3,7 @@
 import { renderBlogPostHtml } from '@/lib/legacy-render/render';
 import { htmlResponse } from '@/lib/legacy-render/serve';
 
-export const revalidate = 3600;
+export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
