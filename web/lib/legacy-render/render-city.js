@@ -39,7 +39,20 @@ const CITY_CSS = `<style>
 .city-faq-item{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:15px 17px;margin-bottom:10px}
 .city-faq-q{font-weight:700;font-size:14.5px;color:var(--tx);margin-bottom:6px}
 .city-faq-a{font-size:13.5px;color:var(--tx2);line-height:1.55}
-@media (max-width:480px){.city-route-grid{grid-template-columns:1fr}.city-stats{grid-template-columns:repeat(2,1fr)}}
+.city-why,.city-tips{margin-top:28px}
+.city-why h2,.city-tips h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin-bottom:12px}
+.city-why-grid{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.city-why-grid li{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:600;color:var(--tx)}
+.city-why-grid li::before{content:"✓";color:var(--teal);font-weight:800;margin-inline-end:8px}
+.city-tips-list{margin:0;padding-inline-start:20px}
+.city-tips-list li{font-size:13.5px;color:var(--tx2);line-height:1.7}
+.city-eeat{margin-top:28px;padding:16px 18px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px}
+.city-eeat-meta{font-size:13px;color:var(--tx2);font-weight:600}
+.city-eeat-dates{font-size:12px;color:var(--tx3);margin-top:6px;display:flex;gap:16px;flex-wrap:wrap}
+.city-eeat-links{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
+.city-eeat-links a{color:var(--teal);text-decoration:none;font-weight:600;font-size:13px}
+.city-eeat-links a:hover{text-decoration:underline}
+@media (max-width:480px){.city-route-grid{grid-template-columns:1fr}.city-stats{grid-template-columns:repeat(2,1fr)}.city-why-grid{grid-template-columns:1fr}}
 </style>`;
 
 function renderCityPage(city, routes, lang, routeMetaBySlug) {
@@ -132,6 +145,51 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
     : '';
 
   const routesWord = locRoutes.length === 1 ? translate('routeWordSingular', lang) : translate('routeWordPlural', lang);
+
+  // [WHY-AIRPIV] Static trust block — reuses the three hero-badge labels plus
+  // three E-E-A-T points. Identical for every city, localized per language.
+  const whyAirpivHtml = `<section class="city-why"><h2>${escHtml(translate('whyAirpivHeading', lang))}</h2><ul class="city-why-grid">`
+    + [
+      translate('heroBadgeAirlines', lang),
+      translate('heroBadgeLivePrices', lang),
+      translate('heroBadgeNoHiddenFees', lang),
+      translate('whyAirpivTransparentData', lang),
+      translate('whyAirpivDailyUpdates', lang),
+      translate('whyAirpivEditoriallyChecked', lang),
+    ].map((t) => `<li>${escHtml(t)}</li>`).join('')
+    + '</ul></section>';
+
+  // [SPARTIPPS] Generic flight money-saving tips — same set for every city.
+  const savingTipsHtml = `<section class="city-tips"><h2>${escHtml(translate('savingTipsHeading', lang))}</h2><ul class="city-tips-list">`
+    + ['savingTipEarly', 'savingTipFlexibleDates', 'savingTipMidweek', 'savingTipCompareDirect', 'savingTipCheckBaggage', 'savingTipAltAirports', 'savingTipPriceAlert', 'savingTipOffSeason']
+      .map((k) => `<li>${escHtml(translate(k, lang))}</li>`).join('')
+    + '</ul></section>';
+
+  // [E-E-A-T] Reading time is computed from the page's own visible text (~200
+  // words/min). The dates come from the city record's real updated_at (never a
+  // fabricated "reviewed today"); if absent, the block simply omits them.
+  const readingText = [introText, fromSectionHtml, toSectionHtml, countriesHtml, faqHtml, whyAirpivHtml, savingTipsHtml]
+    .join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const readingMin = Math.max(1, Math.round((readingText ? readingText.split(' ').length : 0) / 200));
+  const updatedAt = city.updated_at ? new Date(city.updated_at) : null;
+  const reviewedDate = updatedAt ? updatedAt.toISOString().slice(0, 10) : null;
+  const dataUpdateUtc = updatedAt ? `${updatedAt.toISOString().slice(0, 16).replace('T', ' ')} UTC` : null;
+  const eeatLinks = [
+    ['/methodology.html', translate('methodologyLabel', lang)],
+    ['/data-sources.html', translate('dataSourcesLabel', lang)],
+    ['/editorial-policy.html', translate('editorialPolicyLabel', lang)],
+    ['/transparency.html', translate('transparencyPageLabel', lang)],
+  ].map(([href, label]) => `<a href="${href}">${escHtml(label)}</a>`).join('');
+  const eeatDates = [
+    reviewedDate ? `<span>${escHtml(translate('eeatReviewedLabel', lang))}: ${reviewedDate}</span>` : '',
+    dataUpdateUtc ? `<span>${escHtml(translate('eeatLastDataUpdateLabel', lang))}: ${dataUpdateUtc}</span>` : '',
+  ].join('');
+  const eeatHtml = '<section class="city-eeat">'
+    + `<div class="city-eeat-meta">${escHtml(translate('eeatTeam', lang))} · ${escHtml(format(translate('eeatReadingTimeTemplate', lang), { min: readingMin }))}</div>`
+    + (eeatDates ? `<div class="city-eeat-dates">${eeatDates}</div>` : '')
+    + `<div class="city-eeat-links">${eeatLinks}</div>`
+    + '</section>';
+
   const mainContent = `<main id="city-main">
   <div id="city-content">
 ${breadcrumbHtml}
@@ -147,6 +205,9 @@ ${fromSectionHtml}
 ${toSectionHtml}
 ${countriesHtml}
 ${faqHtml}
+${whyAirpivHtml}
+${savingTipsHtml}
+${eeatHtml}
   </div>
 </main>`;
 

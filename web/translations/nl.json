@@ -303,5 +303,22 @@
   "routeDataMethodologyText": "Vluchttijden, tussenstops en luchtvaartmaatschappijen op deze pagina worden samengesteld uit echte aanbiedingen van luchtvaartmaatschappijen via onze gegevensproviders en regelmatig bijgewerkt. Ontdek hoe wij deze gegevens verzamelen en verifiëren:",
   "heroBadgeLivePrices": "Live prijzen",
   "heroBadgeNoHiddenFees": "Geen verborgen kosten",
-  "heroBadgeAirlines": "600+ luchtvaartmaatschappijen"
+  "heroBadgeAirlines": "600+ luchtvaartmaatschappijen",
+  "whyAirpivHeading": "Waarom Airpiv?",
+  "whyAirpivTransparentData": "Transparante gegevens",
+  "whyAirpivDailyUpdates": "Dagelijks bijgewerkt",
+  "whyAirpivEditoriallyChecked": "Redactioneel gecontroleerd",
+  "savingTipsHeading": "Bespaartips",
+  "savingTipEarly": "Boek vroeg",
+  "savingTipFlexibleDates": "Kies flexibele data",
+  "savingTipMidweek": "Vlieg op dinsdag of woensdag",
+  "savingTipCompareDirect": "Vergelijk directe vluchten",
+  "savingTipCheckBaggage": "Controleer bagage",
+  "savingTipAltAirports": "Overweeg alternatieve luchthavens",
+  "savingTipPriceAlert": "Gebruik prijsmeldingen",
+  "savingTipOffSeason": "Kies het laagseizoen",
+  "eeatTeam": "Airpiv-redactie",
+  "eeatReviewedLabel": "Laatst redactioneel gecontroleerd",
+  "eeatReadingTimeTemplate": "{min} min leestijd",
+  "eeatLastDataUpdateLabel": "Laatste gegevensupdate"
 }

@@ -303,5 +303,22 @@
   "routeDataMethodologyText": "أوقات الرحلات والتوقّفات وشركات الطيران المعروضة هنا مجمّعة من عروض طيران حقيقية عبر مزوّدي البيانات لدينا وتُحدَّث بانتظام. تعرّف على كيفية مصدرنا وتحقّقنا من هذه البيانات:",
   "heroBadgeLivePrices": "أسعار حيّة",
   "heroBadgeNoHiddenFees": "بلا رسوم خفية",
-  "heroBadgeAirlines": "+600 شركة طيران"
+  "heroBadgeAirlines": "+600 شركة طيران",
+  "whyAirpivHeading": "لماذا Airpiv؟",
+  "whyAirpivTransparentData": "بيانات شفافة",
+  "whyAirpivDailyUpdates": "تحديث يومي",
+  "whyAirpivEditoriallyChecked": "مراجَع تحريرياً",
+  "savingTipsHeading": "نصائح للتوفير",
+  "savingTipEarly": "احجز مبكراً",
+  "savingTipFlexibleDates": "اختر تواريخ مرنة",
+  "savingTipMidweek": "سافر الثلاثاء أو الأربعاء",
+  "savingTipCompareDirect": "قارن الرحلات المباشرة",
+  "savingTipCheckBaggage": "تحقّق من الأمتعة",
+  "savingTipAltAirports": "جرّب مطارات بديلة",
+  "savingTipPriceAlert": "استخدم تنبيه الأسعار",
+  "savingTipOffSeason": "فضّل الموسم منخفض الإقبال",
+  "eeatTeam": "فريق تحرير Airpiv",
+  "eeatReviewedLabel": "آخر مراجعة تحريرية",
+  "eeatReadingTimeTemplate": "{min} دقيقة قراءة",
+  "eeatLastDataUpdateLabel": "آخر تحديث للبيانات"
 }

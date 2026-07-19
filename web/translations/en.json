@@ -303,5 +303,22 @@
   "routeDataMethodologyText": "Flight times, stops and airlines shown here are aggregated from real airline offers through our data providers and refreshed regularly. Learn how we source and verify this data:",
   "heroBadgeLivePrices": "Live prices",
   "heroBadgeNoHiddenFees": "No hidden fees",
-  "heroBadgeAirlines": "600+ airlines"
+  "heroBadgeAirlines": "600+ airlines",
+  "whyAirpivHeading": "Why Airpiv?",
+  "whyAirpivTransparentData": "Transparent data",
+  "whyAirpivDailyUpdates": "Updated daily",
+  "whyAirpivEditoriallyChecked": "Editorially reviewed",
+  "savingTipsHeading": "Money-saving tips",
+  "savingTipEarly": "Book early",
+  "savingTipFlexibleDates": "Choose flexible dates",
+  "savingTipMidweek": "Fly Tuesday or Wednesday",
+  "savingTipCompareDirect": "Compare direct flights",
+  "savingTipCheckBaggage": "Check baggage",
+  "savingTipAltAirports": "Consider alternative airports",
+  "savingTipPriceAlert": "Use price alerts",
+  "savingTipOffSeason": "Prefer the off-season",
+  "eeatTeam": "Airpiv Editorial Team",
+  "eeatReviewedLabel": "Last editorially reviewed",
+  "eeatReadingTimeTemplate": "{min} min read",
+  "eeatLastDataUpdateLabel": "Last data update"
 }
