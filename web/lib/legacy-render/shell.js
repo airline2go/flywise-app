@@ -157,6 +157,7 @@ ${bodySuffix}
   <div class="fbot"><p>${s.copyright}</p></div>
 </div></footer>
 ${scripts}
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
 `;

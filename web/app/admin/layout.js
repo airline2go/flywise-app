@@ -9,6 +9,7 @@
 // can't itself require a session) — the actual auth gate lives one
 // level down in app/admin/(protected)/layout.js.
 import { ADMIN_COLORS, ADMIN_FONT_SANS } from '../../lib/admin/theme';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata = {
   title: 'Airpiv — لوحة التحكم',
@@ -20,6 +21,7 @@ export default function AdminRootLayout({ children }) {
     <html lang="ar" dir="rtl">
       <body style={{ margin: 0, fontFamily: ADMIN_FONT_SANS, background: ADMIN_COLORS.bg, color: ADMIN_COLORS.tx }}>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
