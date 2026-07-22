@@ -320,5 +320,11 @@
   "eeatTeam": "فريق تحرير Airpiv",
   "eeatReviewedLabel": "آخر مراجعة تحريرية",
   "eeatReadingTimeTemplate": "{min} دقيقة قراءة",
-  "eeatLastDataUpdateLabel": "آخر تحديث للبيانات"
+  "eeatLastDataUpdateLabel": "آخر تحديث للبيانات",
+  "routeTitleInfo": "رحلات {origin} → {destination} | مدة الرحلة والمسافة وشركات الطيران",
+  "routeMetaBase": "رحلات من {origin} إلى {destination}",
+  "routeMetaFrom": " من {price}",
+  "routeMetaDistance": "المسافة {distance} كم",
+  "routeMetaDirectYes": "رحلات مباشرة متاحة",
+  "routeMetaDirectAll": "رحلات مباشرة فقط"
 }

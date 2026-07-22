@@ -320,5 +320,11 @@
   "eeatTeam": "Airpiv-redactie",
   "eeatReviewedLabel": "Laatst redactioneel gecontroleerd",
   "eeatReadingTimeTemplate": "{min} min leestijd",
-  "eeatLastDataUpdateLabel": "Laatste gegevensupdate"
+  "eeatLastDataUpdateLabel": "Laatste gegevensupdate",
+  "routeTitleInfo": "{origin} → {destination} vluchten | Vliegtijd, afstand & maatschappijen",
+  "routeMetaBase": "Vluchten van {origin} naar {destination}",
+  "routeMetaFrom": " vanaf {price}",
+  "routeMetaDistance": "Afstand {distance} km",
+  "routeMetaDirectYes": "Directe vluchten beschikbaar",
+  "routeMetaDirectAll": "alleen directe vluchten"
 }

@@ -320,5 +320,11 @@
   "eeatTeam": "Airpiv Editorial Team",
   "eeatReviewedLabel": "Last editorially reviewed",
   "eeatReadingTimeTemplate": "{min} min read",
-  "eeatLastDataUpdateLabel": "Last data update"
+  "eeatLastDataUpdateLabel": "Last data update",
+  "routeTitleInfo": "{origin} → {destination} Flights | Flight Time, Distance & Airlines",
+  "routeMetaBase": "Flights from {origin} to {destination}",
+  "routeMetaFrom": " from {price}",
+  "routeMetaDistance": "Distance {distance} km",
+  "routeMetaDirectYes": "Direct flights available",
+  "routeMetaDirectAll": "direct flights only"
 }

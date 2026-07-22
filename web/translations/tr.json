@@ -320,5 +320,11 @@
   "eeatTeam": "Airpiv Yayın Ekibi",
   "eeatReviewedLabel": "Son editör kontrolü",
   "eeatReadingTimeTemplate": "{min} dk okuma",
-  "eeatLastDataUpdateLabel": "Son veri güncellemesi"
+  "eeatLastDataUpdateLabel": "Son veri güncellemesi",
+  "routeTitleInfo": "{origin} → {destination} Uçuşları | Uçuş süresi, mesafe ve havayolları",
+  "routeMetaBase": "{origin} - {destination} uçuşları",
+  "routeMetaFrom": " {price}'den itibaren",
+  "routeMetaDistance": "Mesafe {distance} km",
+  "routeMetaDirectYes": "Direkt uçuşlar mevcut",
+  "routeMetaDirectAll": "sadece direkt uçuşlar"
 }
