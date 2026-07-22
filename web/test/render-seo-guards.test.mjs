@@ -66,6 +66,19 @@ test('city breadcrumb uses the localized country name, not the raw code', () => 
   assert.doesNotMatch(html, />DE<\/a>/, 'breadcrumb should not show the bare code "DE"');
 });
 
+// ─── Turkish fully wired in the entity render path ────────────────────────
+test('a Turkish entity page carries tr hreflang, tr_TR og:locale and lang="tr"', () => {
+  const city = { city_slug: 'berlin', name: 'Berlin', country_code: 'DE', airport_codes: ['BER', 'TXL'], updated_at: '2026-01-01T00:00:00Z' };
+  const routes = [
+    routeRow({ slug: 'ber-muc', origin_iata: 'BER' }),
+    routeRow({ slug: 'ber-cdg', origin_iata: 'BER', destination_iata: 'CDG', destination_city: 'Paris', destination_city_slug: 'paris', destination_country: 'FR' }),
+  ];
+  const { html } = renderCityPage(city, routes, 'tr', {});
+  assert.match(html, /<link rel="alternate" hreflang="tr" href="https:\/\/airpiv\.com\/tr\/city\/berlin">/);
+  assert.match(html, /<meta property="og:locale" content="tr_TR">/);
+  assert.match(html, /<html lang="tr"/);
+});
+
 // ─── #5 Airport thin-content noindex guard ────────────────────────────────
 test('airport with a single destination and no admin info is noindex', () => {
   const airport = { code: 'TXL', name: 'Berlin-Tegel', city: 'Berlin', city_slug: 'berlin', country: 'DE', translations: {} };

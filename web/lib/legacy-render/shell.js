@@ -69,7 +69,7 @@ const WEBSITE_SCHEMA = {
 // [OG-LOCALE] schema.org locale tags (BCP-47-ish og:locale values) per
 // language — og:locale was previously absent entirely, which link
 // previews/crawlers use to pick the right localized rendering.
-const OG_LOCALE = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR', es: 'es_ES', fr: 'fr_FR', it: 'it_IT', nl: 'nl_NL' };
+const OG_LOCALE = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR', es: 'es_ES', fr: 'fr_FR', it: 'it_IT', nl: 'nl_NL', tr: 'tr_TR' };
 
 // Root-relative home URL for a language, honoring the same
 // default-language-stays-unprefixed rule as every generated page URL.

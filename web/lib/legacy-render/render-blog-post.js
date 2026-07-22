@@ -2,6 +2,7 @@ const { parse } = require('node-html-parser');
 const { escHtml, renderShell, jsonLdScript } = require('./shell');
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
+const { blogHreflangUrls } = require('./blog-hreflang');
 
 // blog-post.css is inlined (bundled string, not a <link>) so it isn't a
 // render-blocking round-trip — same reasoning as the flight-route page.
@@ -160,7 +161,9 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
   const de = lang !== 'en';
   const url = `https://airpiv.com/${de ? '' : 'en/'}blog/${encodeURIComponent(post.slug)}`;
   const deUrl = `https://airpiv.com/blog/${encodeURIComponent(post.slug)}`;
-  const enUrl = `https://airpiv.com/en/blog/${encodeURIComponent(post.slug)}`;
+  // [BLOG-HREFLANG-FIX] Only advertise language alternates that actually
+  // exist — the full rule lives in lib/legacy-render/blog-hreflang.js.
+  const hreflangUrls = blogHreflangUrls(post, de, url, deUrl);
   const description = post.meta_description || post.excerpt || `${post.title} — Airpiv Blog`;
   const image = post.cover_image_url || 'https://airpiv.com/og-image.png';
 
@@ -303,7 +306,7 @@ ${similarPostsHtml}
     title: `${post.title} | Airpiv Blog`,
     description,
     canonicalUrl: url,
-    urls: { de: deUrl, en: enUrl },
+    urls: hreflangUrls,
     ogType: 'article',
     ogImage: image,
     headExtra: headExtraParts.join('\n'),
