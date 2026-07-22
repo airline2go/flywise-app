@@ -26,7 +26,7 @@ const nextConfig = {
   // exist on production (it 404s), so only the root path is rewritten and the
   // React [lang]/search routes are removed.
   async rewrites() {
-    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl'];
+    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
