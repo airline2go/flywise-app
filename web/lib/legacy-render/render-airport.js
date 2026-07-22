@@ -88,7 +88,7 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
   const countryHref = airport.country ? urlFor(lang, `country/${encodeURIComponent(airport.country)}`) : null;
   const cityHref = airport.city_slug ? urlFor(lang, `city/${encodeURIComponent(airport.city_slug)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
-  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(airport.country)}</a><span>›</span>`;
+  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(countryName || airport.country)}</a><span>›</span>`;
   if (cityHref) breadcrumbHtml += `<a href="${cityHref}">${escHtml(cityName)}</a><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(airport.code)}</span></nav>`;
 
@@ -186,7 +186,7 @@ ${faqHtml}
 
   const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
   let pos = 2;
-  if (airport.country) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: airport.country, item: urlFor(lang, `country/${airport.country}`) });
+  if (airport.country) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: countryName || airport.country, item: urlFor(lang, `country/${airport.country}`) });
   if (airport.city_slug) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: cityName, item: urlFor(lang, `city/${airport.city_slug}`) });
   breadcrumbList.push({ '@type': 'ListItem', position: pos, name: airport.code, item: url });
 
@@ -231,12 +231,24 @@ ${faqHtml}
 
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}${extraSchemaHtml ? '\n' + extraSchemaHtml : ''}\n${AIRPORT_CSS}`;
 
+  // [THIN-CONTENT-NOINDEX] An airport reaching at most one distinct
+  // destination and with no admin-authored traveler content (terminal/
+  // transit info or tips) is thin — its stats/FAQ are then largely the
+  // same templated shape as every other single-destination airport, so it
+  // must not be indexed. Airports with real connectivity (2+ destinations)
+  // or admin-written info carry genuinely distinct content and are indexed.
+  // Always `follow` so link equity flows through either way — matching the
+  // city/country/airline rule.
+  const hasAdminAirportContent = !!(airport.terminal_info || airport.transit_options || airport.traveler_tips);
+  const robotsContent = (facts.destinationCount <= 1 && !hasAdminAirportContent) ? 'noindex, follow' : 'index, follow';
+
   const html = renderShell({
     lang,
     title: `${title} | Airpiv`,
     description,
     canonicalUrl: url,
     urls,
+    robotsContent,
     headExtra,
     mainContent,
   });

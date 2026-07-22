@@ -607,6 +607,21 @@ ${moreToDestinationHtml}
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n`
     + `${relatedItemListSchema ? jsonLdScript(relatedItemListSchema) + '\n' : ''}${ROUTE_HEAD_EXTRA_STATIC}`;
 
+  // [THIN-CONTENT-NOINDEX] A route with no real intelligence data at all
+  // (no distance, no average/fastest duration, no observed airline count, and
+  // no stop distribution) and no admin-authored intro/FAQ is thin: its intro
+  // and FAQ are then fully templated boilerplate shared in shape with every
+  // other dataless route, so it must not be indexed. Any single real data
+  // point, or any admin-written intro_text/custom_faq, makes the page
+  // genuinely distinct and keeps it indexed. Always `follow` so link equity
+  // keeps flowing either way — matching the city/country/airline/airport rule.
+  const hasRealRouteData = route.distance_km != null
+    || route.avg_duration_min != null
+    || (route.airline_count != null && route.airline_count > 0)
+    || (route.stop_distribution && typeof route.stop_distribution === 'object' && Object.keys(route.stop_distribution).length > 0);
+  const hasAdminRouteContent = !!(route.intro_text || (route.custom_faq && route.custom_faq.length));
+  const robotsContent = (!hasRealRouteData && !hasAdminRouteContent) ? 'noindex, follow' : 'index, follow';
+
   const html = renderShell({
     lang,
     // [CTR-TITLE] The route title template already ends in a "| Compare &
@@ -618,6 +633,7 @@ ${moreToDestinationHtml}
     description,
     canonicalUrl: url,
     urls,
+    robotsContent,
     headExtra,
     mainContent,
     scripts: buildLiveScript(route, lang),

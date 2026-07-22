@@ -98,7 +98,7 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
 
   const countryHref = city.country_code ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
-  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(city.country_code)}</a><span>›</span>`;
+  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(countryName || city.country_code)}</a><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(cityName)}</span></nav>`;
 
   const airportsHtml = (city.airport_codes && city.airport_codes.length)
@@ -212,7 +212,7 @@ ${eeatHtml}
 </main>`;
 
   const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
-  if (city.country_code) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: city.country_code, item: urlFor(lang, `country/${city.country_code}`) });
+  if (city.country_code) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: countryName || city.country_code, item: urlFor(lang, `country/${city.country_code}`) });
   breadcrumbList.push({ '@type': 'ListItem', position: breadcrumbList.length + 1, name: cityName, item: url });
 
   const schema = {
