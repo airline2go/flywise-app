@@ -407,6 +407,44 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 </script>`;
 }
 
+// [ROUTE-SEO-META] Stable, data-descriptive <title> — names the facets the
+// page covers (flight time, distance, airlines), never a volatile value, so the
+// title never churns between crawls (a price-in-title would). Localized; the
+// visible <h1> is derived from the part before " | " in the render below.
+function buildRouteTitle(route, lang) {
+  return format(translate('routeTitleInfo', lang), { origin: route.origin_city, destination: route.destination_city });
+}
+
+// Format a "from" price with its currency — used ONLY in the meta description,
+// never the title.
+function formatRoutePrice(price, currency, lang) {
+  const n = Math.round(Number(price)).toLocaleString(getLanguage(lang).locale);
+  if (currency === 'EUR') return `${n} €`;
+  if (currency === 'USD') return `$${n}`;
+  if (currency === 'GBP') return `£${n}`;
+  return `${n} ${currency || 'EUR'}`;
+}
+
+// [ROUTE-SEO-META] Data-gated meta description. The volatile "from" price
+// (route.cached_price — a cache-only value the server attaches from its
+// route_price cache) lives HERE, not in the title, so it can refresh without
+// destabilising the title. Every clause is omitted when its data is missing, so
+// a data-poor route gets a shorter, still-accurate description, never an
+// invented one.
+function buildRouteMetaDescription(route, lang) {
+  let lead = format(translate('routeMetaBase', lang), { origin: route.origin_city, destination: route.destination_city });
+  if (route.cached_price != null && Number(route.cached_price) > 0) {
+    lead += format(translate('routeMetaFrom', lang), { price: formatRoutePrice(route.cached_price, route.cached_currency || 'EUR', lang) });
+  }
+  const parts = [lead];
+  if (route.distance_km != null) {
+    parts.push(format(translate('routeMetaDistance', lang), { distance: Number(route.distance_km).toLocaleString(getLanguage(lang).locale) }));
+  }
+  if (route.all_direct === true) parts.push(translate('routeMetaDirectAll', lang));
+  else if (route.direct_flight_available === true) parts.push(translate('routeMetaDirectYes', lang));
+  return parts.join('. ') + '.';
+}
+
 function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
@@ -419,8 +457,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   // languages while custom_faq (below) already applied uniformly. Now
   // consistent: an admin override always wins over the generated template,
   // regardless of language.
-  const title = route.custom_title || format(translate('routeTitleTemplate', lang), { origin: route.origin_city, destination: route.destination_city });
-  const description = route.custom_meta_description || format(translate('routeDescriptionTemplate', lang), { origin: route.origin_city, originCode: route.origin_iata, destination: route.destination_city, destCode: route.destination_iata });
+  // [ROUTE-SEO-META] Precedence: an admin manual override wins, then the
+  // server-side SEO engine's output (route.seo — populated once that system is
+  // live; effectiveRouteSeo already folds custom_* over generated seo_*), then
+  // the data-driven default built here. The <title> is deliberately STABLE
+  // (flight time / distance / airlines) with NO price; the volatile "from"
+  // price appears only in the meta description, so the title never churns.
+  const title = route.custom_title || (route.seo && route.seo.title) || buildRouteTitle(route, lang);
+  const description = route.custom_meta_description || (route.seo && route.seo.metaDescription) || buildRouteMetaDescription(route, lang);
 
   const urls = urlsFor(`flights/${encodeURIComponent(route.slug)}`);
   const url = urls[lang];
@@ -642,4 +686,4 @@ ${moreToDestinationHtml}
   return { html, seo: { title, description, canonicalUrl: url, schema } };
 }
 
-module.exports = { renderFlightRoutePage };
+module.exports = { renderFlightRoutePage, buildRouteTitle, buildRouteMetaDescription };
