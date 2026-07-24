@@ -339,13 +339,14 @@
   "sitemapSectionAirports": "Tous les aéroports",
   "sitemapSectionAirlines": "Toutes les compagnies aériennes",
   "popularLabel": "Destinations populaires",
-  "popularPageTitle": "Destinations de vol populaires et itinéraires les plus desservis",
-  "popularMetaDescription": "Découvrez les destinations de vol les mieux connectées d'Airpiv et les itinéraires desservis par le plus de compagnies. Comparez les prix et trouvez des vols pas chers vers les meilleures villes.",
+  "popularPageTitle": "Destinations, itinéraires et compagnies de vol populaires",
+  "popularMetaDescription": "Découvrez les destinations les mieux connectées d'Airpiv, les itinéraires desservis par le plus de compagnies et les compagnies opérant le plus d'itinéraires. Comparez les prix et trouvez des vols pas chers.",
   "popularH1": "Destinations de vol populaires",
-  "popularIntro": "Voici les destinations offrant le plus de correspondances sur Airpiv, suivies des itinéraires desservis par le plus grand nombre de compagnies aériennes. Tous les chiffres proviennent des itinéraires que nous suivons réellement — choisissez une ville ou un itinéraire pour comparer les prix en direct.",
+  "popularIntro": "Voici les destinations les mieux connectées d'Airpiv, les itinéraires desservis par le plus de compagnies et les compagnies qui opèrent le plus d'itinéraires. Tous les chiffres proviennent des itinéraires que nous suivons réellement — choisissez une ville, un itinéraire ou une compagnie pour comparer les prix en direct.",
   "popularSectionDestinations": "Principales destinations",
   "popularSectionRoutes": "Itinéraires les plus desservis",
   "popularStatRoutes": "itinéraires",
   "popularStatAirlines": "compagnies",
-  "routeRelatedArticles": "Articles liés"
+  "routeRelatedArticles": "Articles liés",
+  "popularSectionAirlines": "Compagnies aériennes populaires"
 }

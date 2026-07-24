@@ -339,13 +339,14 @@
   "sitemapSectionAirports": "Tüm havalimanları",
   "sitemapSectionAirlines": "Tüm havayolları",
   "popularLabel": "Popüler destinasyonlar",
-  "popularPageTitle": "Popüler uçuş destinasyonları ve en çok hizmet verilen rotalar",
-  "popularMetaDescription": "Airpiv'deki en iyi bağlantılı uçuş destinasyonlarını ve en fazla havayolu tarafından hizmet verilen rotaları keşfedin. Fiyatları karşılaştırın ve en iyi şehirlere ucuz uçuşlar bulun.",
+  "popularPageTitle": "Popüler uçuş destinasyonları, rotalar ve havayolları",
+  "popularMetaDescription": "Airpiv'deki en iyi bağlantılı uçuş destinasyonlarını, en fazla havayolu tarafından hizmet verilen rotaları ve en fazla rota işleten havayollarını keşfedin. Fiyatları karşılaştırın ve ucuz uçuşlar bulun.",
   "popularH1": "Popüler uçuş destinasyonları",
-  "popularIntro": "Bunlar Airpiv'de en fazla uçuş bağlantısına sahip destinasyonlar ve ardından en fazla havayolu tarafından hizmet verilen rotalardır. Tüm veriler gerçekten takip ettiğimiz rotalardan gelir — canlı fiyatları karşılaştırmak için bir şehir veya rota seçin.",
+  "popularIntro": "Bunlar Airpiv'de en iyi bağlantılı uçuş destinasyonları, en fazla havayolu tarafından hizmet verilen rotalar ve en fazla rota işleten havayollarıdır. Tüm veriler gerçekten takip ettiğimiz rotalardan gelir — canlı fiyatları karşılaştırmak için bir şehir, rota veya havayolu seçin.",
   "popularSectionDestinations": "Öne çıkan destinasyonlar",
   "popularSectionRoutes": "En çok hizmet verilen uçuş rotaları",
   "popularStatRoutes": "rota",
   "popularStatAirlines": "havayolu",
-  "routeRelatedArticles": "İlgili makaleler"
+  "routeRelatedArticles": "İlgili makaleler",
+  "popularSectionAirlines": "Popüler havayolları"
 }

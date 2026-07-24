@@ -38,7 +38,7 @@ const POPULAR_CSS = `<style>
 //   topRoutes    – raw route rows (with airline_count) pre-ranked, pre-sliced
 function renderPopularPage(data, lang) {
   const locale = getLanguage(lang).locale;
-  const { destinations = [], topRoutes = [] } = data;
+  const { destinations = [], topRoutes = [], popularAirlines = [] } = data;
   const nf = (n) => Number(n).toLocaleString(locale);
 
   const title = translate('popularPageTitle', lang);
@@ -73,6 +73,14 @@ function renderPopularPage(data, lang) {
     ? `<section class="popular-section"><h2>${escHtml(translate('popularSectionRoutes', lang))}</h2><div class="popular-grid">${routeCards}</div></section>`
     : '';
 
+  // ── Airline cards (ranked by the real number of routes each operates) ──
+  const airlineCards = popularAirlines.map((a) => `<a class="popular-card" href="${pathFor(lang, `airline/${encodeURIComponent(a.iata_code)}`)}">`
+    + `<span class="popular-card-name">${escHtml(a.name || a.iata_code)}</span>`
+    + `<span class="popular-card-stat"><span class="num">${nf(a.routeCount)}</span> ${escHtml(routesUnit)}</span></a>`).join('');
+  const airlineSection = airlineCards
+    ? `<section class="popular-section"><h2>${escHtml(translate('popularSectionAirlines', lang))}</h2><div class="popular-grid">${airlineCards}</div></section>`
+    : '';
+
   const mainContent = `<main id="popular-main">
   <div id="popular-content">
 ${breadcrumbHtml}
@@ -80,6 +88,7 @@ ${breadcrumbHtml}
 <p class="popular-intro">${escHtml(translate('popularIntro', lang))}</p>
 ${destSection}
 ${routeSection}
+${airlineSection}
   </div>
 </main>`;
 
@@ -131,12 +140,27 @@ ${routeSection}
     }
     : null;
 
-  const extraSchema = [destItemList, routeItemList].filter(Boolean).map((s) => jsonLdScript(s)).join('\n');
+  const airlineItemList = popularAirlines.length
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: translate('popularSectionAirlines', lang),
+      numberOfItems: popularAirlines.length,
+      itemListElement: popularAirlines.map((a, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: a.name || a.iata_code,
+        url: urlFor(lang, `airline/${encodeURIComponent(a.iata_code)}`),
+      })),
+    }
+    : null;
+
+  const extraSchema = [destItemList, routeItemList, airlineItemList].filter(Boolean).map((s) => jsonLdScript(s)).join('\n');
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}${extraSchema ? '\n' + extraSchema : ''}\n${POPULAR_CSS}`;
 
   // Only worth indexing once there's something real to rank; an empty page
   // (no route data at all) is thin. Always `follow`.
-  const robotsContent = (destinations.length || topRoutes.length) ? 'index, follow' : 'noindex, follow';
+  const robotsContent = (destinations.length || topRoutes.length || popularAirlines.length) ? 'index, follow' : 'noindex, follow';
 
   const html = renderShell({
     lang,

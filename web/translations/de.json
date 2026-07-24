@@ -339,13 +339,14 @@
   "sitemapSectionAirports": "Alle Flughäfen",
   "sitemapSectionAirlines": "Alle Airlines",
   "popularLabel": "Beliebte Reiseziele",
-  "popularPageTitle": "Beliebte Flugziele & meistbediente Strecken",
-  "popularMetaDescription": "Entdecke die bestvernetzten Flugziele auf Airpiv und die Strecken mit den meisten Airlines. Vergleiche Preise und finde günstige Flüge zu den Top-Städten.",
+  "popularPageTitle": "Beliebte Flugziele, Strecken & Airlines",
+  "popularMetaDescription": "Entdecke die bestvernetzten Flugziele auf Airpiv, die Strecken mit den meisten Airlines und die Airlines mit den meisten Strecken. Vergleiche Preise und finde günstige Flüge.",
   "popularH1": "Beliebte Flugziele",
-  "popularIntro": "Das sind die Ziele mit den meisten Flugverbindungen auf Airpiv, gefolgt von den Strecken mit der größten Zahl an Airlines. Alle Angaben stammen aus den tatsächlich erfassten Strecken – wähle eine Stadt oder Strecke, um Live-Preise zu vergleichen.",
+  "popularIntro": "Das sind die bestvernetzten Flugziele auf Airpiv, die Strecken mit den meisten Airlines und die Airlines mit den meisten Strecken. Alle Angaben stammen aus den tatsächlich erfassten Strecken – wähle eine Stadt, Strecke oder Airline, um Live-Preise zu vergleichen.",
   "popularSectionDestinations": "Top-Reiseziele",
   "popularSectionRoutes": "Meistbediente Flugstrecken",
   "popularStatRoutes": "Strecken",
   "popularStatAirlines": "Airlines",
-  "routeRelatedArticles": "Passende Artikel"
+  "routeRelatedArticles": "Passende Artikel",
+  "popularSectionAirlines": "Beliebte Airlines"
 }

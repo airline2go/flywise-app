@@ -339,13 +339,14 @@
   "sitemapSectionAirports": "Alle luchthavens",
   "sitemapSectionAirlines": "Alle luchtvaartmaatschappijen",
   "popularLabel": "Populaire bestemmingen",
-  "popularPageTitle": "Populaire vluchtbestemmingen en meest bediende routes",
-  "popularMetaDescription": "Ontdek de best verbonden vluchtbestemmingen op Airpiv en de routes die door de meeste luchtvaartmaatschappijen worden bediend. Vergelijk prijzen en vind goedkope vluchten naar topsteden.",
+  "popularPageTitle": "Populaire vluchtbestemmingen, routes en maatschappijen",
+  "popularMetaDescription": "Ontdek de best verbonden vluchtbestemmingen op Airpiv, de routes die door de meeste maatschappijen worden bediend en de maatschappijen met de meeste routes. Vergelijk prijzen en vind goedkope vluchten.",
   "popularH1": "Populaire vluchtbestemmingen",
-  "popularIntro": "Dit zijn de bestemmingen met de meeste vluchtverbindingen op Airpiv, gevolgd door de routes die door de meeste luchtvaartmaatschappijen worden bediend. Alle cijfers komen uit de routes die we daadwerkelijk volgen — kies een stad of route om live prijzen te vergelijken.",
+  "popularIntro": "Dit zijn de best verbonden vluchtbestemmingen op Airpiv, de routes die door de meeste maatschappijen worden bediend en de maatschappijen met de meeste routes. Alle cijfers komen uit de routes die we daadwerkelijk volgen — kies een stad, route of maatschappij om live prijzen te vergelijken.",
   "popularSectionDestinations": "Topbestemmingen",
   "popularSectionRoutes": "Meest bediende vluchtroutes",
   "popularStatRoutes": "routes",
   "popularStatAirlines": "maatschappijen",
-  "routeRelatedArticles": "Gerelateerde artikelen"
+  "routeRelatedArticles": "Gerelateerde artikelen",
+  "popularSectionAirlines": "Populaire luchtvaartmaatschappijen"
 }

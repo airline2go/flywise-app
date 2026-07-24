@@ -339,13 +339,14 @@
   "sitemapSectionAirports": "Todos los aeropuertos",
   "sitemapSectionAirlines": "Todas las aerolíneas",
   "popularLabel": "Destinos populares",
-  "popularPageTitle": "Destinos de vuelo populares y rutas más servidas",
-  "popularMetaDescription": "Descubre los destinos de vuelo mejor conectados de Airpiv y las rutas servidas por más aerolíneas. Compara precios y encuentra vuelos baratos a las mejores ciudades.",
+  "popularPageTitle": "Destinos, rutas y aerolíneas de vuelo populares",
+  "popularMetaDescription": "Descubre los destinos de vuelo mejor conectados de Airpiv, las rutas servidas por más aerolíneas y las aerolíneas que operan más rutas. Compara precios y encuentra vuelos baratos.",
   "popularH1": "Destinos de vuelo populares",
-  "popularIntro": "Estos son los destinos con más conexiones de vuelo en Airpiv, seguidos de las rutas servidas por el mayor número de aerolíneas. Todas las cifras provienen de las rutas que realmente seguimos: elige una ciudad o ruta para comparar precios en vivo.",
+  "popularIntro": "Estos son los destinos de vuelo mejor conectados de Airpiv, las rutas servidas por más aerolíneas y las aerolíneas que operan más rutas. Todas las cifras provienen de las rutas que realmente seguimos: elige una ciudad, ruta o aerolínea para comparar precios en vivo.",
   "popularSectionDestinations": "Destinos principales",
   "popularSectionRoutes": "Rutas de vuelo más servidas",
   "popularStatRoutes": "rutas",
   "popularStatAirlines": "aerolíneas",
-  "routeRelatedArticles": "Artículos relacionados"
+  "routeRelatedArticles": "Artículos relacionados",
+  "popularSectionAirlines": "Aerolíneas populares"
 }
