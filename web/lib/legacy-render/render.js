@@ -203,8 +203,49 @@ export async function renderSitemapHtml(lang) {
 // is not populated yet, so it is deliberately not used here).
 const POPULAR_DESTINATION_LIMIT = 30;
 const POPULAR_ROUTE_LIMIT = 30;
+const POPULAR_AIRLINE_LIMIT = 24;
+
+// Run an async fn over items with a bounded concurrency — keeps the popular
+// hub's per-airline detail fetches (one per airline, ~70) comfortably under
+// the backend's shared rate limit instead of firing all of them at once.
+async function mapWithConcurrency(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+// [POPULAR-AIRLINES] Real airline popularity by the number of routes each
+// airline is observed operating. The /airlines LIST carries no usage signal, so
+// the count comes from each airline's own detail endpoint (the route_airlines
+// join) — one cached fetch per airline, concurrency-bounded. Airlines whose
+// detail fetch fails are dropped rather than ranked at 0, and airlines with no
+// observed routes are excluded. Nothing is fabricated.
+async function computePopularAirlines() {
+  const airlines = await listAirlines();
+  const counted = await mapWithConcurrency(airlines, 6, async (a) => {
+    try {
+      const data = await getAirline(a.iata_code);
+      const routeCount = data && Array.isArray(data.routes) ? data.routes.length : null;
+      return routeCount != null ? { iata_code: a.iata_code, name: a.name, routeCount } : null;
+    } catch {
+      return null; // transient failure — omit rather than rank an unknown count
+    }
+  });
+  return counted
+    .filter((x) => x && x.routeCount > 0)
+    .sort((a, b) => b.routeCount - a.routeCount || String(a.name).localeCompare(String(b.name)))
+    .slice(0, POPULAR_AIRLINE_LIMIT);
+}
+
 export async function renderPopularHtml(lang) {
-  const [routes, cities] = await Promise.all([listRoutePages(), listCities()]);
+  const [routes, cities, popularAirlines] = await Promise.all([listRoutePages(), listCities(), computePopularAirlines()]);
   await ensureGeo();
 
   const cityBySlug = new Map();
@@ -235,5 +276,5 @@ export async function renderPopularHtml(lang) {
     .sort((a, b) => (Number(b.airline_count) || 0) - (Number(a.airline_count) || 0))
     .slice(0, POPULAR_ROUTE_LIMIT);
 
-  return renderPopularPage({ destinations, topRoutes }, lang).html;
+  return renderPopularPage({ destinations, topRoutes, popularAirlines }, lang).html;
 }

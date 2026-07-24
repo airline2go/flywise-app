@@ -24,6 +24,10 @@ const fixture = () => ({
   topRoutes: [
     { slug: 'ber-muc', origin_city: 'Berlin', destination_city: 'München', origin_iata: 'BER', destination_iata: 'MUC', airline_count: 7 },
   ],
+  popularAirlines: [
+    { iata_code: 'LH', name: 'Lufthansa', routeCount: 542 },
+    { iata_code: 'EW', name: 'Eurowings', routeCount: 488 },
+  ],
 });
 
 test('renders a complete, indexable document with canonical + hreflang', () => {
@@ -42,6 +46,22 @@ test('destination cards link to city pages and show the real route count', () =>
   assert.match(html, /42/); // real arriving-route count, not a fabricated score
 });
 
+test('airline cards link to airline pages and show the real route count', () => {
+  const { html } = renderPopularPage(fixture(), 'de');
+  assert.match(html, /Beliebte Airlines/);
+  assert.match(html, /href="\/airline\/LH"/);
+  assert.match(html, /Lufthansa/);
+  assert.match(html, /542/); // real observed route count
+  // …and a matching ItemList JSON-LD.
+  assert.match(html, /"@type":"ItemList"[^}]*"name":"Beliebte Airlines"/);
+});
+
+test('non-default language uses prefixed airline links', () => {
+  const { html } = renderPopularPage(fixture(), 'en');
+  assert.match(html, /href="\/en\/airline\/EW"/);
+  assert.match(html, /Popular airlines/);
+});
+
 test('most-served route cards link to flight pages and show the real airline_count', () => {
   const { html } = renderPopularPage(fixture(), 'de');
   assert.match(html, /href="\/flights\/ber-muc"/);
@@ -55,10 +75,10 @@ test('non-default language uses prefixed links + localized city names', () => {
   assert.match(html, />Munich</); // localized, not the German "München"
 });
 
-test('emits ItemList schema for both destinations and routes', () => {
+test('emits an ItemList schema for destinations, routes and airlines', () => {
   const { html } = renderPopularPage(fixture(), 'de');
   const itemLists = html.match(/"@type":"ItemList"/g) || [];
-  assert.equal(itemLists.length, 2);
+  assert.equal(itemLists.length, 3);
   assert.match(html, /"@type":"BreadcrumbList"/);
 });
 
