@@ -8,8 +8,9 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
+import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
+import { airportEntriesFromRoutes } from '../sitemap-serialize.mjs';
 import { localizeLinks } from '../link-localize.mjs';
 import cityMod from './render-city.js';
 import cityFactsMod from './city-facts.js';
@@ -18,6 +19,7 @@ import airportMod from './render-airport.js';
 import airlineMod from './render-airline.js';
 import flightRouteMod from './render-flight-route.js';
 import blogPostMod from './render-blog-post.js';
+import sitemapMod from './render-sitemap.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
@@ -27,6 +29,7 @@ const { renderAirportPage } = airportMod;
 const { renderAirlinePage } = airlineMod;
 const { renderFlightRoutePage } = flightRouteMod;
 const { renderBlogPostPage } = blogPostMod;
+const { renderSitemapPage } = sitemapMod;
 const { setGeoData } = dataMod;
 
 // Populate the generators' geo lookup tables exactly once per process. The
@@ -127,4 +130,39 @@ export async function renderBlogPostHtml(slug, lang) {
   // current language prefix (one canonical set of links serves every language).
   const localized = Object.assign({}, post, { content: localizeLinks(post.content, lang) });
   return renderBlogPostPage(localized, allRoutes, allPosts, lang).html;
+}
+
+// [HTML-SITEMAP] The crawlable sitemap hub (/sitemap, /en/sitemap, …). Pulls
+// the same list endpoints the XML sitemap + entity pages already use (so it's
+// always in sync with what actually exists) and derives the airport set from
+// the route list exactly as sitemap-urls.js does — never linking an airport
+// with no route pages behind it. Popular routes are the top slice by
+// route_score; the full country/city/airport/airline lists are all included.
+const SITEMAP_POPULAR_ROUTE_LIMIT = 100;
+export async function renderSitemapHtml(lang) {
+  const [cities, countries, airlines, airports, routes] = await Promise.all([
+    listCities(),
+    listCountries(),
+    listAirlines(),
+    listAirports(),
+    listRoutePages(),
+  ]);
+  await ensureGeo();
+
+  // Airport code set derived from the routes (the pages that actually exist),
+  // paired with each code's richer list row for its display name.
+  const airportRowByCode = new Map();
+  for (const a of airports) {
+    const code = a && (a.code || a.iata_code);
+    if (code && !airportRowByCode.has(code)) airportRowByCode.set(code, a);
+  }
+  const airportList = [...airportEntriesFromRoutes(routes).keys()]
+    .map((code) => ({ code, airport: airportRowByCode.get(code) || null }));
+
+  // Top routes by real popularity signal; routes with no score sort last.
+  const popularRoutes = [...routes]
+    .sort((a, b) => (Number(b.route_score) || 0) - (Number(a.route_score) || 0))
+    .slice(0, SITEMAP_POPULAR_ROUTE_LIMIT);
+
+  return renderSitemapPage({ countries, cities, airports: airportList, airlines, popularRoutes }, lang).html;
 }
