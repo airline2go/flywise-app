@@ -348,5 +348,13 @@
   "popularStatRoutes": "itinéraires",
   "popularStatAirlines": "compagnies",
   "routeRelatedArticles": "Articles liés",
-  "popularSectionAirlines": "Compagnies aériennes populaires"
+  "popularSectionAirlines": "Compagnies aériennes populaires",
+  "routePriceHeading": "Prix moyens des vols",
+  "routePriceAvgLabel": "Prix moyen",
+  "routePriceRangeLabel": "Fourchette habituelle",
+  "routePriceTrendLabel": "Tendance des prix",
+  "priceTrendDown": "En baisse",
+  "priceTrendUp": "En hausse",
+  "priceTrendStable": "Stable",
+  "routePriceNote": "Moyenne indicative basée sur {count} vérifications de prix récentes."
 }

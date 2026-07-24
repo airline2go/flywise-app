@@ -290,6 +290,41 @@ function buildRouteFactsHtml(route, lang) {
   return `<section class="route-facts-section"><h2>${translate('routeFactsHeading', lang)}</h2><div class="route-insights-grid">${cards.join('')}</div>${breakdownHtml}${freshHtml}</section>`;
 }
 
+// [ROUTE-PRICE-FACTS] Server-rendered, crawlable "average flight prices" from
+// the route's PERSISTED price aggregates (price_avg/min/max/trend, computed over
+// price_sample_count recent checks). This is deliberately separate from the
+// hero's live price box (which stays client-side for real-time booking
+// accuracy): it is framed as an INDICATIVE AVERAGE with its own freshness date,
+// never as a live bookable quote. Fully data-gated — shown only when there's a
+// real average from at least a few samples; nothing is fabricated.
+function buildPriceHtml(route, lang) {
+  if (route.price_avg == null || !(Number(route.price_sample_count) >= 3)) return '';
+  const loc = getLanguage(lang).locale;
+  const ccy = route.price_currency || 'EUR';
+  const card = (valHtml, lbl) => `<div class="route-insight-card"><div class="route-insight-val">${valHtml}</div><div class="route-insight-lbl">${escHtml(lbl)}</div></div>`;
+
+  const cards = [card(escHtml(formatRoutePrice(route.price_avg, ccy, lang)), translate('routePriceAvgLabel', lang))];
+  // Range card only when min and max DISPLAY as different values — a raw
+  // 38.5 vs 39.4 both render "39 €", so gate on the rounded output, not the raw
+  // numbers, to avoid a pointless "39 € – 39 €".
+  if (route.price_min != null && route.price_max != null) {
+    const minStr = formatRoutePrice(route.price_min, ccy, lang);
+    const maxStr = formatRoutePrice(route.price_max, ccy, lang);
+    if (minStr !== maxStr) cards.push(card(`${escHtml(minStr)} – ${escHtml(maxStr)}`, translate('routePriceRangeLabel', lang)));
+  }
+  const trendMap = { down: ['↓', 'priceTrendDown'], up: ['↑', 'priceTrendUp'], stable: ['→', 'priceTrendStable'] };
+  const trend = trendMap[route.price_trend];
+  if (trend) cards.push(card(`${trend[0]} ${escHtml(translate(trend[1], lang))}`, translate('routePriceTrendLabel', lang)));
+
+  const updated = route.price_updated_at ? String(route.price_updated_at).slice(0, 10) : null;
+  const note = format(translate('routePriceNote', lang), { count: Number(route.price_sample_count).toLocaleString(loc) })
+    + (updated ? ` ${format(translate('routeDataUpdated', lang), { date: updated })}` : '');
+
+  return `<section class="route-facts-section"><h2>${translate('routePriceHeading', lang)}</h2>`
+    + `<div class="route-insights-grid">${cards.join('')}</div>`
+    + `<div class="route-facts-note">${escHtml(note)}</div></section>`;
+}
+
 // [E-E-A-T] In-context trust section: a short data-methodology note plus
 // links to the methodology / data-sources / editorial-policy / transparency
 // pages, right next to the route's data. The "last updated" date is NOT
@@ -581,6 +616,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
+  const priceHtml = buildPriceHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
   // Manual FAQ wins, then generated (matching language), then the template default.
   const faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq
@@ -617,6 +653,7 @@ ${breadcrumbHtml}
 </div>
 ${generatedBodyHtml ? `<section class="route-generated-body">${generatedBodyHtml}</section>` : `<section><p>${escHtml(introText)}</p></section>`}
 ${routeFactsHtml}
+${priceHtml}
 ${generatedBodyHtml ? '' : bestTimeHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}

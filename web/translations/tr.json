@@ -348,5 +348,13 @@
   "popularStatRoutes": "rota",
   "popularStatAirlines": "havayolu",
   "routeRelatedArticles": "İlgili makaleler",
-  "popularSectionAirlines": "Popüler havayolları"
+  "popularSectionAirlines": "Popüler havayolları",
+  "routePriceHeading": "Ortalama uçuş fiyatları",
+  "routePriceAvgLabel": "Ortalama fiyat",
+  "routePriceRangeLabel": "Tipik aralık",
+  "routePriceTrendLabel": "Fiyat eğilimi",
+  "priceTrendDown": "Düşüyor",
+  "priceTrendUp": "Yükseliyor",
+  "priceTrendStable": "Sabit",
+  "routePriceNote": "{count} güncel fiyat kontrolüne dayalı gösterge niteliğinde ortalama."
 }
