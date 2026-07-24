@@ -326,5 +326,16 @@
   "routeMetaFrom": " من {price}",
   "routeMetaDistance": "المسافة {distance} كم",
   "routeMetaDirectYes": "رحلات مباشرة متاحة",
-  "routeMetaDirectAll": "رحلات مباشرة فقط"
+  "routeMetaDirectAll": "رحلات مباشرة فقط",
+  "sitemapLabel": "خريطة الموقع",
+  "sitemapPageTitle": "خريطة الموقع – جميع الوجهات والمطارات وشركات الطيران",
+  "sitemapMetaDescription": "تصفّح موقع Airpiv بالكامل من صفحة واحدة: جميع الدول والمدن والمطارات وشركات الطيران التي نغطّيها، إضافةً إلى أشهر مسارات الطيران.",
+  "sitemapH1": "خريطة الموقع",
+  "sitemapIntro": "استكشف كل شيء على Airpiv من مكان واحد. اتبع الروابط أدناه للوصول إلى جميع الدول والمدن والمطارات وشركات الطيران التي نغطّيها، إضافةً إلى أشهر مسارات الطيران لدينا.",
+  "sitemapSectionMainPages": "الصفحات الرئيسية",
+  "sitemapSectionPopularRoutes": "مسارات الطيران الشائعة",
+  "sitemapSectionCountries": "جميع الدول",
+  "sitemapSectionCities": "جميع المدن",
+  "sitemapSectionAirports": "جميع المطارات",
+  "sitemapSectionAirlines": "جميع شركات الطيران"
 }

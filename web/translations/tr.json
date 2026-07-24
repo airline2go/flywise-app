@@ -326,5 +326,16 @@
   "routeMetaFrom": " {price}'den itibaren",
   "routeMetaDistance": "Mesafe {distance} km",
   "routeMetaDirectYes": "Direkt uçuşlar mevcut",
-  "routeMetaDirectAll": "sadece direkt uçuşlar"
+  "routeMetaDirectAll": "sadece direkt uçuşlar",
+  "sitemapLabel": "Site haritası",
+  "sitemapPageTitle": "Site haritası – tüm destinasyonlar, havalimanları ve havayolları",
+  "sitemapMetaDescription": "Airpiv’in tamamını tek bir sayfadan keşfedin: kapsadığımız tüm ülkeler, şehirler, havalimanları ve havayolları ile en popüler uçuş rotaları.",
+  "sitemapH1": "Site haritası",
+  "sitemapIntro": "Airpiv’deki her şeyi tek bir yerden keşfedin. Kapsadığımız tüm ülkelere, şehirlere, havalimanlarına ve havayollarına ve en popüler uçuş rotalarımıza aşağıdaki bağlantılardan ulaşın.",
+  "sitemapSectionMainPages": "Ana sayfalar",
+  "sitemapSectionPopularRoutes": "Popüler uçuş rotaları",
+  "sitemapSectionCountries": "Tüm ülkeler",
+  "sitemapSectionCities": "Tüm şehirler",
+  "sitemapSectionAirports": "Tüm havalimanları",
+  "sitemapSectionAirlines": "Tüm havayolları"
 }

@@ -48,6 +48,9 @@ export async function buildUrlsForLang(lang) {
   ]);
 
   const urls = [];
+  // The HTML sitemap hub itself (one crawlable page linking every entity) —
+  // no meaningful per-entry lastmod, so it carries none.
+  urls.push({ loc: urlFor(lang, 'sitemap'), lastmod: null });
   for (const c of cities) urls.push({ loc: urlFor(lang, `city/${c.city_slug}`), lastmod: toLastmod(c.updated_at || c.created_at) });
   for (const c of countries) urls.push({ loc: urlFor(lang, `country/${c.code}`), lastmod: toLastmod(c.updated_at || c.created_at) });
   for (const [code, lastmod] of airportEntriesFromRoutes(routes)) urls.push({ loc: urlFor(lang, `airport/${code}`), lastmod });

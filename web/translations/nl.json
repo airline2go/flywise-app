@@ -326,5 +326,16 @@
   "routeMetaFrom": " vanaf {price}",
   "routeMetaDistance": "Afstand {distance} km",
   "routeMetaDirectYes": "Directe vluchten beschikbaar",
-  "routeMetaDirectAll": "alleen directe vluchten"
+  "routeMetaDirectAll": "alleen directe vluchten",
+  "sitemapLabel": "Sitemap",
+  "sitemapPageTitle": "Sitemap – alle bestemmingen, luchthavens en luchtvaartmaatschappijen",
+  "sitemapMetaDescription": "Blader door heel Airpiv vanaf één pagina: alle landen, steden, luchthavens en luchtvaartmaatschappijen die we behandelen, plus de populairste vluchtroutes.",
+  "sitemapH1": "Sitemap",
+  "sitemapIntro": "Ontdek alles op Airpiv vanaf één plek. Volg de links hieronder naar alle landen, steden, luchthavens en luchtvaartmaatschappijen die we behandelen, samen met onze populairste vluchtroutes.",
+  "sitemapSectionMainPages": "Hoofdpagina’s",
+  "sitemapSectionPopularRoutes": "Populaire vluchtroutes",
+  "sitemapSectionCountries": "Alle landen",
+  "sitemapSectionCities": "Alle steden",
+  "sitemapSectionAirports": "Alle luchthavens",
+  "sitemapSectionAirlines": "Alle luchtvaartmaatschappijen"
 }

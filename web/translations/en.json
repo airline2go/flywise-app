@@ -326,5 +326,16 @@
   "routeMetaFrom": " from {price}",
   "routeMetaDistance": "Distance {distance} km",
   "routeMetaDirectYes": "Direct flights available",
-  "routeMetaDirectAll": "direct flights only"
+  "routeMetaDirectAll": "direct flights only",
+  "sitemapLabel": "Sitemap",
+  "sitemapPageTitle": "Sitemap – all destinations, airports & airlines",
+  "sitemapMetaDescription": "Browse the whole of Airpiv from one page: every country, city, airport and airline we cover, plus the most popular flight routes.",
+  "sitemapH1": "Sitemap",
+  "sitemapIntro": "Explore everything on Airpiv from one place. Follow the links below to every country, city, airport and airline we cover, along with our most popular flight routes.",
+  "sitemapSectionMainPages": "Main pages",
+  "sitemapSectionPopularRoutes": "Popular flight routes",
+  "sitemapSectionCountries": "All countries",
+  "sitemapSectionCities": "All cities",
+  "sitemapSectionAirports": "All airports",
+  "sitemapSectionAirlines": "All airlines"
 }

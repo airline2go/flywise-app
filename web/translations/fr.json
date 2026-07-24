@@ -326,5 +326,16 @@
   "routeMetaFrom": " à partir de {price}",
   "routeMetaDistance": "Distance {distance} km",
   "routeMetaDirectYes": "Vols directs disponibles",
-  "routeMetaDirectAll": "vols directs uniquement"
+  "routeMetaDirectAll": "vols directs uniquement",
+  "sitemapLabel": "Plan du site",
+  "sitemapPageTitle": "Plan du site – toutes les destinations, aéroports et compagnies",
+  "sitemapMetaDescription": "Parcourez tout Airpiv depuis une seule page : tous les pays, villes, aéroports et compagnies aériennes que nous couvrons, ainsi que les itinéraires de vol les plus populaires.",
+  "sitemapH1": "Plan du site",
+  "sitemapIntro": "Explorez tout Airpiv depuis un seul endroit. Suivez les liens ci-dessous vers tous les pays, villes, aéroports et compagnies aériennes que nous couvrons, ainsi que nos itinéraires de vol les plus populaires.",
+  "sitemapSectionMainPages": "Pages principales",
+  "sitemapSectionPopularRoutes": "Itinéraires de vol populaires",
+  "sitemapSectionCountries": "Tous les pays",
+  "sitemapSectionCities": "Toutes les villes",
+  "sitemapSectionAirports": "Tous les aéroports",
+  "sitemapSectionAirlines": "Toutes les compagnies aériennes"
 }
