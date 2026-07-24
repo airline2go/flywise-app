@@ -4,14 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { ADMIN_COLORS } from './theme';
 import { labelStyle, inputStyle } from './EntityModal';
 
-// Live airport/city search, matching the old admin.js's route-page
-// editor — calls flywise-server's public GET /search/airports directly
-// from the browser (no admin auth needed for this endpoint, so no
-// Route Handler proxy hop). On picking a real airport result, reports
-// {code, city, country, lat, lng} back to the caller; a "city" result
-// is skipped (route pages need real airport coordinates — see
-// [ROUTE-PAGES] in search.routes.js for why cities carry no lat/lng).
-const API_BASE = 'https://api.airpiv.com';
+// Live airport/city search for the route-page editor. Goes through the
+// same-origin /admin/api/search-airports proxy (NOT api.airpiv.com directly):
+// the API's CORS allowlist only names https://airpiv.com, so a direct browser
+// fetch silently fails on preview deployments / other origins and the dropdown
+// shows nothing. The proxy makes it server-to-server, so it works everywhere.
+// On picking a real airport result, reports {code, city, country, lat, lng}
+// back to the caller; a "city" result is skipped (route pages need real airport
+// coordinates — see [ROUTE-PAGES] in search.routes.js for why cities carry no
+// lat/lng).
+const SEARCH_URL = '/admin/api/search-airports';
 
 export default function AirportAutocomplete({ label, initialText, onSelect }) {
   const [query, setQuery] = useState(initialText || '');
@@ -28,7 +30,7 @@ export default function AirportAutocomplete({ label, initialText, onSelect }) {
     debounceRef.current = setTimeout(async () => {
       if (query.trim().length < 2) { setResults([]); return; }
       try {
-        const res = await fetch(`${API_BASE}/search/airports?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(query.trim())}`);
         const data = await res.json();
         setResults((data.airports || []).filter((a) => a.type === 'airport'));
       } catch {

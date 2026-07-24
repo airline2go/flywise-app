@@ -9,7 +9,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ADMIN_COLORS } from './theme';
 import { labelStyle, inputStyle } from './EntityModal';
 
-const API_BASE = 'https://api.airpiv.com';
+// Same-origin proxy (not api.airpiv.com directly) so the airport search works
+// on every origin — see AirportAutocomplete.jsx for the CORS reasoning.
+const SEARCH_URL = '/admin/api/search-airports';
 const MAX_AIRPORTS = 40;
 
 export default function RouteMatrixModal({ onClose, onQuickCreate }) {
@@ -27,7 +29,7 @@ export default function RouteMatrixModal({ onClose, onQuickCreate }) {
     debounceRef.current = setTimeout(async () => {
       if (query.trim().length < 2) { setResults([]); return; }
       try {
-        const res = await fetch(`${API_BASE}/search/airports?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(query.trim())}`);
         const data = await res.json();
         setResults((data.airports || []).filter((a) => a.type === 'airport'));
       } catch {
