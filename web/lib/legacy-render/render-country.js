@@ -1,4 +1,4 @@
-const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { localizeCity, localizeCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -132,6 +132,7 @@ ${faqHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
+    speakable: speakableSpec('.country-faq-q'),
   };
 
   // [STANDALONE-BREADCRUMB] Standalone top-level BreadcrumbList block

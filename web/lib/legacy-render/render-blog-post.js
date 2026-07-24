@@ -1,5 +1,5 @@
 const { parse } = require('node-html-parser');
-const { escHtml, renderShell, jsonLdScript } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, speakableSpec } = require('./shell');
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
 const { blogHreflangUrls } = require('./blog-hreflang');
@@ -201,6 +201,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
     articleSection: 'Reisetipps',
     wordCount,
     inLanguage: de ? 'de-DE' : 'en-GB',
+    speakable: speakableSpec('.post-faq-q'),
   };
 
   const cover = post.cover_image_url ? `<img class="post-cover" src="${escHtml(post.cover_image_url)}" alt="${escHtml(post.title)}" loading="lazy">` : '';

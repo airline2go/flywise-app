@@ -71,6 +71,17 @@ const WEBSITE_SCHEMA = {
 // previews/crawlers use to pick the right localized rendering.
 const OG_LOCALE = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR', es: 'es_ES', fr: 'fr_FR', it: 'it_IT', nl: 'nl_NL', tr: 'tr_TR' };
 
+// [SPEAKABLE] A SpeakableSpecification for voice assistants (Google Assistant
+// TTS): the page's <h1> plus its FAQ questions — short, self-contained, read-
+// aloud-friendly text. `speakable` is only valid on WebPage / Article (its
+// schema.org domain), so it is attached to those nodes on the route/city/
+// country/blog pages, never onto the airport/airline Place/Organization nodes
+// where it would not validate. Each caller passes its own FAQ-question CSS
+// selector since the class name differs per page type.
+function speakableSpec(...selectors) {
+  return { '@type': 'SpeakableSpecification', cssSelector: ['h1', ...selectors.filter(Boolean)] };
+}
+
 // Root-relative home URL for a language, honoring the same
 // default-language-stays-unprefixed rule as every generated page URL.
 function homeHref(lang) {
@@ -162,4 +173,4 @@ ${scripts}
 `;
 }
 
-module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA };
+module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec };

@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<sitemap>
-<loc>https://airpiv.com/sitemap-pages.xml</loc>
-</sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-en.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-de.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-ar.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-es.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-fr.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-it.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-nl.xml</loc></sitemap>
-<sitemap><loc>https://airpiv.com/sitemap-tr.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-pages.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-routes.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-cities.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-countries.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-airports.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-airlines.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-blog.xml</loc></sitemap>
+<sitemap><loc>https://airpiv.com/sitemap-popular.xml</loc></sitemap>
 </sitemapindex>
