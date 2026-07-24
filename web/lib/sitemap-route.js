@@ -1,12 +1,12 @@
-// Shared GET handler for the 7 per-language sitemap route handlers
-// (app/sitemap-{lang}.xml/route.js). Each of those files is a one-line
-// re-export binding this factory to its language code, so the actual XML
-// building logic lives in exactly one place.
-import { buildUrlsForLang, urlsetXml } from './sitemap-urls';
+// Shared GET handler for the per-type sitemap route handlers
+// (app/sitemap-{type}.xml/route.js). Each of those files is a one-line binding
+// of this factory to its type's URL builder (from sitemap-urls.js), so the
+// actual XML building logic lives in exactly one place.
+import { urlsetXml } from './sitemap-urls';
 
-export function makeSitemapRoute(lang) {
+export function makeTypeSitemapRoute(buildUrls) {
   return async function GET() {
-    const urls = await buildUrlsForLang(lang);
+    const urls = await buildUrls();
     return new Response(urlsetXml(urls), {
       headers: {
         'content-type': 'application/xml; charset=utf-8',

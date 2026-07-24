@@ -1,4 +1,4 @@
-const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { localizeCity, localizeCountry, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -223,6 +223,7 @@ ${eeatHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
+    speakable: speakableSpec('.city-faq-q'),
   };
 
   // [STANDALONE-BREADCRUMB] Emitted as its own top-level BreadcrumbList

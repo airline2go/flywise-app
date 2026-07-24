@@ -1,4 +1,4 @@
-const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { localizeCity, getAlternativeAirports } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -625,6 +625,7 @@ ${moreToDestinationHtml}
     url,
     inLanguage: getLanguage(lang).locale,
     availableLanguage: LANGUAGES.map((l) => l.locale),
+    speakable: speakableSpec('.route-faq-q'),
     mainEntity: {
       '@type': 'FAQPage',
       mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })),
