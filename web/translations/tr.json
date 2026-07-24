@@ -337,5 +337,14 @@
   "sitemapSectionCountries": "Tüm ülkeler",
   "sitemapSectionCities": "Tüm şehirler",
   "sitemapSectionAirports": "Tüm havalimanları",
-  "sitemapSectionAirlines": "Tüm havayolları"
+  "sitemapSectionAirlines": "Tüm havayolları",
+  "popularLabel": "Popüler destinasyonlar",
+  "popularPageTitle": "Popüler uçuş destinasyonları ve en çok hizmet verilen rotalar",
+  "popularMetaDescription": "Airpiv'deki en iyi bağlantılı uçuş destinasyonlarını ve en fazla havayolu tarafından hizmet verilen rotaları keşfedin. Fiyatları karşılaştırın ve en iyi şehirlere ucuz uçuşlar bulun.",
+  "popularH1": "Popüler uçuş destinasyonları",
+  "popularIntro": "Bunlar Airpiv'de en fazla uçuş bağlantısına sahip destinasyonlar ve ardından en fazla havayolu tarafından hizmet verilen rotalardır. Tüm veriler gerçekten takip ettiğimiz rotalardan gelir — canlı fiyatları karşılaştırmak için bir şehir veya rota seçin.",
+  "popularSectionDestinations": "Öne çıkan destinasyonlar",
+  "popularSectionRoutes": "En çok hizmet verilen uçuş rotaları",
+  "popularStatRoutes": "rota",
+  "popularStatAirlines": "havayolu"
 }

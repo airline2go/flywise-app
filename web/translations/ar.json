@@ -337,5 +337,14 @@
   "sitemapSectionCountries": "جميع الدول",
   "sitemapSectionCities": "جميع المدن",
   "sitemapSectionAirports": "جميع المطارات",
-  "sitemapSectionAirlines": "جميع شركات الطيران"
+  "sitemapSectionAirlines": "جميع شركات الطيران",
+  "popularLabel": "الوجهات الشائعة",
+  "popularPageTitle": "أشهر وجهات الطيران والمسارات الأكثر تشغيلاً",
+  "popularMetaDescription": "اكتشف أكثر وجهات الطيران ارتباطاً على Airpiv والمسارات التي تخدمها أكبر عدد من شركات الطيران. قارن الأسعار وابحث عن رحلات رخيصة إلى أبرز المدن.",
+  "popularH1": "أشهر وجهات الطيران",
+  "popularIntro": "هذه هي الوجهات التي تضم أكبر عدد من روابط الطيران على Airpiv، تليها المسارات التي تخدمها أكبر عدد من شركات الطيران. جميع الأرقام مأخوذة من المسارات التي نتتبّعها فعلياً — اختر مدينة أو مساراً لمقارنة الأسعار المباشرة.",
+  "popularSectionDestinations": "أبرز الوجهات",
+  "popularSectionRoutes": "مسارات الطيران الأكثر تشغيلاً",
+  "popularStatRoutes": "مسارات",
+  "popularStatAirlines": "شركات طيران"
 }

@@ -48,9 +48,10 @@ export async function buildUrlsForLang(lang) {
   ]);
 
   const urls = [];
-  // The HTML sitemap hub itself (one crawlable page linking every entity) —
-  // no meaningful per-entry lastmod, so it carries none.
+  // The HTML sitemap hub + the "popular destinations" category page — both are
+  // crawlable hub pages with no meaningful per-entry lastmod, so they carry none.
   urls.push({ loc: urlFor(lang, 'sitemap'), lastmod: null });
+  urls.push({ loc: urlFor(lang, 'popular'), lastmod: null });
   for (const c of cities) urls.push({ loc: urlFor(lang, `city/${c.city_slug}`), lastmod: toLastmod(c.updated_at || c.created_at) });
   for (const c of countries) urls.push({ loc: urlFor(lang, `country/${c.code}`), lastmod: toLastmod(c.updated_at || c.created_at) });
   for (const [code, lastmod] of airportEntriesFromRoutes(routes)) urls.push({ loc: urlFor(lang, `airport/${code}`), lastmod });

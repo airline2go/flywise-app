@@ -68,6 +68,7 @@ function renderSitemapPage(data, lang) {
   // ── Main / trust pages (same fixed static URLs every language shares) ──
   const mainPages = [
     { href: homeHref(lang), label: translate('homeLabel', lang) },
+    { href: pathFor(lang, 'popular'), label: translate('popularLabel', lang) },
     { href: '/blog.html', label: translate('blogLabel', lang) },
     { href: '/about.html', label: translate('aboutLabel', lang) },
     { href: '/contact.html', label: translate('contactLabel', lang) },
