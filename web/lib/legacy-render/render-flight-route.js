@@ -72,6 +72,14 @@ function formatHoursMinutes(min, lang) {
   return h + translate('hoursAbbrev', lang) + (m > 0 ? ` ${m}${translate('minutesAbbrev', lang)}` : '');
 }
 
+// ISO-8601 duration (e.g. 90 -> "PT1H30M") for schema.org estimatedFlightDuration.
+function isoDuration(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  const body = `${h ? `${h}H` : ''}${m ? `${m}M` : ''}`;
+  return `PT${body || '0M'}`;
+}
+
 function buildFaqItems(route, lang) {
   const haulQuestion = route.distance_km != null
     ? {
@@ -447,7 +455,7 @@ function buildRouteMetaDescription(route, lang) {
   return parts.join('. ') + '.';
 }
 
-function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = []) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
@@ -563,6 +571,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const moreFromOriginHtml = cityRouteSectionHtml(cityLinks && cityLinks.fromOrigin, translate('flightsFrom', lang), route.origin_city);
   const moreToDestinationHtml = cityRouteSectionHtml(cityLinks && cityLinks.toDestination, translate('flightsTo', lang), route.destination_city);
 
+  // [ROUTE-RELATED-ARTICLES] Blog posts that genuinely mention this route's
+  // cities (matched in render.js), linking routes → the blog. Reuses the
+  // related-routes card styling; omitted when there are no matching articles
+  // (e.g. every language without a blog).
+  const relatedArticlesHtml = (relatedArticles && relatedArticles.length)
+    ? `<section class="route-citylinks-section"><h2>${translate('routeRelatedArticles', lang)}</h2><div class="related-routes-grid">${relatedArticles.map((p) => `<a class="related-route-card" href="${pathFor(lang, `blog/${encodeURIComponent(p.slug)}`)}">${escHtml(p.title)}</a>`).join('')}</div></section>`
+    : '';
+
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
@@ -614,6 +630,7 @@ ${trustHtml}
 ${relatedRoutesHtml}
 ${moreFromOriginHtml}
 ${moreToDestinationHtml}
+${relatedArticlesHtml}
   </div>
 </main>`;
 
@@ -634,15 +651,21 @@ ${moreToDestinationHtml}
 
   const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbItems };
 
-  // [FLIGHT-SCHEMA] New — schema.org Flight, giving search engines a
-  // structured departure/arrival-airport pair for this route in addition
-  // to the generic WebPage/FAQPage/BreadcrumbList schemas above.
+  // [FLIGHT-SCHEMA] schema.org Flight, giving search engines a structured
+  // departure/arrival-airport pair for this route in addition to the generic
+  // WebPage/FAQPage/BreadcrumbList schemas above.
+  // [TRAVEL-SCHEMA] Enriched with the route's REAL travel facts when known:
+  // flightDistance (km) and estimatedFlightDuration as an ISO-8601 duration
+  // from the persisted average flight time. Both are data-gated — a route with
+  // no distance/duration simply omits that property, never a fabricated value.
   const flightSchema = {
     '@context': 'https://schema.org',
     '@type': 'Flight',
     departureAirport: { '@type': 'Airport', iataCode: route.origin_iata, name: route.origin_city },
     arrivalAirport: { '@type': 'Airport', iataCode: route.destination_iata, name: route.destination_city },
   };
+  if (route.distance_km != null) flightSchema.flightDistance = `${route.distance_km} km`;
+  if (route.avg_duration_min != null) flightSchema.estimatedFlightDuration = isoDuration(route.avg_duration_min);
 
   // [ITEMLIST-SCHEMA] Structured ItemList mirroring the visible "similar
   // routes" section — an ordered list of linked route pages for search
@@ -662,8 +685,26 @@ ${moreToDestinationHtml}
     }
     : null;
 
+  // [ARTICLES-ITEMLIST] Structured ItemList mirroring the visible "related
+  // articles" section — linked blog posts, emitted only when there are matches.
+  const articlesItemListSchema = (relatedArticles && relatedArticles.length)
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: translate('routeRelatedArticles', lang),
+      numberOfItems: relatedArticles.length,
+      itemListElement: relatedArticles.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: urlFor(lang, `blog/${encodeURIComponent(p.slug)}`),
+        name: p.title,
+      })),
+    }
+    : null;
+
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}\n${jsonLdScript(flightSchema)}\n`
-    + `${relatedItemListSchema ? jsonLdScript(relatedItemListSchema) + '\n' : ''}${ROUTE_HEAD_EXTRA_STATIC}`;
+    + `${relatedItemListSchema ? jsonLdScript(relatedItemListSchema) + '\n' : ''}`
+    + `${articlesItemListSchema ? jsonLdScript(articlesItemListSchema) + '\n' : ''}${ROUTE_HEAD_EXTRA_STATIC}`;
 
   // [THIN-CONTENT-NOINDEX] A route with no real intelligence data at all
   // (no distance, no average/fastest duration, no observed airline count, and
