@@ -313,7 +313,9 @@ const INTERNAL_LINK_CSS = `.route-hero-cities a{color:inherit;text-decoration:no
   + `.route-eeat p{font-size:13.5px;color:var(--tx3);line-height:1.55}`
   + `.route-eeat-links{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}`
   + `.route-eeat-links a{color:var(--teal);text-decoration:none;font-weight:600}`
-  + `.route-eeat-links a:hover{text-decoration:underline}`;
+  + `.route-eeat-links a:hover{text-decoration:underline}`
+  + `.route-generated-body h2{font-family:'Syne',sans-serif;font-size:1.2rem;color:var(--tx);margin:22px 0 10px}`
+  + `.route-generated-body p{font-size:14.5px;line-height:1.7;color:var(--tx2);margin-bottom:12px}`;
 const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}</style>`;
 
 // [LIVE-PRICE-WIDGET] The price box, "prices checked today" trust signal,
@@ -463,11 +465,17 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   // the data-driven default built here. The <title> is deliberately STABLE
   // (flight time / distance / airlines) with NO price; the volatile "from"
   // price appears only in the meta description, so the title never churns.
-  const title = route.custom_title || (route.seo && route.seo.title) || buildRouteTitle(route, lang);
-  const description = route.custom_meta_description || (route.seo && route.seo.metaDescription) || buildRouteMetaDescription(route, lang);
+  // [ROUTE-SEO-GENERATED] The engine generates content in one language at a
+  // time (route.seo_lang), so it must only be used when it matches the
+  // current page's language — otherwise German copy would leak onto /en, /fr, …
+  const gen = !!(route.seo_lang && route.seo_lang === lang);
+  const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang);
+  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang);
 
   const urls = urlsFor(`flights/${encodeURIComponent(route.slug)}`);
   const url = urls[lang];
+  // Server-generated from data blocks (never user input) — safe as raw HTML.
+  const generatedBodyHtml = (gen && !route.intro_text && route.seo_intro_html) ? route.seo_intro_html : null;
   const introText = route.intro_text || buildDynamicIntro(route, lang);
   const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
@@ -558,7 +566,10 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
-  const faqItems = buildFaqItems(route, lang);
+  // Manual FAQ wins, then generated (matching language), then the template default.
+  const faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq
+    : (gen && Array.isArray(route.seo_faq) && route.seo_faq.length) ? route.seo_faq
+      : buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
   // [CTR-TITLE] The <title>/og:title carry the "… | Compare & Save" call to
@@ -568,6 +579,8 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks) {
   // the generated template has exactly one, and an admin custom_title rarely
   // does (and still renders fine either way).
   const heading = String(title).split(' | ')[0];
+  // The generated body's own "booking strategy" section already covers best-time
+  // advice, so the templated bestTimeHtml is dropped to avoid saying it twice.
   const mainContent = `<main id="route-main">
   <div id="route-content">
 ${breadcrumbHtml}
@@ -586,9 +599,9 @@ ${breadcrumbHtml}
   <div class="route-trust-signal" id="route-trust-signal" style="display:none"></div>
   <a href="${bookingUrl}" class="route-cta">${translate('searchFlightsNow', lang)}</a>
 </div>
-<section><p>${escHtml(introText)}</p></section>
+${generatedBodyHtml ? `<section class="route-generated-body">${generatedBodyHtml}</section>` : `<section><p>${escHtml(introText)}</p></section>`}
 ${routeFactsHtml}
-${bestTimeHtml}
+${generatedBodyHtml ? '' : bestTimeHtml}
 ${airportInfoHtml}
 ${altAirportsHtml}
 ${airlinesHtml}

@@ -58,16 +58,41 @@ test('non-EUR currency is rendered with its code', () => {
   assert.match(m, /ab 120 CHF\./);
 });
 
-// ─── Precedence: manual > engine (route.seo) > generated default ──────────
-test('route.seo.title/metaDescription (engine output) is used when present', () => {
-  const html = renderFlightRoutePage(R({ distance_km: 1297, direct_flight_available: true, seo: { title: 'ENGINE TITLE X', metaDescription: 'ENGINE META X' } }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
-  assert.match(html, /<title>ENGINE TITLE X<\/title>/);
-  assert.match(html, /<meta name="description" content="ENGINE META X">/);
+// ─── Precedence: manual > engine-generated (matching language) > default ──
+test('German page uses the engine-generated title/meta/body/FAQ when seo_lang matches', () => {
+  const route = R({ seo_lang: 'de', seo_title: 'ENGINE DE TITLE', seo_meta_description: 'ENGINE DE META', seo_intro_html: '<p>Einzigartiger Text.</p><h2>Preisanalyse</h2><p>Ab 29 €.</p>', seo_faq: [{ question: 'Wie lange dauert der Flug?', answer: 'Rund 50 Min.' }], distance_km: 202, direct_flight_available: true });
+  const html = renderFlightRoutePage(route, 'de', [], { fromOrigin: [], toDestination: [] }).html;
+  assert.match(html, /<title>ENGINE DE TITLE<\/title>/);
+  assert.match(html, /<meta name="description" content="ENGINE DE META">/);
+  assert.match(html, /<section class="route-generated-body"><p>Einzigartiger Text\.<\/p><h2>Preisanalyse<\/h2>/); // body rendered as raw HTML
+  assert.match(html, /Wie lange dauert der Flug\?/); // generated FAQ, visible
+  assert.match(html, /"name":"Wie lange dauert der Flug\?"/); // and in the FAQPage JSON-LD
+  // templated best-time prose suppressed (the body already covers it) — check the
+  // actual <section> tag, not the class name (which is always present in the
+  // inlined static CSS regardless of whether the section renders)
+  assert.doesNotMatch(html, /<section class="route-besttime-section">/);
 });
 
-test('an admin custom_title still wins over the engine and the default', () => {
-  const html = renderFlightRoutePage(R({ distance_km: 1297, custom_title: 'MANUAL TITLE', seo: { title: 'ENGINE TITLE X' } }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
+test('a non-German page does NOT use German generated content — localized default instead', () => {
+  const route = R({ seo_lang: 'de', seo_title: 'ENGINE DE TITLE', seo_meta_description: 'ENGINE DE META', seo_intro_html: '<p>Einzigartig.</p>', seo_faq: [{ question: 'X', answer: 'Y' }], destination_city: 'Rome', distance_km: 1297, direct_flight_available: true, cached_price: 83, cached_currency: 'EUR' });
+  const html = renderFlightRoutePage(route, 'en', [], { fromOrigin: [], toDestination: [] }).html;
+  assert.doesNotMatch(html, /ENGINE DE TITLE/);
+  // the actual <section> tag, not the class name (always present in the
+  // inlined static CSS regardless of whether the section renders)
+  assert.doesNotMatch(html, /<section class="route-generated-body">/);
+  assert.match(html, /<title>Amsterdam → Rome Flights \| Flight Time, Distance &amp; Airlines<\/title>/);
+});
+
+test('an admin custom_title still wins over the engine on the matching language', () => {
+  const html = renderFlightRoutePage(R({ seo_lang: 'de', seo_title: 'ENGINE DE TITLE', custom_title: 'MANUAL TITLE', distance_km: 202 }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
   assert.match(html, /<title>MANUAL TITLE<\/title>/);
+});
+
+test('a manual intro_text suppresses the generated body (manual wins)', () => {
+  const html = renderFlightRoutePage(R({ seo_lang: 'de', seo_intro_html: '<p>GENERATED</p>', intro_text: 'Handgeschriebene Einleitung.', distance_km: 202 }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
+  assert.doesNotMatch(html, /<section class="route-generated-body">/);
+  assert.doesNotMatch(html, /GENERATED<\/p>/);
+  assert.match(html, /Handgeschriebene Einleitung\./);
 });
 
 test('with no manual/engine content, the generated default title+meta render', () => {
