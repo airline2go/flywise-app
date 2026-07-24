@@ -337,5 +337,14 @@
   "sitemapSectionCountries": "All countries",
   "sitemapSectionCities": "All cities",
   "sitemapSectionAirports": "All airports",
-  "sitemapSectionAirlines": "All airlines"
+  "sitemapSectionAirlines": "All airlines",
+  "popularLabel": "Popular destinations",
+  "popularPageTitle": "Popular flight destinations & most-served routes",
+  "popularMetaDescription": "Discover the most connected flight destinations on Airpiv and the routes served by the most airlines. Compare prices and find cheap flights to top cities.",
+  "popularH1": "Popular flight destinations",
+  "popularIntro": "These are the destinations with the most flight connections on Airpiv, followed by the routes served by the largest number of airlines. Every figure comes from the routes we actually track — pick a city or route to compare live prices.",
+  "popularSectionDestinations": "Top destinations",
+  "popularSectionRoutes": "Most-served flight routes",
+  "popularStatRoutes": "routes",
+  "popularStatAirlines": "airlines"
 }

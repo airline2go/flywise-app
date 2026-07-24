@@ -20,6 +20,7 @@ import airlineMod from './render-airline.js';
 import flightRouteMod from './render-flight-route.js';
 import blogPostMod from './render-blog-post.js';
 import sitemapMod from './render-sitemap.js';
+import popularMod from './render-popular.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
@@ -30,6 +31,7 @@ const { renderAirlinePage } = airlineMod;
 const { renderFlightRoutePage } = flightRouteMod;
 const { renderBlogPostPage } = blogPostMod;
 const { renderSitemapPage } = sitemapMod;
+const { renderPopularPage } = popularMod;
 const { setGeoData } = dataMod;
 
 // Populate the generators' geo lookup tables exactly once per process. The
@@ -165,4 +167,46 @@ export async function renderSitemapHtml(lang) {
     .slice(0, SITEMAP_POPULAR_ROUTE_LIMIT);
 
   return renderSitemapPage({ countries, cities, airports: airportList, airlines, popularRoutes }, lang).html;
+}
+
+// [POPULAR-DESTINATIONS] The /popular category hub. Rankings are computed from
+// the same cached route/city lists the rest of the site uses, from real
+// persisted signals only: destinations by the count of tracked routes arriving
+// at the city, and "most-served routes" by observed airline_count (route_score
+// is not populated yet, so it is deliberately not used here).
+const POPULAR_DESTINATION_LIMIT = 30;
+const POPULAR_ROUTE_LIMIT = 30;
+export async function renderPopularHtml(lang) {
+  const [routes, cities] = await Promise.all([listRoutePages(), listCities()]);
+  await ensureGeo();
+
+  const cityBySlug = new Map();
+  const iataToSlug = new Map();
+  for (const c of cities) {
+    cityBySlug.set(c.city_slug, c);
+    for (const code of c.airport_codes || []) iataToSlug.set(code, c.city_slug);
+  }
+
+  // Arriving-route count per destination city (only cities that have a real
+  // page, i.e. resolve through the geo index) — the connectivity signal.
+  const arriving = new Map(); // slug -> count
+  for (const r of routes) {
+    const slug = iataToSlug.get(r.destination_iata);
+    if (!slug) continue;
+    arriving.set(slug, (arriving.get(slug) || 0) + 1);
+  }
+  const destinations = [...arriving.entries()]
+    .map(([slug, routeCount]) => {
+      const c = cityBySlug.get(slug);
+      return { slug, iata: (c && c.airport_codes && c.airport_codes[0]) || null, rawName: (c && c.name) || slug, routeCount };
+    })
+    .sort((a, b) => b.routeCount - a.routeCount || String(a.rawName).localeCompare(String(b.rawName)))
+    .slice(0, POPULAR_DESTINATION_LIMIT);
+
+  const topRoutes = routes
+    .filter((r) => r.airline_count != null && Number(r.airline_count) > 0)
+    .sort((a, b) => (Number(b.airline_count) || 0) - (Number(a.airline_count) || 0))
+    .slice(0, POPULAR_ROUTE_LIMIT);
+
+  return renderPopularPage({ destinations, topRoutes }, lang).html;
 }
