@@ -32,7 +32,33 @@ const { renderFlightRoutePage } = flightRouteMod;
 const { renderBlogPostPage } = blogPostMod;
 const { renderSitemapPage } = sitemapMod;
 const { renderPopularPage } = popularMod;
-const { setGeoData } = dataMod;
+const { setGeoData, detectCitiesInText, localizeCity } = dataMod;
+
+// [ROUTE-RELATED-ARTICLES] Blog posts whose text genuinely mentions this
+// route's origin or destination city — the inverse of the blog page's
+// "matching flight routes" block. The blog is German-source with optional
+// English translations (the other 5 languages currently have none), so
+// listBlogPosts(lang) returns [] there and the section is simply omitted:
+// links are only ever emitted to a post that really exists in that language.
+// City matching is done in the page's own language (post text + route city
+// name both localized to `lang`), so an English page matches "Munich" and a
+// German page matches "München". Nothing is fabricated.
+const ROUTE_RELATED_ARTICLE_LIMIT = 4;
+function computeRelatedArticles(route, posts, lang) {
+  if (!posts || !posts.length) return [];
+  const origin = String(localizeCity(route.origin_city, route.origin_iata, lang) || '').toLowerCase();
+  const dest = String(localizeCity(route.destination_city, route.destination_iata, lang) || '').toLowerCase();
+  return posts
+    .map((p) => {
+      const cities = detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`).map((c) => c.toLowerCase());
+      const score = (cities.includes(origin) ? 1 : 0) + (cities.includes(dest) ? 1 : 0);
+      return { post: p, score };
+    })
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, ROUTE_RELATED_ARTICLE_LIMIT)
+    .map((s) => s.post);
+}
 
 // Populate the generators' geo lookup tables exactly once per process. The
 // tables are idempotent (same lists → same tables), so this is safe under
@@ -114,10 +140,11 @@ export async function renderFlightRouteHtml(slug, lang) {
   // Related routes are computed from the full route list exactly as the build
   // script did (related-routes.js is its verbatim port) — not the server's
   // /related endpoint — so the "Similar flight routes" section matches 1:1.
-  const routeList = await listRoutePages();
+  const [routeList, posts] = await Promise.all([listRoutePages(), listBlogPosts(lang)]);
   const related = computeRelatedRoutes(routeRaw, routeList);
   const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
-  return renderFlightRoutePage(routeRaw, lang, related, cityLinks).html;
+  const relatedArticles = computeRelatedArticles(routeRaw, posts, lang);
+  return renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
 }
 
 export async function renderBlogPostHtml(slug, lang) {
