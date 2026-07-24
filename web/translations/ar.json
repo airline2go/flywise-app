@@ -348,5 +348,13 @@
   "popularStatRoutes": "مسارات",
   "popularStatAirlines": "شركات طيران",
   "routeRelatedArticles": "مقالات ذات صلة",
-  "popularSectionAirlines": "شركات الطيران الشائعة"
+  "popularSectionAirlines": "شركات الطيران الشائعة",
+  "routePriceHeading": "متوسط أسعار الرحلات",
+  "routePriceAvgLabel": "متوسط السعر",
+  "routePriceRangeLabel": "النطاق المعتاد",
+  "routePriceTrendLabel": "اتجاه الأسعار",
+  "priceTrendDown": "منخفض",
+  "priceTrendUp": "مرتفع",
+  "priceTrendStable": "مستقر",
+  "routePriceNote": "متوسط استرشادي بناءً على {count} عمليات تحقّق حديثة من الأسعار."
 }

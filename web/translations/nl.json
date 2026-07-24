@@ -348,5 +348,13 @@
   "popularStatRoutes": "routes",
   "popularStatAirlines": "maatschappijen",
   "routeRelatedArticles": "Gerelateerde artikelen",
-  "popularSectionAirlines": "Populaire luchtvaartmaatschappijen"
+  "popularSectionAirlines": "Populaire luchtvaartmaatschappijen",
+  "routePriceHeading": "Gemiddelde vluchtprijzen",
+  "routePriceAvgLabel": "Gemiddelde prijs",
+  "routePriceRangeLabel": "Gebruikelijke marge",
+  "routePriceTrendLabel": "Prijstrend",
+  "priceTrendDown": "Dalend",
+  "priceTrendUp": "Stijgend",
+  "priceTrendStable": "Stabiel",
+  "routePriceNote": "Indicatief gemiddelde op basis van {count} recente prijscontroles."
 }
