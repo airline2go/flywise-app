@@ -381,6 +381,22 @@ function buildLiveScript(route, lang) {
   return `<script>
 (function(){
 var PROXY = 'https://api.airpiv.com';
+// [I18N-SCRIPT-SAFE] Every translated label used below is embedded via
+// JSON.stringify, never inline in a single-quoted string — otherwise any value
+// containing an apostrophe (e.g. French "aujourd'hui") or quote would close the
+// JS string early and break this whole <script>, silently killing the live
+// price for that entire language.
+var L = {
+  priceLabel: ${JSON.stringify(translate('priceLabel', lang))},
+  priceUnavailable: ${JSON.stringify(translate('priceUnavailable', lang))},
+  pricesCheckedTodaySuffix: ${JSON.stringify(translate('pricesCheckedTodaySuffix', lang))},
+  lastUpdatedLabel: ${JSON.stringify(translate('lastUpdatedLabel', lang))},
+  hoursAbbrev: ${JSON.stringify(translate('hoursAbbrev', lang))},
+  minutesAbbrev: ${JSON.stringify(translate('minutesAbbrev', lang))},
+  flightData: ${JSON.stringify(translate('flightDataForThisRoute', lang))},
+  avgTravel: ${JSON.stringify(translate('averageTotalTravelTime', lang))},
+  shortestFlight: ${JSON.stringify(translate('shortestFlightTimeFound', lang))}
+};
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 // [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
 // never affects page behavior if it fails. sendBeacon (with a text/plain
@@ -414,38 +430,38 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
     var box = document.getElementById('route-price-box');
     if (j.ok && j.price != null) {
       var priceTpl = ${JSON.stringify(translate('priceFromTemplate', lang))};
-      box.innerHTML = '<div class="route-price-val">' + priceTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">${translate('priceLabel', lang)}</div>';
+      box.innerHTML = '<div class="route-price-val">' + priceTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabel + '</div>';
       if (j.departure_date) {
         var ctaLink = document.querySelector('.route-cta');
         if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
       }
     } else {
-      box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">${translate('priceUnavailable', lang)}</div>';
+      box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
     }
     var trustEl = document.getElementById('route-trust-signal');
     if (trustEl && j.ok && j.checksToday != null && j.checkedAt) {
       var minutesAgo = Math.max(0, Math.round((Date.now() - new Date(j.checkedAt).getTime()) / 60000));
       var agoText = minutesAgo < 1 ? ${JSON.stringify(translate('justNow', lang))} : (minutesAgo === 1 ? ${JSON.stringify(translate('updatedOneMinuteAgo', lang))} : ${JSON.stringify(translate('updatedMinutesAgoTemplate', lang))}.replace('{min}', minutesAgo));
-      trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' ${translate('pricesCheckedTodaySuffix', lang)}</span><span>· ${translate('lastUpdatedLabel', lang)} ' + agoText + '</span>';
+      trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span><span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
       trustEl.style.display = '';
     }
     if (j.ok && j.insights) {
       var ins = j.insights;
-      function fmtHrsMin(min) { var h = Math.floor(min / 60), m = min % 60; return h + '${translate('hoursAbbrev', lang)}' + (m > 0 ? ' ' + m + '${translate('minutesAbbrev', lang)}' : ''); }
+      function fmtHrsMin(min) { var h = Math.floor(min / 60), m = min % 60; return h + L.hoursAbbrev + (m > 0 ? ' ' + m + L.minutesAbbrev : ''); }
       var directLine = ins.allDirect
         ? ${JSON.stringify(translate('allFlightsDirect', lang))}
         : (ins.directAvailable ? ${JSON.stringify(translate('directFlightsAvailable', lang))} : ${JSON.stringify(translate('noDirectFlights', lang))});
       var airlinesLine = ins.airlines.length ? (${JSON.stringify(translate('airlinesFlyingThisRoute', lang))} + ' ' + ins.airlines.join(', ') + '.') : '';
-      var insightsHtml = '<section class="route-insights-section"><h2>${translate('flightDataForThisRoute', lang)}</h2><div class="route-insights-grid">' +
-        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">${translate('averageTotalTravelTime', lang)}</div></div>' +
-        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">${translate('shortestFlightTimeFound', lang)}</div></div>' +
+      var insightsHtml = '<section class="route-insights-section"><h2>' + L.flightData + '</h2><div class="route-insights-grid">' +
+        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">' + L.avgTravel + '</div></div>' +
+        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">' + L.shortestFlight + '</div></div>' +
       '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
       var insightsTarget = document.getElementById('route-insights-section');
       if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
     }
   })
   .catch(function(){
-    document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">${translate('priceUnavailable', lang)}</div>';
+    document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
   });
 try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, slug: ${JSON.stringify(route.slug)} }); } catch (e) {}
 })();

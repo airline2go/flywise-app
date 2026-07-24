@@ -91,41 +91,56 @@ async function listBlogPosts(lang) {
 // render-city.js/render-country.js/render-airport.js/render-airline.js
 // each expected as (entity, routes[, mostUsedRoutes]) parameters.
 
+// [NOT-FOUND-IS-NULL] A detail endpoint returning 404 means the entity simply
+// doesn't exist (e.g. an airport code like LBG that appears in search but has no
+// page). That's a legitimate "not found", not a server error — return null so
+// the route handler answers a clean 404 instead of letting the throw bubble to
+// a 500 (bad for SEO — Google reads 500 as "site broken" — and it floods the
+// error logs). Any non-404 failure still throws.
+async function fetchDetailOrNull(path) {
+  try {
+    return await fetchJSON(path);
+  } catch (e) {
+    if (e && e.status === 404) return null;
+    throw e;
+  }
+}
+
 async function getCity(slug) {
-  const data = await fetchJSON(`/cities/${encodeURIComponent(slug)}`);
-  return data.city ? { city: data.city, routes: data.routes || [] } : null;
+  const data = await fetchDetailOrNull(`/cities/${encodeURIComponent(slug)}`);
+  return data && data.city ? { city: data.city, routes: data.routes || [] } : null;
 }
 
 async function getCountry(code) {
-  const data = await fetchJSON(`/countries/${encodeURIComponent(code)}`);
-  return data.country ? { country: data.country, routes: data.routes || [] } : null;
+  const data = await fetchDetailOrNull(`/countries/${encodeURIComponent(code)}`);
+  return data && data.country ? { country: data.country, routes: data.routes || [] } : null;
 }
 
 async function getAirport(code) {
-  const data = await fetchJSON(`/airports/${encodeURIComponent(code)}`);
-  return data.airport ? { airport: data.airport, routes: data.routes || [] } : null;
+  const data = await fetchDetailOrNull(`/airports/${encodeURIComponent(code)}`);
+  return data && data.airport ? { airport: data.airport, routes: data.routes || [] } : null;
 }
 
 async function getAirline(code) {
-  const data = await fetchJSON(`/airlines/${encodeURIComponent(code)}`);
-  return data.airline ? { airline: data.airline, routes: data.routes || [], mostUsedRoutes: data.mostUsedRoutes || [] } : null;
+  const data = await fetchDetailOrNull(`/airlines/${encodeURIComponent(code)}`);
+  return data && data.airline ? { airline: data.airline, routes: data.routes || [], mostUsedRoutes: data.mostUsedRoutes || [] } : null;
 }
 
 async function getRoutePage(slug) {
-  const data = await fetchJSON(`/route-pages/${encodeURIComponent(slug)}`);
-  return data.route || null;
+  const data = await fetchDetailOrNull(`/route-pages/${encodeURIComponent(slug)}`);
+  return (data && data.route) || null;
 }
 
 async function getRelatedRoutes(slug) {
-  const data = await fetchJSON(`/route-pages/${encodeURIComponent(slug)}/related`);
-  return data.related || [];
+  const data = await fetchDetailOrNull(`/route-pages/${encodeURIComponent(slug)}/related`);
+  return (data && data.related) || [];
 }
 
 async function getBlogPost(slug, lang) {
   const base = `/blog-posts/${encodeURIComponent(slug)}`;
   const path = lang && lang !== 'de' ? `${base}?lang=${encodeURIComponent(lang)}` : base;
-  const data = await fetchJSON(path);
-  return data.post || null;
+  const data = await fetchDetailOrNull(path);
+  return (data && data.post) || null;
 }
 
 // ─── Geo index ──────────────────────────────────────────────────────────
