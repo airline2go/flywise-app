@@ -31,6 +31,7 @@ const REFRESH_FILTER_OPTIONS = [
 const SORT_OPTIONS = [
   { value: '', label: 'الأحدث أولاً' },
   { value: 'score', label: 'الأعلى Route Score أولاً' },
+  { value: 'score_asc', label: 'الأدنى Route Score أولاً' },
 ];
 
 function emptyForm() {
@@ -69,6 +70,19 @@ function routeScoreBadge(score, confidence) {
   );
 }
 
+// Linked-blog-article count for a route. `counts` is null while the counts are
+// still loading (show a subtle placeholder), a {slug: number} map once loaded.
+function articleCountBadge(counts, slug) {
+  if (counts == null) return <span style={{ color: ADMIN_COLORS.tx3 }}>…</span>;
+  const n = counts[slug] || 0;
+  if (n === 0) return <span style={{ color: ADMIN_COLORS.tx3 }}>—</span>;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, color: ADMIN_COLORS.teal }}>
+      📝 {Number(n).toLocaleString('en-US')}
+    </span>
+  );
+}
+
 export default function RoutePagesClient() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -93,6 +107,19 @@ export default function RoutePagesClient() {
   const [banner, setBanner] = useState(null); // {type: 'info'|'success'|'error', text}
   const [healthCheckRunning, setHealthCheckRunning] = useState(false);
   const [healthCheckProgress, setHealthCheckProgress] = useState('');
+  // [ROUTE-ARTICLE-COUNTS] {slug: count} of linked blog articles per route.
+  // null while loading; fetched once (covers every route, so it survives paging
+  // and filtering without a refetch).
+  const [articleCounts, setArticleCounts] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/admin/api/route-pages/article-counts')
+      .then((r) => r.json())
+      .then((d) => { if (alive && d.ok) setArticleCounts(d.counts || {}); })
+      .catch(() => { if (alive) setArticleCounts({}); });
+    return () => { alive = false; };
+  }, []);
 
   // Debounce search — same UX as the old admin.js's rpSearchDebounced().
   useEffect(() => {
@@ -305,6 +332,7 @@ export default function RoutePagesClient() {
     { key: 'status', label: 'الحالة', render: (r) => statusBadge(r.status) },
     { key: 'refresh_frequency', label: 'معدل التحديث', render: (r) => REFRESH_OPTIONS.find((o) => o.value === r.refresh_frequency)?.label || r.refresh_frequency },
     { key: 'route_score', label: 'Route Score', render: (r) => routeScoreBadge(r.route_score, r.route_score_confidence) },
+    { key: 'articles', label: 'مقالات مربوطة', render: (r) => articleCountBadge(articleCounts, r.slug) },
     { key: 'slug', label: 'الرابط', render: (r) => <span style={{ fontFamily: 'monospace', fontSize: 11 }}>flights/{r.slug}</span> },
   ];
 
