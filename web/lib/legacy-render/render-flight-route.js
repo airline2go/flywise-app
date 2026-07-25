@@ -297,7 +297,8 @@ function buildRouteFactsHtml(route, lang) {
 // accuracy): it is framed as an INDICATIVE AVERAGE with its own freshness date,
 // never as a live bookable quote. Fully data-gated — shown only when there's a
 // real average from at least a few samples; nothing is fabricated.
-function buildPriceHtml(route, lang) {
+function buildPriceHtml(route, lang, showPrices) {
+  if (!showPrices) return ''; // [PRICES-TEMP-HIDDEN] Duffel test account — no synthetic prices shown.
   if (route.price_avg == null || !(Number(route.price_sample_count) >= 3)) return '';
   const loc = getLanguage(lang).locale;
   const ccy = route.price_currency || 'EUR';
@@ -377,15 +378,16 @@ const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}<
 // the only genuinely runtime-only pieces (a live price, a "minutes ago"
 // count, a computed duration) use a `{placeholder}`.replace(...) at the
 // JS level against an already-translated template string.
-function buildLiveScript(route, lang) {
-  return `<script>
-(function(){
-var PROXY = 'https://api.airpiv.com';
-// [I18N-SCRIPT-SAFE] Every translated label used below is embedded via
-// JSON.stringify, never inline in a single-quoted string — otherwise any value
-// containing an apostrophe (e.g. French "aujourd'hui") or quote would close the
-// JS string early and break this whole <script>, silently killing the live
-// price for that entire language.
+function buildLiveScript(route, lang, showPrices) {
+  // [PRICES-TEMP-HIDDEN] The live-price fetch + all its DOM writes (price box,
+  // "prices checked today" trust signal, live insights) are emitted ONLY when
+  // prices are enabled. While the flight-data source is a Duffel TEST account,
+  // every price is synthetic, so this whole block is dropped and the page never
+  // shows or fetches a price. Flip SHOW_ROUTE_PRICES=true to bring it back.
+  const priceBlock = showPrices ? `
+// [I18N-SCRIPT-SAFE] Every translated label is embedded via JSON.stringify,
+// never inline in a single-quoted string — an apostrophe (e.g. French
+// "aujourd'hui") would otherwise close the JS string and break this script.
 var L = {
   priceLabel: ${JSON.stringify(translate('priceLabel', lang))},
   priceUnavailable: ${JSON.stringify(translate('priceUnavailable', lang))},
@@ -397,52 +399,23 @@ var L = {
   avgTravel: ${JSON.stringify(translate('averageTotalTravelTime', lang))},
   shortestFlight: ${JSON.stringify(translate('shortestFlightTimeFound', lang))}
 };
-function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-// [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
-// never affects page behavior if it fails. sendBeacon (with a text/plain
-// Blob, not JSON) is preferred so a click that immediately navigates away
-// doesn't abort a plain fetch mid-flight; text/plain also avoids a CORS
-// preflight that sendBeacon can't reliably complete before unload.
-function sendRouteTrack(eventType) {
-  try {
-    var payload = JSON.stringify({ event_type: eventType, route_slug: ${JSON.stringify(route.slug)}, origin_iata: ${JSON.stringify(route.origin_iata)}, destination_iata: ${JSON.stringify(route.destination_iata)}, language: ${JSON.stringify(lang)} });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(PROXY + '/track/route-page', new Blob([payload], { type: 'text/plain' }));
-    } else {
-      fetch(PROXY + '/track/route-page', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: payload });
-    }
-  } catch (e) {}
-}
-sendRouteTrack('impression');
-var routeCtaEl = document.querySelector('.route-cta');
-if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
-  // Hands the originating route page off to app.js's prefillSearchFromUrl(),
-  // which reads this (once) to attribute the resulting booking_start signal
-  // back to this specific route page/language — no URL or search-flow
-  // change involved, purely an in-memory relay for tracking.
-  try { sessionStorage.setItem('fw_route_ref', JSON.stringify({ slug: ${JSON.stringify(route.slug)}, origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, lang: ${JSON.stringify(lang)} })); } catch (e) {}
-  sendRouteTrack('click');
-});
-
 var priceAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-// [PRICE-TIMEOUT] Never leave the box stuck on "loading…": if the live price
-// request stalls (slow network, or an ad/tracker blocker blocking
-// api.airpiv.com), abort after 8s so the .catch below shows the "unavailable"
-// fallback instead of a permanent "Chargement du prix…".
+// [PRICE-TIMEOUT] Abort after 8s so a stalled request (slow network / blocker)
+// falls back to "unavailable" instead of a permanent "loading…".
 var priceTimer = setTimeout(function(){ if (priceAbort) priceAbort.abort(); }, 8000);
 fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.origin_iata)}) + '&to=' + encodeURIComponent(${JSON.stringify(route.destination_iata)}), priceAbort ? { signal: priceAbort.signal } : undefined)
   .then(function(r){ return r.json(); })
   .then(function(j){
     clearTimeout(priceTimer);
     var box = document.getElementById('route-price-box');
-    if (j.ok && j.price != null) {
+    if (box && j.ok && j.price != null) {
       var priceTpl = ${JSON.stringify(translate('priceFromTemplate', lang))};
       box.innerHTML = '<div class="route-price-val">' + priceTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabel + '</div>';
       if (j.departure_date) {
         var ctaLink = document.querySelector('.route-cta');
         if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
       }
-    } else {
+    } else if (box) {
       box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
     }
     var trustEl = document.getElementById('route-trust-signal');
@@ -469,8 +442,33 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
   })
   .catch(function(){
     clearTimeout(priceTimer);
-    document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
+    var box = document.getElementById('route-price-box');
+    if (box) box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
   });
+` : '';
+  return `<script>
+(function(){
+var PROXY = 'https://api.airpiv.com';
+// [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
+// never affects page behavior if it fails. sendBeacon (with a text/plain Blob,
+// not JSON) avoids a CORS preflight and survives an immediate navigation.
+function sendRouteTrack(eventType) {
+  try {
+    var payload = JSON.stringify({ event_type: eventType, route_slug: ${JSON.stringify(route.slug)}, origin_iata: ${JSON.stringify(route.origin_iata)}, destination_iata: ${JSON.stringify(route.destination_iata)}, language: ${JSON.stringify(lang)} });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(PROXY + '/track/route-page', new Blob([payload], { type: 'text/plain' }));
+    } else {
+      fetch(PROXY + '/track/route-page', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: payload });
+    }
+  } catch (e) {}
+}
+sendRouteTrack('impression');
+var routeCtaEl = document.querySelector('.route-cta');
+if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
+  try { sessionStorage.setItem('fw_route_ref', JSON.stringify({ slug: ${JSON.stringify(route.slug)}, origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, lang: ${JSON.stringify(lang)} })); } catch (e) {}
+  sendRouteTrack('click');
+});
+${priceBlock}
 try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, slug: ${JSON.stringify(route.slug)} }); } catch (e) {}
 })();
 </script>`;
@@ -500,9 +498,11 @@ function formatRoutePrice(price, currency, lang) {
 // destabilising the title. Every clause is omitted when its data is missing, so
 // a data-poor route gets a shorter, still-accurate description, never an
 // invented one.
-function buildRouteMetaDescription(route, lang) {
+function buildRouteMetaDescription(route, lang, showPrices = true) {
   let lead = format(translate('routeMetaBase', lang), { origin: route.origin_city, destination: route.destination_city });
-  if (route.cached_price != null && Number(route.cached_price) > 0) {
+  // [PRICES-TEMP-HIDDEN] The "from {price}" clause is dropped while prices are
+  // hidden, so no synthetic price leaks into the search-result snippet.
+  if (showPrices && route.cached_price != null && Number(route.cached_price) > 0) {
     lead += format(translate('routeMetaFrom', lang), { price: formatRoutePrice(route.cached_price, route.cached_currency || 'EUR', lang) });
   }
   const parts = [lead];
@@ -519,6 +519,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
   });
+
+  // [PRICES-TEMP-HIDDEN] Flight data currently comes from a Duffel TEST account,
+  // so every price is synthetic. Until Duffel is switched to Production, hide
+  // ALL price displays (hero live-price box + "checked today" signal, the
+  // "average flight prices" section, and the "from {price}" clause in the meta
+  // description) so real visitors and Google never see a fake price. Flip
+  // SHOW_ROUTE_PRICES=true (env) to bring every price back — no code change.
+  const showPrices = process.env.SHOW_ROUTE_PRICES === 'true';
 
   // [ADMIN-OVERRIDE-ALL-LANGS] custom_title/custom_meta_description/intro_text
   // are admin-authored per route (not per language) — they used to only
@@ -537,7 +545,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   // current page's language — otherwise German copy would leak onto /en, /fr, …
   const gen = !!(route.seo_lang && route.seo_lang === lang);
   const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang);
-  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang);
+  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, showPrices);
 
   const urls = urlsFor(`flights/${encodeURIComponent(route.slug)}`);
   const url = urls[lang];
@@ -640,7 +648,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang);
-  const priceHtml = buildPriceHtml(route, lang);
+  const priceHtml = buildPriceHtml(route, lang, showPrices);
   const trustHtml = buildTrustHtml(route, lang);
   // Manual FAQ wins, then generated (matching language), then the template default.
   const faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq
@@ -667,12 +675,12 @@ ${breadcrumbHtml}
     <span class="route-hero-arrow">✈</span>
     ${destCityNode}
   </div>
-  <div class="route-hero-badges"><span>✓ ${translate('heroBadgeLivePrices', lang)}</span><span>✓ ${translate('heroBadgeNoHiddenFees', lang)}</span><span>✓ ${translate('heroBadgeAirlines', lang)}</span></div>
+  <div class="route-hero-badges">${showPrices ? `<span>✓ ${translate('heroBadgeLivePrices', lang)}</span>` : ''}<span>✓ ${translate('heroBadgeNoHiddenFees', lang)}</span><span>✓ ${translate('heroBadgeAirlines', lang)}</span></div>
   ${distanceHtml}
-  <div class="route-price-box" id="route-price-box">
+  ${showPrices ? `<div class="route-price-box" id="route-price-box">
     <div style="color:rgba(255,255,255,.5);font-size:13px">${translate('loadingPrice', lang)}</div>
   </div>
-  <div class="route-trust-signal" id="route-trust-signal" style="display:none"></div>
+  <div class="route-trust-signal" id="route-trust-signal" style="display:none"></div>` : ''}
   <a href="${bookingUrl}" class="route-cta">${translate('searchFlightsNow', lang)}</a>
 </div>
 ${generatedBodyHtml ? `<section class="route-generated-body">${generatedBodyHtml}</section>` : `<section><p>${escHtml(introText)}</p></section>`}
@@ -796,7 +804,7 @@ ${relatedArticlesHtml}
     robotsContent,
     headExtra,
     mainContent,
-    scripts: buildLiveScript(route, lang),
+    scripts: buildLiveScript(route, lang, showPrices),
   });
 
   return { html, seo: { title, description, canonicalUrl: url, schema } };
