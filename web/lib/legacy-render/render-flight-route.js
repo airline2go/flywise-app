@@ -424,9 +424,16 @@ if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
   sendRouteTrack('click');
 });
 
-fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.origin_iata)}) + '&to=' + encodeURIComponent(${JSON.stringify(route.destination_iata)}))
+var priceAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+// [PRICE-TIMEOUT] Never leave the box stuck on "loading…": if the live price
+// request stalls (slow network, or an ad/tracker blocker blocking
+// api.airpiv.com), abort after 8s so the .catch below shows the "unavailable"
+// fallback instead of a permanent "Chargement du prix…".
+var priceTimer = setTimeout(function(){ if (priceAbort) priceAbort.abort(); }, 8000);
+fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.origin_iata)}) + '&to=' + encodeURIComponent(${JSON.stringify(route.destination_iata)}), priceAbort ? { signal: priceAbort.signal } : undefined)
   .then(function(r){ return r.json(); })
   .then(function(j){
+    clearTimeout(priceTimer);
     var box = document.getElementById('route-price-box');
     if (j.ok && j.price != null) {
       var priceTpl = ${JSON.stringify(translate('priceFromTemplate', lang))};
@@ -461,6 +468,7 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
     }
   })
   .catch(function(){
+    clearTimeout(priceTimer);
     document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
   });
 try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, slug: ${JSON.stringify(route.slug)} }); } catch (e) {}
