@@ -38,14 +38,20 @@ const nextConfig = {
     };
   },
 
-  // [ASSET-CACHING] The verbatim public/ assets were served with
-  // `max-age=0, must-revalidate` (no caching) — a PageSpeed "efficient cache
-  // policy" penalty and slower repeat views. These rules cache the root-level
-  // static assets only: `:file` matches a single path segment, so /_next/*
-  // (which Next already fingerprints + serves immutable) and the HTML pages
-  // are untouched. Images/fonts never change → 1 year immutable. CSS/JS live
-  // at fixed unhashed paths, so they get a 1-day fresh window plus a 30-day
-  // stale-while-revalidate so a deploy is still picked up promptly.
+  // [ASSET-CACHING] These rules target root-level static public/ assets only:
+  // `:file` matches a single path segment, so /_next/* (which Next already
+  // fingerprints + serves immutable) and the HTML pages are untouched.
+  //
+  // Images/fonts never change once shipped → 1 year immutable.
+  //
+  // CSS/JS live at FIXED, unhashed paths (/styles.css, /app.js, …) so a URL
+  // never changes when its content does. A positive max-age therefore risks
+  // serving a stale stylesheet/script alongside a freshly-updated (no-cache)
+  // index.html — the skew that repeatedly hid CSS fixes from users. We serve
+  // them `no-cache` (store, but always revalidate before use): every load
+  // sends a conditional request and Vercel answers 304 when unchanged (tiny,
+  // keeps repeat views fast) or 200 with the new file the instant it changes,
+  // so any deploy reaches users immediately with no stale window.
   async headers() {
     return [
       {
@@ -54,7 +60,7 @@ const nextConfig = {
       },
       {
         source: '/:file(.*\\.(?:css|js|mjs))',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=2592000' }],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
       },
     ];
   },
