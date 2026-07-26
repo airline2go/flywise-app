@@ -169,6 +169,15 @@
 .lang-menu-item .lmi-name{white-space:nowrap}
 .lang-menu-item .lmi-code{font-size:10px;font-weight:800;letter-spacing:.5px;opacity:.65;margin-left:auto}
 .lang-menu-item.active .lmi-code{opacity:1}
+/* [HSCROLL-CRITICAL-CSS] Inlined so the mobile carousels always fill the
+   viewport (no white strip on the right) and snap cleanly — the external
+   /styles.css is served with a long cache, so a fix living only there does
+   not reach users promptly. Kept here (after the stylesheet link, inside the
+   same mobile breakpoint) so it wins over a stale styles.css. */
+@media (max-width:899px){
+.dgrid.hscroll,.rgrid2.hscroll{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:0;scroll-snap-type:x mandatory;scroll-padding-left:var(--pad)}
+.dgrid.hscroll .dcard,.rgrid2.hscroll .rchip{scroll-snap-align:start}
+}
 </style>
 <!-- [LANG-SWITCHER-CRITICAL-JS] Self-contained open/close via event
      delegation on document, so it works even if a browser is still serving
