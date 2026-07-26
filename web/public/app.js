@@ -835,7 +835,14 @@ function loadPopularRouteLinks() {
       if (!j.ok || !j.routes || !j.routes.length) return;
       var section = document.getElementById('popular-routes-links-section');
       var container = document.getElementById('popular-routes-links');
-      var routes = j.routes.slice(0, 40);
+      // [ROUTE-ORDER] Best routes first (by route_score desc, null scores
+      // last) instead of the API's newest-first order, which floods the top
+      // with freshly bulk-added, unscored routes.
+      var routes = j.routes.slice().sort(function (a, b) {
+        var sa = (a.route_score == null) ? -Infinity : a.route_score;
+        var sb = (b.route_score == null) ? -Infinity : b.route_score;
+        return sb - sa;
+      }).slice(0, 40);
       container.innerHTML = routes.map(function (r) {
         return '<a href="/flights/' + encodeURIComponent(r.slug) + '" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--tx2);text-decoration:none">' +
           r.origin_city + ' → ' + r.destination_city +
