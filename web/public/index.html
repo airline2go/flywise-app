@@ -179,14 +179,21 @@
       <li><a href="#" data-i18n="nav_help">❓ Hilfe</a></li>
     </ul>
     <div class="navr">
-      <div class="lang-sw" style="display:flex;gap:0">
-        <button class="lang-btn active" id="lang-de" data-lang="de">DE</button>
-        <button class="lang-btn" id="lang-en" data-lang="en">EN</button>
-        <button class="lang-btn" id="lang-ar" data-lang="ar">AR</button>
-        <button class="lang-btn" id="lang-es" data-lang="es">ES</button>
-        <button class="lang-btn" id="lang-fr" data-lang="fr">FR</button>
-        <button class="lang-btn" id="lang-it" data-lang="it">IT</button>
-        <button class="lang-btn" id="lang-nl" data-lang="nl">NL</button>
+      <div class="lang-sw" id="lang-switcher">
+        <button class="lang-trigger" id="lang-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Sprache wählen / Choose language">
+          <span class="lang-globe" aria-hidden="true">🌐</span>
+          <span class="lang-current" id="lang-current">DE</span>
+          <span class="lang-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="lang-menu" id="lang-menu" role="listbox" aria-label="Sprache">
+          <button class="lang-menu-item active" type="button" role="option" data-lang="de"><span class="lmi-name">Deutsch</span><span class="lmi-code">DE</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="en"><span class="lmi-name">English</span><span class="lmi-code">EN</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="ar"><span class="lmi-name">العربية</span><span class="lmi-code">AR</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="es"><span class="lmi-name">Español</span><span class="lmi-code">ES</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="fr"><span class="lmi-name">Français</span><span class="lmi-code">FR</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="it"><span class="lmi-name">Italiano</span><span class="lmi-code">IT</span></button>
+          <button class="lang-menu-item" type="button" role="option" data-lang="nl"><span class="lmi-name">Nederlands</span><span class="lmi-code">NL</span></button>
+        </div>
       </div>
       <button class="dm-btn" data-tdark title="Dark Mode" aria-label="Dunkelmodus umschalten" style="margin:0"><span id="dm-ico">🌙</span></button>
       <button class="btn-t" id="nav-auth-btn" data-oam="register" style="margin:0 0 0 6px">Registrieren</button>
