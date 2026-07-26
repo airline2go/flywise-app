@@ -9,7 +9,7 @@
      script below (its open/close handler, inlined so it never falls out of sync
      with the markup across deploys). All must be recomputed if their script
      content changes (e.g. `openssl dgst -sha256 -binary file | openssl base64 -A`). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-C2wLziX0E0bk22I0fJfLEFWSu2KWcmSQh+n+AjG7XrE=' 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' 'sha256-a19DpSCW5mIa5m9/g0NNQbA3kq+g7I1fjmhaPUJK3OA=' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-C2wLziX0E0bk22I0fJfLEFWSu2KWcmSQh+n+AjG7XrE=' 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' 'sha256-9nrDsSee22XW/ZTmrBFvQfTVvydjio0FnJ2ewBZqzNU=' https://cdn.jsdelivr.net https://conversations-widget.brevo.com https://app.brevo.com https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://api.airpiv.com https://api.duffel.com https://tflpaysskecpmdpwbvog.supabase.co wss://tflpaysskecpmdpwbvog.supabase.co https://*.brevo.com wss://*.brevo.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.brevo.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.brevo.com; frame-src https://*.brevo.com;">
 
 <link rel="preconnect" href="https://api.airpiv.com">
 <link rel="dns-prefetch" href="https://api.airpiv.com">
@@ -155,7 +155,8 @@
 .lang-sw{position:relative;display:flex;align-items:center;flex-shrink:0;gap:0}
 .lang-trigger{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.22);color:#fff;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;line-height:1;cursor:pointer;transition:border-color .15s,background .15s;white-space:nowrap}
 .lang-trigger:hover{border-color:var(--teal,#0fb5a0);background:rgba(255,255,255,.14)}
-.lang-globe{font-size:14px;line-height:1}
+.lang-trigger-flag{width:20px;height:14px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.25);flex-shrink:0;display:inline-flex}
+.lang-trigger-flag svg{width:100%;height:100%;display:block}
 .lang-current{letter-spacing:.5px}
 .lang-caret{font-size:10px;opacity:.85;transition:transform .18s}
 .lang-trigger[aria-expanded=true] .lang-caret{transform:rotate(180deg)}
@@ -178,14 +179,16 @@
 <script>
 (function(){
   function closeMenu(){var m=document.getElementById('lang-menu');if(m)m.classList.remove('open');var t=document.getElementById('lang-trigger');if(t)t.setAttribute('aria-expanded','false');}
+  function syncFlag(code){var it=document.querySelector('.lang-menu-item[data-lang="'+code+'"]');var h=document.getElementById('lang-trigger-flag');if(it&&h){var f=it.querySelector('.lmi-flag');if(f)h.innerHTML=f.outerHTML;}}
   document.addEventListener('click',function(ev){
     var trg=ev.target.closest&&ev.target.closest('#lang-trigger');
     if(trg){var m=document.getElementById('lang-menu');if(m){var open=m.classList.toggle('open');trg.setAttribute('aria-expanded',open?'true':'false');}return;}
     var item=ev.target.closest&&ev.target.closest('.lang-menu-item');
-    if(item){var code=item.getAttribute('data-lang');document.querySelectorAll('.lang-menu-item').forEach(function(o){o.classList.toggle('active',o===item);});var lc=document.getElementById('lang-current');if(lc&&code)lc.textContent=code.toUpperCase();closeMenu();return;}
+    if(item){var code=item.getAttribute('data-lang');document.querySelectorAll('.lang-menu-item').forEach(function(o){o.classList.toggle('active',o===item);});var lc=document.getElementById('lang-current');if(lc&&code)lc.textContent=code.toUpperCase();syncFlag(code);closeMenu();return;}
     if(!(ev.target.closest&&ev.target.closest('#lang-switcher')))closeMenu();
   });
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeMenu();});
+  window.addEventListener('load',function(){syncFlag((document.documentElement.lang||'de').toLowerCase());});
 })();
 </script>
 </head>
@@ -227,7 +230,7 @@
     <div class="navr">
       <div class="lang-sw" id="lang-switcher">
         <button class="lang-trigger" id="lang-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Sprache wählen / Choose language">
-          <span class="lang-globe" aria-hidden="true">🌐</span>
+          <span class="lang-trigger-flag" id="lang-trigger-flag" aria-hidden="true"><svg class="lmi-flag" viewBox="0 0 5 3"><rect width="5" height="3" fill="#000"/><rect width="5" height="2" y="1" fill="#D00"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg></span>
           <span class="lang-current" id="lang-current">DE</span>
           <span class="lang-caret" aria-hidden="true">▾</span>
         </button>
