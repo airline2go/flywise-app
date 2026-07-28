@@ -96,6 +96,7 @@ test('a manual intro_text suppresses the generated body (manual wins)', () => {
 });
 
 test('with no manual/engine content, the generated default title+meta render', () => {
+  process.env.SHOW_ROUTE_PRICES = 'true'; // the "from {price}" clause only appears when prices are enabled
   const html = renderFlightRoutePage(R({ distance_km: 1297, cached_price: 83, cached_currency: 'EUR', direct_flight_available: true }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
   assert.match(html, /<title>Amsterdam → Rom Flüge \| Flugzeit, Entfernung &amp; Airlines<\/title>/);
   assert.match(html, /<meta name="description" content="Flüge Amsterdam nach Rom ab 83 €\. Entfernung 1\.297 km\. Direktflüge verfügbar\.">/);

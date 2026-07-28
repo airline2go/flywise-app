@@ -37,6 +37,7 @@ function liveScriptBody(html) {
 }
 
 test('live-price script is syntactically valid JS in every language', () => {
+  process.env.SHOW_ROUTE_PRICES = 'true'; // the price fetch only exists when prices are enabled
   for (const lang of LANGS) {
     const { html } = renderFlightRoutePage(routeRow, lang, [], { fromOrigin: [], toDestination: [] }, []);
     const body = liveScriptBody(html);
@@ -48,6 +49,7 @@ test('live-price script is syntactically valid JS in every language', () => {
 });
 
 test('French specifically (the apostrophe case) is valid and carries the price fetch', () => {
+  process.env.SHOW_ROUTE_PRICES = 'true';
   const { html } = renderFlightRoutePage(routeRow, 'fr', [], { fromOrigin: [], toDestination: [] }, []);
   const body = liveScriptBody(html);
   assert.doesNotThrow(() => new Function(body));
