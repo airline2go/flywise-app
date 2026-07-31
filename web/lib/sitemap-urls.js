@@ -21,18 +21,16 @@
 // in each page's <head> <link rel="alternate">). Each entry carries its own real
 // <lastmod> (see sitemap-serialize.mjs for the pure, unit-tested logic).
 import {
-  listCities,
-  listCountries,
-  listAirlines,
   listAirports,
-  listRoutePages,
-  listBlogPosts,
+  sitemapRoutes,
+  sitemapCities,
+  sitemapCountries,
+  sitemapAirlines,
+  sitemapBlog,
 } from './content-api';
 import { LANGUAGE_CODES, urlFor } from './languages';
 import {
-  toLastmod,
-  routeLastmod,
-  airportEntriesFromRoutes,
+  airportLastmods,
   urlsetXml,
   chunkUrls,
   chunkLastmod,
@@ -50,46 +48,41 @@ function eachLang(relativePath, lastmod, out) {
   for (const lang of LANGS) out.push({ loc: urlFor(lang, relativePath), lastmod });
 }
 
+// All entity builders now consume the dedicated /sitemap-data feed, which pages
+// to completion (unbounded) and returns only indexable rows with a resolved
+// lastmod — so the sitemap lists every indexable page regardless of catalogue
+// size, and the frontend no longer filters indexability itself.
+
 export async function buildRouteUrls() {
-  const routes = await listRoutePages();
+  const routes = await sitemapRoutes();
   const urls = [];
-  for (const r of routes) {
-    if (r.indexable === false) continue;
-    eachLang(`flights/${r.slug}`, routeLastmod(r), urls);
-  }
+  for (const r of routes) eachLang(`flights/${r.id}`, r.lastmod, urls);
   return urls;
 }
 
 export async function buildCityUrls() {
-  const cities = await listCities();
+  const cities = await sitemapCities();
   const urls = [];
-  for (const c of cities) {
-    if (c.indexable === false) continue;
-    eachLang(`city/${c.city_slug}`, toLastmod(c.updated_at || c.created_at), urls);
-  }
+  for (const c of cities) eachLang(`city/${c.id}`, c.lastmod, urls);
   return urls;
 }
 
 export async function buildCountryUrls() {
-  const countries = await listCountries();
+  const countries = await sitemapCountries();
   const urls = [];
-  for (const c of countries) {
-    if (c.indexable === false) continue;
-    eachLang(`country/${c.code}`, toLastmod(c.updated_at || c.created_at), urls);
-  }
+  for (const c of countries) eachLang(`country/${c.id}`, c.lastmod, urls);
   return urls;
 }
 
 export async function buildAirportUrls() {
-  // The distinct airport set + each one's freshest date is derived from the
-  // route_pages list (see airportEntriesFromRoutes). Indexability comes from the
-  // /airports list, which flags a thin airport (≤1 distinct destination, no admin
-  // content). Airports touched by routes but not yet in the airports table carry
-  // no flag and are kept (a fallback page renders for them).
-  const [routes, airports] = await Promise.all([listRoutePages(), listAirports()]);
+  // The airport set + each one's freshest date is derived from the COMPLETE
+  // (paginated) route feed. Indexability exclusion still consults the /airports
+  // list (a thin airport is flagged there); an airport absent from that list is
+  // kept (a fallback page renders for it) — the safe, no-omission default.
+  const [routes, airports] = await Promise.all([sitemapRoutes(), listAirports()]);
   const nonIndexable = new Set(airports.filter((a) => a.indexable === false).map((a) => a.iata_code));
   const urls = [];
-  for (const [code, lastmod] of airportEntriesFromRoutes(routes)) {
+  for (const [code, lastmod] of airportLastmods(routes)) {
     if (nonIndexable.has(code)) continue;
     eachLang(`airport/${code}`, lastmod, urls);
   }
@@ -97,23 +90,20 @@ export async function buildAirportUrls() {
 }
 
 export async function buildAirlineUrls() {
-  const airlines = await listAirlines();
+  const airlines = await sitemapAirlines();
   const urls = [];
-  for (const a of airlines) {
-    if (a.indexable === false) continue;
-    eachLang(`airline/${a.iata_code}`, toLastmod(a.updated_at || a.created_at), urls);
-  }
+  for (const a of airlines) eachLang(`airline/${a.id}`, a.lastmod, urls);
   return urls;
 }
 
 export async function buildBlogUrls() {
   // Each language has its OWN blog slugs (German from the base list, the others
   // from blog_post_translations). Blog posts are hand-written published articles
-  // — never thin — so there is no indexable gate here.
+  // — never thin — so there is no indexable gate.
   const urls = [];
   for (const lang of LANGS) {
-    const posts = await listBlogPosts(lang);
-    for (const p of posts) urls.push({ loc: urlFor(lang, `blog/${p.slug}`), lastmod: toLastmod(p.updated_at || p.published_at) });
+    const posts = await sitemapBlog(lang);
+    for (const p of posts) urls.push({ loc: urlFor(lang, `blog/${p.id}`), lastmod: p.lastmod });
   }
   return urls;
 }
