@@ -7,6 +7,29 @@ const nextConfig = {
     root: import.meta.dirname,
   },
 
+  // [CANONICAL-DOMAIN] https://airpiv.com (bare apex) is the ONE canonical
+  // host — every other spelling must 301 onto it so search engines index a
+  // single origin. Vercel already force-redirects http -> https at the edge
+  // for every attached domain, so the http://airpiv.com case is covered by
+  // the platform. The one collapse we own in-app is the `www` host onto the
+  // apex, which also finishes the http://www.airpiv.com chain (edge upgrades
+  // it to https://www.airpiv.com, then this rule drops the www).
+  //   statusCode: 301 — deliberately NOT `permanent: true`, which emits a 308.
+  //   The SEO spec calls for a literal 301, and Google treats 301 as the
+  //   canonical permanent signal, so we pin the exact code.
+  //   source '/:path*' + destination '.../:path*' preserves the full path;
+  //   Next.js forwards the query string automatically.
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.airpiv.com' }],
+        destination: 'https://airpiv.com/:path*',
+        statusCode: 301,
+      },
+    ];
+  },
+
   // [VERBATIM-HOME] The customer-facing homepage + booking/search/checkout
   // SPA is the original index.html + app.js + styles.css, served byte-for-byte
   // from public/ so it is visually and behaviourally 1:1 with production (a
