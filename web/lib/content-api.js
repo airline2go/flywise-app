@@ -84,6 +84,43 @@ async function listBlogPosts(lang) {
   return data.posts || [];
 }
 
+// ─── Sitemap feed (paginated, unbounded) ───────────────────────────────
+// [SITEMAP-SCALE] The list endpoints above cap at PostgREST's 1000 rows, which
+// would truncate a large sitemap. The dedicated /sitemap-data/<type> endpoints
+// page explicitly, so we walk page=0,1,2,… until hasMore is false and get EVERY
+// indexable page's { id, lastmod } (routes also carry their two IATA codes for
+// airport derivation). Wrapped in cache() so the index route — which builds the
+// routes AND airports sitemaps in one pass — scans the routes feed only once
+// per request. Each page URL is still individually fetch-cached (ISR).
+const fetchAllSitemapData = cache(async (type, query = '') => {
+  const items = [];
+  for (let page = 0; ; page++) {
+    const path = `/sitemap-data/${type}?page=${page}${query ? '&' + query : ''}`;
+    let data;
+    try {
+      data = await fetchJSON(path);
+    } catch (e) {
+      // [DEPLOY-ORDER] If the backend feed isn't live yet (frontend deployed
+      // ahead of the /sitemap-data endpoints), a 404 degrades to an empty type
+      // rather than 500-ing the whole sitemap; ISR keeps serving the last good
+      // version and the next revalidation self-heals once the backend is up.
+      // Any other error rethrows so ISR does NOT overwrite good data with a
+      // partial set.
+      if (e && e.status === 404 && page === 0) return [];
+      throw e;
+    }
+    if (data && Array.isArray(data.items)) items.push(...data.items);
+    if (!data || !data.hasMore) break;
+  }
+  return items;
+});
+
+const sitemapRoutes = () => fetchAllSitemapData('routes');
+const sitemapCities = () => fetchAllSitemapData('cities');
+const sitemapCountries = () => fetchAllSitemapData('countries');
+const sitemapAirlines = () => fetchAllSitemapData('airlines');
+const sitemapBlog = (lang) => fetchAllSitemapData('blog', lang && lang !== 'de' ? `lang=${encodeURIComponent(lang)}` : '');
+
 // ─── Detail fetches (used by individual pages) ─────────────────────────
 // [RESPONSE-SHAPE] Each of these bundles the entity together with the
 // route_pages that use it (confirmed directly against content.routes.js's
@@ -159,4 +196,5 @@ export {
   listCities, listCountries, listAirports, listAirlines, listRoutePages, listBlogPosts,
   getCity, getCountry, getAirport, getAirline, getRoutePage, getRelatedRoutes, getBlogPost,
   getGeoIndex,
+  sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapBlog,
 };

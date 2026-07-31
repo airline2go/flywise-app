@@ -41,6 +41,27 @@ export function airportEntriesFromRoutes(routes) {
   return byCode;
 }
 
+// Derive the airport sitemap set from the paginated /sitemap-data/routes feed.
+// Each item is { o, d, lastmod } (both endpoints' IATA codes + the route's
+// already-resolved lastmod). Returns Map(code -> newest 'YYYY-MM-DD' | null),
+// in first-seen order. Same collapse as airportEntriesFromRoutes, but over the
+// COMPLETE (unbounded) route set rather than a 1000-row page.
+export function airportLastmods(routeItems) {
+  const byCode = new Map();
+  for (const r of routeItems) {
+    const d = r.lastmod || null;
+    for (const code of [r.o, r.d]) {
+      if (!code) continue;
+      if (!byCode.has(code)) byCode.set(code, d);
+      else {
+        const prev = byCode.get(code);
+        if (d && (!prev || d > prev)) byCode.set(code, d);
+      }
+    }
+  }
+  return byCode;
+}
+
 // Serialize sitemap entries into a <urlset> document. Accepts either
 // { loc, lastmod } objects or bare URL strings (back-compat). <lastmod> is
 // emitted only when a real date is known; changefreq/priority are unchanged.

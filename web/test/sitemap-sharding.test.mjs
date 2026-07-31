@@ -13,6 +13,7 @@ import {
   MAX_URLS_PER_SITEMAP,
   shardLoc,
   pageUrls,
+  airportLastmods,
 } from '../lib/sitemap-serialize.mjs';
 
 const mkUrls = (n, prefix = 'https://airpiv.com/x') =>
@@ -117,6 +118,24 @@ test('index↔overflow consistency: every overflow loc resolves back to (type, n
       assert.ok(n >= 2);
     }
   }
+});
+
+test('airportLastmods: distinct codes from route items, newest date per code', () => {
+  const m = airportLastmods([
+    { o: 'BER', d: 'MUC', lastmod: '2026-01-01' },
+    { o: 'BER', d: 'CDG', lastmod: '2026-05-09' }, // BER's newest, adds CDG
+    { o: 'MUC', d: 'BER', lastmod: null },          // reverse pair, no date
+  ]);
+  assert.equal(m.get('BER'), '2026-05-09'); // newest across BER's routes
+  assert.equal(m.get('MUC'), '2026-01-01');
+  assert.equal(m.get('CDG'), '2026-05-09');
+  assert.equal(m.size, 3); // BER, MUC, CDG — distinct
+});
+
+test('airportLastmods: skips missing IATA codes', () => {
+  const m = airportLastmods([{ o: 'BER', d: null, lastmod: '2026-01-01' }]);
+  assert.equal(m.size, 1);
+  assert.ok(m.has('BER'));
 });
 
 test('pageUrls: only canonical https static pages, includes the home page', () => {
