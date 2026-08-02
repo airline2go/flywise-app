@@ -476,16 +476,31 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 </script>`;
 }
 
-// [ROUTE-SEO-META] Stable, data-descriptive <title> — names the facets the
-// page covers (flight time, distance, airlines), never a volatile value, so the
-// title never churns between crawls (a price-in-title would). Localized; the
-// visible <h1> is derived from the part before " | " in the render below.
+// [ROUTE-SEO-META] Natural-language, search-friendly <title> — "Flights from
+// {origin} to {destination} …" phrasing (never an arrow), localized city names,
+// always ending in the brand "| Airpiv". The descriptive facet words are
+// data-gated so the title never claims what the route can't back up, and never
+// contains a volatile price value (that stays in the meta description):
+//   • "Prices" (the primary template) is used only when a real cached price
+//     exists — otherwise the word is dropped, never a fabricated price.
+//   • the "Flight Time & Distance" fallback is used only when a distance is known.
+//   • the "Direct flights" fallback is used only when directness is known.
+//   • otherwise the plain "Flights from … to …" base template.
+// Every route's origin/destination pair is unique, so every generated title is
+// unique; the fallbacks exist to shed a facet word, not to disambiguate.
 function buildRouteTitle(route, lang) {
-  return format(translate('routeTitleInfo', lang), { origin: route.origin_city, destination: route.destination_city });
+  const vars = { origin: route.origin_city, destination: route.destination_city };
+  const hasPrice = route.cached_price != null && Number(route.cached_price) > 0;
+  const hasDistance = route.distance_km != null;
+  const isDirect = route.all_direct === true || route.direct_flight_available === true;
+  const key = hasPrice ? 'routeTitlePrimary'
+    : hasDistance ? 'routeTitleFacts'
+      : isDirect ? 'routeTitleDirect'
+        : 'routeTitleBase';
+  return format(translate(key, lang), vars);
 }
 
-// Format a "from" price with its currency — used ONLY in the meta description,
-// never the title.
+// Format a price with its currency — used by the on-page price cards.
 function formatRoutePrice(price, currency, lang) {
   const n = Math.round(Number(price)).toLocaleString(getLanguage(lang).locale);
   if (currency === 'EUR') return `${n} €`;
@@ -494,24 +509,12 @@ function formatRoutePrice(price, currency, lang) {
   return `${n} ${currency || 'EUR'}`;
 }
 
-// [ROUTE-SEO-META] Data-gated meta description. The volatile "from" price
-// (route.cached_price — a cache-only value the server attaches from its
-// route_price cache) lives HERE, not in the title, so it can refresh without
-// destabilising the title. Every clause is omitted when its data is missing, so
-// a data-poor route gets a shorter, still-accurate description, never an
-// invented one.
+// [ROUTE-SEO-META] Natural-language meta description — one localized sentence
+// naming what the page lets you compare (live prices, flight time, distance,
+// airlines, direct flights) for this specific city pair. Unique per route
+// (origin/destination differ), no arrows, no keyword stuffing.
 function buildRouteMetaDescription(route, lang) {
-  let lead = format(translate('routeMetaBase', lang), { origin: route.origin_city, destination: route.destination_city });
-  if (route.cached_price != null && Number(route.cached_price) > 0) {
-    lead += format(translate('routeMetaFrom', lang), { price: formatRoutePrice(route.cached_price, route.cached_currency || 'EUR', lang) });
-  }
-  const parts = [lead];
-  if (route.distance_km != null) {
-    parts.push(format(translate('routeMetaDistance', lang), { distance: Number(route.distance_km).toLocaleString(getLanguage(lang).locale) }));
-  }
-  if (route.all_direct === true) parts.push(translate('routeMetaDirectAll', lang));
-  else if (route.direct_flight_available === true) parts.push(translate('routeMetaDirectYes', lang));
-  return parts.join('. ') + '.';
+  return format(translate('routeMeta', lang), { origin: route.origin_city, destination: route.destination_city });
 }
 
 function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = []) {
@@ -648,13 +651,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
       : buildFaqItems(route, lang);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
-  // [CTR-TITLE] The <title>/og:title carry the "… | Compare & Save" call to
-  // action for the search snippet, but the visible <h1> uses just the clean
-  // heading before the pipe (e.g. "Cheap flights Frankfurt to Barcelona"),
-  // since a CTA reads oddly as an on-page heading. Splitting on " | " is safe:
-  // the generated template has exactly one, and an admin custom_title rarely
-  // does (and still renders fine either way).
-  const heading = String(title).split(' | ')[0];
+  // [CTR-TITLE] The <title>/og:title carry the descriptive facet clause and the
+  // brand ("… – Prices, Flight Time & Airlines | Airpiv"), but the visible <h1>
+  // uses just the clean natural-language phrase — "Flights from {origin} to
+  // {destination}" — since the facet clause and brand read oddly as an on-page
+  // heading. We strip the brand (before " | ") and then the facet clause
+  // (before " – "); a route with no facet clause simply keeps the whole phrase.
+  // An admin custom_title rarely uses either separator (and still renders fine).
+  const heading = String(title).split(' | ')[0].split(' – ')[0];
   // The generated body's own "booking strategy" section already covers best-time
   // advice, so the templated bestTimeHtml is dropped to avoid saying it twice.
   const mainContent = `<main id="route-main">
@@ -784,11 +788,9 @@ ${relatedArticlesHtml}
 
   const html = renderShell({
     lang,
-    // [CTR-TITLE] The route title template already ends in a "| Compare &
-    // Save"-style call to action (see routeTitleTemplate); appending "| Airpiv"
-    // on top would push past Google's title width and waste the space the
-    // pipe-separated CTA was chosen to save. Brand stays in og:site_name,
-    // the description, and every other page type's title.
+    // [ROUTE-SEO-META] The route title template already ends in the brand
+    // ("… | Airpiv") — matching every other page type — so it is passed through
+    // as-is; renderShell must not append the brand a second time.
     title,
     description,
     canonicalUrl: url,
