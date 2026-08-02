@@ -4,7 +4,7 @@
 // omission when no date is known.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { toLastmod, routeLastmod, airportEntriesFromRoutes, urlsetXml } from '../lib/sitemap-serialize.mjs';
+import { toLastmod, routeLastmod, airportEntriesFromRoutes, urlsetXml, SEO_TEMPLATE_VERSIONS, applyTemplateFloor } from '../lib/sitemap-serialize.mjs';
 
 test('toLastmod normalizes ISO timestamps to YYYY-MM-DD', () => {
   assert.equal(toLastmod('2026-06-13T18:39:09.260Z'), '2026-06-13');
@@ -34,6 +34,30 @@ test('airportEntriesFromRoutes keeps the newest date per code, in first-seen ord
   assert.equal(m.get('BER'), '2026-03-01'); // newest among BER's two routes
   assert.equal(m.get('MUC'), '2026-01-01');
   assert.equal(m.get('CDG'), '2026-03-01');
+});
+
+// ─── [TEMPLATE-LASTMOD] template-version floor on <lastmod> ────────────────
+test('applyTemplateFloor returns the later of data date and template floor', () => {
+  // data newer than the template change → keep the more specific data date
+  assert.equal(applyTemplateFloor('2026-09-01', '2026-08-02'), '2026-09-01');
+  // data older than the template change → floor up to the template date
+  assert.equal(applyTemplateFloor('2026-01-01', '2026-08-02'), '2026-08-02');
+  // exactly equal → that date
+  assert.equal(applyTemplateFloor('2026-08-02', '2026-08-02'), '2026-08-02');
+});
+
+test('applyTemplateFloor handles nulls (either side missing)', () => {
+  assert.equal(applyTemplateFloor(null, '2026-08-02'), '2026-08-02'); // no data date → template date
+  assert.equal(applyTemplateFloor('2026-01-01', null), '2026-01-01'); // no floor → data date unchanged
+  assert.equal(applyTemplateFloor(null, null), null); // neither → omit <lastmod>
+  assert.equal(applyTemplateFloor(undefined, undefined), null);
+});
+
+test('routes carry a real template-version date; untouched types stay null (no false signal)', () => {
+  assert.match(SEO_TEMPLATE_VERSIONS.routes, /^\d{4}-\d{2}-\d{2}$/);
+  for (const type of ['cities', 'countries', 'airports', 'airlines', 'blog']) {
+    assert.equal(SEO_TEMPLATE_VERSIONS[type], null, `${type} should not floor lastmod until its templates change`);
+  }
 });
 
 test('urlsetXml emits <lastmod> when present and omits it when null', () => {

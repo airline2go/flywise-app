@@ -21,6 +21,49 @@ export function routeLastmod(r) {
   return toLastmod(r.updated_at || r.insights_updated_at || r.created_at);
 }
 
+// [TEMPLATE-LASTMOD] A page's rendered SEO output — its <title>, meta
+// description and on-page copy — is produced by shared TEMPLATES, not only by
+// the entity's own row. When a template changes, the page a crawler sees
+// genuinely changes even though the row's `updated_at` did not, so a purely
+// data-derived <lastmod> would never move and Google would recrawl only on its
+// slow default cadence (the exact gap that leaves a title/meta rewrite invisible
+// in search for weeks). These per-type dates are the "this type's templates last
+// materially changed" floor: buildXUrls() reports the LATER of a page's real
+// data date and its type's template date (see applyTemplateFloor), giving an
+// honest recrawl signal for template-driven changes.
+//
+// This is NOT the same-for-every-URL "always today" value toLastmod() guards
+// against: each date is a FIXED past date that moves ONLY when a human bumps it
+// here, and only for the type whose rendered output actually changed. Pages
+// whose own data is newer keep their newer (more specific) date; only pages
+// older than the template change floor up to it — which is truthful, because
+// those pages really did all change on the deploy that shipped the new template.
+//
+//   Format: 'YYYY-MM-DD' (UTC), or null when a type has no template-driven
+//   change to floor to. Bump a type's date ONLY when its rendered SEO output
+//   actually changes, so <lastmod> stays meaningful to crawlers.
+//   History:
+//     routes 2026-08-02 — natural-language titles ("Flights from X to Y …"),
+//                         "| Airpiv" brand suffix, and the data-gated live
+//                         price in the meta description (SEO title/meta rewrite).
+export const SEO_TEMPLATE_VERSIONS = {
+  routes: '2026-08-02',
+  cities: null,
+  countries: null,
+  airports: null,
+  airlines: null,
+  blog: null,
+};
+
+// Return the later (newer) of a page's real data lastmod and its type's template
+// floor. Either may be null: the result is whichever exists, or null if neither
+// does. Both are 'YYYY-MM-DD' strings, so a lexical compare is chronological.
+export function applyTemplateFloor(dataLastmod, templateVersion) {
+  if (!templateVersion) return dataLastmod || null;
+  if (!dataLastmod) return templateVersion;
+  return dataLastmod > templateVersion ? dataLastmod : templateVersion;
+}
+
 // Airports have no dedicated list endpoint; the distinct set is derived from
 // the route_pages list (every row carries both endpoints' IATA codes), in
 // first-seen order to match production. Each airport's <lastmod> is the newest

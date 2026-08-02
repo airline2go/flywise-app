@@ -37,6 +37,8 @@ import {
   sitemapIndexXml,
   shardLoc,
   pageUrls,
+  SEO_TEMPLATE_VERSIONS,
+  applyTemplateFloor,
 } from './sitemap-serialize.mjs';
 
 // Every entity URL exists in all 8 languages (German unprefixed at root, the
@@ -53,24 +55,31 @@ function eachLang(relativePath, lastmod, out) {
 // lastmod — so the sitemap lists every indexable page regardless of catalogue
 // size, and the frontend no longer filters indexability itself.
 
+// [TEMPLATE-LASTMOD] Each builder floors its entries' data <lastmod> to its
+// type's SEO template version (applyTemplateFloor), so a change to a page type's
+// rendered <title>/meta/copy templates surfaces as a real recrawl signal even
+// when the underlying rows didn't change. A type with a null version is a no-op.
 export async function buildRouteUrls() {
   const routes = await sitemapRoutes();
+  const floor = SEO_TEMPLATE_VERSIONS.routes;
   const urls = [];
-  for (const r of routes) eachLang(`flights/${r.id}`, r.lastmod, urls);
+  for (const r of routes) eachLang(`flights/${r.id}`, applyTemplateFloor(r.lastmod, floor), urls);
   return urls;
 }
 
 export async function buildCityUrls() {
   const cities = await sitemapCities();
+  const floor = SEO_TEMPLATE_VERSIONS.cities;
   const urls = [];
-  for (const c of cities) eachLang(`city/${c.id}`, c.lastmod, urls);
+  for (const c of cities) eachLang(`city/${c.id}`, applyTemplateFloor(c.lastmod, floor), urls);
   return urls;
 }
 
 export async function buildCountryUrls() {
   const countries = await sitemapCountries();
+  const floor = SEO_TEMPLATE_VERSIONS.countries;
   const urls = [];
-  for (const c of countries) eachLang(`country/${c.id}`, c.lastmod, urls);
+  for (const c of countries) eachLang(`country/${c.id}`, applyTemplateFloor(c.lastmod, floor), urls);
   return urls;
 }
 
@@ -81,18 +90,20 @@ export async function buildAirportUrls() {
   // kept (a fallback page renders for it) — the safe, no-omission default.
   const [routes, airports] = await Promise.all([sitemapRoutes(), listAirports()]);
   const nonIndexable = new Set(airports.filter((a) => a.indexable === false).map((a) => a.iata_code));
+  const floor = SEO_TEMPLATE_VERSIONS.airports;
   const urls = [];
   for (const [code, lastmod] of airportLastmods(routes)) {
     if (nonIndexable.has(code)) continue;
-    eachLang(`airport/${code}`, lastmod, urls);
+    eachLang(`airport/${code}`, applyTemplateFloor(lastmod, floor), urls);
   }
   return urls;
 }
 
 export async function buildAirlineUrls() {
   const airlines = await sitemapAirlines();
+  const floor = SEO_TEMPLATE_VERSIONS.airlines;
   const urls = [];
-  for (const a of airlines) eachLang(`airline/${a.id}`, a.lastmod, urls);
+  for (const a of airlines) eachLang(`airline/${a.id}`, applyTemplateFloor(a.lastmod, floor), urls);
   return urls;
 }
 
@@ -100,10 +111,11 @@ export async function buildBlogUrls() {
   // Each language has its OWN blog slugs (German from the base list, the others
   // from blog_post_translations). Blog posts are hand-written published articles
   // — never thin — so there is no indexable gate.
+  const floor = SEO_TEMPLATE_VERSIONS.blog;
   const urls = [];
   for (const lang of LANGS) {
     const posts = await sitemapBlog(lang);
-    for (const p of posts) urls.push({ loc: urlFor(lang, `blog/${p.id}`), lastmod: p.lastmod });
+    for (const p of posts) urls.push({ loc: urlFor(lang, `blog/${p.id}`), lastmod: applyTemplateFloor(p.lastmod, floor) });
   }
   return urls;
 }
