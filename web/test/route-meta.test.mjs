@@ -1,7 +1,11 @@
 // Tests for the data-driven route <title> and meta description.
-// Key invariant (per the request): the TITLE is stable and never contains a
-// price; the volatile "from" price appears ONLY in the meta description, and
-// every meta clause is data-gated (omitted when its data is missing).
+// Key invariants (per the request):
+//   • Titles use natural language ("Flights from X to Y"), never arrows, always
+//     end in the brand "| Airpiv", and never contain a volatile price value.
+//   • The "Prices" facet word appears only when a real cached price exists;
+//     otherwise the title sheds that word (a data-gated fallback), never a
+//     fabricated price.
+//   • The meta description is one localized, per-city-pair-unique sentence.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -16,46 +20,75 @@ const R = (over) => Object.assign(
   over || {},
 );
 
-// ─── Title: stable, no price ──────────────────────────────────────────────
-test('title is data-descriptive and never contains a price', () => {
-  const t = buildRouteTitle(R({}), 'de');
-  assert.equal(t, 'Amsterdam → Rom Flüge | Flugzeit, Entfernung & Airlines');
+// ─── Title: natural language, brand suffix, never a price value ────────────
+test('title uses natural language, ends in the brand, and never contains a price value', () => {
+  const t = buildRouteTitle(R({ cached_price: 83, cached_currency: 'EUR' }), 'de');
+  assert.equal(t, 'Flüge von Amsterdam nach Rom – Preise, Flugzeit & Airlines | Airpiv');
+  assert.doesNotMatch(t, /→/);
   assert.doesNotMatch(t, /€|\bab \d|\d+\s?€/);
+  assert.match(t, /\| Airpiv$/);
 });
 
-test('title localizes (English)', () => {
-  assert.equal(buildRouteTitle(R({ destination_city: 'Rome' }), 'en'), 'Amsterdam → Rome Flights | Flight Time, Distance & Airlines');
+test('title localizes (English primary, with price)', () => {
+  assert.equal(
+    buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83 }), 'en'),
+    'Flights from Amsterdam to Rome – Prices, Flight Time & Airlines | Airpiv',
+  );
 });
 
-// ─── Meta: price + distance + directness, all data-gated ──────────────────
-test('meta includes from-price, distance and direct clause when present (de)', () => {
+test('without a cached price the title sheds "Prices" and uses the distance/time fallback', () => {
+  assert.equal(
+    buildRouteTitle(R({ destination_city: 'Rome', distance_km: 1297 }), 'en'),
+    'Flights from Amsterdam to Rome – Flight Time & Distance | Airpiv',
+  );
+});
+
+test('with no price and no distance, a direct route uses the direct fallback', () => {
+  assert.equal(
+    buildRouteTitle(R({ destination_city: 'Rome', direct_flight_available: true }), 'en'),
+    'Direct Flights from Amsterdam to Rome | Airpiv',
+  );
+});
+
+test('a data-poor route falls back to the plain base title', () => {
+  assert.equal(
+    buildRouteTitle(R({ destination_city: 'Rome' }), 'en'),
+    'Flights from Amsterdam to Rome | Airpiv',
+  );
+});
+
+// ─── Meta: localized sentence + a REAL live price when one exists ─────────
+test('meta appends the real live "from" price when a cached price exists (de)', () => {
   const m = buildRouteMetaDescription(R({ cached_price: 83, cached_currency: 'EUR', distance_km: 1297, direct_flight_available: true }), 'de');
-  assert.equal(m, 'Flüge Amsterdam nach Rom ab 83 €. Entfernung 1.297 km. Direktflüge verfügbar.');
+  assert.equal(m, 'Vergleiche Live-Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden. Flüge ab 83 €.');
 });
 
-test('meta omits the price clause when there is no cached price', () => {
+test('meta omits the price clause entirely when there is no cached price', () => {
   const m = buildRouteMetaDescription(R({ distance_km: 1297, direct_flight_available: true }), 'de');
-  assert.equal(m, 'Flüge Amsterdam nach Rom. Entfernung 1.297 km. Direktflüge verfügbar.');
-  assert.doesNotMatch(m, / ab /);
+  assert.equal(m, 'Vergleiche Live-Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden.');
+  assert.doesNotMatch(m, /→/);
+  assert.doesNotMatch(m, /\d+\s?€|ab \d/);
 });
 
-test('meta omits distance and directness when that data is absent', () => {
-  assert.equal(buildRouteMetaDescription(R({ cached_price: 50, cached_currency: 'EUR' }), 'de'), 'Flüge Amsterdam nach Rom ab 50 €.');
+test('a zero/invalid cached price never produces a price clause (never fabricated)', () => {
+  assert.doesNotMatch(buildRouteMetaDescription(R({ cached_price: 0 }), 'de'), /ab /);
+  assert.doesNotMatch(buildRouteMetaDescription(R({ cached_price: null }), 'de'), /ab /);
 });
 
-test('all_direct yields the "only direct" clause', () => {
-  const m = buildRouteMetaDescription(R({ distance_km: 400, all_direct: true, direct_flight_available: true }), 'de');
-  assert.match(m, /nur Direktflüge\.$/);
+test('meta localizes, with and without price (English)', () => {
+  assert.equal(
+    buildRouteMetaDescription(R({ destination_city: 'Rome' }), 'en'),
+    'Compare live flight prices, flight time, distance, airlines and direct flights from Amsterdam to Rome on Airpiv.',
+  );
+  assert.equal(
+    buildRouteMetaDescription(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR' }), 'en'),
+    'Compare live flight prices, flight time, distance, airlines and direct flights from Amsterdam to Rome on Airpiv. Flights from 83 €.',
+  );
 });
 
-test('meta localizes (English, comma thousands separator)', () => {
-  const m = buildRouteMetaDescription(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR', distance_km: 1297, direct_flight_available: true }), 'en');
-  assert.equal(m, 'Flights from Amsterdam to Rome from 83 €. Distance 1,297 km. Direct flights available.');
-});
-
-test('non-EUR currency is rendered with its code', () => {
-  const m = buildRouteMetaDescription(R({ cached_price: 120, cached_currency: 'CHF', distance_km: 500 }), 'de');
-  assert.match(m, /ab 120 CHF\./);
+test('a non-EUR cached price renders with its currency symbol/code', () => {
+  assert.match(buildRouteMetaDescription(R({ cached_price: 120, cached_currency: 'GBP' }), 'en'), /Flights from £120\.$/);
+  assert.match(buildRouteMetaDescription(R({ cached_price: 120, cached_currency: 'CHF' }), 'en'), /Flights from 120 CHF\.$/);
 });
 
 // ─── Precedence: manual > engine-generated (matching language) > default ──
@@ -80,7 +113,7 @@ test('a non-German page does NOT use German generated content — localized defa
   // the actual <section> tag, not the class name (always present in the
   // inlined static CSS regardless of whether the section renders)
   assert.doesNotMatch(html, /<section class="route-generated-body">/);
-  assert.match(html, /<title>Amsterdam → Rome Flights \| Flight Time, Distance &amp; Airlines<\/title>/);
+  assert.match(html, /<title>Flights from Amsterdam to Rome – Prices, Flight Time &amp; Airlines \| Airpiv<\/title>/);
 });
 
 test('an admin custom_title still wins over the engine on the matching language', () => {
@@ -97,6 +130,12 @@ test('a manual intro_text suppresses the generated body (manual wins)', () => {
 
 test('with no manual/engine content, the generated default title+meta render', () => {
   const html = renderFlightRoutePage(R({ distance_km: 1297, cached_price: 83, cached_currency: 'EUR', direct_flight_available: true }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
-  assert.match(html, /<title>Amsterdam → Rom Flüge \| Flugzeit, Entfernung &amp; Airlines<\/title>/);
-  assert.match(html, /<meta name="description" content="Flüge Amsterdam nach Rom ab 83 €\. Entfernung 1\.297 km\. Direktflüge verfügbar\.">/);
+  assert.match(html, /<title>Flüge von Amsterdam nach Rom – Preise, Flugzeit &amp; Airlines \| Airpiv<\/title>/);
+  assert.match(html, /<meta name="description" content="Vergleiche Live-Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom\. Jetzt Flüge auf Airpiv finden\. Flüge ab 83 €\.">/);
+});
+
+// ─── H1 heading: clean natural-language phrase (no facet clause, no brand) ─
+test('the visible <h1> strips the facet clause and the brand', () => {
+  const html = renderFlightRoutePage(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR' }), 'en', [], { fromOrigin: [], toDestination: [] }).html;
+  assert.match(html, /<h1>Flights from Amsterdam to Rome<\/h1>/);
 });
