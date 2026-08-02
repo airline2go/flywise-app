@@ -326,6 +326,7 @@
   "routeTitleDirect": "رحلات مباشرة من {origin} إلى {destination} | Airpiv",
   "routeTitleBase": "رحلات من {origin} إلى {destination} | Airpiv",
   "routeMeta": "قارن أسعار الرحلات المباشرة، مدة الرحلة، المسافة وشركات الطيران بين {origin} و{destination} على Airpiv.",
+  "routeMetaPrice": " رحلات تبدأ من {price}.",
   "sitemapLabel": "خريطة الموقع",
   "sitemapPageTitle": "خريطة الموقع – جميع الوجهات والمطارات وشركات الطيران",
   "sitemapMetaDescription": "تصفّح موقع Airpiv بالكامل من صفحة واحدة: جميع الدول والمدن والمطارات وشركات الطيران التي نغطّيها، إضافةً إلى أشهر مسارات الطيران.",

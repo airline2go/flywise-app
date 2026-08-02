@@ -500,7 +500,8 @@ function buildRouteTitle(route, lang) {
   return format(translate(key, lang), vars);
 }
 
-// Format a price with its currency — used by the on-page price cards.
+// Format a price with its currency — used by the on-page price cards and the
+// meta description's live "from" clause.
 function formatRoutePrice(price, currency, lang) {
   const n = Math.round(Number(price)).toLocaleString(getLanguage(lang).locale);
   if (currency === 'EUR') return `${n} €`;
@@ -513,8 +514,19 @@ function formatRoutePrice(price, currency, lang) {
 // naming what the page lets you compare (live prices, flight time, distance,
 // airlines, direct flights) for this specific city pair. Unique per route
 // (origin/destination differ), no arrows, no keyword stuffing.
+// When — and only when — a REAL live price exists (route.cached_price, the
+// cache-only value the server attaches from its route_price cache), a natural
+// "from {price}" clause is appended. The price value is never generated or
+// estimated: no cached price → the generic sentence stands alone, and the price
+// value never appears in the <title> (only here).
 function buildRouteMetaDescription(route, lang) {
-  return format(translate('routeMeta', lang), { origin: route.origin_city, destination: route.destination_city });
+  const vars = { origin: route.origin_city, destination: route.destination_city };
+  const base = format(translate('routeMeta', lang), vars);
+  if (route.cached_price != null && Number(route.cached_price) > 0) {
+    const price = formatRoutePrice(route.cached_price, route.cached_currency || 'EUR', lang);
+    return base + format(translate('routeMetaPrice', lang), { price });
+  }
+  return base;
 }
 
 function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = []) {

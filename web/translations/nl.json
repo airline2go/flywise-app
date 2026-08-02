@@ -326,6 +326,7 @@
   "routeTitleDirect": "Directe vluchten van {origin} naar {destination} | Airpiv",
   "routeTitleBase": "Vluchten van {origin} naar {destination} | Airpiv",
   "routeMeta": "Vergelijk live prijzen, vliegtijd, afstand, luchtvaartmaatschappijen en directe vluchten van {origin} naar {destination}.",
+  "routeMetaPrice": " Vluchten vanaf {price}.",
   "sitemapLabel": "Sitemap",
   "sitemapPageTitle": "Sitemap – alle bestemmingen, luchthavens en luchtvaartmaatschappijen",
   "sitemapMetaDescription": "Blader door heel Airpiv vanaf één pagina: alle landen, steden, luchthavens en luchtvaartmaatschappijen die we behandelen, plus de populairste vluchtroutes.",

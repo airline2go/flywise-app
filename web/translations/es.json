@@ -326,6 +326,7 @@
   "routeTitleDirect": "Vuelos directos de {origin} a {destination} | Airpiv",
   "routeTitleBase": "Vuelos de {origin} a {destination} | Airpiv",
   "routeMeta": "Compara precios en tiempo real, duración del vuelo, distancia, aerolíneas y vuelos directos entre {origin} y {destination}.",
+  "routeMetaPrice": " Vuelos desde {price}.",
   "sitemapLabel": "Mapa del sitio",
   "sitemapPageTitle": "Mapa del sitio: todos los destinos, aeropuertos y aerolíneas",
   "sitemapMetaDescription": "Explora todo Airpiv desde una sola página: todos los países, ciudades, aeropuertos y aerolíneas que cubrimos, además de las rutas de vuelo más populares.",
