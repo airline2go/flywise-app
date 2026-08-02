@@ -278,9 +278,18 @@ function popularDestinationsHtmlMC(e,t){for(var n={},a=0;a<AP.length;a++)n[AP[a]
   // apart; the browser reports "reload" or "back_forward" distinctly
   // from "navigate" (a real new visit), which a bare pathname check
   // can't distinguish on its own.
+  // [NO-AUTOSEARCH-ON-PAYMENT-RETURN] A Stripe return also lands here as a
+  // fresh "navigate" — the success_url is the /search/FROM-TO page the user
+  // booked from, plus ?session_id (booking) or ?change_session_id (date
+  // change). Left ungated, that reopened the search results on top of the
+  // booking confirmation right after paying. checkStripeReturn()/
+  // checkChangeDateReturn() run later in load and own that URL (they strip
+  // the param and render confirmation), so the auto-search must stand down
+  // whenever either return param is present.
+  var isPaymentReturn=!!(params.get("session_id")||params.get("change_session_id"));
   var navEntries=performance.getEntriesByType&&performance.getEntriesByType("navigation");
   var navType=navEntries&&navEntries[0]&&navEntries[0].type;
-  var isFreshVisit=navType!=="reload"&&navType!=="back_forward";
+  var isFreshVisit=navType!=="reload"&&navType!=="back_forward"&&!isPaymentReturn;
   if(isFreshVisit){
     prefillPromise.then(function(){doSearch();});
   }
