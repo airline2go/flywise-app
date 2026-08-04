@@ -119,12 +119,177 @@ body {
   }
 }
 
-/* ── Ticket grid ── */
+/* ── Toolbar: search + count ── */
 .jrn-main {
   max-width: 900px;
   margin: 0 auto;
   padding: 44px var(--pad) 80px;
 }
+.jrn-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+.jrn-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 220px;
+}
+.jrn-search svg {
+  position: absolute;
+  left: 14px;
+  color: var(--tx3);
+  pointer-events: none;
+}
+.jrn-search input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--tx);
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.jrn-search input::placeholder {
+  color: var(--tx3);
+}
+.jrn-search input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(15, 181, 160, 0.14);
+}
+.jrn-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tx3);
+  white-space: nowrap;
+}
+
+/* ── Skeleton loading ── */
+@keyframes jrnShimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.post-skel {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--bd);
+}
+.post-skel-img {
+  height: 168px;
+  background: var(--bg2);
+}
+.post-skel-body {
+  padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.post-skel-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg2) 0, #eef2f5 45%, var(--bg2) 90%);
+  background-size: 800px 100%;
+  animation: jrnShimmer 1.3s linear infinite;
+}
+.post-skel-line.w40 {
+  width: 40%;
+}
+.post-skel-line.w90 {
+  width: 90%;
+}
+.post-skel-line.w70 {
+  width: 70%;
+}
+.post-skel-line.w50 {
+  width: 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .post-skel-line {
+    animation: none;
+  }
+}
+
+/* ── Featured (newest) post — spans full grid width ── */
+.post-featured {
+  grid-column: 1 / -1;
+  flex-direction: column;
+}
+.post-feat-cover {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+  background: var(--navy2);
+  border-radius: 16px 16px 0 0;
+}
+.post-feat-noimg {
+  height: 150px;
+}
+.post-feat-body {
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+}
+.post-feat-title {
+  font-family: "Syne", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--tx);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 11px 0 10px;
+}
+.post-feat-excerpt {
+  font-size: 14.5px;
+  color: var(--tx2);
+  line-height: 1.7;
+  margin: 0 0 16px;
+  max-width: 620px;
+}
+@media (min-width: 680px) {
+  .post-ticket.post-featured {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .post-featured .post-feat-cover {
+    width: 48%;
+    height: auto;
+    min-height: 260px;
+    border-radius: 16px 0 0 16px;
+  }
+  .post-featured .post-feat-noimg {
+    width: 48%;
+    height: auto;
+    border-radius: 16px 0 0 16px;
+  }
+  .post-featured .post-feat-body {
+    width: 52%;
+    justify-content: center;
+    padding: 30px 32px;
+  }
+  .post-featured .post-feat-title {
+    font-size: 1.72rem;
+  }
+}
+
+/* ── Ticket grid ── */
 .blog-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -274,5 +439,28 @@ body {
   color: #eef3f7;
 }
 [data-theme="dark"] .post-ticket-excerpt {
+  color: #aebcc9;
+}
+[data-theme="dark"] .jrn-search input {
+  background: var(--navy2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #eef3f7;
+}
+[data-theme="dark"] .post-skel,
+[data-theme="dark"] .post-skel-img {
+  background: var(--navy2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .post-skel-img {
+  background: #0d1420;
+}
+[data-theme="dark"] .post-skel-line {
+  background: linear-gradient(90deg, #0d1420 0, #1b2c40 45%, #0d1420 90%);
+  background-size: 800px 100%;
+}
+[data-theme="dark"] .post-feat-title {
+  color: #eef3f7;
+}
+[data-theme="dark"] .post-feat-excerpt {
   color: #aebcc9;
 }

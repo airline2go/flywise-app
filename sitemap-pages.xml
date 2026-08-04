@@ -22,7 +22,12 @@
   </url>
   <url>
     <loc>https://airpiv.com/blog.html</loc>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://airpiv.com/en/blog</loc>
+    <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>

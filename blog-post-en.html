@@ -306,7 +306,8 @@ function renderPost(post) {
         '<div class="post-author-bio">Writes for Airpiv about cheap flights, travel planning, and everything that makes flying easier.</div>' +
       '</div>' +
     '</div>' +
-    '<div id="post-similar-slot"></div>';
+    '<div id="post-similar-slot"></div>' +
+    '<div id="post-prevnext-slot"></div>';
 
   var bodyEl = document.getElementById('post-body');
 
@@ -431,6 +432,7 @@ function loadSimilarPosts(post) {
     .then(function(r){ return r.json(); })
     .then(function(j) {
       if (!j.ok || !j.posts) return;
+      renderPrevNext(j.posts, post);
       var others = j.posts.filter(function(p) { return p.slug !== post.slug; });
       var heading = '\ud83d\udcda Similar articles';
       if (currentCities.length) {
@@ -458,6 +460,31 @@ function loadSimilarPosts(post) {
       document.getElementById('post-similar-slot').innerHTML = html;
     })
     .catch(function(){});
+}
+
+// [PREV-NEXT] Article-to-article navigation by publish order (newest first
+// from the API): "newer" = the post before this one in the list, "older" =
+// the one after. If this is the first or last post, the empty side becomes a
+// spacer so the remaining link keeps its column.
+function renderPrevNext(posts, post) {
+  var slot = document.getElementById('post-prevnext-slot');
+  if (!slot) return;
+  var idx = -1;
+  for (var i = 0; i < posts.length; i++) { if (posts[i].slug === post.slug) { idx = i; break; } }
+  if (idx === -1) return;
+  var newer = idx > 0 ? posts[idx - 1] : null;
+  var older = idx < posts.length - 1 ? posts[idx + 1] : null;
+  if (!newer && !older) return;
+  function card(p, dir, label) {
+    return '<a class="post-pn-card ' + dir + '" href="/en/blog/' + encodeURIComponent(p.slug) + '">' +
+      '<span class="post-pn-dir">' + label + '</span>' +
+      '<span class="post-pn-title">' + escHtml(p.title) + '</span>' +
+    '</a>';
+  }
+  slot.innerHTML = '<nav class="post-prevnext" aria-label="More posts">' +
+    (newer ? card(newer, 'prev', '‹ Newer post') : '<span class="post-pn-spacer"></span>') +
+    (older ? card(older, 'next', 'Older post ›') : '<span class="post-pn-spacer"></span>') +
+  '</nav>';
 }
 
 (function() {

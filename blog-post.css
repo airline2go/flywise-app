@@ -516,6 +516,62 @@ main#post-main {
   line-height: 1.6;
 }
 
+.post-prevnext {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 34px 0 8px;
+}
+.post-pn-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.post-pn-card:hover {
+  border-color: var(--teal);
+  transform: translateY(-2px);
+}
+.post-pn-card.next {
+  text-align: right;
+}
+.post-pn-dir {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal2);
+}
+.post-pn-title {
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--tx);
+  line-height: 1.32;
+}
+.post-pn-spacer {
+  display: block;
+}
+@media (max-width: 520px) {
+  .post-prevnext {
+    grid-template-columns: 1fr;
+  }
+  .post-pn-card.next {
+    text-align: left;
+  }
+  .post-pn-spacer {
+    display: none;
+  }
+}
+
 .post-notfound {
   text-align: center;
   padding: 60px 20px;
@@ -578,7 +634,8 @@ main#post-main {
 [data-theme="dark"] .post-routes,
 [data-theme="dark"] .post-author,
 [data-theme="dark"] .post-route-link,
-[data-theme="dark"] .post-similar-card {
+[data-theme="dark"] .post-similar-card,
+[data-theme="dark"] .post-pn-card {
   background: var(--navy2);
   border-color: rgba(255, 255, 255, 0.08);
 }
@@ -594,7 +651,8 @@ main#post-main {
 [data-theme="dark"] .post-similar h2,
 [data-theme="dark"] .post-author-name,
 [data-theme="dark"] .post-faq-q,
-[data-theme="dark"] .post-similar-card-title {
+[data-theme="dark"] .post-similar-card-title,
+[data-theme="dark"] .post-pn-title {
   color: #eef3f7;
 }
 [data-theme="dark"] .post-body {
