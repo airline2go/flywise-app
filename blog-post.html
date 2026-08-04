@@ -306,7 +306,8 @@ function renderPost(post) {
         '<div class="post-author-bio">Schreibt für Airpiv über günstige Flüge, Reiseplanung und alles, was das Fliegen einfacher macht.</div>' +
       '</div>' +
     '</div>' +
-    '<div id="post-similar-slot"></div>';
+    '<div id="post-similar-slot"></div>' +
+    '<div id="post-prevnext-slot"></div>';
 
   var bodyEl = document.getElementById('post-body');
 
@@ -431,6 +432,7 @@ function loadSimilarPosts(post) {
     .then(function(r){ return r.json(); })
     .then(function(j) {
       if (!j.ok || !j.posts) return;
+      renderPrevNext(j.posts, post);
       var others = j.posts.filter(function(p) { return p.slug !== post.slug; });
       var heading = '\ud83d\udcda Ähnliche Artikel';
       if (currentCities.length) {
@@ -458,6 +460,30 @@ function loadSimilarPosts(post) {
       document.getElementById('post-similar-slot').innerHTML = html;
     })
     .catch(function(){});
+}
+
+// [PREV-NEXT] تنقّل بين المقالات حسب ترتيب النشر (الأحدث أولاً من الـ API):
+// "أحدث" = المقال اللي قبله في القائمة، "أقدم" = اللي بعده. لو المقال
+// أول أو آخر واحد، الجهة الفاضية بتتحول لمساحة فاضية عشان يفضل الثاني في مكانه.
+function renderPrevNext(posts, post) {
+  var slot = document.getElementById('post-prevnext-slot');
+  if (!slot) return;
+  var idx = -1;
+  for (var i = 0; i < posts.length; i++) { if (posts[i].slug === post.slug) { idx = i; break; } }
+  if (idx === -1) return;
+  var newer = idx > 0 ? posts[idx - 1] : null;
+  var older = idx < posts.length - 1 ? posts[idx + 1] : null;
+  if (!newer && !older) return;
+  function card(p, dir, label) {
+    return '<a class="post-pn-card ' + dir + '" href="/blog/' + encodeURIComponent(p.slug) + '">' +
+      '<span class="post-pn-dir">' + label + '</span>' +
+      '<span class="post-pn-title">' + escHtml(p.title) + '</span>' +
+    '</a>';
+  }
+  slot.innerHTML = '<nav class="post-prevnext" aria-label="Weitere Beiträge">' +
+    (newer ? card(newer, 'prev', '‹ Neuerer Beitrag') : '<span class="post-pn-spacer"></span>') +
+    (older ? card(older, 'next', 'Älterer Beitrag ›') : '<span class="post-pn-spacer"></span>') +
+  '</nav>';
 }
 
 (function() {
