@@ -12,6 +12,9 @@
 <meta name="description" content="Tipps und Tricks für günstige Flüge, Reise-Inspiration und alles Wissenswerte rund ums Fliegen — vom Airpiv-Team.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://airpiv.com/blog.html">
+<link rel="alternate" hreflang="de" href="https://airpiv.com/blog.html">
+<link rel="alternate" hreflang="en" href="https://airpiv.com/en/blog">
+<link rel="alternate" hreflang="x-default" href="https://airpiv.com/blog.html">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Blog | Airpiv">
@@ -42,6 +45,7 @@
   "inLanguage": "de-DE"
 }
 </script>
+<script type="application/ld+json" id="itemlist-schema"></script>
 <link rel="stylesheet" href="/blog.css">
 </head>
 <body>
@@ -72,8 +76,18 @@
 </header>
 
 <main class="jrn-main">
-  <div class="blog-grid" id="blog-grid">
-    <div class="jrn-empty">Lade Beiträge…</div>
+  <div class="jrn-toolbar" id="jrn-toolbar" hidden>
+    <div class="jrn-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" id="jrn-search-input" placeholder="Beiträge durchsuchen…" aria-label="Beiträge durchsuchen" autocomplete="off">
+    </div>
+    <div class="jrn-count" id="jrn-count" aria-live="polite"></div>
+  </div>
+  <div class="blog-grid" id="blog-grid" aria-busy="true">
+    <div class="post-skel" aria-hidden="true"><div class="post-skel-img"></div><div class="post-skel-body"><span class="post-skel-line w40"></span><span class="post-skel-line w90"></span><span class="post-skel-line w70"></span><span class="post-skel-line w50"></span></div></div>
+    <div class="post-skel" aria-hidden="true"><div class="post-skel-img"></div><div class="post-skel-body"><span class="post-skel-line w40"></span><span class="post-skel-line w90"></span><span class="post-skel-line w70"></span><span class="post-skel-line w50"></span></div></div>
+    <div class="post-skel" aria-hidden="true"><div class="post-skel-img"></div><div class="post-skel-body"><span class="post-skel-line w40"></span><span class="post-skel-line w90"></span><span class="post-skel-line w70"></span><span class="post-skel-line w50"></span></div></div>
+    <div class="post-skel" aria-hidden="true"><div class="post-skel-img"></div><div class="post-skel-body"><span class="post-skel-line w40"></span><span class="post-skel-line w90"></span><span class="post-skel-line w70"></span><span class="post-skel-line w50"></span></div></div>
   </div>
 </main>
 
@@ -97,34 +111,111 @@ function escHtml(s) {
 }
 
 var NOIMG_SVG = '<div class="post-ticket-noimg"><svg width="34" height="34" viewBox="0 0 64 64" fill="none"><path d="M32 10 L48 46 L32 37 L16 46 Z" fill="#0FB5A0" opacity="0.85"/></svg></div>';
+var NOIMG_SVG_LG = '<div class="post-ticket-noimg post-feat-noimg"><svg width="52" height="52" viewBox="0 0 64 64" fill="none"><path d="M32 10 L48 46 L32 37 L16 46 Z" fill="#0FB5A0" opacity="0.85"/></svg></div>';
+
+var allPosts = [];
+
+function fmtDate(iso) {
+  return iso ? new Date(iso).toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : '';
+}
+
+function ticketHtml(p) {
+  var cover = p.cover_image_url
+    ? '<img class="post-ticket-cover" src="' + escHtml(p.cover_image_url) + '" loading="lazy" alt="' + escHtml(p.title) + '">'
+    : NOIMG_SVG;
+  return '<a class="post-ticket" href="/blog/' + encodeURIComponent(p.slug) + '">' +
+    cover +
+    '<div class="post-ticket-perf" aria-hidden="true"></div>' +
+    '<div class="post-ticket-body">' +
+      '<span class="post-ticket-eyebrow">Airpiv Journal</span>' +
+      '<h2 class="post-ticket-title">' + escHtml(p.title) + '</h2>' +
+      (p.excerpt ? '<p class="post-ticket-excerpt">' + escHtml(p.excerpt) + '</p>' : '<span style="flex:1"></span>') +
+      '<div class="post-ticket-meta"><span>' + escHtml(p.author || 'Airpiv Team') + '</span><span class="dot">·</span><span>' + fmtDate(p.published_at) + '</span></div>' +
+    '</div>' +
+  '</a>';
+}
+
+function featuredHtml(p) {
+  var cover = p.cover_image_url
+    ? '<img class="post-feat-cover" src="' + escHtml(p.cover_image_url) + '" loading="lazy" alt="' + escHtml(p.title) + '">'
+    : NOIMG_SVG_LG;
+  return '<a class="post-ticket post-featured" href="/blog/' + encodeURIComponent(p.slug) + '">' +
+    cover +
+    '<div class="post-feat-body">' +
+      '<span class="post-ticket-eyebrow">★ Neuester Beitrag</span>' +
+      '<h2 class="post-feat-title">' + escHtml(p.title) + '</h2>' +
+      (p.excerpt ? '<p class="post-feat-excerpt">' + escHtml(p.excerpt) + '</p>' : '') +
+      '<div class="post-ticket-meta"><span>' + escHtml(p.author || 'Airpiv Team') + '</span><span class="dot">·</span><span>' + fmtDate(p.published_at) + '</span></div>' +
+    '</div>' +
+  '</a>';
+}
+
+function renderPosts(query) {
+  var grid = document.getElementById('blog-grid');
+  var countEl = document.getElementById('jrn-count');
+  var q = (query || '').trim().toLowerCase();
+  var filtered = q
+    ? allPosts.filter(function(p){ return ((p.title || '') + ' ' + (p.excerpt || '')).toLowerCase().indexOf(q) !== -1; })
+    : allPosts;
+
+  if (countEl) {
+    countEl.textContent = q
+      ? (filtered.length + (filtered.length === 1 ? ' Ergebnis' : ' Ergebnisse'))
+      : (allPosts.length + (allPosts.length === 1 ? ' Beitrag' : ' Beiträge'));
+  }
+
+  if (!filtered.length) {
+    grid.classList.remove('has-featured');
+    grid.innerHTML = '<div class="jrn-empty">Keine Beiträge gefunden für „' + escHtml(query) + '".</div>';
+    return;
+  }
+
+  if (!q && filtered.length > 1) {
+    grid.classList.add('has-featured');
+    grid.innerHTML = featuredHtml(filtered[0]) + filtered.slice(1).map(ticketHtml).join('');
+  } else {
+    grid.classList.remove('has-featured');
+    grid.innerHTML = filtered.map(ticketHtml).join('');
+  }
+}
+
+function injectItemListSchema(posts) {
+  var el = document.getElementById('itemlist-schema');
+  if (!el) return;
+  el.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": posts.map(function(p, i) {
+      return { "@type": "ListItem", "position": i + 1, "url": "https://airpiv.com/blog/" + encodeURIComponent(p.slug), "name": p.title };
+    })
+  });
+}
 
 fetch(PROXY + '/blog-posts')
   .then(function(r){ return r.json(); })
   .then(function(j){
     var grid = document.getElementById('blog-grid');
+    grid.setAttribute('aria-busy', 'false');
     if (!j.ok || !j.posts || !j.posts.length) {
+      grid.classList.remove('has-featured');
       grid.innerHTML = '<div class="jrn-empty">Noch keine Beiträge — schau bald wieder vorbei!</div>';
       return;
     }
-    grid.innerHTML = j.posts.map(function(p) {
-      var dateStr = p.published_at ? new Date(p.published_at).toLocaleDateString('de-DE', {year:'numeric',month:'long',day:'numeric'}) : '';
-      var cover = p.cover_image_url
-        ? '<img class="post-ticket-cover" src="' + escHtml(p.cover_image_url) + '" loading="lazy" alt="' + escHtml(p.title) + '">'
-        : NOIMG_SVG;
-      return '<a class="post-ticket" href="/blog/' + encodeURIComponent(p.slug) + '">' +
-        cover +
-        '<div class="post-ticket-perf" aria-hidden="true"></div>' +
-        '<div class="post-ticket-body">' +
-          '<span class="post-ticket-eyebrow">Airpiv Journal</span>' +
-          '<h2 class="post-ticket-title">' + escHtml(p.title) + '</h2>' +
-          (p.excerpt ? '<p class="post-ticket-excerpt">' + escHtml(p.excerpt) + '</p>' : '<span style="flex:1"></span>') +
-          '<div class="post-ticket-meta"><span>' + escHtml(p.author || 'Airpiv Team') + '</span><span class="dot">·</span><span>' + dateStr + '</span></div>' +
-        '</div>' +
-      '</a>';
-    }).join('');
+    allPosts = j.posts;
+    injectItemListSchema(allPosts);
+    renderPosts('');
+    if (allPosts.length >= 4) {
+      var toolbar = document.getElementById('jrn-toolbar');
+      toolbar.hidden = false;
+      var input = document.getElementById('jrn-search-input');
+      input.addEventListener('input', function(){ renderPosts(input.value); });
+    }
   })
   .catch(function(){
-    document.getElementById('blog-grid').innerHTML = '<div class="jrn-error">Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.</div>';
+    var grid = document.getElementById('blog-grid');
+    grid.setAttribute('aria-busy', 'false');
+    grid.classList.remove('has-featured');
+    grid.innerHTML = '<div class="jrn-error">Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.</div>';
   });
 </script>
 

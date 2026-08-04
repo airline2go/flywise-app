@@ -110,6 +110,26 @@ function buildSimilarPostsHtml(post, allPosts, lang) {
   return `<div class="post-similar"><h2>${heading}</h2><div class="post-similar-grid">${cards}</div></div>`;
 }
 
+// [PREV-NEXT] Article-to-article navigation by publish order (allPosts is
+// newest-first, same as the API): "newer" = the post before this one in the
+// list, "older" = the one after. Reuses the post list already passed in for
+// similar-posts — no extra request. If this is the first or last post, the
+// empty side becomes a spacer so the remaining link keeps its column.
+function buildPrevNextHtml(post, allPosts, lang) {
+  const de = lang !== 'en';
+  const posts = allPosts || [];
+  const idx = posts.findIndex((p) => p.slug === post.slug);
+  if (idx === -1) return '';
+  const newer = idx > 0 ? posts[idx - 1] : null;
+  const older = idx < posts.length - 1 ? posts[idx + 1] : null;
+  if (!newer && !older) return '';
+  const base = de ? '/blog/' : '/en/blog/';
+  const card = (p, dir, label) => `<a class="post-pn-card ${dir}" href="${base}${encodeURIComponent(p.slug)}"><span class="post-pn-dir">${escHtml(label)}</span><span class="post-pn-title">${escHtml(p.title)}</span></a>`;
+  const left = newer ? card(newer, 'prev', de ? '‹ Neuerer Beitrag' : '‹ Newer post') : '<span class="post-pn-spacer"></span>';
+  const right = older ? card(older, 'next', de ? 'Älterer Beitrag ›' : 'Older post ›') : '<span class="post-pn-spacer"></span>';
+  return `<nav class="post-prevnext" aria-label="${de ? 'Weitere Beiträge' : 'More posts'}">${left}${right}</nav>`;
+}
+
 // [UI-ONLY SCRIPT] Reading-progress bar, back-to-top button, FAQ
 // expand/collapse, and copy-link button are pure client-side UI behavior —
 // not SEO content. They never touch title/description/canonical/schema,
@@ -245,6 +265,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
   const popularRoutesHtml = buildPopularRoutesHtml(post, allRoutes, lang);
   const mentionedDestinationsHtml = buildMentionedDestinationsHtml(post, allRoutes, lang);
   const similarPostsHtml = buildSimilarPostsHtml(post, allPosts, lang);
+  const prevNextHtml = buildPrevNextHtml(post, allPosts, lang);
 
   const blogHref = de ? '/blog.html' : '/en/blog';
   const homeHref = de ? '/' : '/en/';
@@ -292,6 +313,7 @@ ${faqHtml}
   </div>
 </div>
 ${similarPostsHtml}
+${prevNextHtml}
   </div>
 </main>`;
 
