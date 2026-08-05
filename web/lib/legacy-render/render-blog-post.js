@@ -20,15 +20,18 @@ const BLOG_POST_HEAD_EXTRA = `<link rel="preconnect" href="https://fonts.googlea
 // English page) — this shared implementation anglicizes for both languages.
 function buildPopularRoutesHtml(post, allRoutes, lang) {
   const de = lang !== 'en';
-  const { localizeCity } = require('./data');
-  const detectedCities = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
+  const { localizeCity, slugForIata } = require('./data');
+  const detectedSlugs = new Set(detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`));
   if (!allRoutes || !allRoutes.length) return '';
   let heading = de ? '✈ Beliebte Flugverbindungen' : '✈ Popular flight routes';
   let chosen = allRoutes.slice(0, 4);
-  if (detectedCities.length) {
+  if (detectedSlugs.size) {
+    // Score by canonical city slug (resolved from each route's airport codes),
+    // so the exact route the article is about — both cities matched — ranks
+    // first, regardless of language or spelling.
     const scored = allRoutes.map((r) => {
-      const oMatch = detectedCities.some((c) => r.origin_city && r.origin_city.toLowerCase() === c.toLowerCase());
-      const dMatch = detectedCities.some((c) => r.destination_city && r.destination_city.toLowerCase() === c.toLowerCase());
+      const oMatch = detectedSlugs.has(slugForIata(r.origin_iata));
+      const dMatch = detectedSlugs.has(slugForIata(r.destination_iata));
       return { route: r, score: (oMatch ? 1 : 0) + (dMatch ? 1 : 0) };
     }).filter((s) => s.score > 0);
     if (scored.length) {
@@ -49,35 +52,31 @@ function buildPopularRoutesHtml(post, allRoutes, lang) {
 
 // [MENTIONED-DESTINATIONS] Internal links from a blog post to the CITY pages
 // of the destinations it mentions — the popular-routes block above only links
-// flight routes, leaving the city entity pages unlinked from the blog. Cities
-// are detected in the post text (same detector as the routes block) and
-// resolved to real city pages via the route list's city_slug, so we only ever
-// link a city that actually has a page. Blog is DE/EN-only, so the two hrefs
-// are inline like the rest of this file.
+// flight routes, leaving the city entity pages unlinked from the blog.
+// detectCitiesInText now returns canonical city slugs directly (real published
+// cities only), so each detected slug is a city page we can link straight to —
+// no route-list lookup needed. Blog is DE/EN-only, so the two hrefs are inline
+// like the rest of this file.
 function buildMentionedDestinationsHtml(post, allRoutes, lang) {
   const de = lang !== 'en';
-  const { localizeCity, slugForIata } = require('./data');
-  const detected = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
-  if (!detected.length || !allRoutes || !allRoutes.length) return '';
-  const detLower = detected.map((c) => c.toLowerCase());
-  // The route-pages list carries IATA but no city_slug, so resolve the slug
-  // from the airport code via slugForIata (populated by setGeoData).
-  const bySlug = new Map();
-  for (const r of allRoutes) {
-    for (const side of [['origin_city', 'origin_iata'], ['destination_city', 'destination_iata']]) {
-      const name = r[side[0]];
-      const iata = r[side[1]];
-      if (!name || !detLower.includes(name.toLowerCase())) continue;
-      const slug = slugForIata(iata);
-      if (slug && !bySlug.has(slug)) bySlug.set(slug, { slug, iata, name });
-    }
+  const { cityNameForSlug } = require('./data');
+  const detectedSlugs = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
+  if (!detectedSlugs.length) return '';
+  const dests = [];
+  const seen = new Set();
+  for (const slug of detectedSlugs) {
+    if (seen.has(slug)) continue;
+    const name = cityNameForSlug(slug, lang);
+    if (!name) continue;
+    seen.add(slug);
+    dests.push({ slug, name });
+    if (dests.length >= 6) break;
   }
-  const dests = [...bySlug.values()].slice(0, 6);
   if (!dests.length) return '';
   const cityHrefBase = de ? '/city/' : '/en/city/';
   const heading = de ? '🌍 Reiseziele im Artikel' : '🌍 Destinations in this article';
   const chips = dests
-    .map((d) => `<a class="post-route-link" href="${cityHrefBase}${encodeURIComponent(d.slug)}">${escHtml(localizeCity(d.name, d.iata, lang))}</a>`)
+    .map((d) => `<a class="post-route-link" href="${cityHrefBase}${encodeURIComponent(d.slug)}">${escHtml(d.name)}</a>`)
     .join('');
   return `<div class="post-routes"><h2>${heading}</h2><div class="post-routes-grid">${chips}</div></div>`;
 }
@@ -87,15 +86,16 @@ function buildMentionedDestinationsHtml(post, allRoutes, lang) {
 // post list for this language.
 function buildSimilarPostsHtml(post, allPosts, lang) {
   const de = lang !== 'en';
-  const currentCities = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
-  const currentCountries = citiesToCountries(currentCities, lang);
+  const currentSlugs = detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`);
+  const currentCountries = citiesToCountries(currentSlugs, lang);
   let others = (allPosts || []).filter((p) => p.slug !== post.slug);
   let heading = de ? '📚 Ähnliche Artikel' : '📚 Similar articles';
-  if (currentCities.length) {
+  if (currentSlugs.length) {
+    const cur = new Set(currentSlugs);
     const withMeta = others.map((p) => {
-      const pCities = detectCitiesInText(`${p.title || ''} ${p.excerpt || ''}`);
-      const pCountries = citiesToCountries(pCities, lang);
-      const cityOverlap = pCities.filter((c) => currentCities.indexOf(c) !== -1).length;
+      const pSlugs = detectCitiesInText(`${p.title || ''} ${p.excerpt || ''}`);
+      const pCountries = citiesToCountries(pSlugs, lang);
+      const cityOverlap = pSlugs.filter((c) => cur.has(c)).length;
       const countryOverlap = pCountries.filter((c) => currentCountries.indexOf(c) !== -1).length;
       return { post: p, cityOverlap, countryOverlap };
     });

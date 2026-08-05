@@ -32,7 +32,7 @@ const { renderFlightRoutePage } = flightRouteMod;
 const { renderBlogPostPage } = blogPostMod;
 const { renderSitemapPage } = sitemapMod;
 const { renderPopularPage } = popularMod;
-const { setGeoData, detectCitiesInText, localizeCity } = dataMod;
+const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
 
 // [ROUTE-RELATED-ARTICLES] Blog posts whose text genuinely mentions this
 // route's origin or destination city — the inverse of the blog page's
@@ -44,14 +44,18 @@ const { setGeoData, detectCitiesInText, localizeCity } = dataMod;
 // name both localized to `lang`), so an English page matches "Munich" and a
 // German page matches "München". Nothing is fabricated.
 const ROUTE_RELATED_ARTICLE_LIMIT = 4;
-function computeRelatedArticles(route, posts, lang) {
+function computeRelatedArticles(route, posts) {
   if (!posts || !posts.length) return [];
-  const origin = String(localizeCity(route.origin_city, route.origin_iata, lang) || '').toLowerCase();
-  const dest = String(localizeCity(route.destination_city, route.destination_iata, lang) || '').toLowerCase();
+  // Match by canonical city slug (entity), resolved from the route's airport
+  // codes — language-independent and accent-proof, unlike the old localized-
+  // name string compare. `lang` is no longer needed for matching.
+  const originSlug = slugForIata(route.origin_iata);
+  const destSlug = slugForIata(route.destination_iata);
+  if (!originSlug && !destSlug) return [];
   return posts
     .map((p) => {
-      const cities = detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`).map((c) => c.toLowerCase());
-      const score = (cities.includes(origin) ? 1 : 0) + (cities.includes(dest) ? 1 : 0);
+      const slugs = new Set(detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`));
+      const score = (originSlug && slugs.has(originSlug) ? 1 : 0) + (destSlug && slugs.has(destSlug) ? 1 : 0);
       return { post: p, score };
     })
     .filter((s) => s.score > 0)
@@ -143,7 +147,7 @@ export async function renderFlightRouteHtml(slug, lang) {
   const [routeList, posts] = await Promise.all([listRoutePages(), listBlogPosts(lang)]);
   const related = computeRelatedRoutes(routeRaw, routeList);
   const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
-  const relatedArticles = computeRelatedArticles(routeRaw, posts, lang);
+  const relatedArticles = computeRelatedArticles(routeRaw, posts);
   return renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
 }
 
