@@ -11,18 +11,79 @@ let CITY_BY_SLUG = {};
 let IATA_TO_SLUG = {};
 let COUNTRY_BY_CODE = {};
 
-// Called once by generate-pages.js's main() after fetching the /cities
-// and /countries lists — populates the lookup tables every localize*()
-// call below reads from for the rest of the build run.
+// [CITY-RECOGNITION] Dynamic recognition dataset, rebuilt by setGeoData() from
+// the live city list — replaces the old hardcoded KNOWN_CITIES/CITY_COUNTRY_*
+// tables so every published (and future) city is recognized with zero manual
+// maintenance. NAME_INDEX maps a folded name variant -> Set<city_slug>;
+// IATA_ALIAS maps an uppercase IATA code -> Set<city_slug>; MAX_NGRAM is the
+// longest name (in words) so detection only slides windows as wide as needed.
+let NAME_INDEX = new Map();
+let IATA_ALIAS = new Map();
+let MAX_NGRAM = 1;
+const NGRAM_CAP = 6;
+
+// Unicode-fold a string for accent/case/punctuation-insensitive matching:
+// NFKD-decompose and drop combining marks, map the European letters that do
+// NOT decompose (ß, ø, æ, œ, ł, đ/ð) to their base, lowercase, then collapse
+// every run of non-letter/non-digit to a single space and trim. So "Málaga",
+// "MÁLAGA" and "Malaga," all fold to "malaga"; "Köln" -> "koln"; "Zürich" ->
+// "zurich"; "São Paulo" -> "sao paulo". \p{L}/\p{N} keep non-Latin scripts
+// (Arabic, Cyrillic, …) intact so their translations match too.
+function foldText(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .replace(/[øØ]/g, 'o')
+    .replace(/[æÆ]/g, 'ae')
+    .replace(/[œŒ]/g, 'oe')
+    .replace(/[łŁ]/g, 'l')
+    .replace(/[đðÐ]/g, 'd')
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function addToSetMap(map, key, slug) {
+  if (!key) return;
+  let set = map.get(key);
+  if (!set) { set = new Set(); map.set(key, set); }
+  set.add(slug);
+}
+
+function indexCityName(variant, slug) {
+  const key = foldText(variant);
+  if (!key || key.length < 2) return; // skip empties and 1-char noise
+  addToSetMap(NAME_INDEX, key, slug);
+  const words = key.split(' ').length;
+  if (words > MAX_NGRAM) MAX_NGRAM = Math.min(words, NGRAM_CAP);
+}
+
+// Called once (per request via ensureGeo(), or once per build) after fetching
+// the /cities and /countries lists — populates the localize*() lookup tables
+// AND the dynamic city-recognition index above.
 function setGeoData(cities, countries) {
   CITY_BY_SLUG = {};
   IATA_TO_SLUG = {};
+  NAME_INDEX = new Map();
+  IATA_ALIAS = new Map();
+  MAX_NGRAM = 1;
   (cities || []).forEach((c) => {
+    if (!c || !c.city_slug) return;
     CITY_BY_SLUG[c.city_slug] = c;
-    (c.airport_codes || []).forEach((code) => { IATA_TO_SLUG[code] = c.city_slug; });
+    (c.airport_codes || []).forEach((code) => {
+      IATA_TO_SLUG[code] = c.city_slug;
+      if (code) addToSetMap(IATA_ALIAS, String(code).toUpperCase(), c.city_slug);
+    });
+    // Every name this city is known by — its canonical name plus each localized
+    // translation — folds to the same slug, so a mention in any language links
+    // back to the one city entity.
+    const variants = [c.name].concat(c.translations ? Object.values(c.translations) : []);
+    variants.forEach((v) => indexCityName(v, c.city_slug));
   });
   COUNTRY_BY_CODE = {};
-  (countries || []).forEach((c) => { COUNTRY_BY_CODE[c.code] = c; });
+  (countries || []).forEach((c) => { if (c && c.code) COUNTRY_BY_CODE[c.code] = c; });
 }
 
 // language -> English -> German -> the untranslated name itself (never a
@@ -97,70 +158,64 @@ function buildIataNameMap(lang) {
   return map;
 }
 
-// [CONTEXT-DETECTION] known cities/countries for the blog "popular routes"/
-// "similar posts" matching — ported verbatim from blog-post.html/-en.html.
-// Blog posts stay DE/EN-only (independently-authored content per
-// language via separate backend endpoints), so this stays untouched.
-const KNOWN_CITIES = ['Berlin', 'München', 'Munich', 'Frankfurt', 'Hamburg', 'Düsseldorf', 'Cologne', 'Köln', 'Stuttgart', 'Hannover', 'Leipzig', 'Nürnberg', 'Nuremberg', 'Dortmund', 'Bremen', 'Wien', 'Vienna', 'Zürich', 'Zurich', 'Genf', 'Geneva', 'London', 'Paris', 'Rom', 'Rome', 'Mailand', 'Milan', 'Venedig', 'Venice', 'Neapel', 'Naples', 'Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Seville', 'Malaga', 'Lissabon', 'Lisbon', 'Porto', 'Amsterdam', 'Brüssel', 'Brussels', 'Luxemburg', 'Luxembourg', 'Kopenhagen', 'Copenhagen', 'Oslo', 'Stockholm', 'Helsinki', 'Dublin', 'Warschau', 'Warsaw', 'Krakau', 'Krakow', 'Prag', 'Prague', 'Budapest', 'Athen', 'Athens', 'Istanbul', 'Kairo', 'Cairo', 'Dubai', 'Doha', 'Bangkok', 'Singapur', 'Singapore', 'Hongkong', 'Hong Kong', 'Tokio', 'Tokyo', 'New York', 'Los Angeles', 'San Francisco', 'Miami', 'Toronto', 'São Paulo', 'Kapstadt', 'Cape Town', 'Johannesburg', 'Sydney', 'Melbourne', 'Dubrovnik', 'Split', 'Zagreb'];
+// [CITY-RECOGNITION] Blog "popular routes" / "similar posts" matching now runs
+// off the dynamic NAME_INDEX / IATA_ALIAS that setGeoData() built from the live
+// city list — no hardcoded city list, so every published and future city is
+// recognized automatically with zero manual maintenance.
 
-const CITY_COUNTRY_DE = {
-  Berlin: 'Deutschland', München: 'Deutschland', Munich: 'Deutschland', Frankfurt: 'Deutschland', Hamburg: 'Deutschland', Düsseldorf: 'Deutschland', Cologne: 'Deutschland', Köln: 'Deutschland', Stuttgart: 'Deutschland', Hannover: 'Deutschland', Leipzig: 'Deutschland', Nürnberg: 'Deutschland', Nuremberg: 'Deutschland', Dortmund: 'Deutschland', Bremen: 'Deutschland',
-  Wien: 'Österreich', Vienna: 'Österreich',
-  Zürich: 'Schweiz', Zurich: 'Schweiz', Genf: 'Schweiz', Geneva: 'Schweiz',
-  London: 'Vereinigtes Königreich',
-  Paris: 'Frankreich',
-  Rom: 'Italien', Rome: 'Italien', Mailand: 'Italien', Milan: 'Italien', Venedig: 'Italien', Venice: 'Italien', Neapel: 'Italien', Naples: 'Italien',
-  Madrid: 'Spanien', Barcelona: 'Spanien', Valencia: 'Spanien', Sevilla: 'Spanien', Seville: 'Spanien', Malaga: 'Spanien',
-  Lissabon: 'Portugal', Lisbon: 'Portugal', Porto: 'Portugal',
-  Amsterdam: 'Niederlande',
-  Brüssel: 'Belgien', Brussels: 'Belgien',
-  Luxemburg: 'Luxemburg', Luxembourg: 'Luxemburg',
-  Kopenhagen: 'Dänemark', Copenhagen: 'Dänemark',
-  Oslo: 'Norwegen', Stockholm: 'Schweden', Helsinki: 'Finnland', Dublin: 'Irland',
-  Warschau: 'Polen', Warsaw: 'Polen', Krakau: 'Polen', Krakow: 'Polen',
-  Prag: 'Tschechien', Prague: 'Tschechien', Budapest: 'Ungarn', Athen: 'Griechenland', Athens: 'Griechenland',
-  Istanbul: 'Türkei', Kairo: 'Ägypten', Cairo: 'Ägypten', Dubai: 'VAE', Doha: 'Katar',
-  Bangkok: 'Thailand', Singapur: 'Singapur', Singapore: 'Singapur', Hongkong: 'Hongkong', 'Hong Kong': 'Hongkong', Tokio: 'Japan', Tokyo: 'Japan',
-  'New York': 'USA', 'Los Angeles': 'USA', 'San Francisco': 'USA', Miami: 'USA',
-  Toronto: 'Kanada', 'São Paulo': 'Brasilien', Kapstadt: 'Südafrika', 'Cape Town': 'Südafrika', Johannesburg: 'Südafrika',
-  Sydney: 'Australien', Melbourne: 'Australien', Dubrovnik: 'Kroatien', Split: 'Kroatien', Zagreb: 'Kroatien',
-};
-
-const CITY_COUNTRY_EN = {
-  Berlin: 'Germany', München: 'Germany', Munich: 'Germany', Frankfurt: 'Germany', Hamburg: 'Germany', Düsseldorf: 'Germany', Cologne: 'Germany', Köln: 'Germany', Stuttgart: 'Germany', Hannover: 'Germany', Leipzig: 'Germany', Nürnberg: 'Germany', Nuremberg: 'Germany', Dortmund: 'Germany', Bremen: 'Germany',
-  Wien: 'Austria', Vienna: 'Austria',
-  Zürich: 'Switzerland', Zurich: 'Switzerland', Genf: 'Switzerland', Geneva: 'Switzerland',
-  London: 'United Kingdom',
-  Paris: 'France',
-  Rom: 'Italy', Rome: 'Italy', Mailand: 'Italy', Milan: 'Italy', Venedig: 'Italy', Venice: 'Italy', Neapel: 'Italy', Naples: 'Italy',
-  Madrid: 'Spain', Barcelona: 'Spain', Valencia: 'Spain', Sevilla: 'Spain', Seville: 'Spain', Malaga: 'Spain',
-  Lissabon: 'Portugal', Lisbon: 'Portugal', Porto: 'Portugal',
-  Amsterdam: 'Netherlands',
-  Brüssel: 'Belgium', Brussels: 'Belgium',
-  Luxemburg: 'Luxembourg', Luxembourg: 'Luxembourg',
-  Kopenhagen: 'Denmark', Copenhagen: 'Denmark',
-  Oslo: 'Norway', Stockholm: 'Sweden', Helsinki: 'Finland', Dublin: 'Ireland',
-  Warschau: 'Poland', Warsaw: 'Poland', Krakau: 'Poland', Krakow: 'Poland',
-  Prag: 'Czech Republic', Prague: 'Czech Republic', Budapest: 'Hungary', Athen: 'Greece', Athens: 'Greece',
-  Istanbul: 'Turkey', Kairo: 'Egypt', Cairo: 'Egypt', Dubai: 'VAE', Doha: 'Qatar',
-  Bangkok: 'Thailand', Singapur: 'Singapore', Singapore: 'Singapore', Hongkong: 'Hong Kong', 'Hong Kong': 'Hong Kong', Tokio: 'Japan', Tokyo: 'Japan',
-  'New York': 'USA', 'Los Angeles': 'USA', 'San Francisco': 'USA', Miami: 'USA',
-  Toronto: 'Canada', 'São Paulo': 'Brazil', Kapstadt: 'South Africa', 'Cape Town': 'South Africa', Johannesburg: 'South Africa',
-  Sydney: 'Australia', Melbourne: 'Australia', Dubrovnik: 'Croatia', Split: 'Croatia', Zagreb: 'Croatia',
-};
-
+// Return the published city slugs a text mentions — accent/case/punctuation-
+// insensitive, multi-word aware, plus explicit uppercase IATA codes. Returns
+// canonical slugs (not display names) so callers cross-link by entity,
+// language-independently.
 function detectCitiesInText(text) {
-  const found = [];
-  KNOWN_CITIES.forEach((city) => {
-    const re = new RegExp('(^|[^a-zA-ZäöüÄÖÜ])' + city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-zA-ZäöüÄÖÜ]|$)', 'i');
-    if (re.test(text)) found.push(city);
-  });
-  return found;
+  const raw = String(text == null ? '' : text);
+  const slugs = new Set();
+  // Explicit IATA codes ("MUC", "FRA") — only as a standalone 3-letter
+  // uppercase token, so lowercase words can never false-match a code.
+  const codes = raw.match(/\b[A-Z]{3}\b/g);
+  if (codes) {
+    codes.forEach((code) => {
+      const set = IATA_ALIAS.get(code);
+      if (set) set.forEach((s) => slugs.add(s));
+    });
+  }
+  // City names, matched as whole-word 1..MAX_NGRAM windows over the folded text.
+  const folded = foldText(raw);
+  if (folded) {
+    const tokens = folded.split(' ');
+    for (let i = 0; i < tokens.length; i++) {
+      let key = tokens[i];
+      let set = NAME_INDEX.get(key);
+      if (set) set.forEach((s) => slugs.add(s));
+      for (let n = 1; n < MAX_NGRAM && i + n < tokens.length; n++) {
+        key += ' ' + tokens[i + n];
+        set = NAME_INDEX.get(key);
+        if (set) set.forEach((s) => slugs.add(s));
+      }
+    }
+  }
+  return [...slugs];
 }
-function citiesToCountries(cities, lang) {
-  const table = lang === 'en' ? CITY_COUNTRY_EN : CITY_COUNTRY_DE;
+
+// Localized display name for a city slug — labels internal links to the
+// destinations detected in a blog post's text.
+function cityNameForSlug(slug, lang) {
+  const city = CITY_BY_SLUG[slug];
+  return city ? resolveTranslation(city.translations, lang, city.name) : null;
+}
+
+// Map detected city slugs to the localized names of the countries they're in
+// (drives "more articles from <country>"-style groupings).
+function citiesToCountries(slugs, lang) {
   const set = {};
-  cities.forEach((c) => { const co = table[c]; if (co) set[co] = true; });
+  (slugs || []).forEach((slug) => {
+    const city = CITY_BY_SLUG[slug];
+    const code = city && city.country_code;
+    if (!code) return;
+    const country = COUNTRY_BY_CODE[code];
+    const name = resolveTranslation(country && country.translations, lang, code);
+    if (name) set[name] = true;
+  });
   return Object.keys(set);
 }
 
@@ -168,5 +223,5 @@ module.exports = {
   setGeoData,
   localizeCity, localizeCountry, localizeAirport,
   getAlternativeAirports, buildIataNameMap, slugForIata,
-  KNOWN_CITIES, detectCitiesInText, citiesToCountries,
+  detectCitiesInText, citiesToCountries, cityNameForSlug,
 };

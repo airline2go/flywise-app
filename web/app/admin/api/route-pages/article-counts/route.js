@@ -3,7 +3,7 @@ import { listRoutePages, listBlogPosts, listCities, listCountries } from '../../
 import dataMod from '../../../../../lib/legacy-render/data.js';
 import countsMod from '../../../../../lib/article-link-counts.js';
 
-const { setGeoData, detectCitiesInText, localizeCity } = dataMod;
+const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
 const { articleLinkCounts } = countsMod;
 
 // [ROUTE-ARTICLE-COUNTS] For the admin route list: how many blog articles are
@@ -32,17 +32,18 @@ export async function GET() {
     ]);
     setGeoData(cities, countries);
 
-    // Each post's mentioned-city set, per language, computed once (lowercased).
+    // Each post's mentioned-city set, per language — canonical city slugs from
+    // the dynamic recognizer (language-independent, accent-proof).
     const citySets = (posts) => posts.map((p) => new Set(
-      detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`).map((c) => c.toLowerCase()),
+      detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`),
     ));
     const postCitySetsByLang = { de: citySets(dePosts), en: citySets(enPosts) };
 
-    // A route's two cities, localized to the language being matched and
-    // lowercased — "München" for de, "Munich" for en.
-    const resolveRouteCities = (r, lang) => ({
-      origin: String(localizeCity(r.origin_city, r.origin_iata, lang) || '').toLowerCase(),
-      dest: String(localizeCity(r.destination_city, r.destination_iata, lang) || '').toLowerCase(),
+    // A route's two cities as canonical slugs, resolved from its airport codes
+    // — the same entity space the post slug sets use, so matching is exact.
+    const resolveRouteCities = (r) => ({
+      origin: slugForIata(r.origin_iata) || '',
+      dest: slugForIata(r.destination_iata) || '',
     });
 
     const { counts, langCounts } = articleLinkCounts(routes, postCitySetsByLang, resolveRouteCities);
