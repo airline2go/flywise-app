@@ -7,7 +7,7 @@
 // the signals today, and GSC / price-history auto-fill and a save-to-queue land
 // later. Honest by design: the opportunity score only counts signals that are
 // actually provided.
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { ADMIN_COLORS as C } from '../../../../lib/admin/theme';
 import generatorMod from '../../../../lib/social/generator';
 import opportunityMod from '../../../../lib/social/opportunity';
@@ -19,6 +19,17 @@ const PLATFORM_KEYS = Object.keys(PLATFORMS);
 const LEVELS = ['', 'low', 'medium', 'high'];
 const TYPE_LABEL = { flight_deal: 'عرض رحلة', city_guide: 'دليل مدينة', blog_promo: 'ترويج مقال' };
 const LEVEL_LABEL = { '': '—', low: 'منخفض', medium: 'متوسط', high: 'عالٍ' };
+const STATUS_ORDER = ['draft', 'pending_review', 'approved', 'scheduled', 'published', 'failed'];
+const STATUS_LABEL = { draft: 'مسودة', pending_review: 'بانتظار المراجعة', approved: 'معتمد', scheduled: 'مجدول', published: 'منشور', failed: 'فشل' };
+
+// ISO -> value for <input type="datetime-local"> (local wall-clock, minutes).
+function toLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 const EXAMPLE = {
   subjectType: 'route', slug: 'malaga-ibiza', origin: 'Málaga', destination: 'Ibiza',
@@ -48,6 +59,21 @@ export default function ContentStudioClient() {
   const [lang, setLang] = useState('de');
   const [type, setType] = useState('flight_deal');
   const [copied, setCopied] = useState('');
+  const [queue, setQueue] = useState([]);
+  const [queueNote, setQueueNote] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const loadQueue = useCallback(() => {
+    fetch('/admin/api/social-posts')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setQueue(d.posts || []);
+        setQueueNote(d.unconfigured || (d.ok ? '' : d.error || ''));
+      })
+      .catch(() => setQueueNote('تعذّر تحميل الطابور.'));
+  }, []);
+
+  useEffect(() => { loadQueue(); }, [loadQueue]);
 
   const set = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -77,6 +103,44 @@ export default function ContentStudioClient() {
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
       setCopied(key); setTimeout(() => setCopied(''), 1500);
     }).catch(() => {});
+  }, []);
+
+  const saveToQueue = useCallback(() => {
+    setSaving(true);
+    fetch('/admin/api/social-posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: post.platform, language: post.language, template_type: post.type,
+        subject_type: subject.type, subject_ref: subject.slug,
+        title: post.title, body: post.body, hashtags: post.hashtags,
+        cta_label: post.ctaLabel, cta_url: post.ctaUrl, image_brief: post.imageBrief,
+        status: 'draft',
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok && d.post) setQueue((q) => [d.post, ...q]);
+        else setQueueNote(d.error || 'تعذّر الحفظ.');
+      })
+      .catch(() => setQueueNote('تعذّر الحفظ.'))
+      .finally(() => setSaving(false));
+  }, [post, subject]);
+
+  const patchPost = useCallback((id, patch) => {
+    fetch(`/admin/api/social-posts/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.ok && d.post) setQueue((q) => q.map((p) => (p.id === id ? d.post : p))); })
+      .catch(() => {});
+  }, []);
+
+  const deletePost = useCallback((id) => {
+    fetch(`/admin/api/social-posts/${id}`, { method: 'DELETE' })
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setQueue((q) => q.filter((p) => p.id !== id)); })
+      .catch(() => {});
   }, []);
 
   const stars = '★'.repeat(opportunity.stars) + '☆'.repeat(5 - opportunity.stars);
@@ -197,7 +261,10 @@ export default function ContentStudioClient() {
           <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: C.bg2, border: `1px solid ${C.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 12, color: post.withinLimit ? C.tx2 : C.red }}>{post.charCount} / {PLATFORMS[platform].maxLen} حرف {post.withinLimit ? '' : '⚠ تجاوز'}</span>
-              <button style={btn(C.teal, '#04121b')} onClick={() => copy('body', post.body)}>{copied === 'body' ? 'تم النسخ ✓' : 'نسخ المنشور'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={btn(C.bg3, C.tx)} onClick={saveToQueue} disabled={saving}>{saving ? '…' : 'حفظ في الطابور'}</button>
+                <button style={btn(C.teal, '#04121b')} onClick={() => copy('body', post.body)}>{copied === 'body' ? 'تم النسخ ✓' : 'نسخ المنشور'}</button>
+              </div>
             </div>
             <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, fontFamily: 'inherit', fontSize: 13.5, color: C.tx, lineHeight: 1.7 }}>{post.body}</pre>
             <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -209,9 +276,48 @@ export default function ContentStudioClient() {
               <div><strong style={{ color: C.tx3 }}>وصف الصورة المقترح:</strong> {post.imageBrief}</div>
             </div>
           </div>
-          <p style={{ fontSize: 11.5, color: C.tx3, marginTop: 10 }}>💡 الحفظ في طابور/تقويم والنشر التلقائي وربط Search Console — الخطوة التالية (تحتاج جدول Supabase + مسار كتابة).</p>
+          <p style={{ fontSize: 11.5, color: C.tx3, marginTop: 10 }}>💡 النشر التلقائي للمنصات وربط Search Console للدرجة الحيّة — الخطوات التالية.</p>
         </section>
       </div>
+
+      {/* ── Queue ── */}
+      <section style={{ ...cardStyle, marginTop: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>الطابور ({queue.length})</h2>
+          <button style={btn(C.bg3, C.tx2)} onClick={loadQueue}>تحديث</button>
+        </div>
+        {queueNote && <p style={{ fontSize: 12, color: C.yellow, margin: '0 0 10px' }}>{queueNote}</p>}
+        {queue.length === 0 && !queueNote && <p style={{ fontSize: 13, color: C.tx3, margin: 0 }}>لا منشورات محفوظة بعد — ولّد منشوراً واضغط «حفظ في الطابور».</p>}
+        <div style={{ display: 'grid', gap: 10 }}>
+          {queue.map((p) => (
+            <div key={p.id} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, background: C.bg2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.tx2 }}>
+                <span style={{ color: C.teal, fontWeight: 700 }}>{(PLATFORMS[p.platform] && PLATFORMS[p.platform].label) || p.platform}</span>
+                <span>· {String(p.language).toUpperCase()}</span>
+                <span>· {TYPE_LABEL[p.template_type] || p.template_type}</span>
+                <span style={{ marginInlineStart: 'auto' }}>
+                  <select value={p.status} onChange={(e) => patchPost(p.id, { status: e.target.value })} style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 12 }}>
+                    {STATUS_ORDER.map((st) => <option key={st} value={st}>{STATUS_LABEL[st]}</option>)}
+                  </select>
+                </span>
+              </div>
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '8px 0 0', fontFamily: 'inherit', fontSize: 12.5, color: C.tx, maxHeight: 88, overflow: 'hidden' }}>{p.body}</pre>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                <label style={{ fontSize: 11.5, color: C.tx3 }}>جدولة:
+                  <input
+                    type="datetime-local"
+                    value={toLocalInput(p.scheduled_at)}
+                    onChange={(e) => patchPost(p.id, { scheduled_at: e.target.value ? new Date(e.target.value).toISOString() : null, status: e.target.value ? 'scheduled' : p.status })}
+                    style={{ ...inputStyle, width: 'auto', marginInlineStart: 6, padding: '4px 8px', fontSize: 12 }}
+                  />
+                </label>
+                <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => copy('q' + p.id, p.body)}>{copied === 'q' + p.id ? '✓' : 'نسخ'}</button>
+                <button style={{ ...btn(C.redBg, C.red), padding: '4px 10px', fontSize: 12 }} onClick={() => deletePost(p.id)}>حذف</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
