@@ -70,15 +70,24 @@ function routeScoreBadge(score, confidence) {
   );
 }
 
-// Linked-blog-article count for a route. `counts` is null while the counts are
-// still loading (show a subtle placeholder), a {slug: number} map once loaded.
-function articleCountBadge(counts, slug) {
+// Linked-blog-article badge for a route. `counts` is null while still loading
+// (subtle placeholder), a {slug: number} map once loaded. `langCounts` is the
+// per-language breakdown ({slug: {de, en, total, langs}}) that drives the
+// "how many versions · how many languages" display; it may be null on older
+// API responses, in which case we fall back to the German-only count.
+function articleCountBadge(counts, langCounts, slug) {
   if (counts == null) return <span style={{ color: ADMIN_COLORS.tx3 }}>…</span>;
-  const n = counts[slug] || 0;
-  if (n === 0) return <span style={{ color: ADMIN_COLORS.tx3 }}>—</span>;
+  const lc = langCounts && langCounts[slug];
+  const total = lc ? lc.total : (counts[slug] || 0);
+  if (!total) return <span style={{ color: ADMIN_COLORS.tx3 }}>—</span>;
+  const langCount = lc ? lc.langs : 1;
+  const de = lc ? (lc.de || 0) : (counts[slug] || 0);
+  const en = lc ? (lc.en || 0) : 0;
+  const title = `ألماني (DE): ${de} · إنجليزي (EN): ${en}`;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, color: ADMIN_COLORS.teal }}>
-      📝 {Number(n).toLocaleString('en-US')}
+    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: ADMIN_COLORS.teal }}>
+      <span>📝 {Number(total).toLocaleString('en-US')}</span>
+      <span style={{ color: ADMIN_COLORS.tx3, fontWeight: 600, fontSize: 12 }}>· 🌐 {langCount}</span>
     </span>
   );
 }
@@ -111,13 +120,20 @@ export default function RoutePagesClient() {
   // null while loading; fetched once (covers every route, so it survives paging
   // and filtering without a refetch).
   const [articleCounts, setArticleCounts] = useState(null);
+  // [ARTICLE-COUNTS-BY-LANG] Per-language breakdown {slug: {de, en, total,
+  // langs}} — how many linked article versions and in how many languages.
+  const [articleLangCounts, setArticleLangCounts] = useState(null);
 
   useEffect(() => {
     let alive = true;
     fetch('/admin/api/route-pages/article-counts')
       .then((r) => r.json())
-      .then((d) => { if (alive && d.ok) setArticleCounts(d.counts || {}); })
-      .catch(() => { if (alive) setArticleCounts({}); });
+      .then((d) => {
+        if (!alive || !d.ok) return;
+        setArticleCounts(d.counts || {});
+        setArticleLangCounts(d.langCounts || {});
+      })
+      .catch(() => { if (alive) { setArticleCounts({}); setArticleLangCounts({}); } });
     return () => { alive = false; };
   }, []);
 
@@ -332,7 +348,7 @@ export default function RoutePagesClient() {
     { key: 'status', label: 'الحالة', render: (r) => statusBadge(r.status) },
     { key: 'refresh_frequency', label: 'معدل التحديث', render: (r) => REFRESH_OPTIONS.find((o) => o.value === r.refresh_frequency)?.label || r.refresh_frequency },
     { key: 'route_score', label: 'Route Score', render: (r) => routeScoreBadge(r.route_score, r.route_score_confidence) },
-    { key: 'articles', label: 'مقالات مربوطة', render: (r) => articleCountBadge(articleCounts, r.slug) },
+    { key: 'articles', label: 'مقالات مربوطة (نسخ · لغات)', render: (r) => articleCountBadge(articleCounts, articleLangCounts, r.slug) },
     { key: 'slug', label: 'الرابط', render: (r) => <span style={{ fontFamily: 'monospace', fontSize: 11 }}>flights/{r.slug}</span> },
   ];
 
