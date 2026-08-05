@@ -13,7 +13,26 @@ import generatorMod from '../../../../lib/social/generator';
 import opportunityMod from '../../../../lib/social/opportunity';
 
 const { generateSocialPost, PLATFORMS, LANGUAGES, TEMPLATE_TYPES } = generatorMod;
-const { scoreOpportunity } = opportunityMod;
+const { scoreOpportunity, rankOpportunities } = opportunityMod;
+
+// Real price (from the DB) formatted with its currency symbol — never invented.
+function fmtPrice(v, currency) {
+  if (v == null) return '';
+  const n = Math.round(Number(v));
+  if (!Number.isFinite(n)) return '';
+  const sym = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : (currency || '');
+  return sym === '€' ? `${n} €` : `${sym}${n}`;
+}
+
+// Map a content_opportunities row to the scoring model's inputs.
+function oppInputs(o) {
+  return {
+    priceDrop: Number(o.price_drop_pct) > 0 ? Number(o.price_drop_pct) : null,
+    popularity: o.route_score != null ? Number(o.route_score) : null,
+    airlineCount: o.airline_count != null ? Number(o.airline_count) : null,
+    direct: o.all_direct ? 'all' : (o.direct_flight_available ? 'some' : null),
+  };
+}
 
 const PLATFORM_KEYS = Object.keys(PLATFORMS);
 const LEVELS = ['', 'low', 'medium', 'high'];
@@ -62,6 +81,22 @@ export default function ContentStudioClient() {
   const [queue, setQueue] = useState([]);
   const [queueNote, setQueueNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [opps, setOpps] = useState([]);
+  const [oppNote, setOppNote] = useState('جارٍ التحميل…');
+
+  useEffect(() => {
+    fetch('/admin/api/content-opportunities')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) { setOpps(d.opportunities || []); setOppNote((d.opportunities || []).length ? '' : 'لا فرص حالياً — تحقّق لاحقاً.'); }
+        else setOppNote(d.error || 'تعذّر تحميل الفرص.');
+      })
+      .catch(() => setOppNote('تعذّر تحميل الفرص.'));
+  }, []);
+
+  const rankedOpps = useMemo(() => rankOpportunities(
+    opps.map((o) => ({ inputs: oppInputs(o), subject: { type: 'route', slug: o.slug }, row: o })),
+  ).slice(0, 12), [opps]);
 
   const loadQueue = useCallback(() => {
     fetch('/admin/api/social-posts')
@@ -105,27 +140,52 @@ export default function ContentStudioClient() {
     }).catch(() => {});
   }, []);
 
+  const persist = useCallback((g, subj) => fetch('/admin/api/social-posts', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      platform: g.platform, language: g.language, template_type: g.type,
+      subject_type: subj.type, subject_ref: subj.slug,
+      title: g.title, body: g.body, hashtags: g.hashtags,
+      cta_label: g.ctaLabel, cta_url: g.ctaUrl, image_brief: g.imageBrief, status: 'draft',
+    }),
+  }).then((r) => r.json()), []);
+
   const saveToQueue = useCallback(() => {
     setSaving(true);
-    fetch('/admin/api/social-posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        platform: post.platform, language: post.language, template_type: post.type,
-        subject_type: subject.type, subject_ref: subject.slug,
-        title: post.title, body: post.body, hashtags: post.hashtags,
-        cta_label: post.ctaLabel, cta_url: post.ctaUrl, image_brief: post.imageBrief,
-        status: 'draft',
-      }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.ok && d.post) setQueue((q) => [d.post, ...q]);
-        else setQueueNote(d.error || 'تعذّر الحفظ.');
-      })
+    persist(post, subject)
+      .then((d) => { if (d.ok && d.post) setQueue((q) => [d.post, ...q]); else setQueueNote(d.error || 'تعذّر الحفظ.'); })
       .catch(() => setQueueNote('تعذّر الحفظ.'))
       .finally(() => setSaving(false));
-  }, [post, subject]);
+  }, [post, subject, persist]);
+
+  // Fill the generator from a recommended route (real price included).
+  const loadOpportunity = useCallback((o) => {
+    setType('flight_deal');
+    setS((prev) => ({
+      ...prev, subjectType: 'route', slug: o.slug,
+      origin: o.origin_city || '', destination: o.destination_city || '',
+      price: fmtPrice(o.recent_price != null ? o.recent_price : o.price_min, o.price_currency),
+      directFlight: !!o.direct_flight_available,
+    }));
+    if (typeof window !== 'undefined') window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, []);
+
+  // Generate a flight-deal post for the current platform/language and queue it.
+  const generateAndSave = useCallback((o) => {
+    const g = generateSocialPost({
+      type: 'flight_deal', platform, lang,
+      subject: { type: 'route', slug: o.slug },
+      data: {
+        origin: o.origin_city, destination: o.destination_city,
+        price: fmtPrice(o.recent_price != null ? o.recent_price : o.price_min, o.price_currency),
+        directFlight: !!o.direct_flight_available,
+        entities: [o.origin_city, o.destination_city].filter(Boolean),
+      },
+    });
+    persist(g, { type: 'route', slug: o.slug })
+      .then((d) => { if (d.ok && d.post) setQueue((q) => [d.post, ...q]); else setQueueNote(d.error || 'تعذّر الحفظ.'); })
+      .catch(() => setQueueNote('تعذّر الحفظ.'));
+  }, [platform, lang, persist]);
 
   const patchPost = useCallback((id, patch) => {
     fetch(`/admin/api/social-posts/${id}`, {
@@ -158,6 +218,39 @@ export default function ContentStudioClient() {
           <button style={btn(C.bg3, C.tx2)} onClick={() => setS(EMPTY)}>تفريغ</button>
         </div>
       </div>
+
+      {/* ── Recommended Today ── */}
+      <section style={{ ...cardStyle, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>🔥 مُوصى اليوم</h2>
+          <span style={{ fontSize: 12, color: C.tx3 }}>مسارات بهبوط سعر حقيقي أو شعبية عالية — بيانات مباشرة</span>
+        </div>
+        {oppNote && <p style={{ fontSize: 12.5, color: C.tx3, margin: 0 }}>{oppNote}</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+          {rankedOpps.map((it) => {
+            const o = it.input.row;
+            const drop = Number(o.price_drop_pct) > 0;
+            return (
+              <div key={o.slug} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, background: C.bg2 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                  <strong style={{ fontSize: 13.5, color: C.tx }}>{o.origin_city} → {o.destination_city}</strong>
+                  <span style={{ fontSize: 15, letterSpacing: 1, color: it.stars >= 4 ? C.teal : it.stars === 3 ? C.yellow : C.tx3 }}>{'★'.repeat(it.stars)}{'☆'.repeat(5 - it.stars)}</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '8px 0' }}>
+                  {drop && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.teal, background: C.tealGlow, padding: '2px 8px', borderRadius: 6 }}>▼ {o.price_drop_pct}% · {fmtPrice(o.recent_price, o.price_currency)}</span>}
+                  {o.route_score != null && <span style={{ fontSize: 11, color: C.tx2 }}>شعبية {Math.round(Number(o.route_score))}</span>}
+                  {o.airline_count != null && <span style={{ fontSize: 11, color: C.tx2 }}>{o.airline_count} شركة</span>}
+                </div>
+                {it.reasons[0] && <p style={{ fontSize: 11.5, color: C.tx2, margin: '0 0 10px', lineHeight: 1.5 }}>{it.reasons[0]}</p>}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button style={{ ...btn(C.teal, '#04121b'), padding: '5px 10px', fontSize: 12 }} onClick={() => generateAndSave(o)}>توليد وحفظ</button>
+                  <button style={{ ...btn(C.bg3, C.tx), padding: '5px 10px', fontSize: 12 }} onClick={() => loadOpportunity(o)}>تحميل</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 18, alignItems: 'start' }}>
 
