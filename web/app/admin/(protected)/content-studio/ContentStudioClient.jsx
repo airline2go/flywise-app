@@ -129,7 +129,7 @@ export default function ContentStudioClient() {
 
   const patchPost = useCallback((id, patch) => {
     fetch(`/admin/api/social-posts/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
     })
       .then((r) => r.json())
       .then((d) => { if (d.ok && d.post) setQueue((q) => q.map((p) => (p.id === id ? d.post : p))); })
