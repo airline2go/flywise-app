@@ -98,7 +98,7 @@ export default function ContentStudioClient() {
     opps.map((o) => ({ inputs: oppInputs(o), subject: { type: 'route', slug: o.slug }, row: o })),
   ).slice(0, 12), [opps]);
 
-  const [autoCfg, setAutoCfg] = useState({ enabled: false, platforms: ['instagram'], languages: ['de'], dailyCount: 3 });
+  const [autoCfg, setAutoCfg] = useState({ frequency: 'off', platforms: ['instagram'], languages: ['de'], dailyCount: 3 });
   const [autoMsg, setAutoMsg] = useState('');
   const [autoBusy, setAutoBusy] = useState(false);
 
@@ -284,12 +284,15 @@ export default function ContentStudioClient() {
       {/* ── Daily automation ── */}
       <section style={{ ...cardStyle, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
-          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>⚙️ التوليد التلقائي اليومي</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.tx2 }}>
-            <input type="checkbox" checked={autoCfg.enabled} onChange={(e) => setAutoCfg((c) => ({ ...c, enabled: e.target.checked }))} /> مُفعّل
-          </label>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>⚙️ التوليد التلقائي</h2>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {[['off', 'إيقاف'], ['daily', 'يومي'], ['weekly', 'أسبوعي']].map(([v, label]) => (
+              <button key={v} onClick={() => setAutoCfg((c) => ({ ...c, frequency: v }))}
+                style={{ ...btn(autoCfg.frequency === v ? C.teal : C.bg3, autoCfg.frequency === v ? '#04121b' : C.tx2), padding: '5px 12px', fontSize: 12.5 }}>{label}</button>
+            ))}
+          </div>
         </div>
-        <p style={{ fontSize: 12, color: C.tx3, margin: '0 0 12px' }}>عند التفعيل، يولّد النظام مسودات يومياً من أفضل الفرص (هبوط السعر/الشعبية) إلى الطابور — دون فتح اللوحة.</p>
+        <p style={{ fontSize: 12, color: C.tx3, margin: '0 0 12px' }}>اختر «يومي» أو «أسبوعي» ليولّد النظام مسودات تلقائياً من أفضل الفرص (هبوط السعر/الشعبية) إلى الطابور — دون فتح اللوحة. «إيقاف» يوقف التوليد التلقائي (يبقى «شغّل الآن» يدوياً).</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
           <div>
             <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>المنصات</div>
