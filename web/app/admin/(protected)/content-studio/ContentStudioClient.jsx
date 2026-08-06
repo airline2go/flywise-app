@@ -98,6 +98,17 @@ export default function ContentStudioClient() {
     opps.map((o) => ({ inputs: oppInputs(o), subject: { type: 'route', slug: o.slug }, row: o })),
   ).slice(0, 12), [opps]);
 
+  const [autoCfg, setAutoCfg] = useState({ enabled: false, platforms: ['instagram'], languages: ['de'], dailyCount: 3 });
+  const [autoMsg, setAutoMsg] = useState('');
+  const [autoBusy, setAutoBusy] = useState(false);
+
+  useEffect(() => {
+    fetch('/admin/api/social-auto-generate/config')
+      .then((r) => r.json())
+      .then((d) => { if (d.ok && d.config) setAutoCfg(d.config); })
+      .catch(() => {});
+  }, []);
+
   const loadQueue = useCallback(() => {
     fetch('/admin/api/social-posts')
       .then((r) => r.json())
@@ -187,6 +198,24 @@ export default function ContentStudioClient() {
       .catch(() => setQueueNote('تعذّر الحفظ.'));
   }, [platform, lang, persist]);
 
+  const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const saveAuto = useCallback(() => {
+    setAutoBusy(true); setAutoMsg('');
+    fetch('/admin/api/social-auto-generate/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(autoCfg) })
+      .then((r) => r.json())
+      .then((d) => { if (d.ok && d.config) { setAutoCfg(d.config); setAutoMsg('تم الحفظ ✓'); } else setAutoMsg(d.error || 'تعذّر الحفظ.'); })
+      .catch(() => setAutoMsg('تعذّر الحفظ.'))
+      .finally(() => setAutoBusy(false));
+  }, [autoCfg]);
+  const runAuto = useCallback(() => {
+    setAutoBusy(true); setAutoMsg('');
+    fetch('/admin/api/social-auto-generate/run', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) { setAutoMsg(`تم توليد ${d.created} منشور ✓`); loadQueue(); } else setAutoMsg(d.error || 'فشل التوليد.'); })
+      .catch(() => setAutoMsg('فشل التوليد.'))
+      .finally(() => setAutoBusy(false));
+  }, [loadQueue]);
+
   const patchPost = useCallback((id, patch) => {
     fetch(`/admin/api/social-posts/${id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
@@ -249,6 +278,46 @@ export default function ContentStudioClient() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ── Daily automation ── */}
+      <section style={{ ...cardStyle, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>⚙️ التوليد التلقائي اليومي</h2>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.tx2 }}>
+            <input type="checkbox" checked={autoCfg.enabled} onChange={(e) => setAutoCfg((c) => ({ ...c, enabled: e.target.checked }))} /> مُفعّل
+          </label>
+        </div>
+        <p style={{ fontSize: 12, color: C.tx3, margin: '0 0 12px' }}>عند التفعيل، يولّد النظام مسودات يومياً من أفضل الفرص (هبوط السعر/الشعبية) إلى الطابور — دون فتح اللوحة.</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+          <div>
+            <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>المنصات</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+              {PLATFORM_KEYS.map((p) => (
+                <button key={p} onClick={() => setAutoCfg((c) => ({ ...c, platforms: toggleIn(c.platforms, p) }))}
+                  style={{ ...btn(autoCfg.platforms.includes(p) ? C.teal : C.bg3, autoCfg.platforms.includes(p) ? '#04121b' : C.tx2), padding: '4px 9px', fontSize: 11.5 }}>{PLATFORMS[p].label}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>اللغة (الأولى تُستخدم)</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+              {LANGUAGES.map((l) => (
+                <button key={l} onClick={() => setAutoCfg((c) => ({ ...c, languages: toggleIn(c.languages, l) }))}
+                  style={{ ...btn(autoCfg.languages.includes(l) ? C.teal : C.bg3, autoCfg.languages.includes(l) ? '#04121b' : C.tx2), padding: '4px 9px', fontSize: 11.5 }}>{l.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>عدد الفرص يومياً</div>
+            <input type="number" min="1" max="20" value={autoCfg.dailyCount} onChange={(e) => setAutoCfg((c) => ({ ...c, dailyCount: Number(e.target.value) || 1 }))} style={{ ...inputStyle, width: 80 }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+          <button style={btn(C.teal, '#04121b')} onClick={saveAuto} disabled={autoBusy}>حفظ الإعدادات</button>
+          <button style={btn(C.bg3, C.tx)} onClick={runAuto} disabled={autoBusy}>▶ شغّل الآن</button>
+          {autoMsg && <span style={{ fontSize: 12.5, color: C.tx2 }}>{autoMsg}</span>}
         </div>
       </section>
 
