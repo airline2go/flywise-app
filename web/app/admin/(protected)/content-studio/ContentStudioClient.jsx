@@ -85,6 +85,10 @@ export default function ContentStudioClient() {
   const [qStatus, setQStatus] = useState('');
   const [qPlatform, setQPlatform] = useState('');
   const [sel, setSel] = useState({});
+  const [bulkPlatforms, setBulkPlatforms] = useState([]);
+  const [bulkLangs, setBulkLangs] = useState([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
 
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
   const filteredQueue = useMemo(() => {
@@ -181,6 +185,27 @@ export default function ContentStudioClient() {
       .catch(() => setQueueNote('تعذّر الحفظ.'))
       .finally(() => setSaving(false));
   }, [post, subject, persist]);
+
+  // Generate the current subject/type across every selected platform × language
+  // and queue them all. Empty selections fall back to the single current pick,
+  // so the button always does something sensible.
+  const bulkGenerate = useCallback(() => {
+    const plats = bulkPlatforms.length ? bulkPlatforms : [platform];
+    const langs = bulkLangs.length ? bulkLangs : [lang];
+    const combos = [];
+    for (const pf of plats) for (const lg of langs) combos.push([pf, lg]);
+    if (!combos.length) return;
+    setBulkBusy(true); setBulkMsg('');
+    Promise.all(combos.map(([pf, lg]) => {
+      const g = generateSocialPost({ type, platform: pf, lang: lg, subject, data });
+      return persist(g, subject).then((d) => (d && d.ok && d.post ? d.post : null)).catch(() => null);
+    })).then((results) => {
+      const saved = results.filter(Boolean);
+      if (saved.length) setQueue((q) => [...saved, ...q]);
+      const failed = combos.length - saved.length;
+      setBulkMsg(`تم توليد وحفظ ${saved.length} منشور${failed ? ` (فشل ${failed})` : ''} ✓`);
+    }).finally(() => setBulkBusy(false));
+  }, [bulkPlatforms, bulkLangs, platform, lang, type, subject, data, persist]);
 
   // Fill the generator from a recommended route (real price included).
   const loadOpportunity = useCallback((o) => {
@@ -468,6 +493,37 @@ export default function ContentStudioClient() {
               <div><strong style={{ color: C.tx3 }}>وصف الصورة المقترح:</strong> {post.imageBrief}</div>
             </div>
           </div>
+
+          {/* ── Bulk generate ── */}
+          <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: C.bg2, border: `1px dashed ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <strong style={{ fontSize: 13, color: C.tx }}>توليد جماعي</strong>
+              <span style={{ fontSize: 11.5, color: C.tx3 }}>نفس الموضوع لعدة منصات ولغات دفعة واحدة</span>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>المنصات {bulkPlatforms.length ? `(${bulkPlatforms.length})` : '(الحالية)'}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {PLATFORM_KEYS.map((p) => (
+                  <button key={p} onClick={() => setBulkPlatforms((a) => toggleIn(a, p))}
+                    style={{ ...btn(bulkPlatforms.includes(p) ? C.teal : C.bg3, bulkPlatforms.includes(p) ? '#04121b' : C.tx2), padding: '4px 9px', fontSize: 11.5 }}>{PLATFORMS[p].label}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 11.5, color: C.tx2, marginBottom: 5 }}>اللغات {bulkLangs.length ? `(${bulkLangs.length})` : '(الحالية)'}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {LANGUAGES.map((l) => (
+                  <button key={l} onClick={() => setBulkLangs((a) => toggleIn(a, l))}
+                    style={{ ...btn(bulkLangs.includes(l) ? C.teal : C.bg3, bulkLangs.includes(l) ? '#04121b' : C.tx2), padding: '4px 9px', fontSize: 11.5 }}>{l.toUpperCase()}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+              <button style={btn(C.teal, '#04121b')} onClick={bulkGenerate} disabled={bulkBusy}>{bulkBusy ? '…' : `توليد وحفظ للكل (${(bulkPlatforms.length || 1) * (bulkLangs.length || 1)})`}</button>
+              {bulkMsg && <span style={{ fontSize: 12.5, color: C.tx2 }}>{bulkMsg}</span>}
+            </div>
+          </div>
+
           <p style={{ fontSize: 11.5, color: C.tx3, marginTop: 10 }}>💡 النشر التلقائي للمنصات وربط Search Console للدرجة الحيّة — الخطوات التالية.</p>
         </section>
       </div>
