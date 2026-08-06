@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/admin/promos', label: 'كودات الخصم' },
   { href: '/admin/blog', label: 'المدونة' },
   { href: '/admin/content-studio', label: 'استوديو المحتوى' },
+  { href: '/admin/content-calendar', label: 'تقويم المحتوى' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
   { href: '/admin/geo', label: 'المطارات والمدن' },
   { href: '/admin/error-logs', label: 'سجل الأخطاء' },
