@@ -40,6 +40,20 @@ const TYPE_LABEL = { flight_deal: 'عرض رحلة', city_guide: 'دليل مد�
 const LEVEL_LABEL = { '': '—', low: 'منخفض', medium: 'متوسط', high: 'عالٍ' };
 const STATUS_ORDER = ['draft', 'pending_review', 'approved', 'scheduled', 'published', 'failed'];
 const STATUS_LABEL = { draft: 'مسودة', pending_review: 'بانتظار المراجعة', approved: 'معتمد', scheduled: 'مجدول', published: 'منشور', failed: 'فشل' };
+const ACTION_LABEL = { created: 'أُنشئ', updated: 'عُدّل', status_changed: 'تغيّرت الحالة', deleted: 'حُذف', auto_generated: 'توليد تلقائي' };
+
+// Compact "time ago" in Arabic for the activity feed.
+function timeAgo(iso) {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '';
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 60) return 'الآن';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `قبل ${m} د`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `قبل ${h} س`;
+  return `قبل ${Math.floor(h / 24)} يوم`;
+}
 
 // ISO -> value for <input type="datetime-local"> (local wall-clock, minutes).
 function toLocalInput(iso) {
@@ -107,6 +121,8 @@ export default function ContentStudioClient() {
   }, [queue, qSearch, qStatus, qPlatform, qCampaign]);
   const [opps, setOpps] = useState([]);
   const [oppNote, setOppNote] = useState('جارٍ التحميل…');
+  const [activity, setActivity] = useState([]);
+  const [showActivity, setShowActivity] = useState(false);
 
   useEffect(() => {
     fetch('/admin/api/content-opportunities')
@@ -144,6 +160,16 @@ export default function ContentStudioClient() {
   }, []);
 
   useEffect(() => { loadQueue(); }, [loadQueue]);
+
+  const loadActivity = useCallback(() => {
+    fetch('/admin/api/social-activity')
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setActivity(d.activity || []); })
+      .catch(() => {});
+  }, []);
+
+  // Load the feed the first time the operator opens it.
+  useEffect(() => { if (showActivity) loadActivity(); }, [showActivity, loadActivity]);
 
   const set = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -611,6 +637,34 @@ export default function ContentStudioClient() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Activity log ── */}
+      <section style={{ ...cardStyle, marginTop: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>سجلّ النشاط</h2>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {showActivity && <button style={btn(C.bg3, C.tx2)} onClick={loadActivity}>تحديث</button>}
+            <button style={btn(C.bg3, C.tx)} onClick={() => setShowActivity((v) => !v)}>{showActivity ? 'إخفاء' : 'عرض'}</button>
+          </div>
+        </div>
+        {showActivity && (
+          <div style={{ marginTop: 12 }}>
+            {activity.length === 0 && <p style={{ fontSize: 13, color: C.tx3, margin: 0 }}>لا نشاط مُسجّل بعد.</p>}
+            <div style={{ display: 'grid', gap: 6 }}>
+              {activity.map((a) => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 12.5, color: C.tx2, padding: '6px 10px', borderRadius: 8, background: C.bg2, border: `1px solid ${C.border}` }}>
+                  <span style={{ color: a.action === 'deleted' ? C.red : C.teal, fontWeight: 700 }}>{ACTION_LABEL[a.action] || a.action}</span>
+                  {a.action === 'auto_generated' && a.detail && a.detail.count != null && <span>× {a.detail.count}</span>}
+                  {a.subject_ref && <span style={{ color: C.tx }}>{a.subject_ref}</span>}
+                  {a.platform && <span>· {(PLATFORMS[a.platform] && PLATFORMS[a.platform].label) || a.platform}</span>}
+                  {a.action === 'status_changed' && a.detail && a.detail.status && <span>→ {STATUS_LABEL[a.detail.status] || a.detail.status}</span>}
+                  <span style={{ marginInlineStart: 'auto', color: C.tx3 }}>{a.actor === 'auto' ? 'تلقائي' : (a.actor || 'admin')} · {timeAgo(a.created_at)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
