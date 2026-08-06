@@ -77,6 +77,7 @@ export default function ContentStudioClient() {
   const [platform, setPlatform] = useState('instagram');
   const [lang, setLang] = useState('de');
   const [type, setType] = useState('flight_deal');
+  const [campaign, setCampaign] = useState('');
   const [copied, setCopied] = useState('');
   const [queue, setQueue] = useState([]);
   const [queueNote, setQueueNote] = useState('');
@@ -84,6 +85,7 @@ export default function ContentStudioClient() {
   const [qSearch, setQSearch] = useState('');
   const [qStatus, setQStatus] = useState('');
   const [qPlatform, setQPlatform] = useState('');
+  const [qCampaign, setQCampaign] = useState('');
   const [sel, setSel] = useState({});
   const [bulkPlatforms, setBulkPlatforms] = useState([]);
   const [bulkLangs, setBulkLangs] = useState([]);
@@ -91,13 +93,18 @@ export default function ContentStudioClient() {
   const [bulkMsg, setBulkMsg] = useState('');
 
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
+  const campaigns = useMemo(
+    () => Array.from(new Set(queue.map((p) => p.campaign).filter(Boolean))).sort(),
+    [queue],
+  );
   const filteredQueue = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
     return queue.filter((p) =>
       (!qStatus || p.status === qStatus)
       && (!qPlatform || p.platform === qPlatform)
+      && (!qCampaign || p.campaign === qCampaign)
       && (!q || `${p.title || ''} ${p.body || ''} ${p.subject_ref || ''}`.toLowerCase().indexOf(q) !== -1));
-  }, [queue, qSearch, qStatus, qPlatform]);
+  }, [queue, qSearch, qStatus, qPlatform, qCampaign]);
   const [opps, setOpps] = useState([]);
   const [oppNote, setOppNote] = useState('جارٍ التحميل…');
 
@@ -175,8 +182,9 @@ export default function ContentStudioClient() {
       subject_type: subj.type, subject_ref: subj.slug,
       title: g.title, body: g.body, hashtags: g.hashtags,
       cta_label: g.ctaLabel, cta_url: g.ctaUrl, image_brief: g.imageBrief, status: 'draft',
+      campaign: campaign.trim() || null,
     }),
-  }).then((r) => r.json()), []);
+  }).then((r) => r.json()), [campaign]);
 
   const saveToQueue = useCallback(() => {
     setSaving(true);
@@ -452,6 +460,12 @@ export default function ContentStudioClient() {
             </div>
           </div>
 
+          <div>
+            <label style={lbl()}>الحملة (اختياري — لتجميع المنشورات وفلترتها)</label>
+            <input style={inputStyle} value={campaign} onChange={(e) => setCampaign(e.target.value)} list="campaign-list" placeholder="مثال: صيف مالقة 2026" maxLength={120} />
+            {campaigns.length > 0 && <datalist id="campaign-list">{campaigns.map((c) => <option key={c} value={c} />)}</datalist>}
+          </div>
+
           {type === 'flight_deal' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div><label style={lbl()}>من</label><input style={inputStyle} value={s.origin} onChange={set('origin')} placeholder="Málaga" /></div>
@@ -545,6 +559,12 @@ export default function ContentStudioClient() {
             <option value="">كل المنصات</option>
             {PLATFORM_KEYS.map((p) => <option key={p} value={p}>{PLATFORMS[p].label}</option>)}
           </select>
+          {campaigns.length > 0 && (
+            <select value={qCampaign} onChange={(e) => setQCampaign(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+              <option value="">كل الحملات</option>
+              {campaigns.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
         </div>
 
         {selectedIds.length > 0 && (
@@ -568,6 +588,7 @@ export default function ContentStudioClient() {
                 <span>· {String(p.language).toUpperCase()}</span>
                 <span>· {TYPE_LABEL[p.template_type] || p.template_type}</span>
                 {p.created_by === 'auto' && <span style={{ fontSize: 10.5, color: C.blue, background: C.blueBg, padding: '1px 6px', borderRadius: 5 }}>تلقائي</span>}
+                {p.campaign && <span style={{ fontSize: 10.5, color: C.teal, background: C.tealGlow, padding: '1px 6px', borderRadius: 5 }}>🏷 {p.campaign}</span>}
                 <span style={{ marginInlineStart: 'auto' }}>
                   <select value={p.status} onChange={(e) => patchPost(p.id, { status: e.target.value })} style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 12 }}>
                     {STATUS_ORDER.map((st) => <option key={st} value={st}>{STATUS_LABEL[st]}</option>)}
