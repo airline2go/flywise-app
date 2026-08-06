@@ -81,6 +81,19 @@ export default function ContentStudioClient() {
   const [queue, setQueue] = useState([]);
   const [queueNote, setQueueNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [qSearch, setQSearch] = useState('');
+  const [qStatus, setQStatus] = useState('');
+  const [qPlatform, setQPlatform] = useState('');
+  const [sel, setSel] = useState({});
+
+  const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
+  const filteredQueue = useMemo(() => {
+    const q = qSearch.trim().toLowerCase();
+    return queue.filter((p) =>
+      (!qStatus || p.status === qStatus)
+      && (!qPlatform || p.platform === qPlatform)
+      && (!q || `${p.title || ''} ${p.body || ''} ${p.subject_ref || ''}`.toLowerCase().indexOf(q) !== -1));
+  }, [queue, qSearch, qStatus, qPlatform]);
   const [opps, setOpps] = useState([]);
   const [oppNote, setOppNote] = useState('جارٍ التحميل…');
 
@@ -231,6 +244,20 @@ export default function ContentStudioClient() {
       .then((d) => { if (d.ok) setQueue((q) => q.filter((p) => p.id !== id)); })
       .catch(() => {});
   }, []);
+
+  const bulkStatus = useCallback((status) => {
+    const ids = Object.keys(sel).filter((k) => sel[k]);
+    if (!ids.length) return;
+    Promise.all(ids.map((id) => fetch(`/admin/api/social-posts/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }).then((r) => r.json()).catch(() => null)))
+      .then(() => { loadQueue(); setSel({}); });
+  }, [sel, loadQueue]);
+
+  const bulkDelete = useCallback(() => {
+    const ids = Object.keys(sel).filter((k) => sel[k]);
+    if (!ids.length) return;
+    Promise.all(ids.map((id) => fetch(`/admin/api/social-posts/${id}`, { method: 'DELETE' }).then((r) => r.json()).catch(() => null)))
+      .then(() => { setQueue((q) => q.filter((p) => !sel[p.id])); setSel({}); });
+  }, [sel]);
 
   const stars = '★'.repeat(opportunity.stars) + '☆'.repeat(5 - opportunity.stars);
   const starColor = opportunity.stars >= 4 ? C.teal : opportunity.stars === 3 ? C.yellow : C.tx3;
@@ -447,19 +474,44 @@ export default function ContentStudioClient() {
 
       {/* ── Queue ── */}
       <section style={{ ...cardStyle, marginTop: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>الطابور ({queue.length})</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>الطابور ({filteredQueue.length}{filteredQueue.length !== queue.length ? ` / ${queue.length}` : ''})</h2>
           <button style={btn(C.bg3, C.tx2)} onClick={loadQueue}>تحديث</button>
         </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+          <input value={qSearch} onChange={(e) => setQSearch(e.target.value)} placeholder="بحث في النص/المسار…" style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
+          <select value={qStatus} onChange={(e) => setQStatus(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+            <option value="">كل الحالات</option>
+            {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+          </select>
+          <select value={qPlatform} onChange={(e) => setQPlatform(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+            <option value="">كل المنصات</option>
+            {PLATFORM_KEYS.map((p) => <option key={p} value={p}>{PLATFORMS[p].label}</option>)}
+          </select>
+        </div>
+
+        {selectedIds.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10, padding: '8px 10px', borderRadius: 8, background: C.bg3 }}>
+            <span style={{ fontSize: 12.5, color: C.tx }}>{selectedIds.length} محدّد</span>
+            <button style={{ ...btn(C.teal, '#04121b'), padding: '4px 10px', fontSize: 12 }} onClick={() => bulkStatus('approved')}>اعتماد</button>
+            <button style={{ ...btn(C.bg2, C.tx), padding: '4px 10px', fontSize: 12 }} onClick={() => bulkStatus('draft')}>مسودة</button>
+            <button style={{ ...btn(C.redBg, C.red), padding: '4px 10px', fontSize: 12 }} onClick={bulkDelete}>حذف</button>
+            <button style={{ ...btn(C.bg2, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => setSel({})}>إلغاء التحديد</button>
+          </div>
+        )}
+
         {queueNote && <p style={{ fontSize: 12, color: C.yellow, margin: '0 0 10px' }}>{queueNote}</p>}
-        {queue.length === 0 && !queueNote && <p style={{ fontSize: 13, color: C.tx3, margin: 0 }}>لا منشورات محفوظة بعد — ولّد منشوراً واضغط «حفظ في الطابور».</p>}
+        {filteredQueue.length === 0 && !queueNote && <p style={{ fontSize: 13, color: C.tx3, margin: 0 }}>{queue.length ? 'لا نتائج مطابقة.' : 'لا منشورات محفوظة بعد — ولّد منشوراً واضغط «حفظ في الطابور».'}</p>}
         <div style={{ display: 'grid', gap: 10 }}>
-          {queue.map((p) => (
-            <div key={p.id} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, background: C.bg2 }}>
+          {filteredQueue.map((p) => (
+            <div key={p.id} style={{ border: `1px solid ${sel[p.id] ? C.teal : C.border}`, borderRadius: 10, padding: 12, background: C.bg2 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.tx2 }}>
+                <input type="checkbox" checked={!!sel[p.id]} onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))} />
                 <span style={{ color: C.teal, fontWeight: 700 }}>{(PLATFORMS[p.platform] && PLATFORMS[p.platform].label) || p.platform}</span>
                 <span>· {String(p.language).toUpperCase()}</span>
                 <span>· {TYPE_LABEL[p.template_type] || p.template_type}</span>
+                {p.created_by === 'auto' && <span style={{ fontSize: 10.5, color: C.blue, background: C.blueBg, padding: '1px 6px', borderRadius: 5 }}>تلقائي</span>}
                 <span style={{ marginInlineStart: 'auto' }}>
                   <select value={p.status} onChange={(e) => patchPost(p.id, { status: e.target.value })} style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 12 }}>
                     {STATUS_ORDER.map((st) => <option key={st} value={st}>{STATUS_LABEL[st]}</option>)}
