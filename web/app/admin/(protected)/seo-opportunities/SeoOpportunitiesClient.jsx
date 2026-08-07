@@ -11,7 +11,7 @@
 //      trip) and cached in localStorage so it survives a reload.
 //   2. LIVE API — if a Google Search Console feed is later connected on the
 //      server (/admin/api/seo-opportunities), it takes precedence automatically.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { ADMIN_COLORS } from '../../../../lib/admin/theme';
 import { parseGscCsv } from '../../../../lib/seo/parse-gsc-csv.js';
 import { buildOpportunityReport } from '../../../../lib/seo/report.js';
@@ -60,6 +60,8 @@ export default function SeoOpportunitiesClient() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState(null);
+  const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
+  const [expanded, setExpanded] = useState({}); // slug -> bool
 
   // Restore a previously-uploaded CSV report from localStorage.
   const loadCsvCache = useCallback(() => {
@@ -187,6 +189,32 @@ export default function SeoOpportunitiesClient() {
     setUploadInfo(null);
     setFilter('');
     setSort(null);
+    setAnalyses({});
+    setExpanded({});
+  }
+
+  // [Phase 3] Fetch a read-only SEO analysis of the route's real rendered page.
+  async function analyzeRow(r) {
+    const key = r.slug || r.url;
+    setExpanded((prev) => ({ ...prev, [key]: true }));
+    if (analyses[key] && analyses[key].data) return; // already analyzed
+    setAnalyses((prev) => ({ ...prev, [key]: { loading: true } }));
+    try {
+      const p = new URLSearchParams({ slug: r.slug || '', lang: r.language || 'de' });
+      if (r.impressions != null) p.set('impressions', r.impressions);
+      if (r.clicks != null) p.set('clicks', r.clicks);
+      if (r.position != null) p.set('position', r.position);
+      const res = await fetch(`/admin/api/seo-opportunities/analyze?${p.toString()}`);
+      const data = await res.json();
+      if (data.ok) setAnalyses((prev) => ({ ...prev, [key]: { data } }));
+      else setAnalyses((prev) => ({ ...prev, [key]: { error: data.error || 'فشل التحليل' } }));
+    } catch {
+      setAnalyses((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بالتحليل' } }));
+    }
+  }
+
+  function toggleExpand(key) {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   const view = useMemo(() => {
@@ -320,31 +348,121 @@ export default function SeoOpportunitiesClient() {
                 <Th onClick={() => toggleSort('category')}>الفئة{sortArrow('category')}</Th>
                 <Th onClick={() => toggleSort('lastOptimizedAt')}>آخر تحسين{sortArrow('lastOptimizedAt')}</Th>
                 <Th onClick={() => toggleSort('status')}>الحالة{sortArrow('status')}</Th>
+                <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap', textAlign: 'center' }}>تحليل</th>
               </tr>
             </thead>
             <tbody>
-              {view.map((r) => (
-                <tr key={r.url || r.slug} style={{ borderTop: `1px solid ${ADMIN_COLORS.border}` }}>
-                  <td style={td}>
-                    <a href={r.url && r.url.startsWith('http') ? r.url : `https://airpiv.com${r.url || `/flights/${r.slug}`}`} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal, textDecoration: 'none' }}>
-                      {r.slug || r.url}
-                    </a>
-                  </td>
-                  <td style={td}>{r.language || '—'}</td>
-                  <td style={{ ...td, color: r.primaryQuery ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.primaryQuery || 'n/a'}</td>
-                  <td style={tdNum}>{fmtNum(r.impressions)}</td>
-                  <td style={{ ...tdNum, color: r.clicks == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtNum(r.clicks)}</td>
-                  <td style={{ ...tdNum, color: r.ctr == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtPct(r.ctr)}</td>
-                  <td style={tdNum}>{fmtPos(r.position)}</td>
-                  <td style={td}><CategoryBadge category={r.category} /></td>
-                  <td style={{ ...td, color: r.lastOptimizedAt ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.lastOptimizedAt || '—'}</td>
-                  <td style={td}><span style={{ fontSize: 11, color: ADMIN_COLORS.tx2 }}>{STATUS_OPTIONS.includes(r.status) ? r.status : 'ANALYZED'}</span></td>
-                </tr>
-              ))}
+              {view.map((r) => {
+                const key = r.url || r.slug;
+                const a = analyses[key];
+                const open = !!expanded[key];
+                return (
+                  <Fragment key={key}>
+                    <tr style={{ borderTop: `1px solid ${ADMIN_COLORS.border}` }}>
+                      <td style={td}>
+                        <a href={r.url && r.url.startsWith('http') ? r.url : `https://airpiv.com${r.url || `/flights/${r.slug}`}`} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal, textDecoration: 'none' }}>
+                          {r.slug || r.url}
+                        </a>
+                      </td>
+                      <td style={td}>{r.language || '—'}</td>
+                      <td style={{ ...td, color: r.primaryQuery ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.primaryQuery || 'n/a'}</td>
+                      <td style={tdNum}>{fmtNum(r.impressions)}</td>
+                      <td style={{ ...tdNum, color: r.clicks == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtNum(r.clicks)}</td>
+                      <td style={{ ...tdNum, color: r.ctr == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtPct(r.ctr)}</td>
+                      <td style={tdNum}>{fmtPos(r.position)}</td>
+                      <td style={td}><CategoryBadge category={r.category} /></td>
+                      <td style={{ ...td, color: r.lastOptimizedAt ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.lastOptimizedAt || '—'}</td>
+                      <td style={td}><span style={{ fontSize: 11, color: ADMIN_COLORS.tx2 }}>{a && a.data ? 'ANALYZED' : (STATUS_OPTIONS.includes(r.status) ? r.status : 'NEW')}</span></td>
+                      <td style={{ ...td, textAlign: 'center' }}>
+                        <button type="button" onClick={() => (a ? toggleExpand(key) : analyzeRow(r))} disabled={a && a.loading} style={analyzeBtn}>
+                          {a && a.loading ? '…' : a && a.data ? (open ? 'إخفاء' : 'عرض') : '🔍 Analyze'}
+                        </button>
+                      </td>
+                    </tr>
+                    {open && (
+                      <tr>
+                        <td colSpan={11} style={{ padding: 0, background: ADMIN_COLORS.bg }}>
+                          {a && a.loading && <div style={{ padding: 14, color: ADMIN_COLORS.tx2, fontSize: 12.5 }}>جارٍ تحليل الصفحة الحقيقية…</div>}
+                          {a && a.error && <div style={{ padding: 14, color: ADMIN_COLORS.red, fontSize: 12.5 }}>{a.error}</div>}
+                          {a && a.data && <AnalysisPanel a={a.data} />}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// [Phase 3/14] Read-only analysis panel for one route's real rendered page.
+const FACTOR_LABELS = {
+  QUERY_OPPORTUNITY: 'فرصة الاستعلام',
+  CONTENT_MATCH: 'مطابقة المحتوى',
+  CTR_OPPORTUNITY: 'فرصة CTR',
+  TECHNICAL_HEALTH: 'الصحة التقنية',
+  INTERNAL_LINKING: 'الروابط الداخلية',
+  DATA_COMPLETENESS: 'اكتمال البيانات',
+};
+const FLAG_COLOR = { issue: ADMIN_COLORS.red, warn: ADMIN_COLORS.yellow, opportunity: ADMIN_COLORS.teal, observation: ADMIN_COLORS.tx2 };
+function scoreColor(s) {
+  if (s == null) return ADMIN_COLORS.tx3;
+  if (s >= 75) return ADMIN_COLORS.teal;
+  if (s >= 45) return ADMIN_COLORS.yellow;
+  return ADMIN_COLORS.red;
+}
+
+function AnalysisPanel({ a }) {
+  const el = a.elements || {};
+  const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
+  const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
+  const val = { color: ADMIN_COLORS.tx, wordBreak: 'break-word' };
+  return (
+    <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18 }}>
+      {/* Extracted elements */}
+      <div>
+        <h3 style={panelH}>عناصر الصفحة الحقيقية</h3>
+        <div style={rowStyle}><span style={lbl}>Title ({el.titleLength})</span><span style={val}>{el.title || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>Meta ({el.metaLength})</span><span style={val}>{el.metaDescription || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>H1</span><span style={val}>{el.h1 || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>Canonical</span><span style={val}>{el.canonical || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>Hreflang</span><span style={val}>{el.hreflangCount}</span></div>
+        <div style={rowStyle}><span style={lbl}>Robots</span><span style={val}>{el.robots || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>Schema</span><span style={val}>{(el.schemaTypes || []).join(', ') || '—'}</span></div>
+        <div style={rowStyle}><span style={lbl}>Internal links</span><span style={val}>{el.internalLinks ? el.internalLinks.total : 0}</span></div>
+        <div style={{ ...rowStyle, borderBottom: 'none' }}><span style={lbl}>Content</span><span style={val}>
+          {['hasFlightTime', 'hasDistance', 'hasAirlines', 'hasDirectInfo'].map((k) => `${(el.content && el.content[k]) ? '✓' : '✗'} ${k.replace('has', '')}`).join(' · ')} · FAQ {el.content ? el.content.faqCount : 0}
+        </span></div>
+      </div>
+      {/* Score factors */}
+      <div>
+        <h3 style={panelH}>درجة SEO {a.score != null ? `— ${a.score}/100` : ''} <span style={{ color: ADMIN_COLORS.tx3, fontWeight: 400 }}>({a.coverage} عوامل)</span></h3>
+        {Object.entries(a.factors || {}).map(([k, f]) => (
+          <div key={k} style={{ marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: ADMIN_COLORS.tx }}>{FACTOR_LABELS[k] || k}</span>
+              <span style={{ color: scoreColor(f.score), fontWeight: 700 }}>{f.available ? `${f.score}` : 'غير متوفر'}</span>
+            </div>
+            <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 2 }}>{f.reason}</div>
+          </div>
+        ))}
+      </div>
+      {/* Flags */}
+      <div>
+        <h3 style={panelH}>ملاحظات ({(a.flags || []).length})</h3>
+        {(a.flags || []).length === 0 && <div style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>لا ملاحظات — الصفحة سليمة.</div>}
+        {(a.flags || []).map((f, i) => (
+          <div key={i} style={{ fontSize: 12, color: FLAG_COLOR[f.level] || ADMIN_COLORS.tx2, padding: '3px 0' }}>• {f.text}</div>
+        ))}
+        <div style={{ marginTop: 10, fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>
+          تحليل للقراءة فقط — لا يطبّق أي تغيير. اقتراحات العناوين/الوصف والموافقة قادمة في مرحلة لاحقة.
+          {a.url && <> · <a href={a.url} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal }}>فتح الصفحة</a></>}
+        </div>
+      </div>
     </div>
   );
 }
@@ -360,6 +478,8 @@ function Th({ children, onClick, num }) {
 const td = { padding: '9px 12px', color: ADMIN_COLORS.tx, textAlign: 'right', whiteSpace: 'nowrap' };
 const tdNum = { ...td, textAlign: 'left', fontVariantNumeric: 'tabular-nums' };
 const ghostBtn = { background: 'transparent', color: ADMIN_COLORS.tx2, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 8, padding: '7px 12px', fontSize: 13, cursor: 'pointer' };
+const analyzeBtn = { background: 'transparent', color: ADMIN_COLORS.teal, border: `1px solid ${ADMIN_COLORS.teal}55`, borderRadius: 6, padding: '4px 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
+const panelH = { fontSize: 12.5, fontWeight: 700, color: ADMIN_COLORS.tx, marginBottom: 8 };
 const chip = (active) => ({
   background: active ? ADMIN_COLORS.tealGlow : ADMIN_COLORS.bg2,
   color: active ? ADMIN_COLORS.teal : ADMIN_COLORS.tx2,
