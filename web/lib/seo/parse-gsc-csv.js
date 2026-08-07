@@ -14,13 +14,54 @@
 // The CSV's own CTR column is intentionally IGNORED — CTR is recomputed from
 // clicks/impressions downstream so it can never disagree with the counts.
 
-// Header aliases (lower-cased, trimmed) → canonical field.
+// Header aliases (lower-cased, trimmed) → canonical field. GSC localizes the
+// export headers to the account's UI language, so every language the site
+// targets is covered here (English, German, Arabic, Spanish, French, Italian,
+// Dutch, Turkish). Add more spellings freely — matching is exact-per-token.
 const COLUMN_ALIASES = {
-  url: ['page', 'pages', 'top pages', 'url', 'address', 'landing page', 'seite', 'seiten', 'häufigste seiten', 'top-seiten'],
-  query: ['query', 'queries', 'top queries', 'keyword', 'search query', 'suchanfrage', 'suchanfragen', 'häufigste suchanfragen'],
-  clicks: ['clicks', 'click', 'klicks'],
-  impressions: ['impressions', 'impression', 'impressionen'],
-  position: ['position', 'avg. position', 'average position', 'avg position', 'durchschnittliche position', 'durchschnittspos.', 'pos'],
+  url: [
+    'page', 'pages', 'top pages', 'url', 'address', 'landing page', // en
+    'seite', 'seiten', 'häufigste seiten', 'top-seiten', // de
+    'أهم الصفحات', 'الصفحات', 'صفحة', 'عنوان url', // ar
+    'páginas', 'páginas principales', 'página', // es
+    'pages les plus fréquentes', 'page', // fr (page shared with en)
+    'pagine', 'pagine principali', // it
+    "sayfalar", "en i̇yi sayfalar", "en iyi sayfalar", // tr
+  ],
+  query: [
+    'query', 'queries', 'top queries', 'keyword', 'search query', // en
+    'suchanfrage', 'suchanfragen', 'häufigste suchanfragen', // de
+    'طلبات البحث', 'أهم طلبات البحث', 'استعلام', 'الاستعلام', // ar
+    'consultas', 'consultas principales', // es
+    'requêtes', 'requêtes les plus fréquentes', // fr
+    'query principali', // it
+  ],
+  clicks: [
+    'clicks', 'click', // en
+    'klicks', // de
+    'النقرات', 'نقرات', 'عدد النقرات', // ar
+    'clics', // es/fr
+    'clic', 'clic totali', // it
+    'tıklamalar', // tr
+  ],
+  impressions: [
+    'impressions', 'impression', // en
+    'impressionen', // de
+    'عدد الظهور', 'مرات الظهور', 'الظهور', 'ظهور', // ar
+    'impresiones', // es
+    'impressions', // fr (same as en)
+    'impressioni', // it
+    'gösterimler', // tr
+  ],
+  position: [
+    'position', 'avg. position', 'average position', 'avg position', // en
+    'durchschnittliche position', 'durchschnittspos.', 'pos', // de
+    'موضع', 'الموضع', 'متوسط الموضع', // ar
+    'posición', 'posición media', // es
+    'position moyenne', // fr
+    'posizione', 'posizione media', // it
+    'konum', 'ortalama konum', // tr
+  ],
 };
 
 // Detect the delimiter from the header line by counting candidates outside quotes.
