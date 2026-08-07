@@ -12,12 +12,20 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { CATEGORY, classifyOpportunity, computeCtr } = require('../lib/seo/gsc-opportunity.js');
+const { CATEGORY, classifyOpportunity, computeCtr, STATUS, STATUS_VALUES } = require('../lib/seo/gsc-opportunity.js');
 const { normalizeGscRows, slugFromUrl, languageFromUrl } = require('../lib/seo/normalize.js');
 const { buildOpportunityReport } = require('../lib/seo/report.js');
 const { GSC_SAMPLE_ROWS, EXPECTED_CATEGORY } = require('./fixtures/gsc-sample.js');
 
 const cat = (impressions, position) => classifyOpportunity({ impressions, position }).category;
+
+// ─── Phase 17 lifecycle status enum ────────────────────────────────────────
+test('STATUS enum covers the full Phase 17 lifecycle', () => {
+  for (const s of ['NEW', 'ANALYZED', 'OPTIMIZATION_READY', 'PENDING_APPROVAL', 'APPROVED', 'APPLIED', 'MONITORING', 'WINNER', 'NEEDS_REWORK', 'REJECTED']) {
+    assert.ok(STATUS_VALUES.includes(s), `missing status ${s}`);
+    assert.equal(STATUS[s], s);
+  }
+});
 
 // ─── §6 Boundary tests — every threshold edge from the brief ────────────────
 test('19 impressions / position 10 → NORMAL (just under the HIGH impressions floor)', () => {
