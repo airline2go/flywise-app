@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/admin/content-studio', label: 'استوديو المحتوى' },
   { href: '/admin/content-calendar', label: 'تقويم المحتوى' },
   { href: '/admin/route-pages', label: 'صفحات المسارات' },
+  { href: '/admin/seo-opportunities', label: 'فرص السيو' },
   { href: '/admin/geo', label: 'المطارات والمدن' },
   { href: '/admin/error-logs', label: 'سجل الأخطاء' },
   { href: '/admin/team', label: 'الفريق', fullAdminOnly: true },
