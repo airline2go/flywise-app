@@ -12,10 +12,15 @@ import { ADMIN_COLORS as C } from '../../../../lib/admin/theme';
 import generatorMod from '../../../../lib/social/generator';
 import opportunityMod from '../../../../lib/social/opportunity';
 import imageCardMod from '../../../../lib/social/image-card';
+import recommendationsMod from '../../../../lib/social/recommendations';
 
 const { generateSocialPost, PLATFORMS, LANGUAGES, TEMPLATE_TYPES } = generatorMod;
 const { scoreOpportunity, rankOpportunities } = opportunityMod;
 const { buildImageCard } = imageCardMod;
+const { buildRecommendations } = recommendationsMod;
+
+// Severity → color token for the smart-recommendations panel.
+const REC_SEVERITY = { high: 'yellow', medium: 'blue', low: 'tx2' };
 
 // ── Branded social-image card helpers (client-side, deterministic) ──
 // Trigger a browser download for a blob.
@@ -198,6 +203,12 @@ export default function ContentStudioClient() {
     opps.map((o) => ({ inputs: oppInputs(o), subject: { type: 'route', slug: o.slug }, row: o })),
   ).slice(0, 12), [opps]);
 
+  const oppBySlug = useMemo(() => {
+    const m = new Map();
+    opps.forEach((o) => { if (o.slug) m.set(o.slug, o); });
+    return m;
+  }, [opps]);
+
   const [autoCfg, setAutoCfg] = useState({ frequency: 'off', platforms: ['instagram'], languages: ['de'], dailyCount: 3 });
   const [autoMsg, setAutoMsg] = useState('');
   const [autoBusy, setAutoBusy] = useState(false);
@@ -331,6 +342,41 @@ export default function ContentStudioClient() {
       .catch(() => setQueueNote('تعذّر الحفظ.'));
   }, [platform, lang, persist]);
 
+  // ── Smart recommendations ── operational "next best actions" derived from the
+  // ranked opportunities, the queue, the schedule, and the automation targets.
+  const recommendations = useMemo(() => buildRecommendations({
+    opportunities: rankedOpps.map((it) => ({
+      slug: it.input.row.slug,
+      stars: it.stars,
+      label: `${it.input.row.origin_city || ''} → ${it.input.row.destination_city || ''}`.trim(),
+    })),
+    queue,
+    config: { platforms: autoCfg.platforms, languages: autoCfg.languages },
+  }), [rankedOpps, queue, autoCfg.platforms, autoCfg.languages]);
+
+  const scrollToBottom = useCallback(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, []);
+  const scrollToQueue = useCallback(() => {
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('social-queue');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  // Turn a recommendation's action into a concrete UI move (filter the queue,
+  // preselect bulk targets, or generate posts for the uncovered opportunities).
+  const applyRecAction = useCallback((action) => {
+    if (!action) return;
+    if (action.kind === 'filter_status') { setQStatus(action.status); scrollToQueue(); }
+    else if (action.kind === 'platforms') { setBulkPlatforms(action.platforms.filter((p) => PLATFORM_KEYS.includes(p))); scrollToBottom(); }
+    else if (action.kind === 'languages') { setBulkLangs(action.languages.filter((l) => LANGUAGES.includes(l))); scrollToBottom(); }
+    else if (action.kind === 'generate_opportunities') {
+      (action.slugs || []).map((s) => oppBySlug.get(s)).filter(Boolean).forEach(generateAndSave);
+      scrollToQueue();
+    }
+  }, [oppBySlug, generateAndSave, scrollToQueue, scrollToBottom]);
+
   const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   const saveAuto = useCallback(() => {
     setAutoBusy(true); setAutoMsg('');
@@ -454,6 +500,37 @@ export default function ContentStudioClient() {
             );
           })}
         </div>
+      </section>
+
+      {/* ── Smart recommendations ── */}
+      <section style={{ ...cardStyle, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>💡 توصيات ذكية</h2>
+          <span style={{ fontSize: 12, color: C.tx3 }}>خطواتك التالية — من طابورك وجدولك وفرصك (بيانات حقيقية)</span>
+        </div>
+        {recommendations.length === 0 ? (
+          <p style={{ fontSize: 13, color: C.teal, margin: 0 }}>✓ كل شيء على ما يرام — لا توصيات عاجلة حالياً.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {recommendations.map((r) => {
+              const col = C[REC_SEVERITY[r.severity]] || C.tx2;
+              return (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: C.bg2, border: `1px solid ${C.border}`, borderInlineStart: `3px solid ${col}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: col, marginTop: 6, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: C.tx }}>{r.title}</div>
+                    <div style={{ fontSize: 12, color: C.tx2, marginTop: 3, lineHeight: 1.6 }}>{r.detail}</div>
+                  </div>
+                  {r.action && (
+                    <button style={{ ...btn(C.bg3, C.tx), padding: '5px 12px', fontSize: 12, flexShrink: 0, alignSelf: 'center' }} onClick={() => applyRecAction(r.action)}>
+                      {r.action.kind === 'generate_opportunities' ? 'توليد' : r.action.kind === 'filter_status' ? 'عرض' : 'تجهيز'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ── Daily automation ── */}
@@ -677,7 +754,7 @@ export default function ContentStudioClient() {
       </div>
 
       {/* ── Queue ── */}
-      <section style={{ ...cardStyle, marginTop: 18 }}>
+      <section id="social-queue" style={{ ...cardStyle, marginTop: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           <h2 style={{ fontSize: 15, margin: 0, color: C.tx }}>الطابور ({filteredQueue.length}{filteredQueue.length !== queue.length ? ` / ${queue.length}` : ''})</h2>
           <button style={btn(C.bg3, C.tx2)} onClick={loadQueue}>تحديث</button>
