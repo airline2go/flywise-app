@@ -11,9 +11,64 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { ADMIN_COLORS as C } from '../../../../lib/admin/theme';
 import generatorMod from '../../../../lib/social/generator';
 import opportunityMod from '../../../../lib/social/opportunity';
+import imageCardMod from '../../../../lib/social/image-card';
 
 const { generateSocialPost, PLATFORMS, LANGUAGES, TEMPLATE_TYPES } = generatorMod;
 const { scoreOpportunity, rankOpportunities } = opportunityMod;
+const { buildImageCard } = imageCardMod;
+
+// ── Branded social-image card helpers (client-side, deterministic) ──
+// Trigger a browser download for a blob.
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadCardSvg(card) {
+  downloadBlob(new Blob([card.svg], { type: 'image/svg+xml' }), `${card.filename}.svg`);
+}
+
+// Rasterize the self-contained SVG to PNG via a canvas (no external refs, so the
+// canvas is never tainted and toBlob succeeds).
+function downloadCardPng(card, onError) {
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = card.width;
+      canvas.height = card.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, card.width, card.height);
+      canvas.toBlob((blob) => {
+        if (blob) downloadBlob(blob, `${card.filename}.png`);
+        else if (onError) onError();
+      }, 'image/png');
+    } catch {
+      if (onError) onError();
+    }
+  };
+  img.onerror = () => { if (onError) onError(); };
+  img.src = card.dataUri;
+}
+
+// Reconstruct card inputs from a stored queue row (honest: no price is parsed
+// back out of the body, so queue cards never show a fabricated number). The
+// title carries the headline — "Origin → Destination", the city, or the title.
+function postToCardOpts(p) {
+  const base = { type: p.template_type, platform: p.platform, lang: p.language };
+  if (p.template_type === 'flight_deal') {
+    const parts = String(p.title || '').split('→').map((x) => x.trim());
+    return { ...base, data: { origin: parts[0] || '', destination: parts[1] || '' } };
+  }
+  if (p.template_type === 'city_guide') return { ...base, data: { city: p.title || '' } };
+  return { ...base, data: { title: p.title || '' } };
+}
 
 // Real price (from the DB) formatted with its currency symbol — never invented.
 function fmtPrice(v, currency) {
@@ -109,6 +164,7 @@ export default function ContentStudioClient() {
   const [editDraft, setEditDraft] = useState({ title: '', body: '' });
   const [versionsFor, setVersionsFor] = useState(null);
   const [versions, setVersions] = useState([]);
+  const [imageFor, setImageFor] = useState(null);
 
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
   const campaigns = useMemo(
@@ -198,6 +254,7 @@ export default function ContentStudioClient() {
   }, [type, s]);
 
   const post = useMemo(() => generateSocialPost({ type, platform, lang, subject, data }), [type, platform, lang, subject, data]);
+  const card = useMemo(() => buildImageCard({ type, platform, lang, data }), [type, platform, lang, data]);
 
   const copy = useCallback((key, text) => {
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
@@ -566,6 +623,25 @@ export default function ContentStudioClient() {
             </div>
           </div>
 
+          {/* ── Branded image card ── */}
+          <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: C.bg2, border: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+              <strong style={{ fontSize: 13, color: C.tx }}>صورة جاهزة للنشر</strong>
+              <span style={{ fontSize: 11.5, color: C.tx3 }}>{PLATFORMS[platform].label} · {card.width}×{card.height}px · SVG</span>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={card.dataUri}
+              alt={`صورة ${card.headline}`}
+              style={{ display: 'block', width: '100%', maxWidth: 420, margin: '0 auto', borderRadius: 10, border: `1px solid ${C.border}` }}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button style={btn(C.teal, '#04121b')} onClick={() => downloadCardPng(card, () => setQueueNote('تعذّر إنشاء PNG — جرّب تنزيل SVG.'))}>⬇ تنزيل PNG</button>
+              <button style={btn(C.bg3, C.tx)} onClick={() => downloadCardSvg(card)}>⬇ تنزيل SVG</button>
+            </div>
+            <p style={{ fontSize: 11, color: C.tx3, margin: '10px 0 0', textAlign: 'center' }}>تُولّد محلياً من بياناتك — بدون خدمات خارجية. السعر يظهر فقط عند إدخاله (لا اختلاق).</p>
+          </div>
+
           {/* ── Bulk generate ── */}
           <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: C.bg2, border: `1px dashed ${C.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -676,6 +752,7 @@ export default function ContentStudioClient() {
                 </label>
                 <button style={{ ...btn(C.bg3, C.tx), padding: '4px 10px', fontSize: 12 }} onClick={() => (editId === p.id ? setEditId(null) : startEdit(p))}>{editId === p.id ? 'إغلاق' : 'تعديل'}</button>
                 <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => (versionsFor === p.id ? setVersionsFor(null) : loadVersions(p.id))}>{versionsFor === p.id ? 'إخفاء النسخ' : 'النسخ السابقة'}</button>
+                <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => setImageFor((v) => (v === p.id ? null : p.id))}>{imageFor === p.id ? 'إخفاء الصورة' : '🖼 صورة'}</button>
                 <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => copy('q' + p.id, p.body)}>{copied === 'q' + p.id ? '✓' : 'نسخ'}</button>
                 <button style={{ ...btn(C.redBg, C.red), padding: '4px 10px', fontSize: 12 }} onClick={() => deletePost(p.id)}>حذف</button>
               </div>
@@ -694,6 +771,20 @@ export default function ContentStudioClient() {
                   ))}
                 </div>
               )}
+              {imageFor === p.id && (() => {
+                const qCard = buildImageCard(postToCardOpts(p));
+                return (
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, display: 'grid', gap: 8, justifyItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: C.tx3, alignSelf: 'start' }}>{(PLATFORMS[p.platform] && PLATFORMS[p.platform].label) || p.platform} · {qCard.width}×{qCard.height}px</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={qCard.dataUri} alt={`صورة ${qCard.headline}`} style={{ display: 'block', width: '100%', maxWidth: 320, borderRadius: 8, border: `1px solid ${C.border}` }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button style={{ ...btn(C.teal, '#04121b'), padding: '4px 12px', fontSize: 12 }} onClick={() => downloadCardPng(qCard)}>⬇ PNG</button>
+                      <button style={{ ...btn(C.bg3, C.tx), padding: '4px 12px', fontSize: 12 }} onClick={() => downloadCardSvg(qCard)}>⬇ SVG</button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
