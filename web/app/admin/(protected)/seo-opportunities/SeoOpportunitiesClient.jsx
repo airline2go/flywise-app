@@ -3,14 +3,21 @@
 // [SEO-OPPORTUNITY §3/§4/§8] The admin SEO opportunity report. It is an
 // OPPORTUNITY DETECTOR only — it surfaces route pages worth investigating from
 // real Google Search Console data and never changes titles/meta/content itself
-// (any SEO edit stays a separate, controlled action). Data + default sort come
-// from /admin/api/seo-opportunities (server-side normalize → classify → sort);
-// this component adds interactive column sorting and a category filter.
+// (any SEO edit stays a separate, controlled action).
+//
+// Two data sources, both routed through the SAME pure classifier/report:
+//   1. CSV IMPORT (default) — upload a GSC "Pages" export; it is parsed,
+//      classified and sorted entirely in the browser (no API, no server round
+//      trip) and cached in localStorage so it survives a reload.
+//   2. LIVE API — if a Google Search Console feed is later connected on the
+//      server (/admin/api/seo-opportunities), it takes precedence automatically.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ADMIN_COLORS } from '../../../../lib/admin/theme';
+import { parseGscCsv } from '../../../../lib/seo/parse-gsc-csv.js';
+import { buildOpportunityReport } from '../../../../lib/seo/report.js';
 
-// Category → { label, color } for the badge. Order mirrors the report's default
-// sort (BREAKOUT → VERY_HIGH → HIGH → NORMAL → LOW).
+const LS_KEY = 'airpiv_seo_gsc_csv_report';
+
 const CATEGORY_META = {
   BREAKOUT: { label: 'BREAKOUT', color: ADMIN_COLORS.teal, bg: ADMIN_COLORS.tealGlow },
   VERY_HIGH: { label: 'VERY HIGH', color: ADMIN_COLORS.blue, bg: ADMIN_COLORS.blueBg },
@@ -21,7 +28,6 @@ const CATEGORY_META = {
 
 const STATUS_OPTIONS = ['NEW', 'ANALYZED', 'OPTIMIZED', 'MONITORING', 'WINNER', 'NEEDS_REWORK'];
 
-// Threshold reference shown as a legend, kept in sync with lib/seo/gsc-opportunity.
 const THRESHOLDS = [
   ['BREAKOUT', 'Position ≤ 5 و Impressions ≥ 10'],
   ['VERY HIGH', 'Impressions ≥ 40 و Position ≤ 12'],
@@ -45,35 +51,99 @@ const fmtPos = (v) => (v == null ? '—' : v.toFixed(2));
 
 export default function SeoOpportunitiesClient() {
   const [rows, setRows] = useState([]);
-  const [connected, setConnected] = useState(true);
+  const [source, setSource] = useState(null); // 'api' | 'csv' | null
   const [note, setNote] = useState('');
   const [dateRange, setDateRange] = useState(null);
+  const [uploadInfo, setUploadInfo] = useState(null); // { count, uploadedAt, warnings, fileName }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState(''); // category filter
-  const [sort, setSort] = useState(null); // { key, dir } — null = server default (§4)
+  const [filter, setFilter] = useState('');
+  const [sort, setSort] = useState(null);
 
+  // Restore a previously-uploaded CSV report from localStorage.
+  const loadCsvCache = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.rows)) return parsed;
+    } catch { /* ignore corrupt cache */ }
+    return null;
+  }, []);
+
+  // On mount: prefer a live API feed if one is connected; otherwise fall back to
+  // the cached CSV import. Never inject sample/fake rows.
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    const cache = loadCsvCache();
+    let usedApi = false;
     try {
       const res = await fetch('/admin/api/seo-opportunities');
       const data = await res.json();
-      if (!data.ok) { setError(data.error || 'فشل تحميل التقرير'); setRows([]); }
-      else {
-        setRows(data.rows || []);
-        setConnected(data.connected !== false);
-        setNote(data.note || '');
+      if (data.ok && data.connected && Array.isArray(data.rows) && data.rows.length) {
+        setRows(data.rows);
+        setSource('api');
         setDateRange(data.dateRange || null);
+        setNote('');
+        usedApi = true;
+      } else if (data.ok) {
+        setNote(data.note || '');
       }
-    } catch {
-      setError('تعذّر الاتصال بالخادم');
-      setRows([]);
+    } catch { /* API optional — CSV import is the primary path */ }
+
+    if (!usedApi) {
+      if (cache) {
+        setRows(cache.rows);
+        setSource('csv');
+        setUploadInfo(cache.info || null);
+      } else {
+        setRows([]);
+        setSource(null);
+      }
     }
     setLoading(false);
-  }, []);
+  }, [loadCsvCache]);
 
   useEffect(() => { const t = setTimeout(() => load(), 0); return () => clearTimeout(t); }, [load]);
+
+  function onFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const { rows: raw, meta } = parseGscCsv(String(reader.result || ''));
+        if (!raw.length) {
+          setError((meta.warnings || []).join(' ') || 'لم يتم العثور على صفوف مسارات صالحة في الملف.');
+          return;
+        }
+        const report = buildOpportunityReport(raw);
+        const info = { count: report.length, uploadedAt: new Date().toISOString(), warnings: meta.warnings || [], fileName: file.name };
+        setRows(report);
+        setSource('csv');
+        setUploadInfo(info);
+        setError('');
+        setFilter('');
+        setSort(null);
+        try { localStorage.setItem(LS_KEY, JSON.stringify({ rows: report, info })); } catch { /* quota — still shown this session */ }
+      } catch {
+        setError('تعذّر قراءة الملف. تأكد أنه ملف CSV صالح من Search Console.');
+      }
+    };
+    reader.onerror = () => setError('تعذّر قراءة الملف.');
+    reader.readAsText(file);
+    e.target.value = ''; // allow re-uploading the same file name
+  }
+
+  function clearCsv() {
+    try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+    setRows([]);
+    setSource(null);
+    setUploadInfo(null);
+    setFilter('');
+    setSort(null);
+  }
 
   const view = useMemo(() => {
     let out = filter ? rows.filter((r) => r.category === filter) : rows.slice();
@@ -84,7 +154,7 @@ export default function SeoOpportunitiesClient() {
         const av = a[key];
         const bv = b[key];
         if (av == null && bv == null) return 0;
-        if (av == null) return 1; // unknowns last regardless of dir
+        if (av == null) return 1;
         if (bv == null) return -1;
         if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mul;
         return String(av).localeCompare(String(bv)) * mul;
@@ -103,10 +173,9 @@ export default function SeoOpportunitiesClient() {
     setSort((prev) => {
       if (!prev || prev.key !== key) return { key, dir: 'desc' };
       if (prev.dir === 'desc') return { key, dir: 'asc' };
-      return null; // third click → back to server default
+      return null;
     });
   }
-
   const sortArrow = (key) => (sort && sort.key === key ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : '');
 
   return (
@@ -114,12 +183,18 @@ export default function SeoOpportunitiesClient() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700 }}>فرص السيو (Search Console)</h1>
-          <p style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, marginTop: 4, maxWidth: 640 }}>
+          <p style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, marginTop: 4, maxWidth: 660 }}>
             كاشف فرص فقط — يرتّب صفحات المسارات حسب فرصتها في التصنيف اعتماداً على بيانات Google Search Console الحقيقية.
             لا يغيّر أي عنوان أو وصف أو محتوى؛ أي تعديل سيو يبقى إجراءً منفصلاً ومتحكَّماً به.
           </p>
         </div>
-        <button type="button" onClick={load} style={ghostBtn}>↻ تحديث</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <label style={{ ...ghostBtn, cursor: 'pointer' }}>
+            ⬆️ رفع CSV
+            <input type="file" accept=".csv,text/csv" onChange={onFile} style={{ display: 'none' }} />
+          </label>
+          {source === 'csv' && <button type="button" onClick={clearCsv} style={ghostBtn}>🗑 مسح</button>}
+        </div>
       </div>
 
       {/* Threshold legend */}
@@ -131,35 +206,55 @@ export default function SeoOpportunitiesClient() {
         ))}
       </div>
 
-      {/* Category filter chips */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        <button type="button" onClick={() => setFilter('')} style={chip(filter === '')}>الكل ({rows.length})</button>
-        {['BREAKOUT', 'VERY_HIGH', 'HIGH', 'NORMAL', 'LOW'].map((c) => (
-          <button key={c} type="button" onClick={() => setFilter(filter === c ? '' : c)} style={chip(filter === c)}>
-            {CATEGORY_META[c].label} ({counts[c] || 0})
-          </button>
-        ))}
-      </div>
+      {/* Source banner */}
+      {source === 'csv' && uploadInfo && (
+        <div style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, background: ADMIN_COLORS.bg2, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          📄 المصدر: ملف CSV مرفوع{uploadInfo.fileName ? ` (${uploadInfo.fileName})` : ''} · {uploadInfo.count} صف · {new Date(uploadInfo.uploadedAt).toLocaleString('en-GB')}
+          {uploadInfo.warnings && uploadInfo.warnings.length ? <div style={{ color: ADMIN_COLORS.yellow, marginTop: 4 }}>⚠️ {uploadInfo.warnings.join(' ')}</div> : null}
+        </div>
+      )}
+      {source === 'api' && (
+        <div style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, marginBottom: 12 }}>
+          🔗 المصدر: اتصال Google Search Console المباشر{dateRange ? ` · ${dateRange}` : ''}
+        </div>
+      )}
 
-      {dateRange && (
-        <p style={{ fontSize: 12, color: ADMIN_COLORS.tx3, marginBottom: 10 }}>نطاق البيانات: {dateRange}</p>
+      {/* Category filter chips */}
+      {rows.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <button type="button" onClick={() => setFilter('')} style={chip(filter === '')}>الكل ({rows.length})</button>
+          {['BREAKOUT', 'VERY_HIGH', 'HIGH', 'NORMAL', 'LOW'].map((c) => (
+            <button key={c} type="button" onClick={() => setFilter(filter === c ? '' : c)} style={chip(filter === c)}>
+              {CATEGORY_META[c].label} ({counts[c] || 0})
+            </button>
+          ))}
+        </div>
       )}
 
       {loading && <p style={{ color: ADMIN_COLORS.tx2, fontSize: 13 }}>جارٍ التحميل…</p>}
       {error && <p style={{ color: ADMIN_COLORS.red, fontSize: 13 }}>{error}</p>}
 
-      {!loading && !error && !connected && (
-        <div style={{ padding: 20, background: ADMIN_COLORS.bg2, border: `1px dashed ${ADMIN_COLORS.border}`, borderRadius: 10, color: ADMIN_COLORS.tx2, fontSize: 13.5, lineHeight: 1.7 }}>
-          <strong style={{ color: ADMIN_COLORS.tx }}>لا يوجد اتصال بـ Google Search Console بعد.</strong>
-          <div style={{ marginTop: 6 }}>{note || 'اربط GSC على الخادم لتعبئة هذا التقرير. البنية جاهزة (تطبيع → تصنيف → تقرير) وستعمل تلقائياً بمجرد توفّر البيانات.'}</div>
+      {/* Empty state — how to import */}
+      {!loading && rows.length === 0 && (
+        <div style={{ padding: 20, background: ADMIN_COLORS.bg2, border: `1px dashed ${ADMIN_COLORS.border}`, borderRadius: 10, color: ADMIN_COLORS.tx2, fontSize: 13.5, lineHeight: 1.8 }}>
+          <strong style={{ color: ADMIN_COLORS.tx }}>ارفع تقرير Search Console لبدء التحليل.</strong>
+          <ol style={{ margin: '10px 0 0', paddingInlineStart: 20 }}>
+            <li>افتح Google Search Console → <b>Leistung / Performance</b>.</li>
+            <li>اختر تبويب <b>Seiten / Pages</b> والفترة الزمنية المطلوبة.</li>
+            <li>اضغط <b>Export / Exportieren → CSV</b> (ملف الصفحات «Pages»).</li>
+            <li>ارجع هنا واضغط <b>⬆️ رفع CSV</b> وارفع الملف.</li>
+          </ol>
+          <div style={{ marginTop: 10, color: ADMIN_COLORS.tx3 }}>
+            كل الحساب يتم داخل متصفّحك — لا يُرسَل الملف لأي خادم. {note ? `(${note})` : ''}
+          </div>
         </div>
       )}
 
-      {!loading && !error && connected && view.length === 0 && (
-        <p style={{ color: ADMIN_COLORS.tx2, fontSize: 13 }}>لا توجد صفوف مطابقة.</p>
+      {!loading && rows.length > 0 && view.length === 0 && (
+        <p style={{ color: ADMIN_COLORS.tx2, fontSize: 13 }}>لا توجد صفوف مطابقة لهذا الفلتر.</p>
       )}
 
-      {!loading && !error && view.length > 0 && (
+      {!loading && view.length > 0 && (
         <div style={{ overflowX: 'auto', border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 10 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, minWidth: 900 }}>
             <thead>
@@ -192,9 +287,7 @@ export default function SeoOpportunitiesClient() {
                   <td style={tdNum}>{fmtPos(r.position)}</td>
                   <td style={td}><CategoryBadge category={r.category} /></td>
                   <td style={{ ...td, color: r.lastOptimizedAt ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.lastOptimizedAt || '—'}</td>
-                  <td style={td}>
-                    <span style={{ fontSize: 11, color: ADMIN_COLORS.tx2 }}>{STATUS_OPTIONS.includes(r.status) ? r.status : 'ANALYZED'}</span>
-                  </td>
+                  <td style={td}><span style={{ fontSize: 11, color: ADMIN_COLORS.tx2 }}>{STATUS_OPTIONS.includes(r.status) ? r.status : 'ANALYZED'}</span></td>
                 </tr>
               ))}
             </tbody>
