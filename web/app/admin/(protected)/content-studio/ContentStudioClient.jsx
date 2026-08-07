@@ -40,7 +40,7 @@ const TYPE_LABEL = { flight_deal: 'عرض رحلة', city_guide: 'دليل مد�
 const LEVEL_LABEL = { '': '—', low: 'منخفض', medium: 'متوسط', high: 'عالٍ' };
 const STATUS_ORDER = ['draft', 'pending_review', 'approved', 'scheduled', 'published', 'failed'];
 const STATUS_LABEL = { draft: 'مسودة', pending_review: 'بانتظار المراجعة', approved: 'معتمد', scheduled: 'مجدول', published: 'منشور', failed: 'فشل' };
-const ACTION_LABEL = { created: 'أُنشئ', updated: 'عُدّل', status_changed: 'تغيّرت الحالة', deleted: 'حُذف', auto_generated: 'توليد تلقائي' };
+const ACTION_LABEL = { created: 'أُنشئ', updated: 'عُدّل', edited: 'تحرير المحتوى', status_changed: 'تغيّرت الحالة', deleted: 'حُذف', reverted: 'استرجاع نسخة', auto_generated: 'توليد تلقائي' };
 
 // Compact "time ago" in Arabic for the activity feed.
 function timeAgo(iso) {
@@ -105,6 +105,10 @@ export default function ContentStudioClient() {
   const [bulkLangs, setBulkLangs] = useState([]);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
+  const [editId, setEditId] = useState(null);
+  const [editDraft, setEditDraft] = useState({ title: '', body: '' });
+  const [versionsFor, setVersionsFor] = useState(null);
+  const [versions, setVersions] = useState([]);
 
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
   const campaigns = useMemo(
@@ -303,6 +307,34 @@ export default function ContentStudioClient() {
       .then((d) => { if (d.ok) setQueue((q) => q.filter((p) => p.id !== id)); })
       .catch(() => {});
   }, []);
+
+  const startEdit = useCallback((p) => {
+    setEditId(p.id);
+    setEditDraft({ title: p.title || '', body: p.body || '' });
+  }, []);
+
+  const saveEdit = useCallback((id) => {
+    if (!editDraft.body.trim()) return;
+    patchPost(id, { title: editDraft.title, body: editDraft.body });
+    setEditId(null);
+  }, [editDraft, patchPost]);
+
+  const loadVersions = useCallback((id) => {
+    setVersionsFor(id); setVersions([]);
+    fetch(`/admin/api/social-posts/${id}/versions`)
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setVersions(d.versions || []); })
+      .catch(() => {});
+  }, []);
+
+  const revertTo = useCallback((postId, versionId) => {
+    fetch(`/admin/api/social-posts/${postId}/revert`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version_id: versionId }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.ok && d.post) { setQueue((q) => q.map((p) => (p.id === postId ? d.post : p))); loadVersions(postId); } })
+      .catch(() => {});
+  }, [loadVersions]);
 
   const bulkStatus = useCallback((status) => {
     const ids = Object.keys(sel).filter((k) => sel[k]);
@@ -621,7 +653,18 @@ export default function ContentStudioClient() {
                   </select>
                 </span>
               </div>
-              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '8px 0 0', fontFamily: 'inherit', fontSize: 12.5, color: C.tx, maxHeight: 88, overflow: 'hidden' }}>{p.body}</pre>
+              {editId === p.id ? (
+                <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+                  <input value={editDraft.title} onChange={(e) => setEditDraft((d) => ({ ...d, title: e.target.value }))} placeholder="العنوان (اختياري)" style={{ ...inputStyle, fontSize: 12.5 }} />
+                  <textarea value={editDraft.body} onChange={(e) => setEditDraft((d) => ({ ...d, body: e.target.value }))} rows={5} style={{ ...inputStyle, fontSize: 12.5, resize: 'vertical', lineHeight: 1.6 }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button style={{ ...btn(C.teal, '#04121b'), padding: '4px 12px', fontSize: 12 }} onClick={() => saveEdit(p.id)} disabled={!editDraft.body.trim()}>حفظ</button>
+                    <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 12px', fontSize: 12 }} onClick={() => setEditId(null)}>إلغاء</button>
+                  </div>
+                </div>
+              ) : (
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '8px 0 0', fontFamily: 'inherit', fontSize: 12.5, color: C.tx, maxHeight: 88, overflow: 'hidden' }}>{p.body}</pre>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                 <label style={{ fontSize: 11.5, color: C.tx3 }}>جدولة:
                   <input
@@ -631,9 +674,26 @@ export default function ContentStudioClient() {
                     style={{ ...inputStyle, width: 'auto', marginInlineStart: 6, padding: '4px 8px', fontSize: 12 }}
                   />
                 </label>
+                <button style={{ ...btn(C.bg3, C.tx), padding: '4px 10px', fontSize: 12 }} onClick={() => (editId === p.id ? setEditId(null) : startEdit(p))}>{editId === p.id ? 'إغلاق' : 'تعديل'}</button>
+                <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => (versionsFor === p.id ? setVersionsFor(null) : loadVersions(p.id))}>{versionsFor === p.id ? 'إخفاء النسخ' : 'النسخ السابقة'}</button>
                 <button style={{ ...btn(C.bg3, C.tx2), padding: '4px 10px', fontSize: 12 }} onClick={() => copy('q' + p.id, p.body)}>{copied === 'q' + p.id ? '✓' : 'نسخ'}</button>
                 <button style={{ ...btn(C.redBg, C.red), padding: '4px 10px', fontSize: 12 }} onClick={() => deletePost(p.id)}>حذف</button>
               </div>
+              {versionsFor === p.id && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, display: 'grid', gap: 6 }}>
+                  {versions.length === 0 && <p style={{ fontSize: 12, color: C.tx3, margin: 0 }}>لا نسخ سابقة — تظهر النسخ بعد أول تعديل.</p>}
+                  {versions.map((v) => (
+                    <div key={v.id} style={{ background: C.bg3, borderRadius: 8, padding: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 11, color: C.tx3, marginBottom: 4 }}>
+                        <span>{timeAgo(v.created_at)}</span>
+                        <span>· {v.editor === 'auto' ? 'تلقائي' : (v.editor || 'admin')}</span>
+                        <button style={{ ...btn(C.teal, '#04121b'), padding: '2px 8px', fontSize: 11, marginInlineStart: 'auto' }} onClick={() => revertTo(p.id, v.id)}>استرجاع</button>
+                      </div>
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, fontFamily: 'inherit', fontSize: 11.5, color: C.tx2, maxHeight: 60, overflow: 'hidden' }}>{v.body}</pre>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
