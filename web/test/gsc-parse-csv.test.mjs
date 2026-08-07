@@ -35,6 +35,24 @@ test('parses a German GSC export (semicolon-delimited, comma decimals, localized
   assert.equal(rows[1].position, 8.7);
 });
 
+test('parses an Arabic GSC Pages export (localized headers, dot decimals)', () => {
+  const csv = [
+    'أهم الصفحات,النقرات,عدد الظهور,نسبة النقر إلى الظهور,موضع',
+    'https://airpiv.com/,2,8,25%,1',
+    'https://airpiv.com/flights/hamburg-barcelona-2,0,116,0%,9.28',
+    'https://airpiv.com/flights/madrid-ibiza,1,16,6.25%,4.62',
+  ].join('\n');
+  const { rows, meta } = parseGscCsv(csv);
+  assert.deepEqual(meta.columns, { url: 0, clicks: 1, impressions: 2, position: 4 });
+  // The bare "/" home page (no /flights/ slug) is dropped by the normalizer.
+  const report = buildOpportunityReport(rows);
+  assert.equal(report.length, 2);
+  assert.equal(report[0].slug, 'madrid-ibiza'); // BREAKOUT sorts first
+  assert.equal(report[0].category, 'BREAKOUT');
+  assert.equal(report[1].slug, 'hamburg-barcelona-2');
+  assert.equal(report[1].category, 'VERY_HIGH');
+});
+
 test('strips a UTF-8 BOM and ignores blank trailing lines', () => {
   const csv = '﻿Top pages,Clicks,Impressions,CTR,Position\n'
     + 'https://airpiv.com/flights/fra-hel,0,9,0%,9.67\n\n';
