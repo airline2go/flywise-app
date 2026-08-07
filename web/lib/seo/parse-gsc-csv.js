@@ -171,4 +171,36 @@ function parseGscCsv(text) {
   return { rows, meta: { rowCount: rows.length, warnings, columns: cols, delimiter: delim } };
 }
 
-module.exports = { parseGscCsv, parseNum };
+// Parse a GSC "Queries" export (first column = the search query, no page
+// column) into raw query rows: { query, clicks, impressions, position }. The
+// CSV's CTR column is ignored (recomputed downstream). Malformed input → [].
+function parseGscQueriesCsv(text) {
+  const warnings = [];
+  if (typeof text !== 'string' || !text.trim()) return { rows: [], meta: { rowCount: 0, warnings: ['Empty file'], columns: {} } };
+  const clean = text.replace(/^﻿/, '');
+  const lines = clean.split(/\r\n|\n|\r/).filter((l) => l.trim() !== '');
+  if (lines.length < 2) return { rows: [], meta: { rowCount: 0, warnings: ['No data rows'], columns: {} } };
+  const delim = detectDelimiter(lines[0]);
+  const header = splitLine(lines[0], delim);
+  const cols = mapHeader(header);
+  // The query column is aliased under COLUMN_ALIASES.query; if the header wasn't
+  // recognized, fall back to the first column (GSC always puts the query first).
+  const queryIdx = cols.query != null ? cols.query : 0;
+  if (cols.query == null) warnings.push('Query column not recognized — using the first column.');
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i += 1) {
+    const cells = splitLine(lines[i], delim);
+    const query = (cells[queryIdx] || '').replace(/^"|"$/g, '').trim();
+    if (!query) continue;
+    rows.push({
+      query,
+      clicks: cols.clicks != null ? parseNum(cells[cols.clicks]) : null,
+      impressions: cols.impressions != null ? parseNum(cells[cols.impressions]) : null,
+      position: cols.position != null ? parseNum(cells[cols.position]) : null,
+    });
+  }
+  return { rows, meta: { rowCount: rows.length, warnings, columns: cols, delimiter: delim } };
+}
+
+module.exports = { parseGscCsv, parseGscQueriesCsv, parseNum };
