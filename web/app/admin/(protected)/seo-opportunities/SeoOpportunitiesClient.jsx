@@ -26,7 +26,7 @@ const CATEGORY_META = {
   LOW: { label: 'LOW', color: ADMIN_COLORS.red, bg: ADMIN_COLORS.redBg },
 };
 
-const STATUS_OPTIONS = ['NEW', 'ANALYZED', 'OPTIMIZED', 'MONITORING', 'WINNER', 'NEEDS_REWORK'];
+const STATUS_OPTIONS = ['NEW', 'ANALYZED', 'OPTIMIZATION_READY', 'PENDING_APPROVAL', 'APPROVED', 'APPLIED', 'MONITORING', 'WINNER', 'NEEDS_REWORK', 'REJECTED'];
 
 const THRESHOLDS = [
   ['BREAKOUT', 'Position ≤ 5 و Impressions ≥ 10'],
@@ -62,6 +62,7 @@ export default function SeoOpportunitiesClient() {
   const [sort, setSort] = useState(null);
   const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
   const [expanded, setExpanded] = useState({}); // slug -> bool
+  const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
 
   // Restore a previously-uploaded CSV report from localStorage.
   const loadCsvCache = useCallback(() => {
@@ -124,8 +125,49 @@ export default function SeoOpportunitiesClient() {
         setSource(null);
       }
     }
+
+    // Per-route lifecycle state (status + timestamps), shared via the server.
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/status');
+      const data = await res.json();
+      if (data.ok && data.statuses) setStatusMap(data.statuses);
+    } catch { /* status store optional */ }
+
     setLoading(false);
   }, [loadCsvCache]);
+
+  // Persist a route's status change (optimistic).
+  async function saveStatus(r, status) {
+    const key = r.slug;
+    if (!key) return;
+    setStatusMap((prev) => ({ ...prev, [key]: { ...(prev[key] || {}), status } }));
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: key, language: r.language || 'de', status }),
+      });
+      const j = await res.json();
+      if (j.ok && j.status) setStatusMap((prev) => ({ ...prev, [key]: j.status }));
+      else if (j && j.configured === false) setNote('لتتبّع الحالة على السيرفر فعّل SUPABASE_SERVICE_ROLE_KEY (محفوظ محلياً في العرض فقط الآن).');
+    } catch { /* keep optimistic value */ }
+  }
+
+  // Record that a route was just analyzed (bumps NEW → ANALYZED, stamps time).
+  async function markAnalyzed(r) {
+    const key = r.slug;
+    if (!key) return;
+    const cur = (statusMap[key] && statusMap[key].status) || r.status || 'NEW';
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: key, language: r.language || 'de', markAnalyzed: true, status: cur === 'NEW' ? 'ANALYZED' : undefined }),
+      });
+      const j = await res.json();
+      if (j.ok && j.status) setStatusMap((prev) => ({ ...prev, [key]: j.status }));
+    } catch { /* non-critical */ }
+  }
 
   useEffect(() => { const t = setTimeout(() => load(), 0); return () => clearTimeout(t); }, [load]);
 
@@ -206,7 +248,7 @@ export default function SeoOpportunitiesClient() {
       if (r.position != null) p.set('position', r.position);
       const res = await fetch(`/admin/api/seo-opportunities/analyze?${p.toString()}`);
       const data = await res.json();
-      if (data.ok) setAnalyses((prev) => ({ ...prev, [key]: { data } }));
+      if (data.ok) { setAnalyses((prev) => ({ ...prev, [key]: { data } })); markAnalyzed(r); }
       else setAnalyses((prev) => ({ ...prev, [key]: { error: data.error || 'فشل التحليل' } }));
     } catch {
       setAnalyses((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بالتحليل' } }));
@@ -371,8 +413,16 @@ export default function SeoOpportunitiesClient() {
                       <td style={{ ...tdNum, color: r.ctr == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtPct(r.ctr)}</td>
                       <td style={tdNum}>{fmtPos(r.position)}</td>
                       <td style={td}><CategoryBadge category={r.category} /></td>
-                      <td style={{ ...td, color: r.lastOptimizedAt ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{r.lastOptimizedAt || '—'}</td>
-                      <td style={td}><span style={{ fontSize: 11, color: ADMIN_COLORS.tx2 }}>{a && a.data ? 'ANALYZED' : (STATUS_OPTIONS.includes(r.status) ? r.status : 'NEW')}</span></td>
+                      <td style={{ ...td, color: (statusMap[key] && statusMap[key].lastOptimizedAt) ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{(statusMap[key] && statusMap[key].lastOptimizedAt) ? new Date(statusMap[key].lastOptimizedAt).toLocaleDateString('en-GB') : '—'}</td>
+                      <td style={td}>
+                        <select
+                          value={(statusMap[key] && statusMap[key].status) || (STATUS_OPTIONS.includes(r.status) ? r.status : 'NEW')}
+                          onChange={(e) => saveStatus(r, e.target.value)}
+                          style={{ background: ADMIN_COLORS.bg2, color: ADMIN_COLORS.tx, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 6, padding: '3px 6px', fontSize: 11 }}
+                        >
+                          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
                       <td style={{ ...td, textAlign: 'center' }}>
                         <button type="button" onClick={() => (a ? toggleExpand(key) : analyzeRow(r))} disabled={a && a.loading} style={analyzeBtn}>
                           {a && a.loading ? '…' : a && a.data ? (open ? 'إخفاء' : 'عرض') : '🔍 Analyze'}

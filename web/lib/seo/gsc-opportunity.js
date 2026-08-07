@@ -45,18 +45,22 @@ const SORT_ORDER = [CATEGORY.BREAKOUT, CATEGORY.VERY_HIGH, CATEGORY.HIGH, CATEGO
 // Categories the brief tells us to prioritize spending time on.
 const PRIORITY_CATEGORIES = new Set([CATEGORY.BREAKOUT, CATEGORY.VERY_HIGH, CATEGORY.HIGH]);
 
-// [§19] Optimization lifecycle statuses. These are OPERATOR state (not derived
-// from GSC): NEW → ANALYZED (scored) → OPTIMIZED (page changed) → MONITORING
-// (waiting for post-change GSC data) → WINNER / NEEDS_REWORK. The classifier
-// never advances a status on its own — §8: any SEO change is a separate,
-// controlled, manual action.
+// [Phase 17] Optimization lifecycle statuses. These are OPERATOR state (not
+// derived from GSC): NEW → ANALYZED → OPTIMIZATION_READY → PENDING_APPROVAL →
+// APPROVED → APPLIED → MONITORING → WINNER / NEEDS_REWORK (or REJECTED at the
+// approval step). The classifier never advances a status on its own — any SEO
+// change is a separate, controlled, admin-approved action.
 const STATUS = {
   NEW: 'NEW',
   ANALYZED: 'ANALYZED',
-  OPTIMIZED: 'OPTIMIZED',
+  OPTIMIZATION_READY: 'OPTIMIZATION_READY',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  APPROVED: 'APPROVED',
+  APPLIED: 'APPLIED',
   MONITORING: 'MONITORING',
   WINNER: 'WINNER',
   NEEDS_REWORK: 'NEEDS_REWORK',
+  REJECTED: 'REJECTED',
 };
 const STATUS_VALUES = Object.values(STATUS);
 
