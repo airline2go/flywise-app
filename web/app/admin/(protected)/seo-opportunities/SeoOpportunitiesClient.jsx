@@ -56,6 +56,7 @@ export default function SeoOpportunitiesClient() {
   const [dateRange, setDateRange] = useState(null);
   const [uploadInfo, setUploadInfo] = useState(null); // { count, uploadedAt, warnings, fileName }
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState(null);
@@ -71,13 +72,15 @@ export default function SeoOpportunitiesClient() {
     return null;
   }, []);
 
-  // On mount: prefer a live API feed if one is connected; otherwise fall back to
-  // the cached CSV import. Never inject sample/fake rows.
+  // On mount: prefer a live API feed, then the shared server snapshot (Supabase),
+  // then this browser's local CSV cache. Never inject sample/fake rows.
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     const cache = loadCsvCache();
-    let usedApi = false;
+    let handled = false;
+
+    // 1) Live Google Search Console feed (if ever connected on the server).
     try {
       const res = await fetch('/admin/api/seo-opportunities');
       const data = await res.json();
@@ -86,13 +89,30 @@ export default function SeoOpportunitiesClient() {
         setSource('api');
         setDateRange(data.dateRange || null);
         setNote('');
-        usedApi = true;
+        handled = true;
       } else if (data.ok) {
         setNote(data.note || '');
       }
-    } catch { /* API optional — CSV import is the primary path */ }
+    } catch { /* API optional */ }
 
-    if (!usedApi) {
+    // 2) Shared server snapshot — the last report anyone uploaded (all staff,
+    //    all devices see it). Only used when server storage is configured.
+    if (!handled) {
+      try {
+        const res = await fetch('/admin/api/seo-opportunities/snapshot');
+        const data = await res.json();
+        if (data.ok && data.configured && data.snapshot && Array.isArray(data.snapshot.rows) && data.snapshot.rows.length) {
+          const s = data.snapshot;
+          setRows(s.rows);
+          setSource('server');
+          setUploadInfo({ count: s.row_count || s.rows.length, uploadedAt: s.created_at, fileName: s.file_name, uploadedBy: s.uploaded_by, warnings: [] });
+          handled = true;
+        }
+      } catch { /* storage optional — fall back to local */ }
+    }
+
+    // 3) This browser's local cache (offline / storage-not-configured fallback).
+    if (!handled) {
       if (cache) {
         setRows(cache.rows);
         setSource('csv');
@@ -111,7 +131,7 @@ export default function SeoOpportunitiesClient() {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const { rows: raw, meta } = parseGscCsv(String(reader.result || ''));
         if (!raw.length) {
@@ -121,14 +141,38 @@ export default function SeoOpportunitiesClient() {
         const report = buildOpportunityReport(raw);
         const info = { count: report.length, uploadedAt: new Date().toISOString(), warnings: meta.warnings || [], fileName: file.name };
         setRows(report);
-        setSource('csv');
         setUploadInfo(info);
         setError('');
         setFilter('');
         setSort(null);
-        try { localStorage.setItem(LS_KEY, JSON.stringify({ rows: report, info })); } catch { /* quota — still shown this session */ }
+        // Always keep a local copy (offline fallback / storage-not-configured).
+        try { localStorage.setItem(LS_KEY, JSON.stringify({ rows: report, info })); } catch { /* quota */ }
+
+        // Persist to the shared server store so every device/staff member sees it.
+        setSaving(true);
+        try {
+          const res = await fetch('/admin/api/seo-opportunities/snapshot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rows: report, source: 'csv', fileName: file.name, dateRange: meta.dateRange || null }),
+          });
+          const j = await res.json();
+          if (j.ok && j.configured && j.saved) {
+            setSource('server');
+            setUploadInfo({ ...info, uploadedBy: null });
+            setNote('');
+          } else {
+            setSource('csv'); // saved locally only
+            if (j && j.configured === false) setNote('لم يُفعَّل التخزين على السيرفر بعد — محفوظ محلياً على هذا المتصفّح فقط.');
+          }
+        } catch {
+          setSource('csv');
+        } finally {
+          setSaving(false);
+        }
       } catch {
         setError('تعذّر قراءة الملف. تأكد أنه ملف CSV صالح من Search Console.');
+        setSaving(false);
       }
     };
     reader.onerror = () => setError('تعذّر قراءة الملف.');
@@ -188,12 +232,13 @@ export default function SeoOpportunitiesClient() {
             لا يغيّر أي عنوان أو وصف أو محتوى؛ أي تعديل سيو يبقى إجراءً منفصلاً ومتحكَّماً به.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <label style={{ ...ghostBtn, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {saving && <span style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>جارٍ الحفظ…</span>}
+          <label style={{ ...ghostBtn, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             ⬆️ رفع CSV
-            <input type="file" accept=".csv,text/csv" onChange={onFile} style={{ display: 'none' }} />
+            <input type="file" accept=".csv,text/csv" onChange={onFile} disabled={saving} style={{ display: 'none' }} />
           </label>
-          {source === 'csv' && <button type="button" onClick={clearCsv} style={ghostBtn}>🗑 مسح</button>}
+          {source === 'csv' && <button type="button" onClick={clearCsv} style={ghostBtn}>🗑 مسح المحلي</button>}
         </div>
       </div>
 
@@ -207,9 +252,15 @@ export default function SeoOpportunitiesClient() {
       </div>
 
       {/* Source banner */}
+      {source === 'server' && uploadInfo && (
+        <div style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, background: ADMIN_COLORS.bg2, border: `1px solid ${ADMIN_COLORS.teal}55`, borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          🗄️ مُخزَّن على السيرفر (مشترك لكل الأجهزة والموظفين){uploadInfo.fileName ? ` · ${uploadInfo.fileName}` : ''} · {uploadInfo.count} صف · {new Date(uploadInfo.uploadedAt).toLocaleString('en-GB')}{uploadInfo.uploadedBy ? ` · بواسطة ${uploadInfo.uploadedBy}` : ''}
+        </div>
+      )}
       {source === 'csv' && uploadInfo && (
         <div style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, background: ADMIN_COLORS.bg2, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
-          📄 المصدر: ملف CSV مرفوع{uploadInfo.fileName ? ` (${uploadInfo.fileName})` : ''} · {uploadInfo.count} صف · {new Date(uploadInfo.uploadedAt).toLocaleString('en-GB')}
+          📄 محفوظ محلياً على هذا المتصفّح فقط{uploadInfo.fileName ? ` (${uploadInfo.fileName})` : ''} · {uploadInfo.count} صف · {new Date(uploadInfo.uploadedAt).toLocaleString('en-GB')}
+          {note ? <div style={{ color: ADMIN_COLORS.yellow, marginTop: 4 }}>⚠️ {note}</div> : null}
           {uploadInfo.warnings && uploadInfo.warnings.length ? <div style={{ color: ADMIN_COLORS.yellow, marginTop: 4 }}>⚠️ {uploadInfo.warnings.join(' ')}</div> : null}
         </div>
       )}
