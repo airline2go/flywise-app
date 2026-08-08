@@ -13,10 +13,12 @@
 //      server (/admin/api/seo-opportunities), it takes precedence automatically.
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { ADMIN_COLORS } from '../../../../lib/admin/theme';
-import { parseGscCsv } from '../../../../lib/seo/parse-gsc-csv.js';
+import { parseGscCsv, parseGscQueriesCsv } from '../../../../lib/seo/parse-gsc-csv.js';
 import { buildOpportunityReport } from '../../../../lib/seo/report.js';
+import { matchQueriesToRoutes, summarizeRouteQueries, queryPageMatch } from '../../../../lib/seo/query-intent.js';
 
 const LS_KEY = 'airpiv_seo_gsc_csv_report';
+const LS_QUERIES = 'airpiv_seo_gsc_queries';
 
 const CATEGORY_META = {
   BREAKOUT: { label: 'BREAKOUT', color: ADMIN_COLORS.teal, bg: ADMIN_COLORS.tealGlow },
@@ -63,6 +65,8 @@ export default function SeoOpportunitiesClient() {
   const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
   const [expanded, setExpanded] = useState({}); // slug -> bool
   const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
+  const [queryRows, setQueryRows] = useState([]); // imported GSC query rows
+  const [queryInfo, setQueryInfo] = useState(null); // { count, fileName, uploadedAt }
 
   // Restore a previously-uploaded CSV report from localStorage.
   const loadCsvCache = useCallback(() => {
@@ -133,8 +137,43 @@ export default function SeoOpportunitiesClient() {
       if (data.ok && data.statuses) setStatusMap(data.statuses);
     } catch { /* status store optional */ }
 
+    // Restore a previously-imported Queries export (browser-local).
+    try {
+      const raw = localStorage.getItem(LS_QUERIES);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.rows)) { setQueryRows(parsed.rows); setQueryInfo(parsed.info || null); }
+      }
+    } catch { /* ignore */ }
+
     setLoading(false);
   }, [loadCsvCache]);
+
+  // [Phase 4] Import a GSC "Queries" export (query text + metrics). Matched to
+  // routes by city-name detection — no page column needed.
+  function onQueryFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const { rows: qrows, meta } = parseGscQueriesCsv(String(reader.result || ''));
+        if (!qrows.length) { setError((meta.warnings || []).join(' ') || 'لم يتم العثور على استعلامات في الملف.'); return; }
+        const info = { count: qrows.length, fileName: file.name, uploadedAt: new Date().toISOString() };
+        setQueryRows(qrows);
+        setQueryInfo(info);
+        setError('');
+        try { localStorage.setItem(LS_QUERIES, JSON.stringify({ rows: qrows, info })); } catch { /* quota */ }
+      } catch {
+        setError('تعذّر قراءة ملف الاستعلامات.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  // slug -> matched queries (recomputed when either the report or queries change).
+  const queryMap = useMemo(() => (queryRows.length ? matchQueriesToRoutes(queryRows, rows) : {}), [queryRows, rows]);
 
   // Persist a route's status change (optimistic).
   async function saveStatus(r, status) {
@@ -305,8 +344,12 @@ export default function SeoOpportunitiesClient() {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {saving && <span style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>جارٍ الحفظ…</span>}
           <label style={{ ...ghostBtn, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-            ⬆️ رفع CSV
+            ⬆️ رفع الصفحات (Pages)
             <input type="file" accept=".csv,text/csv" onChange={onFile} disabled={saving} style={{ display: 'none' }} />
+          </label>
+          <label style={{ ...ghostBtn, cursor: 'pointer' }}>
+            🔎 رفع الاستعلامات (Queries)
+            <input type="file" accept=".csv,text/csv" onChange={onQueryFile} style={{ display: 'none' }} />
           </label>
           {source === 'csv' && <button type="button" onClick={clearCsv} style={ghostBtn}>🗑 مسح المحلي</button>}
         </div>
@@ -337,6 +380,11 @@ export default function SeoOpportunitiesClient() {
       {source === 'api' && (
         <div style={{ fontSize: 12.5, color: ADMIN_COLORS.tx2, marginBottom: 12 }}>
           🔗 المصدر: اتصال Google Search Console المباشر{dateRange ? ` · ${dateRange}` : ''}
+        </div>
+      )}
+      {queryInfo && (
+        <div style={{ fontSize: 12, color: ADMIN_COLORS.tx2, marginBottom: 12 }}>
+          🔎 استعلامات مستوردة: {queryInfo.count} · طُوبقت على {Object.keys(queryMap).length} مسار · اضغط «Analyze» لعرض استعلامات كل مسار ونيّتها
         </div>
       )}
 
@@ -434,7 +482,7 @@ export default function SeoOpportunitiesClient() {
                         <td colSpan={11} style={{ padding: 0, background: ADMIN_COLORS.bg }}>
                           {a && a.loading && <div style={{ padding: 14, color: ADMIN_COLORS.tx2, fontSize: 12.5 }}>جارٍ تحليل الصفحة الحقيقية…</div>}
                           {a && a.error && <div style={{ padding: 14, color: ADMIN_COLORS.red, fontSize: 12.5 }}>{a.error}</div>}
-                          {a && a.data && <AnalysisPanel a={a.data} />}
+                          {a && a.data && <AnalysisPanel a={a.data} queries={queryMap[key]} />}
                         </td>
                       </tr>
                     )}
@@ -466,7 +514,37 @@ function scoreColor(s) {
   return ADMIN_COLORS.red;
 }
 
-function AnalysisPanel({ a }) {
+const INTENT_LABEL = { duration: 'الوقت (Flugzeit)', direct: 'مباشر (Direkt)', price: 'السعر', distance: 'المسافة', flight: 'عام' };
+
+function QueriesSection({ queries, content }) {
+  if (!queries || !queries.length) {
+    return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3 }}>لا استعلامات مطابقة — ارفع ملف «Queries» من Search Console لعرض استعلامات هذا المسار ونيّتها.</div>;
+  }
+  const s = summarizeRouteQueries(queries);
+  const match = queryPageMatch(s.dominantIntent, content);
+  return (
+    <div>
+      <div style={{ fontSize: 12, marginBottom: 8 }}>
+        <span style={{ color: ADMIN_COLORS.tx3 }}>النية السائدة: </span>
+        <span style={{ color: ADMIN_COLORS.teal, fontWeight: 700 }}>{INTENT_LABEL[s.dominantIntent] || s.dominantIntent}</span>
+        {match && match.covered != null && (
+          <span style={{ marginInlineStart: 8, color: match.covered ? ADMIN_COLORS.teal : ADMIN_COLORS.yellow }}>
+            {match.covered ? '✓ مغطّاة في الصفحة' : '⚠ فجوة محتوى محتملة'}
+          </span>
+        )}
+      </div>
+      {queries.slice(0, 6).map((q, i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, fontSize: 11.5, padding: '2px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` }}>
+          <span style={{ color: i === 0 ? ADMIN_COLORS.teal : ADMIN_COLORS.tx, flex: 1, wordBreak: 'break-word' }}>{i === 0 ? '★ ' : ''}{q.query}</span>
+          <span style={{ color: ADMIN_COLORS.tx3, whiteSpace: 'nowrap' }}>{q.impressions ?? '—'} imp · pos {q.position != null ? q.position.toFixed(1) : '—'} · {INTENT_LABEL[q.intent] || q.intent}</span>
+        </div>
+      ))}
+      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 6 }}>★ الاستعلام الأساسي · المطابقة بأسماء المدن (تقديرية — راجعها).</div>
+    </div>
+  );
+}
+
+function AnalysisPanel({ a, queries }) {
   const el = a.elements || {};
   const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
   const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
@@ -500,6 +578,11 @@ function AnalysisPanel({ a }) {
             <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 2 }}>{f.reason}</div>
           </div>
         ))}
+      </div>
+      {/* Search queries & intent (Phase 4/5) */}
+      <div>
+        <h3 style={panelH}>استعلامات البحث والنية</h3>
+        <QueriesSection queries={queries} content={el.content} />
       </div>
       {/* Flags */}
       <div>
