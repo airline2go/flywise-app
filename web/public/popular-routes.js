@@ -6,6 +6,17 @@
 // بـdefer، يعني بيتنفذ بعد أي <script> عادي زي ده — الاعتماد على
 // متغيره العام هنا كان هيبقى خطأ ترتيب تنفيذ.
 (function() {
+  // [SSG-FIRST] The links are now server-rendered into the static HTML at
+  // deploy time (scripts/prerender-popular-routes.mjs) so crawlers see them
+  // in View Page Source. When that succeeded the container is already
+  // populated — skip the redundant fetch + innerHTML (avoids an extra network
+  // request and a layout shift on every homepage load). This client-side path
+  // now only runs as the fallback when the build-time injection was skipped
+  // (e.g. the API was unreachable during the build): container empty, section
+  // still hidden — exactly the case this was originally written for.
+  var existing = document.getElementById('popular-routes-links');
+  if (existing && existing.children.length > 0) return;
+
   var PROXY_LOCAL = 'https://api.airpiv.com';
   function escHtmlLocal(s) {
     var d = document.createElement('div');
