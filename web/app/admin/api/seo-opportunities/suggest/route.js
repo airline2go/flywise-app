@@ -34,6 +34,24 @@ function ruleFallback({ elements, gsc, dominantIntent, lang }) {
   });
 }
 
+// Persist a rules suggestion on the backend (best-effort) so it enters the same
+// review lifecycle as an AI one — the operator can approve/apply it too. Returns
+// the stored id, or null when storage isn't reachable/configured.
+async function storeRules(suggestions, { slug, lang, dominantIntent, gsc }) {
+  if (!slug) return null;
+  try {
+    const res = await adminFetch('/admin/seo/optimizations', {
+      method: 'POST',
+      body: JSON.stringify({ slug, language: lang, source: 'rules', dominantIntent, gsc, suggestions }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data && data.id ? data.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request) {
   const session = await getAdminSession();
   if (!session) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
@@ -63,16 +81,22 @@ export async function POST(request) {
     if (res.ok) {
       const data = await res.json().catch(() => null);
       if (data && data.ok && data.source === 'ai' && data.suggestions) {
-        return NextResponse.json({ ok: true, source: 'ai', model: data.model || null, suggestions: data.suggestions });
+        return NextResponse.json({ ok: true, source: 'ai', model: data.model || null, suggestions: data.suggestions, id: data.id || null });
       }
-      // Backend reachable but the AI path was unavailable/unsupported → rules.
+      // Backend reachable but the AI path was unavailable/unsupported → rules,
+      // which we still persist so it enters the approve/apply lifecycle.
       const reason = data && data.reason ? data.reason : (data && data.source) || 'unavailable';
-      return NextResponse.json({ ok: true, source: 'rules', note: `AI ${reason}; used rules.`, suggestions: ruleFallback({ elements, gsc, dominantIntent, lang }) });
+      const suggestions = ruleFallback({ elements, gsc, dominantIntent, lang });
+      const id = await storeRules(suggestions, { slug, lang, dominantIntent, gsc });
+      return NextResponse.json({ ok: true, source: 'rules', note: `AI ${reason}; used rules.`, suggestions, id });
     }
     // Non-2xx (e.g. backend not yet deployed, 401/404/5xx) → rules fallback.
-    return NextResponse.json({ ok: true, source: 'rules', note: `backend ${res.status}; used rules.`, suggestions: ruleFallback({ elements, gsc, dominantIntent, lang }) });
+    const suggestions = ruleFallback({ elements, gsc, dominantIntent, lang });
+    const id = await storeRules(suggestions, { slug, lang, dominantIntent, gsc });
+    return NextResponse.json({ ok: true, source: 'rules', note: `backend ${res.status}; used rules.`, suggestions, id });
   } catch {
-    // Backend unreachable (network) → deterministic rules keep the UI working.
+    // Backend unreachable (network) → deterministic rules keep the UI working
+    // (nothing to store since the backend is unreachable).
     return NextResponse.json({ ok: true, source: 'rules', note: 'backend unreachable; used rules.', suggestions: ruleFallback({ elements, gsc, dominantIntent, lang }) });
   }
 }

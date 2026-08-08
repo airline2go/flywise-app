@@ -310,7 +310,9 @@ export default function SeoOpportunitiesClient() {
       if (data.ok && data.suggestions) {
         setSuggestions((prev) => ({ ...prev, [key]: { data: data.suggestions, source: data.source, note: data.note } }));
         markOptimized(r, data.source); // stamp the clear "AI-modified" marker (dashboard)
-        if (data.source === 'ai') loadHistory(r); // the backend stored it — refresh the audit list
+        // The backend stores both AI and rules suggestions now — refresh the
+        // audit list whenever one was stored so it shows up for approve/apply.
+        if (data.id) loadHistory(r);
       } else setSuggestions((prev) => ({ ...prev, [key]: { error: data.error || 'فشل توليد الاقتراح' } }));
     } catch {
       setSuggestions((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بمولّد الاقتراحات' } }));
