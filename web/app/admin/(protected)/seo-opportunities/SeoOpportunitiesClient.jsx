@@ -63,6 +63,7 @@ export default function SeoOpportunitiesClient() {
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState(null);
   const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
+  const [suggestions, setSuggestions] = useState({}); // slug -> { loading, error, data, source }
   const [expanded, setExpanded] = useState({}); // slug -> bool
   const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
   const [queryRows, setQueryRows] = useState([]); // imported GSC query rows
@@ -294,6 +295,33 @@ export default function SeoOpportunitiesClient() {
     }
   }
 
+  // [Phase 15/16] Generate a BEFORE / PROPOSED optimization for this route. AI is
+  // the primary generator (server-side, using the page's real extracted elements +
+  // its GSC row + the dominant query intent); a deterministic rule engine is the
+  // fallback when no API key is configured or the model is unavailable. READ-ONLY:
+  // it proposes for review, applies nothing.
+  async function generateSuggestion(r, analysisData, queries) {
+    const key = r.slug || r.url;
+    if (!analysisData || !analysisData.elements) return;
+    setSuggestions((prev) => ({ ...prev, [key]: { loading: true } }));
+    const dominantIntent = (summarizeRouteQueries(queries).dominantIntent) || null;
+    const gsc = (r.impressions != null || r.position != null)
+      ? { impressions: r.impressions ?? null, clicks: r.clicks ?? null, position: r.position ?? null }
+      : null;
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ elements: analysisData.elements, gsc, dominantIntent, lang: r.language || 'de', slug: r.slug }),
+      });
+      const data = await res.json();
+      if (data.ok && data.suggestions) setSuggestions((prev) => ({ ...prev, [key]: { data: data.suggestions, source: data.source, note: data.note } }));
+      else setSuggestions((prev) => ({ ...prev, [key]: { error: data.error || 'فشل توليد الاقتراح' } }));
+    } catch {
+      setSuggestions((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بمولّد الاقتراحات' } }));
+    }
+  }
+
   function toggleExpand(key) {
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   }
@@ -482,7 +510,14 @@ export default function SeoOpportunitiesClient() {
                         <td colSpan={11} style={{ padding: 0, background: ADMIN_COLORS.bg }}>
                           {a && a.loading && <div style={{ padding: 14, color: ADMIN_COLORS.tx2, fontSize: 12.5 }}>جارٍ تحليل الصفحة الحقيقية…</div>}
                           {a && a.error && <div style={{ padding: 14, color: ADMIN_COLORS.red, fontSize: 12.5 }}>{a.error}</div>}
-                          {a && a.data && <AnalysisPanel a={a.data} queries={queryMap[key]} />}
+                          {a && a.data && (
+                            <AnalysisPanel
+                              a={a.data}
+                              queries={queryMap[key]}
+                              suggestion={suggestions[key]}
+                              onGenerate={() => generateSuggestion(r, a.data, queryMap[key])}
+                            />
+                          )}
                         </td>
                       </tr>
                     )}
@@ -544,7 +579,59 @@ function QueriesSection({ queries, content }) {
   );
 }
 
-function AnalysisPanel({ a, queries }) {
+// [Phase 15/16] BEFORE / PROPOSED optimization block. Renders only what the
+// generator returned — a proposed value appears only when a real trigger exists;
+// otherwise it shows "no change recommended" with the reason. Applies nothing.
+function DiffRow({ label, node }) {
+  if (!node) return null;
+  const changed = node.changeRecommended && node.proposed;
+  return (
+    <div style={{ marginBottom: 12, borderInlineStart: `3px solid ${changed ? ADMIN_COLORS.teal : ADMIN_COLORS.border}`, paddingInlineStart: 10 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: changed ? ADMIN_COLORS.teal : ADMIN_COLORS.tx2, marginBottom: 4 }}>
+        {label} {changed ? '· تغيير مقترح' : '· لا تغيير'}
+      </div>
+      <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3, wordBreak: 'break-word' }}>
+        <span style={{ color: ADMIN_COLORS.tx3 }}>الحالي: </span>{node.current || '—'}
+      </div>
+      {changed && (
+        <div style={{ fontSize: 12, color: ADMIN_COLORS.tx, wordBreak: 'break-word', marginTop: 3 }}>
+          <span style={{ color: ADMIN_COLORS.teal }}>المقترح: </span>{node.proposed}
+        </div>
+      )}
+      {node.reason && <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 3 }}>↳ {node.reason}</div>}
+    </div>
+  );
+}
+
+function SuggestionSection({ suggestion, onGenerate }) {
+  if (!suggestion) {
+    return (
+      <div>
+        <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '6px 14px', fontSize: 12 }}>🛠️ توليد اقتراح تحسين</button>
+        <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 6, lineHeight: 1.6 }}>
+          يقترح عنوان/وصف/H1 بصيغة «الحالي ↔ المقترح» اعتماداً على عناصر الصفحة الحقيقية ونيّة استعلاماتها فقط — بدون أي أرقام أو حقائق مُختلَقة. للمراجعة فقط، لا يطبّق شيئاً.
+        </div>
+      </div>
+    );
+  }
+  if (suggestion.loading) return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>جارٍ توليد الاقتراح…</div>;
+  if (suggestion.error) return <div style={{ fontSize: 12, color: ADMIN_COLORS.red }}>{suggestion.error} · <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '3px 8px' }}>إعادة المحاولة</button></div>;
+  const d = suggestion.data;
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginBottom: 8 }}>
+        المصدر: {suggestion.source === 'ai' ? '🤖 ذكاء اصطناعي (Claude)' : '⚙️ قواعد'}{d.opportunity ? ' · فرصة CTR مكتشفة' : ''}
+        {suggestion.note ? ` · ${suggestion.note}` : ''}
+        <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '2px 8px', marginInlineStart: 8 }}>↻ إعادة التوليد</button>
+      </div>
+      <DiffRow label="Title" node={d.title} />
+      <DiffRow label="Meta" node={d.meta} />
+      <DiffRow label="H1" node={d.h1} />
+    </div>
+  );
+}
+
+function AnalysisPanel({ a, queries, suggestion, onGenerate }) {
   const el = a.elements || {};
   const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
   const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
@@ -592,9 +679,14 @@ function AnalysisPanel({ a, queries }) {
           <div key={i} style={{ fontSize: 12, color: FLAG_COLOR[f.level] || ADMIN_COLORS.tx2, padding: '3px 0' }}>• {f.text}</div>
         ))}
         <div style={{ marginTop: 10, fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>
-          تحليل للقراءة فقط — لا يطبّق أي تغيير. اقتراحات العناوين/الوصف والموافقة قادمة في مرحلة لاحقة.
+          تحليل للقراءة فقط — لا يطبّق أي تغيير.
           {a.url && <> · <a href={a.url} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal }}>فتح الصفحة</a></>}
         </div>
+      </div>
+      {/* Optimization suggestion — Before / Proposed (Phase 15/16) */}
+      <div style={{ gridColumn: '1 / -1', borderTop: `1px solid ${ADMIN_COLORS.border}`, paddingTop: 14 }}>
+        <h3 style={panelH}>اقتراح تحسين (قبل ↔ بعد)</h3>
+        <SuggestionSection suggestion={suggestion} onGenerate={onGenerate} />
       </div>
     </div>
   );

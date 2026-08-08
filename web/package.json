@@ -10,6 +10,7 @@
     "test": "node --test \"test/**/*.test.mjs\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
     "@supabase/supabase-js": "^2.110.2",
     "next": "16.2.10",
     "node-html-parser": "^9.0.0",
