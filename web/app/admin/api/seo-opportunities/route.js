@@ -20,7 +20,7 @@ export async function GET(request) {
 
   let payload = null;
   try {
-    const res = await adminFetch(`/admin/seo-opportunities${search}`);
+    const res = await adminFetch(`/admin/seo/gsc/data${search}`);
     if (res.status === 401) {
       // Forward auth failures so the client can bounce to login, matching the
       // other admin proxies.
@@ -31,20 +31,21 @@ export async function GET(request) {
     payload = null;
   }
 
-  // Backend not reachable / endpoint not deployed / no data yet → honest empty.
-  if (!payload || payload.ok === false || !Array.isArray(payload.rows)) {
+  // Backend unreachable / GSC not connected / no data yet → honest empty (the UI
+  // then shows CSV import + a Connect button, never fake rows).
+  if (!payload || payload.ok === false || !payload.connected || !Array.isArray(payload.rows) || !payload.rows.length) {
     return NextResponse.json({
       ok: true,
       connected: false,
       generatedAt: new Date().toISOString(),
       rows: [],
-      note: 'No Google Search Console feed is connected yet. Connect GSC on the server (/admin/seo-opportunities) to populate this report.',
+      note: 'Google Search Console ist noch nicht verbunden — verbinde es oben oder importiere einen CSV-Export.',
     });
   }
 
-  // `payload.rows` are raw GSC rows; `payload.status` is the optional per-URL
-  // operator overlay (optimization status + last-optimized date).
-  const rows = buildOpportunityReport(payload.rows, payload.status || {});
+  // `payload.rows` are the raw GSC Pages rows; classify + sort via the pure
+  // report builder (the operator's status overlay is loaded separately).
+  const rows = buildOpportunityReport(payload.rows, {});
   return NextResponse.json({
     ok: true,
     connected: true,
