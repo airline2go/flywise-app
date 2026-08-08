@@ -63,10 +63,13 @@ export default function SeoOpportunitiesClient() {
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState(null);
   const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
+  const [suggestions, setSuggestions] = useState({}); // slug -> { loading, error, data, source }
   const [expanded, setExpanded] = useState({}); // slug -> bool
   const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
   const [queryRows, setQueryRows] = useState([]); // imported GSC query rows
   const [queryInfo, setQueryInfo] = useState(null); // { count, fileName, uploadedAt }
+  const [selected, setSelected] = useState(() => new Set()); // slug keys chosen for batch generation
+  const [batch, setBatch] = useState(null); // { total, done } while a batch runs
 
   // Restore a previously-uploaded CSV report from localStorage.
   const loadCsvCache = useCallback(() => {
@@ -274,11 +277,68 @@ export default function SeoOpportunitiesClient() {
     setExpanded({});
   }
 
-  // [Phase 3] Fetch a read-only SEO analysis of the route's real rendered page.
+  // [Phase 3] Expand a row and fetch its read-only SEO analysis (via fetchAnalysis).
   async function analyzeRow(r) {
     const key = r.slug || r.url;
     setExpanded((prev) => ({ ...prev, [key]: true }));
     if (analyses[key] && analyses[key].data) return; // already analyzed
+    await fetchAnalysis(r);
+  }
+
+  // [Phase 15/16] Generate a BEFORE / PROPOSED optimization for this route. AI is
+  // the primary generator (server-side, using the page's real extracted elements +
+  // its GSC row + the dominant query intent); a deterministic rule engine is the
+  // fallback when no API key is configured or the model is unavailable. READ-ONLY:
+  // it proposes for review, applies nothing.
+  async function generateSuggestion(r, analysisData, queries) {
+    const key = r.slug || r.url;
+    if (!analysisData || !analysisData.elements) return;
+    setSuggestions((prev) => ({ ...prev, [key]: { loading: true } }));
+    const dominantIntent = (summarizeRouteQueries(queries).dominantIntent) || null;
+    const gsc = (r.impressions != null || r.position != null)
+      ? { impressions: r.impressions ?? null, clicks: r.clicks ?? null, position: r.position ?? null }
+      : null;
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ elements: analysisData.elements, gsc, dominantIntent, lang: r.language || 'de', slug: r.slug }),
+      });
+      const data = await res.json();
+      if (data.ok && data.suggestions) {
+        setSuggestions((prev) => ({ ...prev, [key]: { data: data.suggestions, source: data.source, note: data.note } }));
+        markOptimized(r, data.source); // stamp the clear "AI-modified" marker (dashboard)
+      } else setSuggestions((prev) => ({ ...prev, [key]: { error: data.error || 'فشل توليد الاقتراح' } }));
+    } catch {
+      setSuggestions((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بمولّد الاقتراحات' } }));
+    }
+  }
+
+  // Persist the "this route was optimized by AI/rules" marker + timestamp so the
+  // dashboard clearly flags every route the generator touched (shared via server).
+  async function markOptimized(r, sourceVal) {
+    const key = r.slug;
+    if (!key) return;
+    const source = sourceVal === 'ai' ? 'ai' : 'rules';
+    const cur = statusMap[key] && statusMap[key].status;
+    const bumpTo = !cur || cur === 'NEW' || cur === 'ANALYZED' ? 'OPTIMIZATION_READY' : undefined;
+    setStatusMap((prev) => ({ ...prev, [key]: { ...(prev[key] || {}), lastOptimizedAt: new Date().toISOString(), optimizationSource: source, status: bumpTo || (prev[key] && prev[key].status) } }));
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: key, language: r.language || 'de', markOptimized: true, optimizationSource: source, status: bumpTo }),
+      });
+      const j = await res.json();
+      if (j.ok && j.status) setStatusMap((prev) => ({ ...prev, [key]: j.status }));
+    } catch { /* keep optimistic marker */ }
+  }
+
+  // Fetch (or reuse) the read-only analysis for a row and RETURN its data, so the
+  // batch runner can chain optimization generation on top of it.
+  async function fetchAnalysis(r) {
+    const key = r.slug || r.url;
+    if (analyses[key] && analyses[key].data) return analyses[key].data;
     setAnalyses((prev) => ({ ...prev, [key]: { loading: true } }));
     try {
       const p = new URLSearchParams({ slug: r.slug || '', lang: r.language || 'de' });
@@ -287,11 +347,36 @@ export default function SeoOpportunitiesClient() {
       if (r.position != null) p.set('position', r.position);
       const res = await fetch(`/admin/api/seo-opportunities/analyze?${p.toString()}`);
       const data = await res.json();
-      if (data.ok) { setAnalyses((prev) => ({ ...prev, [key]: { data } })); markAnalyzed(r); }
-      else setAnalyses((prev) => ({ ...prev, [key]: { error: data.error || 'فشل التحليل' } }));
+      if (data.ok) { setAnalyses((prev) => ({ ...prev, [key]: { data } })); markAnalyzed(r); return data; }
+      setAnalyses((prev) => ({ ...prev, [key]: { error: data.error || 'فشل التحليل' } }));
+      return null;
     } catch {
       setAnalyses((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بالتحليل' } }));
+      return null;
     }
+  }
+
+  // [Phase 15/16] Batch: for each route the operator selected, ensure it's
+  // analyzed then generate its optimization — sequentially, to stay gentle on the
+  // AI endpoint. The operator picks exactly which routes run (checkboxes).
+  async function generateForSelected() {
+    const keys = [...selected];
+    if (!keys.length || batch) return;
+    setBatch({ total: keys.length, done: 0 });
+    for (let i = 0; i < keys.length; i += 1) {
+      const k = keys[i];
+      const r = rows.find((x) => (x.slug || x.url) === k);
+      if (r) {
+        const data = await fetchAnalysis(r);
+        if (data) await generateSuggestion(r, data, queryMap[k]);
+      }
+      setBatch({ total: keys.length, done: i + 1 });
+    }
+    setBatch(null);
+  }
+
+  function toggleSelect(key) {
+    setSelected((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
   }
 
   function toggleExpand(key) {
@@ -330,6 +415,16 @@ export default function SeoOpportunitiesClient() {
     });
   }
   const sortArrow = (key) => (sort && sort.key === key ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : '');
+
+  const allVisibleSelected = view.length > 0 && view.every((r) => selected.has(r.slug || r.url));
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allVisibleSelected) { for (const r of view) n.delete(r.slug || r.url); }
+      else { for (const r of view) n.add(r.slug || r.url); }
+      return n;
+    });
+  }
 
   return (
     <div>
@@ -400,6 +495,18 @@ export default function SeoOpportunitiesClient() {
         </div>
       )}
 
+      {/* Batch action bar — appears once the operator has selected routes */}
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12, padding: '8px 12px', background: ADMIN_COLORS.tealGlow, border: `1px solid ${ADMIN_COLORS.teal}55`, borderRadius: 8 }}>
+          <span style={{ fontSize: 12.5, color: ADMIN_COLORS.tx }}>محدَّد: <strong>{selected.size}</strong> مسار</span>
+          <button type="button" onClick={generateForSelected} disabled={!!batch} style={{ ...analyzeBtn, padding: '6px 14px', fontSize: 12.5, opacity: batch ? 0.6 : 1, cursor: batch ? 'wait' : 'pointer' }}>
+            {batch ? `جارٍ التوليد… ${batch.done}/${batch.total}` : `🛠️ توليد تحسين للمحدَّد (${selected.size})`}
+          </button>
+          <button type="button" onClick={() => setSelected(new Set())} disabled={!!batch} style={{ ...ghostBtn, padding: '5px 10px', fontSize: 12 }}>مسح التحديد</button>
+          <span style={{ fontSize: 11, color: ADMIN_COLORS.tx3 }}>يحلّل كل مسار محدَّد ثم يولّد اقتراحه (عنوان/وصف/H1 + محتوى فريد) — للمراجعة فقط.</span>
+        </div>
+      )}
+
       {loading && <p style={{ color: ADMIN_COLORS.tx2, fontSize: 13 }}>جارٍ التحميل…</p>}
       {error && <p style={{ color: ADMIN_COLORS.red, fontSize: 13 }}>{error}</p>}
 
@@ -428,6 +535,9 @@ export default function SeoOpportunitiesClient() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, minWidth: 900 }}>
             <thead>
               <tr style={{ background: ADMIN_COLORS.bg2, color: ADMIN_COLORS.tx2, textAlign: 'right' }}>
+                <th style={{ padding: '10px 8px', textAlign: 'center', width: 34 }}>
+                  <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} title="تحديد كل المعروض" style={{ cursor: 'pointer' }} />
+                </th>
                 <Th onClick={() => toggleSort('slug')}>المسار{sortArrow('slug')}</Th>
                 <Th onClick={() => toggleSort('language')}>اللغة{sortArrow('language')}</Th>
                 <Th onClick={() => toggleSort('primaryQuery')}>الاستعلام الأساسي{sortArrow('primaryQuery')}</Th>
@@ -443,12 +553,16 @@ export default function SeoOpportunitiesClient() {
             </thead>
             <tbody>
               {view.map((r) => {
-                const key = r.url || r.slug;
+                const key = r.slug || r.url;
                 const a = analyses[key];
                 const open = !!expanded[key];
+                const st = statusMap[key] || {};
                 return (
                   <Fragment key={key}>
-                    <tr style={{ borderTop: `1px solid ${ADMIN_COLORS.border}` }}>
+                    <tr style={{ borderTop: `1px solid ${ADMIN_COLORS.border}`, background: selected.has(key) ? ADMIN_COLORS.tealGlow : 'transparent' }}>
+                      <td style={{ ...td, textAlign: 'center' }}>
+                        <input type="checkbox" checked={selected.has(key)} onChange={() => toggleSelect(key)} style={{ cursor: 'pointer' }} />
+                      </td>
                       <td style={td}>
                         <a href={r.url && r.url.startsWith('http') ? r.url : `https://airpiv.com${r.url || `/flights/${r.slug}`}`} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal, textDecoration: 'none' }}>
                           {r.slug || r.url}
@@ -461,10 +575,17 @@ export default function SeoOpportunitiesClient() {
                       <td style={{ ...tdNum, color: r.ctr == null ? ADMIN_COLORS.tx3 : ADMIN_COLORS.tx }}>{fmtPct(r.ctr)}</td>
                       <td style={tdNum}>{fmtPos(r.position)}</td>
                       <td style={td}><CategoryBadge category={r.category} /></td>
-                      <td style={{ ...td, color: (statusMap[key] && statusMap[key].lastOptimizedAt) ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>{(statusMap[key] && statusMap[key].lastOptimizedAt) ? new Date(statusMap[key].lastOptimizedAt).toLocaleDateString('en-GB') : '—'}</td>
+                      <td style={{ ...td, color: st.lastOptimizedAt ? ADMIN_COLORS.tx : ADMIN_COLORS.tx3 }}>
+                        {st.optimizationSource && (
+                          <span title={st.optimizationSource === 'ai' ? 'تم توليد تحسين بالذكاء الاصطناعي' : 'تم توليد تحسين بالقواعد'} style={{ display: 'inline-block', marginInlineEnd: 6, fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 5, color: st.optimizationSource === 'ai' ? ADMIN_COLORS.teal : ADMIN_COLORS.tx2, background: st.optimizationSource === 'ai' ? ADMIN_COLORS.tealGlow : ADMIN_COLORS.bg2, border: `1px solid ${(st.optimizationSource === 'ai' ? ADMIN_COLORS.teal : ADMIN_COLORS.border)}55` }}>
+                            {st.optimizationSource === 'ai' ? '🤖 AI' : '⚙️'}
+                          </span>
+                        )}
+                        {st.lastOptimizedAt ? new Date(st.lastOptimizedAt).toLocaleDateString('en-GB') : '—'}
+                      </td>
                       <td style={td}>
                         <select
-                          value={(statusMap[key] && statusMap[key].status) || (STATUS_OPTIONS.includes(r.status) ? r.status : 'NEW')}
+                          value={st.status || (STATUS_OPTIONS.includes(r.status) ? r.status : 'NEW')}
                           onChange={(e) => saveStatus(r, e.target.value)}
                           style={{ background: ADMIN_COLORS.bg2, color: ADMIN_COLORS.tx, border: `1px solid ${ADMIN_COLORS.border}`, borderRadius: 6, padding: '3px 6px', fontSize: 11 }}
                         >
@@ -479,10 +600,17 @@ export default function SeoOpportunitiesClient() {
                     </tr>
                     {open && (
                       <tr>
-                        <td colSpan={11} style={{ padding: 0, background: ADMIN_COLORS.bg }}>
+                        <td colSpan={12} style={{ padding: 0, background: ADMIN_COLORS.bg }}>
                           {a && a.loading && <div style={{ padding: 14, color: ADMIN_COLORS.tx2, fontSize: 12.5 }}>جارٍ تحليل الصفحة الحقيقية…</div>}
                           {a && a.error && <div style={{ padding: 14, color: ADMIN_COLORS.red, fontSize: 12.5 }}>{a.error}</div>}
-                          {a && a.data && <AnalysisPanel a={a.data} queries={queryMap[key]} />}
+                          {a && a.data && (
+                            <AnalysisPanel
+                              a={a.data}
+                              queries={queryMap[key]}
+                              suggestion={suggestions[key]}
+                              onGenerate={() => generateSuggestion(r, a.data, queryMap[key])}
+                            />
+                          )}
                         </td>
                       </tr>
                     )}
@@ -544,7 +672,72 @@ function QueriesSection({ queries, content }) {
   );
 }
 
-function AnalysisPanel({ a, queries }) {
+// [Phase 15/16] BEFORE / PROPOSED optimization block. Renders only what the
+// generator returned — a proposed value appears only when a real trigger exists;
+// otherwise it shows "no change recommended" with the reason. Applies nothing.
+function DiffRow({ label, node }) {
+  if (!node) return null;
+  const changed = node.changeRecommended && node.proposed;
+  return (
+    <div style={{ marginBottom: 12, borderInlineStart: `3px solid ${changed ? ADMIN_COLORS.teal : ADMIN_COLORS.border}`, paddingInlineStart: 10 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: changed ? ADMIN_COLORS.teal : ADMIN_COLORS.tx2, marginBottom: 4 }}>
+        {label} {changed ? '· تغيير مقترح' : '· لا تغيير'}
+      </div>
+      <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3, wordBreak: 'break-word' }}>
+        <span style={{ color: ADMIN_COLORS.tx3 }}>الحالي: </span>{node.current || '—'}
+      </div>
+      {changed && (
+        <div style={{ fontSize: 12, color: ADMIN_COLORS.tx, wordBreak: 'break-word', marginTop: 3 }}>
+          <span style={{ color: ADMIN_COLORS.teal }}>المقترح: </span>{node.proposed}
+        </div>
+      )}
+      {node.reason && <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 3 }}>↳ {node.reason}</div>}
+    </div>
+  );
+}
+
+function SuggestionSection({ suggestion, onGenerate }) {
+  if (!suggestion) {
+    return (
+      <div>
+        <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '6px 14px', fontSize: 12 }}>🛠️ توليد اقتراح تحسين</button>
+        <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 6, lineHeight: 1.6 }}>
+          يقترح عنوان/وصف/H1 بصيغة «الحالي ↔ المقترح» اعتماداً على عناصر الصفحة الحقيقية ونيّة استعلاماتها فقط — بدون أي أرقام أو حقائق مُختلَقة. للمراجعة فقط، لا يطبّق شيئاً.
+        </div>
+      </div>
+    );
+  }
+  if (suggestion.loading) return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>جارٍ توليد الاقتراح…</div>;
+  if (suggestion.error) return <div style={{ fontSize: 12, color: ADMIN_COLORS.red }}>{suggestion.error} · <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '3px 8px' }}>إعادة المحاولة</button></div>;
+  const d = suggestion.data;
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginBottom: 8 }}>
+        المصدر: {suggestion.source === 'ai' ? '🤖 ذكاء اصطناعي (Claude)' : '⚙️ قواعد'}{d.opportunity ? ' · فرصة CTR مكتشفة' : ''}
+        {suggestion.note ? ` · ${suggestion.note}` : ''}
+        <button type="button" onClick={onGenerate} style={{ ...analyzeBtn, padding: '2px 8px', marginInlineStart: 8 }}>↻ إعادة التوليد</button>
+      </div>
+      <DiffRow label="Title" node={d.title} />
+      <DiffRow label="Meta" node={d.meta} />
+      <DiffRow label="H1" node={d.h1} />
+      {d.content && d.content.proposed && (
+        <div style={{ marginTop: 12, borderInlineStart: `3px solid ${ADMIN_COLORS.teal}`, paddingInlineStart: 10 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: ADMIN_COLORS.teal, marginBottom: 4, display: 'flex', gap: 8, alignItems: 'center' }}>
+            محتوى فريد · مقترح
+            <button type="button" onClick={() => { try { navigator.clipboard.writeText(d.content.proposed); } catch { /* clipboard optional */ } }} style={{ ...analyzeBtn, padding: '2px 8px', fontSize: 10.5 }}>📋 نسخ</button>
+          </div>
+          <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, color: ADMIN_COLORS.tx, margin: 0, lineHeight: 1.7 }}>{d.content.proposed}</pre>
+          {d.content.factsUsed && d.content.factsUsed.length > 0 && (
+            <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 5 }}>حقائق حقيقية مُستخدَمة: {d.content.factsUsed.join(' · ')}</div>
+          )}
+          {d.content.reason && <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, marginTop: 3 }}>↳ {d.content.reason}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalysisPanel({ a, queries, suggestion, onGenerate }) {
   const el = a.elements || {};
   const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
   const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
@@ -592,9 +785,14 @@ function AnalysisPanel({ a, queries }) {
           <div key={i} style={{ fontSize: 12, color: FLAG_COLOR[f.level] || ADMIN_COLORS.tx2, padding: '3px 0' }}>• {f.text}</div>
         ))}
         <div style={{ marginTop: 10, fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>
-          تحليل للقراءة فقط — لا يطبّق أي تغيير. اقتراحات العناوين/الوصف والموافقة قادمة في مرحلة لاحقة.
+          تحليل للقراءة فقط — لا يطبّق أي تغيير.
           {a.url && <> · <a href={a.url} target="_blank" rel="noreferrer" style={{ color: ADMIN_COLORS.teal }}>فتح الصفحة</a></>}
         </div>
+      </div>
+      {/* Optimization suggestion — Before / Proposed (Phase 15/16) */}
+      <div style={{ gridColumn: '1 / -1', borderTop: `1px solid ${ADMIN_COLORS.border}`, paddingTop: 14 }}>
+        <h3 style={panelH}>اقتراح تحسين (قبل ↔ بعد)</h3>
+        <SuggestionSection suggestion={suggestion} onGenerate={onGenerate} />
       </div>
     </div>
   );

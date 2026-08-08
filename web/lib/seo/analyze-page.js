@@ -101,7 +101,45 @@ function extractSeoElements(html) {
     schemaTypes: [...schemaTypes],
     internalLinks: { total: internalTotal, ...linkGroups },
     content: { faqCount, hasFlightTime, hasAirlines, hasDistance, hasDirectInfo, hasBreadcrumb, hasRelatedRoutes, hasPrice },
+    // [Phase 16] Real, verifiable fact VALUES pulled off the page (never invented)
+    // so the content generator can write grounded copy — a fact absent here must
+    // not be asserted downstream.
+    facts: extractFacts(root, linkGroups),
   };
+}
+
+// Pull concrete fact values already present in the rendered page — the ONLY
+// numbers/names the content generator is allowed to state. Anything not found
+// here is simply omitted (never guessed).
+function extractFacts(root, linkGroups) {
+  const facts = {};
+  const contentText = (root.querySelector('#route-content') || root.querySelector('#route-main') || root).text;
+
+  // Distance — keep the page's own formatted token (e.g. "1.100 km").
+  const km = contentText.match(/(\d[\d.,]*)\s*km\b/i);
+  if (km) facts.distanceKm = `${km[1].trim()} km`;
+
+  // Flight duration — read from the facts/insight block only, matched as a
+  // duration pattern across the site's languages.
+  const factsEl = root.querySelector('.route-insight-card, .route-facts-section, .route-insights-section');
+  if (factsEl) {
+    const t = textOf(factsEl);
+    const dur = t.match(/\b\d{1,2}\s*(?:h|std|stunden|stunde|hours?|hrs?|saat|ساعات?|ساعة)\b\.?(?:\s*\d{1,2}\s*(?:m|min|minuten|minute|minutes?|mins?|dk|دقيقة|دقائق)?)?/i);
+    if (dur) facts.flightTime = dur[0].replace(/\s+/g, ' ').trim();
+  }
+
+  // Airline names — the real anchor texts of the page's airline links.
+  if (linkGroups.airline > 0) {
+    const names = [];
+    for (const a of root.querySelectorAll('a')) {
+      const href = a.getAttribute('href') || '';
+      if (!/^\/(?:[a-z]{2}\/)?airline\//i.test(href)) continue;
+      const name = textOf(a);
+      if (name && name.length <= 40 && !names.includes(name)) names.push(name);
+    }
+    if (names.length) facts.airlines = names.slice(0, 6);
+  }
+  return facts;
 }
 
 // [Phase 14] Transparent multi-factor score. Each factor is 0–100 with a reason,
