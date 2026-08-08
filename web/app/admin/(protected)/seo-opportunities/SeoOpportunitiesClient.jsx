@@ -353,6 +353,35 @@ export default function SeoOpportunitiesClient() {
     } catch { /* non-critical — the list refreshes on next open */ }
   }
 
+  // [§7] Apply an APPROVED optimization to the live route (write happens on the
+  // backend only). Confirmed first; on success the audit list refreshes.
+  async function applyOptimization(r, id) {
+    if (typeof window !== 'undefined' && !window.confirm('تطبيق هذا الاقتراح على الصفحة الحقيقية؟\nسيُكتب على حقول SEO المولّدة فقط (عنوان/وصف/مقدمة/FAQ) مع حفظ القيم القديمة للتراجع.')) return;
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/optimizations/apply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (data.ok) loadHistory(r);
+      else if (typeof window !== 'undefined') window.alert(`فشل التطبيق: ${data.error || ''}`);
+    } catch { if (typeof window !== 'undefined') window.alert('تعذّر الاتصال بالتطبيق'); }
+  }
+
+  // [§18] Roll an APPLIED optimization back to the exact saved previous values.
+  async function rollbackOptimization(r, id) {
+    if (typeof window === 'undefined') return;
+    const reason = window.prompt('التراجع سيعيد القيم القديمة بالضبط على الصفحة.\nسبب التراجع (اختياري):', '');
+    if (reason === null) return; // cancelled
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/optimizations/rollback', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, reason }),
+      });
+      const data = await res.json();
+      if (data.ok) loadHistory(r);
+      else window.alert(`فشل التراجع: ${data.error || ''}`);
+    } catch { window.alert('تعذّر الاتصال بالتراجع'); }
+  }
+
   // Persist the "this route was optimized by AI/rules" marker + timestamp so the
   // dashboard clearly flags every route the generator touched (shared via server).
   async function markOptimized(r, sourceVal) {
@@ -650,6 +679,8 @@ export default function SeoOpportunitiesClient() {
                               onGenerate={() => generateSuggestion(r, a.data, queryMap[key])}
                               history={history[key]}
                               onStatus={(id, status) => setOptimizationStatus(r, id, status)}
+                              onApply={(id) => applyOptimization(r, id)}
+                              onRollback={(id) => rollbackOptimization(r, id)}
                             />
                           )}
                         </td>
@@ -778,7 +809,7 @@ function SuggestionSection({ suggestion, onGenerate }) {
   );
 }
 
-function AnalysisPanel({ a, queries, suggestion, onGenerate, history, onStatus }) {
+function AnalysisPanel({ a, queries, suggestion, onGenerate, history, onStatus, onApply, onRollback }) {
   const el = a.elements || {};
   const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
   const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
@@ -838,7 +869,7 @@ function AnalysisPanel({ a, queries, suggestion, onGenerate, history, onStatus }
       {/* Stored optimization history + review lifecycle (§16-17) */}
       <div style={{ gridColumn: '1 / -1', borderTop: `1px solid ${ADMIN_COLORS.border}`, paddingTop: 14 }}>
         <h3 style={panelH}>سجل التحسينات (مخزَّن على السيرفر)</h3>
-        <HistorySection history={history} onStatus={onStatus} />
+        <HistorySection history={history} onStatus={onStatus} onApply={onApply} onRollback={onRollback} />
       </div>
     </div>
   );
@@ -852,9 +883,10 @@ const OPT_STATUS_META = {
   reviewed: { label: 'روجِع', color: ADMIN_COLORS.blue },
   approved: { label: 'مُعتمد', color: ADMIN_COLORS.teal },
   rejected: { label: 'مرفوض', color: ADMIN_COLORS.red },
-  applied: { label: 'مُطبَّق', color: ADMIN_COLORS.teal },
+  applied: { label: '✅ مُطبَّق', color: ADMIN_COLORS.teal },
+  rolled_back: { label: '↩︎ مُتراجَع', color: ADMIN_COLORS.yellow },
 };
-function HistorySection({ history, onStatus }) {
+function HistorySection({ history, onStatus, onApply, onRollback }) {
   if (!history || history.loading) return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3 }}>جارٍ تحميل السجل…</div>;
   const items = history.items || [];
   if (!items.length) {
@@ -864,23 +896,33 @@ function HistorySection({ history, onStatus }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {items.map((it) => {
         const meta = OPT_STATUS_META[it.status] || { label: it.status, color: ADMIN_COLORS.tx2 };
-        const open = it.status === 'generated' || it.status === 'reviewed';
+        const reviewable = it.status === 'generated' || it.status === 'reviewed';
         return (
           <div key={it.id} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 11.5, borderBottom: `1px solid ${ADMIN_COLORS.border}`, paddingBottom: 6 }}>
-            <span style={{ color: meta.color, fontWeight: 700, minWidth: 54 }}>{meta.label}</span>
+            <span style={{ color: meta.color, fontWeight: 700, minWidth: 60 }}>{meta.label}</span>
             <span style={{ color: ADMIN_COLORS.tx3 }}>{it.source === 'ai' ? '🤖' : '⚙️'}{it.model ? ` ${it.model}` : ''}</span>
             <span style={{ color: ADMIN_COLORS.tx, flex: 1, minWidth: 160, wordBreak: 'break-word' }}>{it.proposed_title || '—'}</span>
             <span style={{ color: ADMIN_COLORS.tx3, whiteSpace: 'nowrap' }}>{it.created_at ? new Date(it.created_at).toLocaleString('en-GB') : ''}</span>
-            {open && (
-              <span style={{ display: 'flex', gap: 6 }}>
-                <button type="button" onClick={() => onStatus(it.id, 'approved')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.teal, borderColor: `${ADMIN_COLORS.teal}55` }}>✓ اعتماد</button>
-                <button type="button" onClick={() => onStatus(it.id, 'rejected')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.red, borderColor: `${ADMIN_COLORS.red}55` }}>✗ رفض</button>
-              </span>
-            )}
+            <span style={{ display: 'flex', gap: 6 }}>
+              {reviewable && (
+                <>
+                  <button type="button" onClick={() => onStatus(it.id, 'approved')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.teal, borderColor: `${ADMIN_COLORS.teal}55` }}>✓ اعتماد</button>
+                  <button type="button" onClick={() => onStatus(it.id, 'rejected')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.red, borderColor: `${ADMIN_COLORS.red}55` }}>✗ رفض</button>
+                </>
+              )}
+              {it.status === 'approved' && onApply && (
+                <button type="button" onClick={() => onApply(it.id)} style={{ ...analyzeBtn, padding: '2px 10px', color: ADMIN_COLORS.teal, borderColor: ADMIN_COLORS.teal, fontWeight: 700 }}>🚀 تطبيق</button>
+              )}
+              {it.status === 'applied' && onRollback && (
+                <button type="button" onClick={() => onRollback(it.id)} style={{ ...analyzeBtn, padding: '2px 10px', color: ADMIN_COLORS.yellow, borderColor: `${ADMIN_COLORS.yellow}88` }}>↩︎ تراجع</button>
+              )}
+            </span>
           </div>
         );
       })}
-      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>الاعتماد يسجّل قرار المراجعة فقط — لا يطبّق تغييراً على الصفحة الحقيقية (خطوة التطبيق منفصلة ومحكومة).</div>
+      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>
+        الاعتماد يسجّل قرار المراجعة. <strong>التطبيق</strong> يكتب على حقول SEO المولّدة للصفحة (عنوان/وصف/مقدمة/FAQ فقط) عبر السيرفر مع حفظ القيم القديمة، ويعيد تحقّق الصفحة فوراً. <strong>التراجع</strong> يعيد القيم القديمة بالضبط. تطبيق فردي فقط — لا يوجد «تطبيق للكل».
+      </div>
     </div>
   );
 }
