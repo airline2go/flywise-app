@@ -23,7 +23,7 @@ export async function GET() {
   const db = getServiceClient();
   const { data, error } = await db
     .from(TABLE)
-    .select('slug, language, status, last_analyzed_at, last_optimized_at, updated_by, updated_at');
+    .select('slug, language, status, last_analyzed_at, last_optimized_at, optimization_source, updated_by, updated_at');
   if (error) return NextResponse.json({ ok: false, configured: true, error: error.message }, { status: 500 });
 
   const statuses = {};
@@ -33,6 +33,7 @@ export async function GET() {
       language: r.language,
       lastAnalyzedAt: r.last_analyzed_at,
       lastOptimizedAt: r.last_optimized_at,
+      optimizationSource: r.optimization_source,
       updatedBy: r.updated_by,
       updatedAt: r.updated_at,
     };
@@ -41,7 +42,9 @@ export async function GET() {
 }
 
 // POST → upsert one route's status. Body: { slug, language?, status?,
-// markAnalyzed?, markOptimized? }. Only the fields provided are changed.
+// markAnalyzed?, markOptimized?, optimizationSource? }. Only the fields provided
+// are changed.
+const OPT_SOURCES = new Set(['ai', 'rules']);
 export async function POST(request) {
   const session = await getAdminSession();
   if (!session) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
@@ -65,12 +68,13 @@ export async function POST(request) {
   if (body.status != null) record.status = body.status;
   if (body.markAnalyzed) record.last_analyzed_at = nowIso;
   if (body.markOptimized) record.last_optimized_at = nowIso;
+  if (body.optimizationSource != null && OPT_SOURCES.has(body.optimizationSource)) record.optimization_source = body.optimizationSource;
 
   const db = getServiceClient();
   const { data, error } = await db
     .from(TABLE)
     .upsert(record, { onConflict: 'slug,language' })
-    .select('slug, language, status, last_analyzed_at, last_optimized_at, updated_by, updated_at')
+    .select('slug, language, status, last_analyzed_at, last_optimized_at, optimization_source, updated_by, updated_at')
     .single();
   if (error) return NextResponse.json({ ok: false, configured: true, error: error.message }, { status: 500 });
   return NextResponse.json({
@@ -82,6 +86,7 @@ export async function POST(request) {
       language: data.language,
       lastAnalyzedAt: data.last_analyzed_at,
       lastOptimizedAt: data.last_optimized_at,
+      optimizationSource: data.optimization_source,
       updatedBy: data.updated_by,
       updatedAt: data.updated_at,
     },

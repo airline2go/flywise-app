@@ -24,6 +24,14 @@ const LANGPACK = {
     metaFacets: { duration: 'Flugzeit', direct: 'Direktflüge', price: 'aktuelle Flugpreise', distance: 'Entfernung' },
     metaTail: (o, d) => `für ${o} → ${d} auf Airpiv.`,
     lead: 'Erfahre',
+    contentIntro: (o, d, c, f) => `Du planst einen Flug von ${o} nach ${d}? Hier findest du die wichtigsten Infos zur Strecke${f.distanceKm ? ` – die Entfernung beträgt rund ${f.distanceKm}` : ''}${f.flightTime ? ` und die Flugzeit liegt bei etwa ${f.flightTime}` : ''} übersichtlich zusammengefasst.`,
+    faq: {
+      duration: { q: (o, d) => `Wie lange dauert der Flug von ${o} nach ${d}?`, a: (o, d, c, f) => (f.flightTime ? `Die Flugzeit von ${o} nach ${d} beträgt etwa ${f.flightTime}.` : `Die aktuelle Flugzeit für ${o} → ${d} findest du im Streckenabschnitt oben auf der Seite.`), supported: () => true },
+      direct: { q: (o, d) => `Gibt es Direktflüge von ${o} nach ${d}?`, a: (o, d, c) => (c.hasDirectInfo ? `Für die Strecke ${o} → ${d} sind Direktverbindungen verfügbar – die Details stehen im Abschnitt oben.` : `Ob Direktflüge von ${o} nach ${d} angeboten werden, zeigt dir der Streckenabschnitt oben.`), supported: () => true },
+      distance: { q: (o, d) => `Wie weit ist ${o} von ${d} entfernt?`, a: (o, d, c, f) => `Die Entfernung von ${o} nach ${d} beträgt ca. ${f.distanceKm}.`, supported: (c, f) => !!f.distanceKm },
+      price: { q: (o, d) => `Was kostet ein Flug von ${o} nach ${d}?`, a: (o, d) => `Aktuelle Flugpreise für ${o} → ${d} vergleichst du live oben auf der Seite.`, supported: () => true },
+    },
+    contentReason: 'محتوى فريد مبني على أسماء المدن الحقيقية والحقائق المستخرَجة من الصفحة فقط.',
   },
   en: {
     intentWord: { duration: 'Flight Time', direct: 'Direct Flights', price: 'Flight Prices', distance: 'Distance', flight: 'Flights' },
@@ -33,8 +41,38 @@ const LANGPACK = {
     metaFacets: { duration: 'flight time', direct: 'direct flights', price: 'current fares', distance: 'distance' },
     metaTail: (o, d) => `for ${o} → ${d} on Airpiv.`,
     lead: 'See the',
+    contentIntro: (o, d, c, f) => `Planning a flight from ${o} to ${d}? Here you'll find the key details for this route${f.distanceKm ? ` – the distance is about ${f.distanceKm}` : ''}${f.flightTime ? ` and the flight time is around ${f.flightTime}` : ''}, all in one place.`,
+    faq: {
+      duration: { q: (o, d) => `How long is the flight from ${o} to ${d}?`, a: (o, d, c, f) => (f.flightTime ? `The flight from ${o} to ${d} takes about ${f.flightTime}.` : `You'll find the current flight time for ${o} → ${d} in the route section above.`), supported: () => true },
+      direct: { q: (o, d) => `Are there direct flights from ${o} to ${d}?`, a: (o, d, c) => (c.hasDirectInfo ? `Direct connections are available for ${o} → ${d} – see the section above for details.` : `Whether direct flights from ${o} to ${d} are offered is shown in the route section above.`), supported: () => true },
+      distance: { q: (o, d) => `How far is ${o} from ${d}?`, a: (o, d, c, f) => `The distance from ${o} to ${d} is about ${f.distanceKm}.`, supported: (c, f) => !!f.distanceKm },
+      price: { q: (o, d) => `How much is a flight from ${o} to ${d}?`, a: (o, d) => `Compare current fares for ${o} → ${d} live at the top of the page.`, supported: () => true },
+    },
+    contentReason: 'Unique content built only from the real city names and facts extracted from the page.',
   },
 };
+
+// Build a unique, grounded content block (intro + up to 3 FAQ). It states a
+// number/name ONLY when it appears in the extracted `facts` — never invented.
+function buildContent(pack, o, d, intent, content, facts) {
+  const c = content || {};
+  const f = facts || {};
+  const order = [intent, 'duration', 'direct', 'distance', 'price'].filter((v, i, arr) => arr.indexOf(v) === i && pack.faq[v]);
+  const chosen = [];
+  for (const k of order) {
+    const item = pack.faq[k];
+    if (item && item.supported(c, f)) chosen.push(item);
+    if (chosen.length >= 3) break;
+  }
+  const intro = pack.contentIntro(o, d, c, f);
+  const faqText = chosen.map((it) => `Q: ${it.q(o, d)}\nA: ${it.a(o, d, c, f)}`).join('\n\n');
+  const proposed = `${intro}\n\n${faqText}`.trim();
+  const factsUsed = [];
+  if (f.distanceKm) factsUsed.push(`distance: ${f.distanceKm}`);
+  if (f.flightTime) factsUsed.push(`flight time: ${f.flightTime}`);
+  if (Array.isArray(f.airlines) && f.airlines.length) factsUsed.push(`airlines: ${f.airlines.join(', ')}`);
+  return { current: null, proposed, changeRecommended: true, reason: pack.contentReason, factsUsed };
+}
 
 // Parse the route's real city names from the H1 (preferred) or title. Never
 // fabricates — returns null when it can't parse a clean pair, so the caller
@@ -84,6 +122,7 @@ function buildOptimizationSuggestions({ elements = {}, gsc = null, dominantInten
   const cities = parseCities(elements, lang);
   const opp = ctrOpportunity(gsc);
   const content = elements.content || {};
+  const facts = elements.facts || {};
   const intent = dominantIntent || 'flight';
 
   // Unsupported language, or cities unparseable → honest manual-review, no guess.
@@ -96,6 +135,7 @@ function buildOptimizationSuggestions({ elements = {}, gsc = null, dominantInten
       title: { current: elements.title || null, proposed: null, changeRecommended: false, reason },
       meta: { current: elements.metaDescription || null, proposed: null, changeRecommended: false, reason },
       h1: { current: elements.h1 || null, proposed: null, changeRecommended: false, reason },
+      content: { current: null, proposed: null, changeRecommended: false, reason, factsUsed: [] },
     };
   }
 
@@ -150,7 +190,10 @@ function buildOptimizationSuggestions({ elements = {}, gsc = null, dominantInten
   if (!curH1) h1 = { current: null, proposed: pack.h1(o, d), changeRecommended: true, reason: 'لا يوجد H1 — اقتراح H1 واضح.' };
   else h1 = { current: curH1, proposed: null, changeRecommended: false, reason: 'H1 الحالي واضح ويطابق المسار — لا تغيير موصى به.' };
 
-  return { cities, opportunity: opp, dominantIntent: intent, title, meta, h1 };
+  // ── CONTENT (unique intro + FAQ, grounded in real facts only) ───────────
+  const contentSuggestion = buildContent(pack, o, d, intent, content, facts);
+
+  return { cities, opportunity: opp, dominantIntent: intent, title, meta, h1, content: contentSuggestion };
 }
 
-module.exports = { buildOptimizationSuggestions, parseCities };
+module.exports = { buildOptimizationSuggestions, parseCities, buildContent };

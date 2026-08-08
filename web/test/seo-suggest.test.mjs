@@ -67,6 +67,49 @@ test('missing title/meta/h1 always trigger a proposal', () => {
   assert.equal(out.h1.changeRecommended, false); // H1 present & clear → untouched
 });
 
+test('content generation is grounded in extracted facts and never invents numbers', () => {
+  const withFacts = buildOptimizationSuggestions({
+    elements: {
+      title: 'Hamburg → Barcelona | Airpiv',
+      h1: 'Flüge von Hamburg nach Barcelona',
+      content: { hasFlightTime: true, hasDirectInfo: true },
+      facts: { distanceKm: '1.100 km', flightTime: '2h 20min', airlines: ['Vueling'] },
+    },
+    gsc: null,
+    dominantIntent: 'duration',
+    lang: 'de',
+  });
+  assert.equal(withFacts.content.changeRecommended, true);
+  assert.match(withFacts.content.proposed, /Hamburg/);
+  assert.match(withFacts.content.proposed, /Barcelona/);
+  assert.match(withFacts.content.proposed, /2h 20min/); // real flight time surfaced
+  assert.match(withFacts.content.proposed, /1\.100 km/); // real distance surfaced
+  assert.ok(withFacts.content.factsUsed.some((f) => /2h 20min/.test(f)));
+
+  // No facts on the page → the content must NOT assert any number/distance.
+  const noFacts = buildOptimizationSuggestions({
+    elements: { title: 'x', h1: 'Flüge von Berlin nach Rom', content: {}, facts: {} },
+    gsc: null,
+    dominantIntent: 'duration',
+    lang: 'de',
+  });
+  assert.equal(noFacts.content.changeRecommended, true);
+  assert.doesNotMatch(noFacts.content.proposed, /\d+\s*km/i); // no fabricated distance
+  assert.doesNotMatch(noFacts.content.proposed, /\d+\s*(?:h|std|min)\b/i); // no fabricated duration
+  assert.deepEqual(noFacts.content.factsUsed, []);
+});
+
+test('content is null (manual review) when cities cannot be parsed', () => {
+  const out = buildOptimizationSuggestions({
+    elements: { title: 'Willkommen', h1: 'Startseite', content: {}, facts: {} },
+    gsc: null,
+    dominantIntent: 'flight',
+    lang: 'de',
+  });
+  assert.equal(out.content.proposed, null);
+  assert.equal(out.content.changeRecommended, false);
+});
+
 test('unsupported language yields a manual-review note, never a guessed translation', () => {
   const out = buildOptimizationSuggestions({
     elements: { title: 'Titre', h1: 'Vols de Paris à Nice', content: {} },

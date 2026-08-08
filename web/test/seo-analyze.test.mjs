@@ -60,6 +60,20 @@ test('extractSeoElements detects content blocks and categorizes internal links',
   assert.ok(el.internalLinks.total >= 5);
 });
 
+test('extractSeoElements pulls real fact VALUES (distance, flight time, airlines) for grounding', () => {
+  const el = extractSeoElements(RICH_HTML);
+  assert.equal(el.facts.distanceKm, '1.100 km');
+  assert.match(el.facts.flightTime, /^2\s*h/i);
+  assert.ok(Array.isArray(el.facts.airlines) && el.facts.airlines.includes('Vueling'));
+});
+
+test('a thin page exposes no fabricated facts', () => {
+  const el = extractSeoElements(THIN_HTML);
+  assert.equal(el.facts.distanceKm, undefined);
+  assert.equal(el.facts.flightTime, undefined);
+  assert.equal(el.facts.airlines, undefined);
+});
+
 test('a rich page scores well on technical health, content, and data completeness', () => {
   const a = analyzeRoutePage({ html: RICH_HTML, slug: 'hamburg-barcelona-2', lang: 'de' });
   assert.ok(a.factors.TECHNICAL_HEALTH.score >= 80, `tech ${a.factors.TECHNICAL_HEALTH.score}`);
