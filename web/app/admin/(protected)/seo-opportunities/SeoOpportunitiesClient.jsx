@@ -69,6 +69,7 @@ export default function SeoOpportunitiesClient() {
   const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
   const [queryRows, setQueryRows] = useState([]); // imported GSC query rows
   const [queryInfo, setQueryInfo] = useState(null); // { count, fileName, uploadedAt }
+  const [gsc, setGsc] = useState(null); // { configured, connected, connection } — live GSC OAuth state
   const [selected, setSelected] = useState(() => new Set()); // slug keys chosen for batch generation
   const [batch, setBatch] = useState(null); // { total, done } while a batch runs
 
@@ -213,6 +214,47 @@ export default function SeoOpportunitiesClient() {
   }
 
   useEffect(() => { const t = setTimeout(() => load(), 0); return () => clearTimeout(t); }, [load]);
+
+  // [GSC-OAUTH] Load the live Google Search Console connection state, and surface
+  // the ?gsc=connected|error the backend appends when it redirects back here.
+  const loadGscStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/gsc');
+      const data = await res.json();
+      if (data && data.ok !== false) setGsc(data);
+    } catch { /* GSC connection is optional */ }
+  }, []);
+
+  // Surface the ?gsc=connected|error the backend appends on redirect (kept in a
+  // callback so the effect body itself calls no setState directly).
+  const handleGscRedirect = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search).get('gsc');
+    if (!p) return;
+    if (p === 'connected') setNote('✅ تم ربط Google Search Console بنجاح.');
+    else if (p === 'error') setError('تعذّر ربط Google Search Console — تحقّق من إعدادات OAuth ثم أعد المحاولة.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }, []);
+
+  useEffect(() => { const t = setTimeout(() => { loadGscStatus(); handleGscRedirect(); }, 0); return () => clearTimeout(t); }, [loadGscStatus, handleGscRedirect]);
+
+  async function connectGsc() {
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/gsc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'connect' }) });
+      const data = await res.json();
+      if (data.ok && data.authUrl && typeof window !== 'undefined') window.location.href = data.authUrl;
+      else if (typeof window !== 'undefined') window.alert(`تعذّر بدء الربط: ${data.error || ''}`);
+    } catch { if (typeof window !== 'undefined') window.alert('تعذّر الاتصال بالسيرفر'); }
+  }
+
+  async function disconnectGsc() {
+    if (typeof window !== 'undefined' && !window.confirm('فصل Google Search Console؟ سيتوقف الجلب المباشر ويعود الاعتماد على رفع CSV.')) return;
+    try {
+      await fetch('/admin/api/seo-opportunities/gsc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'disconnect' }) });
+      loadGscStatus();
+      load();
+    } catch { /* keep current view */ }
+  }
 
   function onFile(e) {
     const file = e.target.files && e.target.files[0];
@@ -508,6 +550,15 @@ export default function SeoOpportunitiesClient() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {saving && <span style={{ fontSize: 12, color: ADMIN_COLORS.tx2 }}>جارٍ الحفظ…</span>}
+          {/* Live Google Search Console connection (OAuth) */}
+          {gsc && gsc.connected ? (
+            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, color: ADMIN_COLORS.teal, background: ADMIN_COLORS.tealGlow, border: `1px solid ${ADMIN_COLORS.teal}55`, borderRadius: 8, padding: '6px 10px' }}>
+              🔗 GSC متصل
+              <button type="button" onClick={disconnectGsc} title="فصل" style={{ background: 'transparent', border: 'none', color: ADMIN_COLORS.tx3, cursor: 'pointer', fontSize: 12 }}>✕</button>
+            </span>
+          ) : gsc && gsc.configured ? (
+            <button type="button" onClick={connectGsc} style={{ ...ghostBtn, color: ADMIN_COLORS.teal, borderColor: `${ADMIN_COLORS.teal}88` }}>🔗 ربط Google Search Console</button>
+          ) : null}
           <label style={{ ...ghostBtn, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             ⬆️ رفع الصفحات (Pages)
             <input type="file" accept=".csv,text/csv" onChange={onFile} disabled={saving} style={{ display: 'none' }} />
