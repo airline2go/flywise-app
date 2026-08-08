@@ -9,6 +9,9 @@ import analyzeMod from '../../../../../lib/seo/analyze-page.js';
 const { analyzeRoutePage } = analyzeMod;
 
 export const dynamic = 'force-dynamic';
+// Fetching the live page (12s abort) plus a possibly-cold backend can exceed the
+// default function limit; give it headroom so the request isn't cut off.
+export const maxDuration = 30;
 
 const SITE = 'https://airpiv.com';
 const KNOWN_LANGS = new Set(['de', 'en', 'ar', 'es', 'fr', 'it', 'nl', 'tr']);

@@ -19,6 +19,11 @@ import suggestMod from '../../../../../lib/seo/suggest.js';
 const { buildOptimizationSuggestions } = suggestMod;
 
 export const dynamic = 'force-dynamic';
+// The AI generation runs on the backend (Render) and can be slow on a cold
+// start; give this proxy room so Vercel doesn't kill the function mid-call
+// (which surfaces to the browser as a connection error instead of a graceful
+// rules fallback). The backend itself aborts the Claude call at 30s.
+export const maxDuration = 60;
 
 function ruleFallback({ elements, gsc, dominantIntent, lang }) {
   return buildOptimizationSuggestions({
