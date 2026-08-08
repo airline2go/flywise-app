@@ -64,6 +64,7 @@ export default function SeoOpportunitiesClient() {
   const [sort, setSort] = useState(null);
   const [analyses, setAnalyses] = useState({}); // slug -> { loading, error, data }
   const [suggestions, setSuggestions] = useState({}); // slug -> { loading, error, data, source }
+  const [history, setHistory] = useState({}); // slug -> { loading, items } stored optimizations
   const [expanded, setExpanded] = useState({}); // slug -> bool
   const [statusMap, setStatusMap] = useState({}); // slug -> { status, lastAnalyzedAt, lastOptimizedAt }
   const [queryRows, setQueryRows] = useState([]); // imported GSC query rows
@@ -281,6 +282,7 @@ export default function SeoOpportunitiesClient() {
   async function analyzeRow(r) {
     const key = r.slug || r.url;
     setExpanded((prev) => ({ ...prev, [key]: true }));
+    if (!history[key]) loadHistory(r); // show the route's stored optimization audit trail
     if (analyses[key] && analyses[key].data) return; // already analyzed
     await fetchAnalysis(r);
   }
@@ -308,10 +310,47 @@ export default function SeoOpportunitiesClient() {
       if (data.ok && data.suggestions) {
         setSuggestions((prev) => ({ ...prev, [key]: { data: data.suggestions, source: data.source, note: data.note } }));
         markOptimized(r, data.source); // stamp the clear "AI-modified" marker (dashboard)
+        if (data.source === 'ai') loadHistory(r); // the backend stored it — refresh the audit list
       } else setSuggestions((prev) => ({ ...prev, [key]: { error: data.error || 'فشل توليد الاقتراح' } }));
     } catch {
       setSuggestions((prev) => ({ ...prev, [key]: { error: 'تعذّر الاتصال بمولّد الاقتراحات' } }));
     }
+  }
+
+  // [§16-17] Load a route's stored optimization history (audit trail) from the
+  // backend, and transition a stored optimization's review status. Read/record
+  // only — nothing here changes a live page.
+  async function loadHistory(r) {
+    const key = r.slug || r.url;
+    if (!r.slug) return;
+    setHistory((prev) => ({ ...prev, [key]: { ...(prev[key] || {}), loading: true } }));
+    try {
+      const p = new URLSearchParams({ slug: r.slug, language: r.language || 'de' });
+      const res = await fetch(`/admin/api/seo-opportunities/optimizations?${p.toString()}`);
+      const data = await res.json();
+      setHistory((prev) => ({ ...prev, [key]: { loading: false, items: (data && data.optimizations) || [] } }));
+    } catch {
+      setHistory((prev) => ({ ...prev, [key]: { loading: false, items: [] } }));
+    }
+  }
+
+  async function setOptimizationStatus(r, id, status) {
+    const key = r.slug || r.url;
+    try {
+      const res = await fetch('/admin/api/seo-opportunities/optimizations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const data = await res.json();
+      if (data.ok && data.optimization) {
+        // Optimistically patch the item in place, then refresh from the server.
+        setHistory((prev) => {
+          const cur = prev[key] && prev[key].items ? prev[key].items : [];
+          return { ...prev, [key]: { ...prev[key], items: cur.map((it) => (it.id === id ? { ...it, ...data.optimization } : it)) } };
+        });
+      }
+    } catch { /* non-critical — the list refreshes on next open */ }
   }
 
   // Persist the "this route was optimized by AI/rules" marker + timestamp so the
@@ -609,6 +648,8 @@ export default function SeoOpportunitiesClient() {
                               queries={queryMap[key]}
                               suggestion={suggestions[key]}
                               onGenerate={() => generateSuggestion(r, a.data, queryMap[key])}
+                              history={history[key]}
+                              onStatus={(id, status) => setOptimizationStatus(r, id, status)}
                             />
                           )}
                         </td>
@@ -737,7 +778,7 @@ function SuggestionSection({ suggestion, onGenerate }) {
   );
 }
 
-function AnalysisPanel({ a, queries, suggestion, onGenerate }) {
+function AnalysisPanel({ a, queries, suggestion, onGenerate, history, onStatus }) {
   const el = a.elements || {};
   const rowStyle = { display: 'flex', gap: 8, fontSize: 12, padding: '3px 0', borderBottom: `1px solid ${ADMIN_COLORS.border}` };
   const lbl = { color: ADMIN_COLORS.tx3, minWidth: 130, flexShrink: 0 };
@@ -794,6 +835,52 @@ function AnalysisPanel({ a, queries, suggestion, onGenerate }) {
         <h3 style={panelH}>اقتراح تحسين (قبل ↔ بعد)</h3>
         <SuggestionSection suggestion={suggestion} onGenerate={onGenerate} />
       </div>
+      {/* Stored optimization history + review lifecycle (§16-17) */}
+      <div style={{ gridColumn: '1 / -1', borderTop: `1px solid ${ADMIN_COLORS.border}`, paddingTop: 14 }}>
+        <h3 style={panelH}>سجل التحسينات (مخزَّن على السيرفر)</h3>
+        <HistorySection history={history} onStatus={onStatus} />
+      </div>
+    </div>
+  );
+}
+
+// [§16-17] A route's stored optimizations (audit trail) with a review lifecycle.
+// generated → reviewed → approved / rejected. This records the operator's
+// decision; it does NOT apply anything to a live page.
+const OPT_STATUS_META = {
+  generated: { label: 'مُولّد', color: ADMIN_COLORS.tx2 },
+  reviewed: { label: 'روجِع', color: ADMIN_COLORS.blue },
+  approved: { label: 'مُعتمد', color: ADMIN_COLORS.teal },
+  rejected: { label: 'مرفوض', color: ADMIN_COLORS.red },
+  applied: { label: 'مُطبَّق', color: ADMIN_COLORS.teal },
+};
+function HistorySection({ history, onStatus }) {
+  if (!history || history.loading) return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3 }}>جارٍ تحميل السجل…</div>;
+  const items = history.items || [];
+  if (!items.length) {
+    return <div style={{ fontSize: 12, color: ADMIN_COLORS.tx3 }}>لا سجل بعد — ولّد اقتراحاً بالـ AI ليُخزَّن هنا للمراجعة والتدقيق. (يتطلب تفعيل التخزين على السيرفر.)</div>;
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {items.map((it) => {
+        const meta = OPT_STATUS_META[it.status] || { label: it.status, color: ADMIN_COLORS.tx2 };
+        const open = it.status === 'generated' || it.status === 'reviewed';
+        return (
+          <div key={it.id} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 11.5, borderBottom: `1px solid ${ADMIN_COLORS.border}`, paddingBottom: 6 }}>
+            <span style={{ color: meta.color, fontWeight: 700, minWidth: 54 }}>{meta.label}</span>
+            <span style={{ color: ADMIN_COLORS.tx3 }}>{it.source === 'ai' ? '🤖' : '⚙️'}{it.model ? ` ${it.model}` : ''}</span>
+            <span style={{ color: ADMIN_COLORS.tx, flex: 1, minWidth: 160, wordBreak: 'break-word' }}>{it.proposed_title || '—'}</span>
+            <span style={{ color: ADMIN_COLORS.tx3, whiteSpace: 'nowrap' }}>{it.created_at ? new Date(it.created_at).toLocaleString('en-GB') : ''}</span>
+            {open && (
+              <span style={{ display: 'flex', gap: 6 }}>
+                <button type="button" onClick={() => onStatus(it.id, 'approved')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.teal, borderColor: `${ADMIN_COLORS.teal}55` }}>✓ اعتماد</button>
+                <button type="button" onClick={() => onStatus(it.id, 'rejected')} style={{ ...analyzeBtn, padding: '2px 8px', color: ADMIN_COLORS.red, borderColor: `${ADMIN_COLORS.red}55` }}>✗ رفض</button>
+              </span>
+            )}
+          </div>
+        );
+      })}
+      <div style={{ fontSize: 11, color: ADMIN_COLORS.tx3, lineHeight: 1.6 }}>الاعتماد يسجّل قرار المراجعة فقط — لا يطبّق تغييراً على الصفحة الحقيقية (خطوة التطبيق منفصلة ومحكومة).</div>
     </div>
   );
 }
