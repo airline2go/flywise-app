@@ -741,7 +741,6 @@ function detectHomeAirport() {
       });
       if (nearest && nearest.code !== HOME_ORIGIN.code) {
         HOME_ORIGIN = { code: nearest.code, city: nearest.city };
-        renderTopStrecken();     // إعادة رسم المسارات بالمدينة الصح
         loadDestinationPrices(); // إعادة تحميل الأسعار من المطار الصح
       }
     },
@@ -769,35 +768,16 @@ function qsHome(toCode, toCity) {
   }
 }
 
-// [TOP-STRECKEN-EXPAND] كانت 6 مسارات ثابتة في HTML، بسعر ثابت، ومربوطة
-// ببرلين دايماً. بقت 30 مسار، من غير سعر (السعر مش موجود هنا أصلاً كان
-// تقديري ثابت وغير دقيق)، وبتترسم ديناميكياً بأقرب مدينة حقيقية
-// للمستخدم كنقطة انطلاق.
-var TOP_ROUTES = [
-  ['LHR', 'London', 14], ['PMI', 'Mallorca', 8], ['AMS', 'Amsterdam', 10],
-  ['FCO', 'Rom', 6], ['VIE', 'Wien', 5], ['MAD', 'Madrid', 7],
-  ['BCN', 'Barcelona', 9], ['LIS', 'Lissabon', 4], ['IST', 'Istanbul', 6],
-  ['CDG', 'Paris', 11], ['ATH', 'Athen', 3], ['PRG', 'Prag', 5],
-  ['BUD', 'Budapest', 4], ['WAW', 'Warschau', 4], ['CPH', 'Kopenhagen', 5],
-  ['OSL', 'Oslo', 3], ['ARN', 'Stockholm', 3], ['HEL', 'Helsinki', 2],
-  ['DUB', 'Dublin', 4], ['ZRH', 'Zürich', 6], ['MXP', 'Mailand', 5],
-  ['NCE', 'Nizza', 3], ['LYS', 'Lyon', 2], ['BRU', 'Brüssel', 5],
-  ['LUX', 'Luxemburg', 2], ['SVQ', 'Sevilla', 2], ['VLC', 'Valencia', 3],
-  ['NAP', 'Neapel', 3], ['SPU', 'Split', 2], ['DBV', 'Dubrovnik', 2],
-];
-
-function renderTopStrecken() {
-  var el = document.getElementById('top-strecken-grid');
-  if (!el) return;
-  el.innerHTML = TOP_ROUTES.map(function (r) {
-    var code = r[0], city = r[1], freq = r[2];
-    return '<div class="rchip" data-fn="qsHome" data-fn-arg="' + code + '" data-fn-arg2="' + city + '"><div><div class="rname">' +
-      HOME_ORIGIN.city + ' → ' + city + '</div><div class="rfreq">' + freq + ' Flüge/Tag</div></div></div>';
-  }).join('');
-}
+// [TOP-STRECKEN-SSG] "Top Strecken" (#top-strecken-grid) is now rendered
+// server-side at deploy time as real, crawlable <a href="/flights/…"> cards —
+// the top 30 GSC-opportunity routes — by web/scripts/prerender-popular-routes.mjs.
+// The old client-side renderTopStrecken() drew <div data-fn="qsHome"> search
+// chips (not links, invisible to crawlers) and personalized the origin to the
+// nearest airport; both are dropped so the grid stays a stable set of crawlable
+// route-page links. detectHomeAirport() still runs for the destination price
+// cards below (loadDestinationPrices) — it just no longer redraws this grid.
 
 document.addEventListener('DOMContentLoaded', function () {
-  renderTopStrecken();
   detectHomeAirport();
 });
 
