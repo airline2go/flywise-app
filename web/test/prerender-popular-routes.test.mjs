@@ -55,8 +55,8 @@ test('injectIntoHtml throws if the container is missing (caller degrades gracefu
   assert.throws(() => injectIntoHtml('<div>no container here</div>', '<a></a>'), /container not found/);
 });
 
-test('GSC_TOP_ROUTES is the approved 25-route set, well-formed and in order', () => {
-  assert.equal(GSC_TOP_ROUTES.length, 25);
+test('GSC_TOP_ROUTES is the approved 30-route set, well-formed and in order', () => {
+  assert.equal(GSC_TOP_ROUTES.length, 30);
   // Every entry has a usable slug + both city names.
   for (const r of GSC_TOP_ROUTES) {
     assert.ok(r.slug && typeof r.slug === 'string', `missing slug: ${JSON.stringify(r)}`);
@@ -65,15 +65,16 @@ test('GSC_TOP_ROUTES is the approved 25-route set, well-formed and in order', ()
   // Order is the deliverable: highest GSC opportunity first, top NORMAL last.
   assert.equal(GSC_TOP_ROUTES[0].slug, 'hamburg-barcelona-2');
   assert.equal(GSC_TOP_ROUTES[24].slug, 'amsterdam-zuerich');
+  assert.equal(GSC_TOP_ROUTES[29].slug, 'duesseldorf-dresden');
 });
 
-test('the full curated list renders exactly 25 crawlable anchors, first→last preserved', () => {
+test('the full curated list renders exactly 30 crawlable anchors, first→last preserved', () => {
   const out = injectIntoHtml(
     '<section id="popular-routes-links-section" style="display:none"><div id="popular-routes-links"></div></section>',
     buildLinksHtml(GSC_TOP_ROUTES),
   );
   const anchors = out.match(/<a href="\/flights\/[^"]+"/g) || [];
-  assert.equal(anchors.length, 25);
+  assert.equal(anchors.length, 30);
   assert.equal(anchors[0], '<a href="/flights/hamburg-barcelona-2"');
-  assert.equal(anchors[24], '<a href="/flights/amsterdam-zuerich"');
+  assert.equal(anchors[29], '<a href="/flights/duesseldorf-dresden"');
 });
