@@ -35,13 +35,13 @@ const ANCHOR_STYLE =
 // BREAKOUT → VERY_HIGH → HIGH → NORMAL → LOW, then impressions desc.
 //
 // Snapshot: GSC "Pages" export, 713 rows, 2026-08-08 — 0 BREAKOUT, 5 VERY_HIGH,
-// 19 HIGH, then the single highest-impression NORMAL row (amsterdam-zuerich, 195
-// impressions) fills slot 25.
+// 19 HIGH, then the six highest-impression NORMAL rows (amsterdam-zuerich 195 →
+// duesseldorf-dresden 127) fill slots 25–30.
 //
 // Why hardcoded rather than fetched: the GSC export lives only in the operator's
 // browser (localStorage). There is no server-side copy the build can read — the
 // seo_gsc_snapshots table is empty and no live GSC feed is connected — so the
-// approved ranking is baked in here. All 25 were verified published + indexable
+// approved ranking is baked in here. All 30 were verified published + indexable
 // via /route-pages/:slug when this list was authored. Refresh from a newer GSC
 // export when the opportunity picture changes.
 export const GSC_TOP_ROUTES = [
@@ -70,6 +70,11 @@ export const GSC_TOP_ROUTES = [
   { slug: 'frankfurt-stockholm', origin_city: 'Frankfurt', destination_city: 'Stockholm' },      // HIGH · 20
   { slug: 'jfk-ber', origin_city: 'New York', destination_city: 'Berlin' },                      // HIGH · 20
   { slug: 'amsterdam-zuerich', origin_city: 'Amsterdam', destination_city: 'Zürich' },           // NORMAL · 195
+  { slug: 'frankfurt-berlin', origin_city: 'Frankfurt', destination_city: 'Berlin' },            // NORMAL · 194
+  { slug: 'palma-de-mallorca-duesseldorf', origin_city: 'Palma de Mallorca', destination_city: 'Düsseldorf' }, // NORMAL · 170
+  { slug: 'cologne-palma-de-mallorca', origin_city: 'Cologne', destination_city: 'Palma de Mallorca' }, // NORMAL · 147
+  { slug: 'london-zuerich', origin_city: 'London', destination_city: 'Zürich' },                 // NORMAL · 135
+  { slug: 'duesseldorf-dresden', origin_city: 'Düsseldorf', destination_city: 'Dresden' },       // NORMAL · 127
 ];
 
 export function escHtml(s) {

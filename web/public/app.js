@@ -834,34 +834,17 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('DOMContentLoaded', checkHomeFloatCta);
 })();
 
-// [INTERNAL-LINKING-SEO-FIX] روابط <a href> حقيقية وقابلة للزحف لأهم
-// المسارات المنشورة فعلياً — بتتحمل مرة واحدة، وبتستخدم بيانات حقيقية
-// (مش أسماء مطارات مُخترعة). لحد 40 مسار عشان القسم مايبقاش ضخم.
-function loadPopularRouteLinks() {
-  fetch(PROXY + '/route-pages')
-    .then(function (r) { return r.json(); })
-    .then(function (j) {
-      if (!j.ok || !j.routes || !j.routes.length) return;
-      var section = document.getElementById('popular-routes-links-section');
-      var container = document.getElementById('popular-routes-links');
-      // [ROUTE-ORDER] Best routes first (by route_score desc, null scores
-      // last) instead of the API's newest-first order, which floods the top
-      // with freshly bulk-added, unscored routes.
-      var routes = j.routes.slice().sort(function (a, b) {
-        var sa = (a.route_score == null) ? -Infinity : a.route_score;
-        var sb = (b.route_score == null) ? -Infinity : b.route_score;
-        return sb - sa;
-      }).slice(0, 40);
-      container.innerHTML = routes.map(function (r) {
-        return '<a href="/flights/' + encodeURIComponent(r.slug) + '" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--tx2);text-decoration:none">' +
-          r.origin_city + ' → ' + r.destination_city +
-        '</a>';
-      }).join('');
-      section.style.display = 'block';
-    })
-    .catch(function () { /* قسم ثانوي — فشله مايأثرش على باقي الصفحة */ });
-}
-document.addEventListener('DOMContentLoaded', loadPopularRouteLinks);
+// [INTERNAL-LINKING-SEO-FIX] The #popular-routes-links section is now filled
+// server-side at deploy time with the GSC-opportunity route set — real,
+// crawlable <a href="/flights/…"> anchors present on first byte
+// (scripts/prerender-popular-routes.mjs). The previous runtime fetch here
+// unconditionally overwrote those server-rendered links on DOMContentLoaded,
+// which defeats the whole point (crawlers/no-JS clients want the static links)
+// and caused a layout shift. It was also a duplicate of popular-routes.js,
+// which is the single client-side fallback and already guards on
+// [SSG-FIRST] (skips when the container is already populated). So this
+// redundant, unguarded loader is removed — popular-routes.js covers the rare
+// build-skipped case.
 
 // [FLIGHT-DATE-CHIP] Professional per-leg date label for result cards.
 // Shows the departure date of each leg (outbound + return) from the API
