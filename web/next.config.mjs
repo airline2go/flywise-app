@@ -77,6 +77,28 @@ const nextConfig = {
   // so any deploy reaches users immediately with no stale window.
   async headers() {
     return [
+      // [SECURITY-HEADERS] Applied to every response. The customer SPA
+      // (public/index.html) already ships a detailed page-level CSP via a
+      // <meta http-equiv> tag; `frame-ancestors` is deliberately NOT set
+      // there because the directive is ignored inside a <meta> CSP and only
+      // takes effect as a real response header — so the clickjacking
+      // protection for the checkout/confirmation pages has to live here.
+      // These are all additive, non-breaking headers (no default-src that
+      // could block the SPA's own inline/vendor scripts — that stays owned
+      // by the page-level meta CSP).
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'X-DNS-Prefetch-Control', value: 'off' },
+        ],
+      },
       {
         source: '/:file(.*\\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|otf))',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],

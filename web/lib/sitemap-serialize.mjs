@@ -146,7 +146,7 @@ export function shardLoc(type, n) {
 // indexable. Add a public static page by adding it here. No <lastmod>: these
 // change rarely and carry no tracked timestamp (an unknown date omits <lastmod>
 // rather than faking "today").
-export const STATIC_PAGES = ['', 'cheap-flights.html', 'last-minute-flights.html', 'about.html', 'blog.html', 'contact.html', 'privacy.html', 'terms.html'];
+export const STATIC_PAGES = ['', 'cheap-flights.html', 'last-minute-flights.html', 'about.html', 'blog.html', 'contact.html', 'privacy.html', 'terms.html', 'refund-policy.html', 'cookies.html'];
 
 export function pageUrls() {
   return STATIC_PAGES.map((p) => ({ loc: `${SITE_ORIGIN}/${p}`, lastmod: null }));
