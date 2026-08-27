@@ -138,6 +138,14 @@ function computeCityRouteLinks(route, routeList, relatedSlugs) {
 }
 
 export async function renderFlightRouteHtml(slug, lang) {
+  // [CACHE-VISIBILITY] This function only runs on an ISR cache MISS (first hit
+  // of a slug/lang, or a revalidation after the 24h window) — a cache HIT is
+  // served by the platform without ever calling this. So this single line is
+  // the cache-miss signal: its presence in the logs = a real render happened;
+  // its absence for a URL = that URL was served from cache. `duffel:false` is
+  // asserted deliberately — the render reads only content-api (Supabase) data
+  // and the pre-warmed cached price, never a live Duffel call.
+  const t0 = Date.now();
   const routeRaw = await getRoutePage(slug);
   if (!routeRaw) return null;
   await ensureGeo();
@@ -148,7 +156,9 @@ export async function renderFlightRouteHtml(slug, lang) {
   const related = computeRelatedRoutes(routeRaw, routeList);
   const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);
-  return renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
+  const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
+  console.log(JSON.stringify({ tag: 'flight-render', event: 'cache-miss', slug, lang, duffel: false, ms: Date.now() - t0 }));
+  return out;
 }
 
 export async function renderBlogPostHtml(slug, lang) {
