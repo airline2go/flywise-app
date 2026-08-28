@@ -82,9 +82,18 @@
     return 'de';
   }
 
+  // The banner is position:fixed at the bottom, so on tall forms (e.g. the
+  // multi-city search panel) it overlaps the bottom action buttons ("add
+  // destination", Search) and swallows their taps. Reserve matching space at
+  // the bottom of the page so that content can scroll clear of the banner.
+  function reserveSpace(px) {
+    try { document.body.style.paddingBottom = px ? px + 'px' : ''; } catch (e) {}
+  }
+
   function removeBanner() {
     var el = document.getElementById('airpiv-cookie-banner');
     if (el && el.parentNode) el.parentNode.removeChild(el);
+    reserveSpace(0);
   }
 
   function showBanner() {
@@ -134,6 +143,11 @@
     wrap.appendChild(row);
 
     (document.body || document.documentElement).appendChild(wrap);
+    // Reserve room below the page content so bottom buttons clear the banner.
+    reserveSpace(wrap.offsetHeight + 32);
+    window.addEventListener('resize', function () {
+      if (document.getElementById('airpiv-cookie-banner')) reserveSpace(wrap.offsetHeight + 32);
+    });
   }
 
   window.airpivOpenCookieSettings = showBanner;
