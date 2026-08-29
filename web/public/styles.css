@@ -21,3 +21,8 @@
 .sl-date{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--teal2);background:var(--teal-lt);border-radius:7px;padding:3px 9px;margin:0 0 8px;letter-spacing:.2px;line-height:1.2;text-transform:capitalize}
 .sl-date-i{width:12px;height:12px;flex-shrink:0}
 [data-theme=dark] .sl-date{background:#0fb5a01f;color:var(--teal)}
+/* Cheapest / Fastest result badges */
+.best-cheap{background:linear-gradient(90deg,#00a991,#008773)!important}
+.best-fast{background:linear-gradient(90deg,#ff8a00,#ff6a00)!important}
+.fc.badge-cheap{border:2px solid #00a991;box-shadow:0 4px 18px #00a99124}
+.fc.badge-fast{border:2px solid #ff8a00;box-shadow:0 4px 18px #ff8a0024}
