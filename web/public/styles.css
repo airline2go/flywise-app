@@ -26,3 +26,8 @@
 .best-fast{background:linear-gradient(90deg,#ff8a00,#ff6a00)!important}
 .fc.badge-cheap{border:2px solid #00a991;box-shadow:0 4px 18px #00a99124}
 .fc.badge-fast{border:2px solid #ff8a00;box-shadow:0 4px 18px #ff8a0024}
+/* Baggage-step leg badge (outbound vs return) */
+.bag-leg{display:inline-block;font-weight:800;font-size:10.5px;padding:1px 7px;border-radius:999px;margin-right:5px;vertical-align:middle}
+.bag-leg-out{color:#0e9c8f;background:rgba(18,179,166,.15)}
+.bag-leg-ret{color:#c26a00;background:rgba(255,138,0,.15)}
+[dir=rtl] .bag-leg{margin-right:0;margin-left:5px}
