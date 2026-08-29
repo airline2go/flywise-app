@@ -33,3 +33,32 @@
 [dir=rtl] .bag-leg{margin-right:0;margin-left:5px}
 .pp-jewel-tap{margin-top:12px;text-align:center;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.72);letter-spacing:.03em}
 [dir=rtl] .pp-jewel-tap{direction:rtl}
+/* Light payment card + flight recap (professional) */
+.pp-jewel{background:var(--card,#fff)!important;color:var(--tx,#1a2233)!important;border:2px solid var(--teal,#12b3a6)!important;box-shadow:0 6px 22px rgba(18,179,166,.12)!important}
+.pp-jewel-plane{display:none!important}
+.pp-jewel-route{color:var(--tx,#1a2233)}
+.pp-jewel-dots{border-top-color:rgba(0,0,0,.18)!important}
+.pp-jewel-meta{color:var(--tx3,#8895aa)!important}
+.pp-jewel-div{background:var(--bd,rgba(0,0,0,.08))!important}
+.pp-jewel-price{color:var(--teal,#0e9c8f)!important}
+.pp-jewel-lbl{color:var(--tx3,#8895aa)!important}
+.pp-jewel-was{color:var(--tx3,#9aa6b2)!important}
+.pp-jewel-tap{margin-top:12px;text-align:center;font-size:11.5px;font-weight:800;color:var(--teal,#0e9c8f);letter-spacing:.03em}
+.pp-jewel-flight{display:flex;flex-direction:column;gap:12px}
+.bfr-leg{display:flex;flex-direction:column;gap:6px}
+.bfr-lbl{font-size:11px;font-weight:800;letter-spacing:.03em}
+.bfr-lbl.out{color:var(--teal,#0e9c8f)}
+.bfr-lbl.ret{color:#c26a00}
+.bfr-row{display:flex;align-items:center;gap:10px}
+.bfr-logo{width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:#f2f4f8;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bfr-logo img{width:26px;height:26px;object-fit:contain}
+.bfr-mid{flex:1;min-width:0}
+.bfr-times{font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px}
+.bfr-arw{color:var(--tx3,#8895aa);font-weight:600}
+.bfr-sub{font-size:11.5px;color:var(--tx3,#8895aa);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bfr-al{font-weight:700}
+.bfr-right{text-align:right;flex:0 0 auto}
+.bfr-dur{font-size:12.5px;font-weight:800;color:var(--tx,#1a2233)}
+.bfr-stops{font-size:10.5px;font-weight:700;color:#c26a00}
+.bfr-stops.direct{color:var(--teal,#0e9c8f)}
+[dir=rtl] .bfr-right{text-align:left}
