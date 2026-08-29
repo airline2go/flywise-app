@@ -177,6 +177,16 @@
 .dgrid.hscroll,.rgrid2.hscroll{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:0;scroll-snap-type:x mandatory;scroll-padding-left:var(--pad)}
 .dgrid.hscroll .dcard,.rgrid2.hscroll .rchip{scroll-snap-align:start}
 }
+.rt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;background:linear-gradient(135deg,var(--bg2,#141c2e),var(--bg,#0d1420));border:1px solid rgba(255,255,255,.08);border-radius:14px}
+.rt-steps{display:flex;align-items:center;gap:8px;margin-left:auto}
+.rt-s{font-size:12.5px;font-weight:700;color:var(--tx3,#8895aa);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05)}
+.rt-s.on{color:#fff;background:var(--teal,#12b3a6)}
+.rt-s.done{color:var(--teal,#12b3a6);background:rgba(18,179,166,.14)}
+.rt-sar{color:var(--tx3,#8895aa);font-weight:800}
+.rt-back{cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#fff;font-weight:700;font-size:13px;padding:7px 12px;border-radius:10px}
+.rt-back:hover{background:rgba(255,255,255,.1)}
+.rt-chosen{font-size:13px;font-weight:700;color:var(--teal,#12b3a6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+[dir=rtl] .rt-steps{margin-left:0;margin-right:auto}
 </style>
 <!-- [LANG-SWITCHER-CRITICAL-JS] Self-contained open/close via event
      delegation on document, so it works even if a browser is still serving
