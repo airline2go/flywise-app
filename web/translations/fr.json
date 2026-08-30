@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Prix vérifiés pour la dernière fois : {date}",
   "priceLabelLive": "Prix en direct · Classe économique · 1 adulte",
   "priceLastCheckedTemplate": "Vérifié le {date}",
-  "alternativeAirportLabel": "Aéroport alternatif"
+  "alternativeAirportLabel": "Aéroport alternatif",
+  "offersComparedForRouteSuffix": "offres comparées pour cette liaison"
 }

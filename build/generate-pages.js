@@ -215,7 +215,12 @@ function computeRelatedRoutes(route, routeList) {
 
   return candidates
     .map((c) => scoreRelatedRoute(route, c))
-    .sort((a, b) => b.score - a.score)
+    // [RELATED-ORDER] Kept 1:1 with web/lib/related-routes.js: relevance score,
+    // then higher route_score (demand), then slug — demand-first and
+    // deterministic among equally-relevant suggestions.
+    .sort((a, b) => (b.score - a.score)
+      || ((b.candidate.route_score || 0) - (a.candidate.route_score || 0))
+      || String(a.candidate.slug).localeCompare(String(b.candidate.slug)))
     .slice(0, RELATED_ROUTE_LIMIT)
     .map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
 }

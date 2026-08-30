@@ -456,6 +456,7 @@ var L = {
   priceLastCheckedTpl: ${JSON.stringify(translate('priceLastCheckedTemplate', lang))},
   priceUnavailable: ${JSON.stringify(translate('priceUnavailable', lang))},
   pricesCheckedTodaySuffix: ${JSON.stringify(translate('pricesCheckedTodaySuffix', lang))},
+  offersForRouteSuffix: ${JSON.stringify(translate('offersComparedForRouteSuffix', lang))},
   lastUpdatedLabel: ${JSON.stringify(translate('lastUpdatedLabel', lang))},
   hoursAbbrev: ${JSON.stringify(translate('hoursAbbrev', lang))},
   minutesAbbrev: ${JSON.stringify(translate('minutesAbbrev', lang))},
@@ -526,21 +527,33 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
     var box = document.getElementById('route-price-box');
     var trustEl = document.getElementById('route-trust-signal');
     // [LIVE-VS-CANONICAL] A live price is shown as "live" only when the check
-    // is genuinely fresh (checkedAt within FRESH_MS). A stale live result — or
-    // no live result — falls back to the canonical price with an honest
-    // "last checked on" stamp, never a "checked today / X minutes ago" claim.
+    // is genuinely fresh. The freshness decision is now made ONCE, server-side:
+    // when the backend returns a canonical price snapshot (j.snapshot, see
+    // flywise-server config/price.js) we trust snapshot.isLive so the TTL lives
+    // in exactly one place. Only when no snapshot is present (older backend /
+    // rollout) do we fall back to computing freshness locally against FRESH_MS.
+    var snap = j && j.snapshot;
     var liveAgeMs = (j.ok && j.checkedAt) ? (Date.now() - new Date(j.checkedAt).getTime()) : Infinity;
-    var liveFresh = j.ok && j.price != null && j.checkedAt && liveAgeMs >= 0 && liveAgeMs <= FRESH_MS;
+    var liveFresh = snap
+      ? (snap.isLive === true && j.price != null)
+      : (j.ok && j.price != null && j.checkedAt && liveAgeMs >= 0 && liveAgeMs <= FRESH_MS);
     if (liveFresh) {
       box.innerHTML = '<div class="route-price-val">' + L.priceFromTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabelLive + '</div>';
       if (j.departure_date) {
         var ctaLink = document.querySelector('.route-cta');
         if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
       }
-      if (trustEl && j.checksToday != null) {
+      if (trustEl) {
         var minutesAgo = Math.max(0, Math.round(liveAgeMs / 60000));
         var agoText = minutesAgo < 1 ? ${JSON.stringify(translate('justNow', lang))} : (minutesAgo === 1 ? ${JSON.stringify(translate('updatedOneMinuteAgo', lang))} : ${JSON.stringify(translate('updatedMinutesAgoTemplate', lang))}.replace('{min}', minutesAgo));
-        trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span><span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
+        // [ROUTE-SPECIFIC-TRUST] Prefer the per-route offers-compared count
+        // (snapshot.offersCount) over the legacy site-wide daily counter, so the
+        // number honestly describes THIS route. Fall back to checksToday only
+        // when the snapshot doesn't carry a count.
+        var countHtml = '';
+        if (snap && snap.offersCount != null) countHtml = '<span>✓ ' + snap.offersCount + ' ' + L.offersForRouteSuffix + '</span>';
+        else if (j.checksToday != null) countHtml = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span>';
+        trustEl.innerHTML = countHtml + '<span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
         trustEl.style.display = '';
       }
     } else {
