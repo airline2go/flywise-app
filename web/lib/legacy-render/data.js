@@ -204,6 +204,16 @@ function cityNameForSlug(slug, lang) {
   return city ? resolveTranslation(city.translations, lang, city.name) : null;
 }
 
+// [CITY-LINK-GUARD] True only for a slug that has a real city page (present in
+// the /cities list setGeoData() loaded — the same source the sitemap trusts).
+// Route/airport records carry city_slug values for cities that were never given
+// their own page (e.g. budapest, oslo, abu-dhabi), so linking them blindly
+// emits internal links — and BreadcrumbList JSON-LD items — that resolve to a
+// 404. Callers gate the link on this and fall back to plain text.
+function hasCity(slug) {
+  return !!(slug && Object.prototype.hasOwnProperty.call(CITY_BY_SLUG, slug));
+}
+
 // Map detected city slugs to the localized names of the countries they're in
 // (drives "more articles from <country>"-style groupings).
 function citiesToCountries(slugs, lang) {
@@ -223,5 +233,5 @@ module.exports = {
   setGeoData,
   localizeCity, localizeCountry, localizeAirport,
   getAlternativeAirports, buildIataNameMap, slugForIata,
-  detectCitiesInText, citiesToCountries, cityNameForSlug,
+  detectCitiesInText, citiesToCountries, cityNameForSlug, hasCity,
 };

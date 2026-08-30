@@ -1,5 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
-const { localizeCity, getAlternativeAirports } = require('./data');
+const { localizeCity, getAlternativeAirports, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
@@ -676,13 +676,21 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
 
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
   if (route.destination_country) breadcrumbHtml += `<a href="${urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`)}">${escHtml(route.destination_country)}</a><span>›</span>`;
-  if (route.destination_city_slug) breadcrumbHtml += `<a href="${urlFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`)}">${escHtml(route.destination_city)}</a><span>›</span>`;
+  // [CITY-LINK-GUARD] Only link (and list in JSON-LD) a destination city that
+  // actually has a page — many route records carry a city_slug for a city that
+  // was never given one, so an unconditional link 404s. When absent, keep the
+  // city name as plain text in the visible trail but drop it from the
+  // BreadcrumbList so no structured-data item points at a 404 URL.
+  const destCityHasPage = hasCity(route.destination_city_slug);
+  if (route.destination_city_slug) breadcrumbHtml += destCityHasPage
+    ? `<a href="${urlFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`)}">${escHtml(route.destination_city)}</a><span>›</span>`
+    : `<span>${escHtml(route.destination_city)}</span><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(route.origin_city)} → ${escHtml(route.destination_city)}</span></nav>`;
 
   const breadcrumbItems = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
   let bcPos = 2;
   if (route.destination_country) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_country, item: urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`) });
-  if (route.destination_city_slug) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_city, item: urlFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`) });
+  if (route.destination_city_slug && destCityHasPage) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_city, item: urlFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`) });
   breadcrumbItems.push({ '@type': 'ListItem', position: bcPos, name: `${route.origin_city} → ${route.destination_city}`, item: url });
 
   const airportInfoHtml = `<section class="airport-info-section"><h2>${translate('airportInformation', lang)}</h2><div class="airport-info-grid">` +
@@ -740,11 +748,12 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     : '';
 
   // [INTERNAL-LINKING] Hero city names link to their city pages (were plain
-  // text). Falls back to plain text when a city has no slug.
-  const originCityNode = route.origin_city_slug
+  // text). Falls back to plain text when a city has no slug — or, per
+  // [CITY-LINK-GUARD], when the slug has no actual page (else the link 404s).
+  const originCityNode = hasCity(route.origin_city_slug)
     ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.origin_city_slug)}`)}">${escHtml(route.origin_city)}</a>`
     : `<span>${escHtml(route.origin_city)}</span>`;
-  const destCityNode = route.destination_city_slug
+  const destCityNode = hasCity(route.destination_city_slug)
     ? `<a href="${pathFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`)}">${escHtml(route.destination_city)}</a>`
     : `<span>${escHtml(route.destination_city)}</span>`;
 

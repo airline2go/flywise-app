@@ -1,5 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
-const { localizeCity, localizeCountry } = require('./data');
+const { localizeCity, localizeCountry, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -93,8 +93,12 @@ function renderCountryPage(country, routes, lang, routeMetaBySlug) {
   if (facts.reachableCountryCount > 0) statTiles.push(statTile(nfmt(facts.reachableCountryCount, lang), translate('cityStatCountries', lang)));
   const statsHtml = statTiles.length >= 2 ? `<div class="country-stats">${statTiles.join('')}</div>` : '';
 
-  const citiesChipsHtml = facts.cities.length >= 2
-    ? `<section class="country-chips"><h2>${escHtml(format(translate('countrySectionCities', lang), { country: countryName }))}</h2><div class="country-chip-grid">${facts.cities.slice(0, 24).map((c) => `<a class="country-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
+  // [CITY-LINK-GUARD] Only chip cities that have a real page — a chip linking to
+  // a city with no page 404s. Gate the section on the linkable count so it never
+  // renders an empty grid.
+  const chipCities = facts.cities.filter((c) => hasCity(c.slug));
+  const citiesChipsHtml = chipCities.length >= 2
+    ? `<section class="country-chips"><h2>${escHtml(format(translate('countrySectionCities', lang), { country: countryName }))}</h2><div class="country-chip-grid">${chipCities.slice(0, 24).map((c) => `<a class="country-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
     : '';
 
   const countriesChipsHtml = facts.reachableCountries.length >= 2
@@ -149,16 +153,19 @@ ${faqHtml}
   const faqSchema = faqItems.length
     ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })) }
     : null;
-  const itemListSchema = facts.topDestinations.length
+  // [CITY-LINK-GUARD] Drop destinations without a real city page — a 404 url
+  // invalidates the ItemList structured data. Reindex positions to stay 1..N.
+  const itemListDestinations = facts.topDestinations.filter((d) => hasCity(d.slug));
+  const itemListSchema = itemListDestinations.length
     ? {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
         name: format(translate('countrySectionReach', lang), { country: countryName }),
-        itemListElement: facts.topDestinations.map((d, i) => ({
+        itemListElement: itemListDestinations.map((d, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           name: d.name,
-          url: d.slug ? urlFor(lang, `city/${encodeURIComponent(d.slug)}`) : undefined,
+          url: urlFor(lang, `city/${encodeURIComponent(d.slug)}`),
         })),
       }
     : null;

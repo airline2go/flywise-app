@@ -129,3 +129,27 @@ test('route with observed airlines is indexed', () => {
   const { html } = renderFlightRoutePage(routeRow({ airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] });
   assert.equal(robotsFrom(html), 'index, follow');
 });
+
+// ─── [CITY-LINK-GUARD] Never link/list a city that has no page ────────────
+// A route can carry a *_city_slug for a city that was never given its own page
+// (e.g. budapest); linking it emits a 404 internal link and — worse — a
+// BreadcrumbList item pointing at a 404 URL, which invalidates the structured
+// data. The guard must fall back to plain text and drop the JSON-LD item.
+test('route breadcrumb does not link a destination city that has no page', () => {
+  const { html } = renderFlightRoutePage(
+    routeRow({ destination_iata: 'BUD', destination_city: 'Budapest', destination_city_slug: 'budapest', destination_country: 'HU' }),
+    'de', [], { fromOrigin: [], toDestination: [] },
+  );
+  // No visible anchor and no JSON-LD item pointing at the non-existent city page.
+  assert.doesNotMatch(html, /href="[^"]*\/city\/budapest"/, 'must not emit a 404 city link');
+  assert.doesNotMatch(html, /"item":"[^"]*\/city\/budapest"/, 'must not emit a 404 city URL in BreadcrumbList');
+  // The city name itself is still shown to the reader (as plain text).
+  assert.match(html, />Budapest</, 'destination city name should still be visible');
+});
+
+test('route still links a destination city that has a real page', () => {
+  // muenchen IS in the geo fixtures — the guard must not regress the normal case.
+  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] });
+  assert.match(html, /href="[^"]*\/city\/muenchen"/, 'existing city should still be linked');
+  assert.match(html, /"item":"[^"]*\/city\/muenchen"/, 'existing city should still be in BreadcrumbList');
+});
