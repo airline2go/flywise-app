@@ -44,6 +44,21 @@ const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
 // name both localized to `lang`), so an English page matches "Munich" and a
 // German page matches "München". Nothing is fabricated.
 const ROUTE_RELATED_ARTICLE_LIMIT = 4;
+// [ARTICLE-RELEVANCE] Rank blog posts by how genuinely they relate to THIS
+// route, and drop weak/misleading matches, rather than filling the section
+// with anything that mentions a single endpoint. The old rule scored on a bare
+// city-slug hit anywhere in title+body, which surfaced e.g. a "cheap flights
+// Málaga → Ibiza" guide on the Ibiza → Frankfurt page (it mentions our ORIGIN,
+// Ibiza — but it is really about a different route). The tiered rule:
+//   • both endpoints present            → strongest (route-level relevance)
+//   • destination present               → strong  (a page is about GOING there)
+//   • origin only, no rival city in the → weak     (a genuine "flights from
+//     TITLE (e.g. "flights from Ibiza")             {origin}" piece)
+//   • origin only, but the TITLE also   → excluded (it is about another
+//     names a city that is not our                   route that merely passes
+//     destination                                    through our origin)
+// Title hits weigh more than body hits (the title states the article's real
+// subject). Fewer, on-topic links beat a padded section of loose matches.
 function computeRelatedArticles(route, posts) {
   if (!posts || !posts.length) return [];
   // Match by canonical city slug (entity), resolved from the route's airport
@@ -52,12 +67,28 @@ function computeRelatedArticles(route, posts) {
   const originSlug = slugForIata(route.origin_iata);
   const destSlug = slugForIata(route.destination_iata);
   if (!originSlug && !destSlug) return [];
+  const scoreOf = (p) => {
+    const titleSlugs = new Set(detectCitiesInText(p.title || ''));
+    const bodySlugs = new Set(detectCitiesInText((p.content || '').replace(/<[^>]+>/g, ' ')));
+    const inTitle = (s) => !!s && titleSlugs.has(s);
+    const inText = (s) => !!s && (titleSlugs.has(s) || bodySlugs.has(s));
+    const destHit = inText(destSlug);
+    const originHit = inText(originSlug);
+    // Both endpoints → route-level match (strongest; title-both ranks highest).
+    if (destHit && originHit) return (inTitle(destSlug) && inTitle(originSlug)) ? 100 : 80;
+    // Destination guide → strong (the route page is about going to the dest).
+    if (destHit) return inTitle(destSlug) ? 40 : 20;
+    // Origin only: keep a genuine "flights from {origin}" piece, but reject an
+    // article whose TITLE also names another city that is not our destination —
+    // that is a different route's article merely featuring our origin.
+    if (originHit) {
+      const rivalInTitle = [...titleSlugs].some((s) => s !== originSlug && s !== destSlug);
+      return rivalInTitle ? 0 : 10;
+    }
+    return 0;
+  };
   return posts
-    .map((p) => {
-      const slugs = new Set(detectCitiesInText(`${p.title || ''} ${(p.content || '').replace(/<[^>]+>/g, ' ')}`));
-      const score = (originSlug && slugs.has(originSlug) ? 1 : 0) + (destSlug && slugs.has(destSlug) ? 1 : 0);
-      return { post: p, score };
-    })
+    .map((p) => ({ post: p, score: scoreOf(p) }))
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, ROUTE_RELATED_ARTICLE_LIMIT)
