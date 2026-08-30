@@ -743,6 +743,20 @@ ${relatedArticlesHtml}
   };
   if (route.distance_km != null) flightSchema.flightDistance = `${route.distance_km} km`;
   if (route.avg_duration_min != null) flightSchema.estimatedFlightDuration = isoDuration(route.avg_duration_min);
+  // [PRICE-OFFER-SCHEMA] Emit an Offer with the lowest observed fare so Google
+  // can surface a price for the route. Gated on the SAME quality bar as the
+  // visible "average prices" panel (a real min from >= 3 samples) — never a
+  // fabricated or single-sample outlier quote. priceCurrency mirrors the
+  // persisted aggregate; the price is the lowest observed fare (price_min).
+  if (route.price_min != null && Number(route.price_sample_count) >= 3) {
+    flightSchema.offers = {
+      '@type': 'Offer',
+      price: Number(route.price_min).toFixed(2),
+      priceCurrency: route.price_currency || 'EUR',
+      availability: 'https://schema.org/InStock',
+      url,
+    };
+  }
 
   // [ITEMLIST-SCHEMA] Structured ItemList mirroring the visible "similar
   // routes" section — an ordered list of linked route pages for search
