@@ -4,6 +4,59 @@ const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
 
+// [SECONDARY-AIRPORT-NAMES] A secondary/low-cost airport shares a city entity
+// with the main airport (e.g. Frankfurt owns FRA and HHN), so the data layer
+// maps its IATA code to the CITY name — which made an "alternative airport"
+// card read "Frankfurt", wrongly implying it is Frankfurt's main airport (FRA).
+// This curated, factual map gives such airports their real name so the card is
+// honest ("Frankfurt-Hahn (HHN)"); any code not listed falls back to a neutral
+// "Alternative airport" label rather than the plain city name. Names are
+// proper nouns (identical across languages), so one map serves every locale.
+const SECONDARY_AIRPORT_NAMES = {
+  HHN: 'Frankfurt-Hahn', NRN: 'Weeze (Niederrhein)', CRL: 'Brussels-Charleroi',
+  BVA: 'Paris-Beauvais', NYO: 'Stockholm-Skavsta', BMA: 'Stockholm-Bromma',
+  TRF: 'Oslo-Torp', GRO: 'Girona-Costa Brava', REU: 'Reus', SXF: 'Berlin-Schönefeld',
+  EWR: 'Newark', LGA: 'New York-LaGuardia', ONT: 'Ontario', BUR: 'Hollywood Burbank',
+  STN: 'London-Stansted', LTN: 'London-Luton', LGW: 'London-Gatwick',
+  BGY: 'Milan-Bergamo',
+};
+
+// [AIRLINE-COUNT-CANON] Single source of truth for "how many airlines" the page
+// shows. When the route carries an observed airline LIST (route.airlines, the
+// same list rendered in the visible "Airlines on this route" section), its
+// length is authoritative — the count card, the intro clause and the FAQ must
+// all agree with what the reader can actually count on the page. Only when no
+// list is present do we fall back to the persisted scalar route.airline_count.
+// This removes the "8 Airlines" vs a 14-name list mismatch at the source.
+function effectiveAirlineCount(route) {
+  if (Array.isArray(route.airlines) && route.airlines.length) return route.airlines.length;
+  if (route.airline_count != null && route.airline_count > 0) return route.airline_count;
+  return null;
+}
+
+// [ROUTE-CONSISTENCY-GUARD] Build-time validation that catches data
+// contradictions before a page ships, instead of a human spotting them in
+// production. Non-fatal: it logs a structured warning (so a CI/build log or a
+// content-ops sweep can surface it) but never throws — a single bad field must
+// not take a whole build down. Checks the invariants the SEO review called out:
+// the airline count must equal the airline list length, and the stop-
+// distribution buckets must sum to a positive total when present.
+function validateRouteConsistency(route) {
+  const warn = (code, detail) => {
+    try { console.warn(`[route-consistency] ${route.slug || '?'} ${code}: ${detail}`); } catch (e) { /* noop */ }
+  };
+  if (Array.isArray(route.airlines) && route.airlines.length
+      && route.airline_count != null && route.airline_count !== route.airlines.length) {
+    warn('airline-count-mismatch', `airline_count=${route.airline_count} but airlines.length=${route.airlines.length}`);
+  }
+  const sd = route.stop_distribution;
+  if (sd && typeof sd === 'object') {
+    const total = Object.keys(sd).reduce((s, k) => s + Number(sd[k] || 0), 0);
+    if (!(total > 0)) warn('stop-distribution-empty', `stop_distribution has no positive total`);
+  }
+  return route;
+}
+
 // [BUG-FIX] The original flight-route.html wrote its JSON-LD schema TWICE —
 // a second, dead write unconditionally clobbered the first with a generic
 // hardcoded 2-question FAQ, discarding the real dynamic FAQ/custom_faq data.
@@ -52,10 +105,11 @@ function buildDynamicIntro(r, lang) {
   const closing = translate(closingVariantKeys[pickVariant(r.slug, closingVariantKeys.length)], lang);
 
   let carrierClause = '';
-  if (r.airline_count != null && r.airline_count > 0) {
-    carrierClause = r.airline_count === 1
+  const carrierCount = effectiveAirlineCount(r);
+  if (carrierCount != null) {
+    carrierClause = carrierCount === 1
       ? translate('routeIntroCarrierSingle', lang)
-      : format(translate('routeIntroCarrierMulti', lang), { count: r.airline_count });
+      : format(translate('routeIntroCarrierMulti', lang), { count: carrierCount });
   }
 
   const popularClause = r.route_score_confidence === 'high' ? translate('routeIntroPopular', lang) : '';
@@ -116,13 +170,16 @@ function buildFaqItems(route, lang) {
   }
 
   // [CONTENT-VARIATION-2] New — varies FAQ content based on the route's
-  // actual airline data (Phase 1), rather than a fixed question set.
-  if (route.airline_count != null && route.airline_count > 0) {
+  // actual airline data (Phase 1), rather than a fixed question set. Uses the
+  // canonical airline count (list length when present) so the FAQ never claims
+  // a different number than the visible airline list.
+  const faqAirlineCount = effectiveAirlineCount(route);
+  if (faqAirlineCount != null) {
     items.push({
       question: format(translate('routeFaqAirlineQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: route.airline_count === 1
+      answer: faqAirlineCount === 1
         ? translate('routeFaqAirlineAnswerSingle', lang)
-        : format(translate('routeFaqAirlineAnswerMulti', lang), { count: route.airline_count }),
+        : format(translate('routeFaqAirlineAnswerMulti', lang), { count: faqAirlineCount }),
     });
   }
 
@@ -261,7 +318,8 @@ function buildRouteFactsHtml(route, lang) {
   if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
     cards.push(card(formatHoursMinutes(route.min_duration_min, lang), translate('routeFactFastest', lang)));
   }
-  if (route.airline_count != null && route.airline_count > 0) cards.push(card(route.airline_count.toLocaleString(loc), translate('routeFactAirlines', lang)));
+  const factsAirlineCount = effectiveAirlineCount(route);
+  if (factsAirlineCount != null) cards.push(card(factsAirlineCount.toLocaleString(loc), translate('routeFactAirlines', lang)));
 
   let breakdownHtml = '';
   const sd = route.stop_distribution;
@@ -316,9 +374,14 @@ function buildPriceHtml(route, lang) {
   const trend = trendMap[route.price_trend];
   if (trend) cards.push(card(`${trend[0]} ${escHtml(translate(trend[1], lang))}`, translate('routePriceTrendLabel', lang)));
 
+  // [TIMESTAMP-SEPARATION] The price section's freshness line describes PRICE
+  // data (price_updated_at), so it uses the price-specific label — distinct
+  // from the route-facts section, which describes STRECKENDATEN (route data)
+  // via its own insights_updated_at. Mixing the two under one "Flugdaten
+  // aktualisiert" label was the source of the conflicting-timestamps confusion.
   const updated = route.price_updated_at ? String(route.price_updated_at).slice(0, 10) : null;
   const note = format(translate('routePriceNote', lang), { count: Number(route.price_sample_count).toLocaleString(loc) })
-    + (updated ? ` ${format(translate('routeDataUpdated', lang), { date: updated })}` : '');
+    + (updated ? ` ${format(translate('routePriceCheckedOn', lang), { date: updated })}` : '');
 
   return `<section class="route-facts-section"><h2>${translate('routePriceHeading', lang)}</h2>`
     + `<div class="route-insights-grid">${cards.join('')}</div>`
@@ -388,6 +451,9 @@ var PROXY = 'https://api.airpiv.com';
 // price for that entire language.
 var L = {
   priceLabel: ${JSON.stringify(translate('priceLabel', lang))},
+  priceLabelLive: ${JSON.stringify(translate('priceLabelLive', lang))},
+  priceFromTpl: ${JSON.stringify(translate('priceFromTemplate', lang))},
+  priceLastCheckedTpl: ${JSON.stringify(translate('priceLastCheckedTemplate', lang))},
   priceUnavailable: ${JSON.stringify(translate('priceUnavailable', lang))},
   pricesCheckedTodaySuffix: ${JSON.stringify(translate('pricesCheckedTodaySuffix', lang))},
   lastUpdatedLabel: ${JSON.stringify(translate('lastUpdatedLabel', lang))},
@@ -397,6 +463,29 @@ var L = {
   avgTravel: ${JSON.stringify(translate('averageTotalTravelTime', lang))},
   shortestFlight: ${JSON.stringify(translate('shortestFlightTimeFound', lang))}
 };
+// [CANONICAL-PRICE] The single server-side price of record for this route,
+// baked from the persisted price_min aggregate (the same value the visible
+// "average prices" section and the JSON-LD Offer use). The hero shows the LIVE
+// price only when the live check is genuinely fresh (see FRESH_MS); otherwise
+// it falls back to this canonical value with an honest "last checked on"
+// stamp — so the hero, the price section and the schema never disagree, and the
+// page never calls a days-old number "live".
+var CANON_PRICE = ${route.price_min != null ? Number(route.price_min).toFixed(0) : 'null'};
+var CANON_CCY = ${JSON.stringify(route.price_currency || 'EUR')};
+var CANON_DATE = ${JSON.stringify(route.price_updated_at ? String(route.price_updated_at).slice(0, 10) : null)};
+var FRESH_MS = 24 * 60 * 60 * 1000; // "live" freshness window: 24h
+function fmtCcy(n){ return CANON_CCY === 'EUR' ? (n + ' €') : CANON_CCY === 'USD' ? ('$' + n) : CANON_CCY === 'GBP' ? ('£' + n) : (n + ' ' + CANON_CCY); }
+function renderCanonicalPrice(box, trustEl){
+  if (CANON_PRICE == null) {
+    box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
+    return;
+  }
+  box.innerHTML = '<div class="route-price-val">' + L.priceFromTpl.replace('{price}', fmtCcy(CANON_PRICE)) + '</div><div class="route-price-lbl">' + L.priceLabel + '</div>';
+  if (trustEl && CANON_DATE) {
+    trustEl.innerHTML = '<span>' + L.priceLastCheckedTpl.replace('{date}', CANON_DATE) + '</span>';
+    trustEl.style.display = '';
+  }
+}
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 // [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
 // never affects page behavior if it fails. sendBeacon (with a text/plain
@@ -435,22 +524,27 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
   .then(function(j){
     clearTimeout(priceTimer);
     var box = document.getElementById('route-price-box');
-    if (j.ok && j.price != null) {
-      var priceTpl = ${JSON.stringify(translate('priceFromTemplate', lang))};
-      box.innerHTML = '<div class="route-price-val">' + priceTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabel + '</div>';
+    var trustEl = document.getElementById('route-trust-signal');
+    // [LIVE-VS-CANONICAL] A live price is shown as "live" only when the check
+    // is genuinely fresh (checkedAt within FRESH_MS). A stale live result — or
+    // no live result — falls back to the canonical price with an honest
+    // "last checked on" stamp, never a "checked today / X minutes ago" claim.
+    var liveAgeMs = (j.ok && j.checkedAt) ? (Date.now() - new Date(j.checkedAt).getTime()) : Infinity;
+    var liveFresh = j.ok && j.price != null && j.checkedAt && liveAgeMs >= 0 && liveAgeMs <= FRESH_MS;
+    if (liveFresh) {
+      box.innerHTML = '<div class="route-price-val">' + L.priceFromTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabelLive + '</div>';
       if (j.departure_date) {
         var ctaLink = document.querySelector('.route-cta');
         if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
       }
+      if (trustEl && j.checksToday != null) {
+        var minutesAgo = Math.max(0, Math.round(liveAgeMs / 60000));
+        var agoText = minutesAgo < 1 ? ${JSON.stringify(translate('justNow', lang))} : (minutesAgo === 1 ? ${JSON.stringify(translate('updatedOneMinuteAgo', lang))} : ${JSON.stringify(translate('updatedMinutesAgoTemplate', lang))}.replace('{min}', minutesAgo));
+        trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span><span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
+        trustEl.style.display = '';
+      }
     } else {
-      box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
-    }
-    var trustEl = document.getElementById('route-trust-signal');
-    if (trustEl && j.ok && j.checksToday != null && j.checkedAt) {
-      var minutesAgo = Math.max(0, Math.round((Date.now() - new Date(j.checkedAt).getTime()) / 60000));
-      var agoText = minutesAgo < 1 ? ${JSON.stringify(translate('justNow', lang))} : (minutesAgo === 1 ? ${JSON.stringify(translate('updatedOneMinuteAgo', lang))} : ${JSON.stringify(translate('updatedMinutesAgoTemplate', lang))}.replace('{min}', minutesAgo));
-      trustEl.innerHTML = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span><span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
-      trustEl.style.display = '';
+      renderCanonicalPrice(box, trustEl);
     }
     if (j.ok && j.insights) {
       var ins = j.insights;
@@ -469,7 +563,9 @@ fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.o
   })
   .catch(function(){
     clearTimeout(priceTimer);
-    document.getElementById('route-price-box').innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
+    // Live check failed/blocked/timed out — fall back to the canonical price
+    // (with its "last checked on" stamp) rather than a bare "unavailable".
+    renderCanonicalPrice(document.getElementById('route-price-box'), document.getElementById('route-trust-signal'));
   });
 try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, slug: ${JSON.stringify(route.slug)} }); } catch (e) {}
 })();
@@ -534,6 +630,10 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
   });
+  // [ROUTE-CONSISTENCY-GUARD] Surface any data contradiction (airline count vs
+  // list, empty stop distribution) in the build/render log before the page is
+  // served. Non-fatal — logs once per render, never blocks the page.
+  validateRouteConsistency(routeRaw);
 
   // [ADMIN-OVERRIDE-ALL-LANGS] custom_title/custom_meta_description/intro_text
   // are admin-authored per route (not per language) — they used to only
@@ -577,9 +677,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     `<a class="airport-info-card" href="${pathFor(lang, `airport/${encodeURIComponent(route.destination_iata)}`)}"><span class="airport-info-code">${escHtml(route.destination_iata)}</span><span class="airport-info-city">${escHtml(route.destination_city)}</span></a>` +
     `</div></section>`;
 
+  // [ALT-AIRPORT-NAMING] Show the alternative airport's real name (curated
+  // secondary-airport map) rather than the shared city name, so e.g. HHN never
+  // reads as if it were Frankfurt's main airport. Unknown codes get a neutral
+  // "Alternative airport" label instead of the misleading bare city name.
+  const altAirportSubtitle = (code) => SECONDARY_AIRPORT_NAMES[code] || translate('alternativeAirportLabel', lang);
   const altAirports = getAlternativeAirports(route.destination_city, route.destination_iata, lang);
   const altAirportsHtml = altAirports.length
-    ? `<section class="airport-info-section"><h2>${translate('alternativeAirportsIn', lang)} ${escHtml(route.destination_city)}</h2><div class="airport-info-grid">${altAirports.map((code) => `<a class="airport-info-card" href="${pathFor(lang, `airport/${encodeURIComponent(code)}`)}"><span class="airport-info-code">${escHtml(code)}</span><span class="airport-info-city">${escHtml(route.destination_city)}</span></a>`).join('')}</div></section>`
+    ? `<section class="airport-info-section"><h2>${translate('alternativeAirportsIn', lang)} ${escHtml(route.destination_city)}</h2><div class="airport-info-grid">${altAirports.map((code) => `<a class="airport-info-card" href="${pathFor(lang, `airport/${encodeURIComponent(code)}`)}"><span class="airport-info-code">${escHtml(code)}</span><span class="airport-info-city">${escHtml(altAirportSubtitle(code))}</span></a>`).join('')}</div></section>`
     : '';
 
   // [AIRLINE-SECTION] Real carriers observed on this route (route.airlines,
