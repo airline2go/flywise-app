@@ -4,6 +4,7 @@ import ProfitClient from './ProfitClient';
 
 export default async function ProfitPage() {
   const session = await getAdminSession();
+  if (!session) redirect('/admin/login');
   if (session.role !== 'admin') redirect('/admin');
   return <ProfitClient />;
 }

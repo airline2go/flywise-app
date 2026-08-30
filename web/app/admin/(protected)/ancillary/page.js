@@ -4,6 +4,7 @@ import AncillaryClient from './AncillaryClient';
 
 export default async function AncillaryPage() {
   const session = await getAdminSession();
+  if (!session) redirect('/admin/login');
   if (session.role !== 'admin') redirect('/admin');
   return <AncillaryClient />;
 }

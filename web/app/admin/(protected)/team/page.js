@@ -8,6 +8,7 @@ import TeamClient from './TeamClient';
 // (admin-staff.routes.js), this only avoids showing a broken page.
 export default async function TeamPage() {
   const session = await getAdminSession();
+  if (!session) redirect('/admin/login');
   if (session.role !== 'admin') redirect('/admin');
   return <TeamClient />;
 }
