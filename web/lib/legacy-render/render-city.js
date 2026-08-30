@@ -1,5 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
-const { localizeCity, localizeCountry, getAlternativeAirports } = require('./data');
+const { localizeCity, localizeCountry, getAlternativeAirports, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { computeCityFacts, buildCityFaqItems, buildCityIntro, nfmt } = require('./city-facts');
@@ -241,12 +241,15 @@ ${eeatHtml}
 
   // [ITEMLIST-SCHEMA] The popularity-ranked destinations, exposed as an
   // ItemList of internal links (only when a real demand signal ranked them).
-  const itemListSchema = facts.topDestinations.length
+  // [CITY-LINK-GUARD] Drop destinations without a real city page — a 404 url
+  // invalidates the ItemList structured data. Reindex positions to stay 1..N.
+  const itemListDestinations = facts.topDestinations.filter((d) => hasCity(d.slug));
+  const itemListSchema = itemListDestinations.length
     ? {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
         name: format(translate('citySectionTopDestinations', lang), { city: cityName }),
-        itemListElement: facts.topDestinations.map((d, i) => ({
+        itemListElement: itemListDestinations.map((d, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           name: d.name,

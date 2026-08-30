@@ -1,5 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
-const { localizeCity, localizeCountry, localizeAirport } = require('./data');
+const { localizeCity, localizeCountry, localizeAirport, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -86,7 +86,10 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
   const introText = buildAirportIntro(airport, facts, cityName, lang);
 
   const countryHref = airport.country ? urlFor(lang, `country/${encodeURIComponent(airport.country)}`) : null;
-  const cityHref = airport.city_slug ? urlFor(lang, `city/${encodeURIComponent(airport.city_slug)}`) : null;
+  // [CITY-LINK-GUARD] Link the city crumb only when that city has a real page;
+  // an airport's city_slug can name a city that was never given one, and an
+  // unconditional link (and its BreadcrumbList item) would resolve to a 404.
+  const cityHref = (airport.city_slug && hasCity(airport.city_slug)) ? urlFor(lang, `city/${encodeURIComponent(airport.city_slug)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
   if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(countryName || airport.country)}</a><span>›</span>`;
   if (cityHref) breadcrumbHtml += `<a href="${cityHref}">${escHtml(cityName)}</a><span>›</span>`;
@@ -187,7 +190,7 @@ ${faqHtml}
   const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
   let pos = 2;
   if (airport.country) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: countryName || airport.country, item: urlFor(lang, `country/${airport.country}`) });
-  if (airport.city_slug) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: cityName, item: urlFor(lang, `city/${airport.city_slug}`) });
+  if (cityHref) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: cityName, item: cityHref });
   breadcrumbList.push({ '@type': 'ListItem', position: pos, name: airport.code, item: url });
 
   // [AIRPORT-SCHEMA] schema.org Airport type, already correct — now also
@@ -214,12 +217,16 @@ ${faqHtml}
   const faqSchema = faqItems.length
     ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })) }
     : null;
-  const itemListSchema = facts.topDestinations.length
+  // [CITY-LINK-GUARD] Only destinations that have a real city page belong in the
+  // ItemList — a url pointing at a city with no page 404s, which invalidates the
+  // structured data. Reindex positions after filtering so they stay 1..N.
+  const itemListDestinations = facts.topDestinations.filter((d) => hasCity(d.slug));
+  const itemListSchema = itemListDestinations.length
     ? {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
         name: format(translate('airportSectionTopDestinations', lang), { code: airport.code }),
-        itemListElement: facts.topDestinations.map((d, i) => ({
+        itemListElement: itemListDestinations.map((d, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           name: d.name,

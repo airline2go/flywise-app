@@ -1,5 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
-const { localizeCity } = require('./data');
+const { localizeCity, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -103,8 +103,12 @@ function renderAirlinePage(airline, routes, lang, mostUsedRoutes, routeMetaBySlu
   if (facts.countryCount > 0) statTiles.push(statTile(nfmt(facts.countryCount, lang), translate('cityStatCountries', lang)));
   const statsHtml = statTiles.length >= 2 ? `<div class="airline-stats">${statTiles.join('')}</div>` : '';
 
-  const destinationsChipsHtml = facts.cities.length >= 2
-    ? `<section class="airline-chips"><h2>${escHtml(format(translate('airlineSectionDestinations', lang), { airline: airline.name }))}</h2><div class="airline-chip-grid">${facts.cities.slice(0, 24).map((c) => `<a class="airline-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
+  // [CITY-LINK-GUARD] Only link destination cities that have a real page — a
+  // chip (and its ItemList counterpart below) pointing at a city with no page
+  // 404s. Shared by the visible chips and the structured data.
+  const linkableCities = facts.cities.filter((c) => hasCity(c.slug));
+  const destinationsChipsHtml = linkableCities.length >= 2
+    ? `<section class="airline-chips"><h2>${escHtml(format(translate('airlineSectionDestinations', lang), { airline: airline.name }))}</h2><div class="airline-chip-grid">${linkableCities.slice(0, 24).map((c) => `<a class="airline-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
     : '';
 
   const countriesChipsHtml = facts.countries.length >= 2
@@ -157,12 +161,12 @@ ${faqHtml}
   const faqSchema = faqItems.length
     ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })) }
     : null;
-  const itemListSchema = facts.cities.length >= 3
+  const itemListSchema = linkableCities.length >= 3
     ? {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
         name: format(translate('airlineSectionDestinations', lang), { airline: airline.name }),
-        itemListElement: facts.cities.slice(0, 10).map((c, i) => ({
+        itemListElement: linkableCities.slice(0, 10).map((c, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           name: c.name,
