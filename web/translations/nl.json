@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Prijzen laatst gecontroleerd: {date}",
   "priceLabelLive": "Live prijs · Economy · 1 volwassene",
   "priceLastCheckedTemplate": "Laatst gecontroleerd op {date}",
-  "alternativeAirportLabel": "Alternatieve luchthaven"
+  "alternativeAirportLabel": "Alternatieve luchthaven",
+  "offersComparedForRouteSuffix": "aanbiedingen vergeleken voor deze route"
 }

@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Prezzi controllati l'ultima volta: {date}",
   "priceLabelLive": "Prezzo in tempo reale · Economy · 1 adulto",
   "priceLastCheckedTemplate": "Controllato l'ultima volta il {date}",
-  "alternativeAirportLabel": "Aeroporto alternativo"
+  "alternativeAirportLabel": "Aeroporto alternativo",
+  "offersComparedForRouteSuffix": "offerte confrontate per questa tratta"
 }

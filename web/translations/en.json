@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Price data last checked: {date}",
   "priceLabelLive": "Live price · Economy · 1 adult",
   "priceLastCheckedTemplate": "Last checked on {date}",
-  "alternativeAirportLabel": "Alternative airport"
+  "alternativeAirportLabel": "Alternative airport",
+  "offersComparedForRouteSuffix": "offers compared for this route"
 }

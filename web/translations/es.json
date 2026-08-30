@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Precios comprobados por última vez: {date}",
   "priceLabelLive": "Precio en vivo · Turista · 1 adulto",
   "priceLastCheckedTemplate": "Comprobado por última vez el {date}",
-  "alternativeAirportLabel": "Aeropuerto alternativo"
+  "alternativeAirportLabel": "Aeropuerto alternativo",
+  "offersComparedForRouteSuffix": "ofertas comparadas para esta ruta"
 }

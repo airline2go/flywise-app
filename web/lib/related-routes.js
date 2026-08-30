@@ -45,7 +45,13 @@ function computeRelatedRoutes(route, routeList) {
 
   return candidates
     .map((c) => scoreRelatedRoute(route, c))
-    .sort((a, b) => b.score - a.score)
+    // [RELATED-ORDER] Primary: relevance score. Tie-breakers, in order:
+    // higher route_score (search demand / SEO importance) first, then slug —
+    // so equally-relevant suggestions surface the higher-demand route and the
+    // order is deterministic (never dependent on the input list's order).
+    .sort((a, b) => (b.score - a.score)
+      || ((b.candidate.route_score || 0) - (a.candidate.route_score || 0))
+      || String(a.candidate.slug).localeCompare(String(b.candidate.slug)))
     .slice(0, RELATED_ROUTE_LIMIT)
     .map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
 }

@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "Fiyatlar son kontrol: {date}",
   "priceLabelLive": "Canlı fiyat · Ekonomi · 1 yetişkin",
   "priceLastCheckedTemplate": "Son kontrol: {date}",
-  "alternativeAirportLabel": "Alternatif havalimanı"
+  "alternativeAirportLabel": "Alternatif havalimanı",
+  "offersComparedForRouteSuffix": "bu rota için karşılaştırılan teklif"
 }

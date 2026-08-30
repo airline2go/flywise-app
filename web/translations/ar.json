@@ -360,5 +360,6 @@
   "routePriceCheckedOn": "آخر فحص للأسعار: {date}",
   "priceLabelLive": "سعر حيّ · الدرجة الاقتصادية · بالغ واحد",
   "priceLastCheckedTemplate": "آخر فحص بتاريخ {date}",
-  "alternativeAirportLabel": "مطار بديل"
+  "alternativeAirportLabel": "مطار بديل",
+  "offersComparedForRouteSuffix": "عرضًا تمت مقارنته لهذا المسار"
 }
