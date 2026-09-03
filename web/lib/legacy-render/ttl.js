@@ -8,6 +8,12 @@
 //
 // CommonJS to match the other legacy-render modules (they are required, not
 // imported, by the generators).
+//
+// [F-3] The ISR `revalidate` values below can't be *imported* by the route
+// files — Next.js requires `export const revalidate` to be a statically-
+// analyzable literal — so those files keep the literal and this module is their
+// documented source of truth. test/ttl-policy.test.mjs parses the route-file
+// literals and asserts they equal these constants, so the two can't drift.
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -33,6 +39,12 @@ const ROUTE_DATA_TTL_MS = 30 * DAY;
 // /api/revalidate; this is only the daily fallback.
 const ROUTE_PAGE_REVALIDATE_S = 24 * 60 * 60;
 
+// The ISR revalidation window for the sitemap routes (and the matching
+// `Cache-Control: max-age`), in SECONDS. Sitemaps are cheap to regenerate and
+// should reflect newly-added/removed pages sooner than entity pages, so this is
+// hourly rather than daily.
+const SITEMAP_REVALIDATE_S = 60 * 60;
+
 // True when `checkedAt` (anything Date can parse) is within `ttlMs` of `now`.
 // A missing/invalid/future timestamp is NOT fresh — we never label uncertain
 // data as current.
@@ -49,5 +61,6 @@ module.exports = {
   PRICE_TTL_MS,
   ROUTE_DATA_TTL_MS,
   ROUTE_PAGE_REVALIDATE_S,
+  SITEMAP_REVALIDATE_S,
   isFresh,
 };
