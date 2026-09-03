@@ -471,9 +471,9 @@ var L = {
 // it falls back to this canonical value with an honest "last checked on"
 // stamp — so the hero, the price section and the schema never disagree, and the
 // page never calls a days-old number "live".
-var CANON_PRICE = ${route.price_min != null ? Number(route.price_min).toFixed(0) : 'null'};
-var CANON_CCY = ${JSON.stringify(route.price_currency || 'EUR')};
-var CANON_DATE = ${JSON.stringify(route.price_updated_at ? String(route.price_updated_at).slice(0, 10) : null)};
+var CANON_PRICE = ${(() => { const cp = resolveCanonicalPrice(route); return cp ? cp.amount.toFixed(0) : 'null'; })()};
+var CANON_CCY = ${JSON.stringify((resolveCanonicalPrice(route) || {}).currency || 'EUR')};
+var CANON_DATE = ${JSON.stringify((() => { const cp = resolveCanonicalPrice(route); return cp && cp.checkedAt ? String(cp.checkedAt).slice(0, 10) : null; })())};
 var FRESH_MS = 24 * 60 * 60 * 1000; // "live" freshness window: 24h
 function fmtCcy(n){ return CANON_CCY === 'EUR' ? (n + ' €') : CANON_CCY === 'USD' ? ('$' + n) : CANON_CCY === 'GBP' ? ('£' + n) : (n + ' ' + CANON_CCY); }
 function renderCanonicalPrice(box, trustEl){
@@ -599,7 +599,11 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 // unique; the fallbacks exist to shed a facet word, not to disambiguate.
 function buildRouteTitle(route, lang) {
   const vars = { origin: route.origin_city, destination: route.destination_city };
-  const hasPrice = route.cached_price != null && Number(route.cached_price) > 0;
+  // [CANONICAL-PRICE-SOURCE] The "Prices" facet appears only when the ONE
+  // canonical price resolver yields a value — the same source the meta
+  // description, hero and Offer use, so the title never promises a price the
+  // rest of the page can't back up.
+  const hasPrice = resolveCanonicalPrice(route) != null;
   const hasDistance = route.distance_km != null;
   const isDirect = route.all_direct === true || route.direct_flight_available === true;
   const key = hasPrice ? 'routeTitlePrimary'
@@ -619,6 +623,48 @@ function formatRoutePrice(price, currency, lang) {
   return `${n} ${currency || 'EUR'}`;
 }
 
+// [CANONICAL-PRICE-SOURCE] Phase 1: the SINGLE source of truth for the "from"
+// price the page advertises. Every surface that shows a headline/"from" price —
+// the <title> facet decision, the meta description's "ab/from …" clause, the
+// hero price box's server-side fallback (CANON_PRICE), and the JSON-LD Offer —
+// resolves it through here, so they can never disagree. Before this, the title
+// and meta read `cached_price` while the hero fallback and the Offer read
+// `price_min`, which let a SERP snippet advertise one number while the page and
+// its schema showed another (the "title price ≠ page price" contradiction).
+//
+// Semantics are deliberate and non-fabricated:
+//   • The clause is "ab/from X" = the LOWEST price, so the persisted aggregate
+//     minimum (price_min) is the most correct value AND carries a currency and
+//     a checkedAt (price_updated_at) — so it is preferred, but only when it
+//     clears the same quality bar as the visible price panel (>= 3 samples).
+//   • Otherwise the current cached price the server attaches (cached_price) is
+//     used; it has no exposed timestamp, so checkedAt is null and it is never
+//     labelled "live".
+//   • No valid price → null. Callers must render an explicit "unavailable"
+//     state, never an invented placeholder value.
+// This is distinct from the AVERAGE/typical price (price_avg) shown in the
+// price panel, which is a different, clearly-labelled statistic — not a "from"
+// price — and is intentionally NOT unified with this one.
+function resolveCanonicalPrice(route) {
+  if (route.price_min != null && Number(route.price_min) > 0 && Number(route.price_sample_count) >= 3) {
+    return {
+      amount: Number(route.price_min),
+      currency: route.price_currency || 'EUR',
+      checkedAt: route.price_updated_at || null,
+      source: 'aggregate-min',
+    };
+  }
+  if (route.cached_price != null && Number(route.cached_price) > 0) {
+    return {
+      amount: Number(route.cached_price),
+      currency: route.cached_currency || 'EUR',
+      checkedAt: null,
+      source: 'cached',
+    };
+  }
+  return null;
+}
+
 // [ROUTE-SEO-META] Natural-language meta description — one localized sentence
 // naming what the page lets you compare (live prices, flight time, distance,
 // airlines, direct flights) for this specific city pair. Unique per route
@@ -631,8 +677,12 @@ function formatRoutePrice(price, currency, lang) {
 function buildRouteMetaDescription(route, lang) {
   const vars = { origin: route.origin_city, destination: route.destination_city };
   const base = format(translate('routeMeta', lang), vars);
-  if (route.cached_price != null && Number(route.cached_price) > 0) {
-    const price = formatRoutePrice(route.cached_price, route.cached_currency || 'EUR', lang);
+  // [CANONICAL-PRICE-SOURCE] The "ab/from …" clause uses the ONE canonical
+  // price (same value the title facet, hero fallback and Offer use), so the
+  // SERP snippet never advertises a figure the page itself doesn't show.
+  const cp = resolveCanonicalPrice(route);
+  if (cp) {
+    const price = formatRoutePrice(cp.amount, cp.currency, lang);
     return base + format(translate('routeMetaPrice', lang), { price });
   }
   return base;
@@ -875,11 +925,16 @@ ${relatedArticlesHtml}
   // visible "average prices" panel (a real min from >= 3 samples) — never a
   // fabricated or single-sample outlier quote. priceCurrency mirrors the
   // persisted aggregate; the price is the lowest observed fare (price_min).
-  if (route.price_min != null && Number(route.price_sample_count) >= 3) {
+  // [CANONICAL-PRICE-SOURCE] The Offer is emitted only for the sample-backed
+  // aggregate price (same quality bar as the visible price panel) and its
+  // price/currency come straight from the ONE canonical resolver — so the
+  // structured-data price can never disagree with the hero, title or meta.
+  const offerPrice = resolveCanonicalPrice(route);
+  if (offerPrice && offerPrice.source === 'aggregate-min') {
     flightSchema.offers = {
       '@type': 'Offer',
-      price: Number(route.price_min).toFixed(2),
-      priceCurrency: route.price_currency || 'EUR',
+      price: offerPrice.amount.toFixed(2),
+      priceCurrency: offerPrice.currency,
       availability: 'https://schema.org/InStock',
       url,
     };
@@ -957,4 +1012,4 @@ ${relatedArticlesHtml}
   return { html, seo: { title, description, canonicalUrl: url, schema } };
 }
 
-module.exports = { renderFlightRoutePage, buildRouteTitle, buildRouteMetaDescription };
+module.exports = { renderFlightRoutePage, buildRouteTitle, buildRouteMetaDescription, resolveCanonicalPrice };
