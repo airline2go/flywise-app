@@ -1,0 +1,87 @@
+name: SEO Data Audit (daily)
+
+# [PHASE-48] Scheduled SEO/data-quality health check. Runs the reusable route
+# auditor (web/lib/seo/route-data-audit.mjs, via scripts/audit-route-data.mjs)
+# against the LIVE route list each morning and publishes a health report to the
+# workflow run summary. It fails the run only on a `critical` issue (a genuine
+# internal contradiction / broken route) so a warning-level drift (e.g. a stale
+# airline_count vs the join, F-8) is surfaced without paging anyone.
+#
+# The script reads only the public content API (api.airpiv.com) — no secrets,
+# no DB writes, no external price calls. Also runnable on demand via the
+# "Run workflow" button (workflow_dispatch).
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 06:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  route-data-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run route data audit
+        run: node scripts/audit-route-data.mjs --json | tee report.json
+
+      - name: Publish health report to run summary
+        if: always()
+        run: |
+          node -e "
+          const fs = require('fs');
+          let r;
+          try { r = JSON.parse(fs.readFileSync('report.json', 'utf8')); }
+          catch (e) { fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## SEO Data Audit\n\n⚠️ Audit did not produce a report (see the job log).\n'); process.exit(0); }
+          const L = [];
+          const crit = (r.bySeverity && r.bySeverity.critical) || 0;
+          const warn = (r.bySeverity && r.bySeverity.warning) || 0;
+          L.push('## SEO Data Audit — ' + r.total + ' routes');
+          L.push('');
+          L.push('| Severity | Count |');
+          L.push('| --- | --- |');
+          L.push('| 🔴 critical | ' + crit + ' |');
+          L.push('| 🟡 warning | ' + warn + ' |');
+          L.push('');
+          const codes = Object.entries(r.byCode || {}).sort((a,b)=>b[1]-a[1]);
+          if (codes.length) {
+            L.push('### By check');
+            L.push('');
+            L.push('| Check | Count |');
+            L.push('| --- | --- |');
+            for (const [c,n] of codes) L.push('| ' + c + ' | ' + n + ' |');
+            L.push('');
+          } else {
+            L.push('✅ No issues found — every internal-contradiction check passed.');
+            L.push('');
+          }
+          if ((r.issues || []).length) {
+            L.push('<details><summary>First 50 issues</summary>');
+            L.push('');
+            for (const i of r.issues.slice(0,50)) L.push('- [' + i.severity + '] `' + i.slug + '` ' + i.code + ': ' + i.detail);
+            L.push('');
+            L.push('</details>');
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, L.join('\n') + '\n');
+          "
+
+      - name: Fail on critical issues
+        run: |
+          node -e "
+          const r = require('./report.json');
+          const crit = (r.bySeverity && r.bySeverity.critical) || 0;
+          if (crit > 0) { console.error('Found ' + crit + ' critical data issue(s).'); process.exit(1); }
+          console.log('No critical issues.');
+          "
