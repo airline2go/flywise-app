@@ -4,7 +4,7 @@ const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
 // [ROUTE-SNAPSHOT] Phases 9–14: one canonical object drives the whole page.
-const { buildRouteSnapshot, validateSnapshot, resolveCanonicalPrice } = require('./route-snapshot');
+const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice } = require('./route-snapshot');
 const { LIVE_PRICE_TTL_MS } = require('./ttl');
 
 // [SECONDARY-AIRPORT-NAMES] A secondary/low-cost airport shares a city entity
@@ -935,7 +935,14 @@ ${relatedArticlesHtml}
     || (route.airline_count != null && route.airline_count > 0)
     || (route.stop_distribution && typeof route.stop_distribution === 'object' && Object.keys(route.stop_distribution).length > 0);
   const hasAdminRouteContent = !!(route.intro_text || (route.custom_faq && route.custom_faq.length));
-  const robotsContent = (!hasRealRouteData && !hasAdminRouteContent) ? 'noindex, follow' : 'index, follow';
+  // [PUBLICATION-GATE] F-2: a route whose data is genuinely broken/contradictory
+  // (invalid route, malformed price, impossible stop total) must not be pushed
+  // to the index — set noindex,follow so users still reach it but Google
+  // doesn't index contradictory content. Narrow by design (see
+  // criticalSnapshotErrors); always `follow` to keep link equity flowing.
+  const isThin = !hasRealRouteData && !hasAdminRouteContent;
+  const criticalErrors = criticalSnapshotErrors(routeRaw, snapshot);
+  const robotsContent = (isThin || criticalErrors.length) ? 'noindex, follow' : 'index, follow';
 
   const html = renderShell({
     lang,

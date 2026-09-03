@@ -7,7 +7,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { buildRouteSnapshot, validateSnapshot, deriveStops, deriveAirlineCount } = require('../lib/legacy-render/route-snapshot.js');
+const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, deriveStops, deriveAirlineCount } = require('../lib/legacy-render/route-snapshot.js');
+const { renderFlightRoutePage } = require('../lib/legacy-render/render-flight-route.js');
+const { setGeoData } = require('../lib/legacy-render/data.js');
+setGeoData([], []);
 
 const R = (over) => Object.assign(
   { slug: 'ams-fco', origin_iata: 'AMS', destination_iata: 'FCO', origin_city: 'Amsterdam', destination_city: 'Rom' },
@@ -67,6 +70,25 @@ test('validateSnapshot flags origin === destination and passes a clean route', (
   assert.ok(validateSnapshot(bad, buildRouteSnapshot(bad)).some((e) => e.includes('origin-equals-destination')));
   const good = R({ airlines: [{ iata_code: 'KL' }], airline_count: 1, stop_distribution: { 0: 3, 1: 2 }, price_min: 50, price_sample_count: 5 });
   assert.deepEqual(validateSnapshot(good, buildRouteSnapshot(good)), []);
+});
+
+// ─── Publication gate (Phase 10/13, F-2) ───────────────────────────────────
+test('criticalSnapshotErrors gates only genuinely broken routes, not a stale scalar', () => {
+  // A stale airline_count vs the authoritative list is a warning, NOT critical
+  // (the visible list is what the page shows) — so it must not de-index.
+  const stale = R({ airline_count: 19, airlines: [{ iata_code: 'KL' }, { iata_code: 'AZ' }], distance_km: 1000 });
+  assert.deepEqual(criticalSnapshotErrors(stale, buildRouteSnapshot(stale)), []);
+  // A broken route (origin === destination) is critical.
+  const broken = R({ origin_iata: 'AMS', destination_iata: 'AMS', distance_km: 1000 });
+  assert.ok(criticalSnapshotErrors(broken, buildRouteSnapshot(broken)).length > 0);
+});
+
+test('renderer sets noindex on a broken route, indexes a healthy one', () => {
+  const links = { fromOrigin: [], toDestination: [] };
+  const broken = renderFlightRoutePage(R({ origin_iata: 'AMS', destination_iata: 'AMS', distance_km: 1000 }), 'de', [], links, []);
+  assert.match(broken.html, /<meta name="robots" content="noindex, follow">/);
+  const healthy = renderFlightRoutePage(R({ distance_km: 1297 }), 'de', [], links, []);
+  assert.match(healthy.html, /<meta name="robots" content="index, follow">/);
 });
 
 // ─── deriveAirlineCount unit ───────────────────────────────────────────────
