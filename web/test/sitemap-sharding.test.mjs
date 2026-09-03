@@ -142,6 +142,8 @@ test('pageUrls: only canonical https static pages, includes the home page', () =
   const urls = pageUrls();
   assert.deepEqual(validateSitemapUrls(urls), []);
   assert.ok(urls.some((u) => u.loc === 'https://airpiv.com/'));
-  // Home + 7 named static pages.
-  assert.equal(urls.length, 8);
+  // Home + the 9 named static pages in STATIC_PAGES (cheap-flights,
+  // last-minute-flights, about, blog, contact, privacy, terms, refund-policy,
+  // cookies) — all present under public/, so none is a 404 in the sitemap.
+  assert.equal(urls.length, 10);
 });
