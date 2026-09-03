@@ -136,4 +136,19 @@ function validateSnapshot(route, snapshot) {
   return errors;
 }
 
-module.exports = { buildRouteSnapshot, validateSnapshot, resolveCanonicalPrice, deriveAirlineCount, deriveStops };
+// [PUBLICATION-GATE] Phase 10/13 (F-2): the subset of invariant violations that
+// mean the page's own content is broken/contradictory or the route is invalid,
+// so it must NOT be pushed to the index (the renderer sets noindex,follow on
+// these). Deliberately NARROW — most contradictions the spec worried about
+// (stop buckets vs total, a non-positive price, airline count vs the visible
+// list) can no longer reach the page because the snapshot derives them
+// consistently by construction, so gating never mass-noindexes healthy pages
+// (Phase 0). An `airline-count-mismatch` between a STALE stored scalar and the
+// authoritative list is a data-ops warning, not a visible contradiction, so it
+// is intentionally NOT critical.
+const CRITICAL_PREFIXES = ['origin-equals-destination', 'invalid-price', 'stop-total-mismatch'];
+function criticalSnapshotErrors(route, snapshot) {
+  return validateSnapshot(route, snapshot).filter((e) => CRITICAL_PREFIXES.some((p) => e.startsWith(p)));
+}
+
+module.exports = { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice, deriveAirlineCount, deriveStops };
