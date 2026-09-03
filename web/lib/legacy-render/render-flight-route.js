@@ -3,6 +3,9 @@ const { localizeCity, getAlternativeAirports, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
+// [ROUTE-SNAPSHOT] Phases 9–14: one canonical object drives the whole page.
+const { buildRouteSnapshot, validateSnapshot, resolveCanonicalPrice } = require('./route-snapshot');
+const { LIVE_PRICE_TTL_MS } = require('./ttl');
 
 // [SECONDARY-AIRPORT-NAMES] A secondary/low-cost airport shares a city entity
 // with the main airport (e.g. Frankfurt owns FRA and HHN), so the data layer
@@ -21,41 +24,13 @@ const SECONDARY_AIRPORT_NAMES = {
   BGY: 'Milan-Bergamo',
 };
 
-// [AIRLINE-COUNT-CANON] Single source of truth for "how many airlines" the page
-// shows. When the route carries an observed airline LIST (route.airlines, the
-// same list rendered in the visible "Airlines on this route" section), its
-// length is authoritative — the count card, the intro clause and the FAQ must
-// all agree with what the reader can actually count on the page. Only when no
-// list is present do we fall back to the persisted scalar route.airline_count.
-// This removes the "8 Airlines" vs a 14-name list mismatch at the source.
-function effectiveAirlineCount(route) {
-  if (Array.isArray(route.airlines) && route.airlines.length) return route.airlines.length;
-  if (route.airline_count != null && route.airline_count > 0) return route.airline_count;
-  return null;
-}
-
-// [ROUTE-CONSISTENCY-GUARD] Build-time validation that catches data
-// contradictions before a page ships, instead of a human spotting them in
-// production. Non-fatal: it logs a structured warning (so a CI/build log or a
-// content-ops sweep can surface it) but never throws — a single bad field must
-// not take a whole build down. Checks the invariants the SEO review called out:
-// the airline count must equal the airline list length, and the stop-
-// distribution buckets must sum to a positive total when present.
-function validateRouteConsistency(route) {
-  const warn = (code, detail) => {
-    try { console.warn(`[route-consistency] ${route.slug || '?'} ${code}: ${detail}`); } catch (e) { /* noop */ }
-  };
-  if (Array.isArray(route.airlines) && route.airlines.length
-      && route.airline_count != null && route.airline_count !== route.airlines.length) {
-    warn('airline-count-mismatch', `airline_count=${route.airline_count} but airlines.length=${route.airlines.length}`);
-  }
-  const sd = route.stop_distribution;
-  if (sd && typeof sd === 'object') {
-    const total = Object.keys(sd).reduce((s, k) => s + Number(sd[k] || 0), 0);
-    if (!(total > 0)) warn('stop-distribution-empty', `stop_distribution has no positive total`);
-  }
-  return route;
-}
+// [AIRLINE-COUNT-CANON] / [ROUTE-CONSISTENCY-GUARD] both now live in
+// route-snapshot.js: the snapshot's `airlineCount` is the single source of
+// truth (list length authoritative), and `validateSnapshot()` performs the
+// build-time invariant checks (airline count = unique list length; stop buckets
+// sum to their total; positive priced currency; origin ≠ destination). This
+// generator reads the derived values off the snapshot rather than re-deriving
+// them, so no two sections can compute the same number differently.
 
 // [BUG-FIX] The original flight-route.html wrote its JSON-LD schema TWICE —
 // a second, dead write unconditionally clobbered the first with a generic
@@ -82,7 +57,7 @@ function haulSuffix(r) {
   return r.haul_type === 'long-haul' ? 'LongHaul' : (r.haul_type === 'medium-haul' ? 'MediumHaul' : 'ShortHaul');
 }
 
-function buildDynamicIntro(r, lang) {
+function buildDynamicIntro(r, lang, snapshot) {
   const hasDistance = r.distance_km != null;
   const isLongHaul = r.haul_type === 'long-haul';
   const isDomestic = !!(r.origin_country && r.destination_country && r.origin_country === r.destination_country);
@@ -105,7 +80,7 @@ function buildDynamicIntro(r, lang) {
   const closing = translate(closingVariantKeys[pickVariant(r.slug, closingVariantKeys.length)], lang);
 
   let carrierClause = '';
-  const carrierCount = effectiveAirlineCount(r);
+  const carrierCount = snapshot.airlineCount;
   if (carrierCount != null) {
     carrierClause = carrierCount === 1
       ? translate('routeIntroCarrierSingle', lang)
@@ -134,7 +109,7 @@ function isoDuration(min) {
   return `PT${body || '0M'}`;
 }
 
-function buildFaqItems(route, lang) {
+function buildFaqItems(route, lang, snapshot) {
   const haulQuestion = route.distance_km != null
     ? {
       question: format(translate('routeFaqDistanceQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
@@ -173,7 +148,7 @@ function buildFaqItems(route, lang) {
   // actual airline data (Phase 1), rather than a fixed question set. Uses the
   // canonical airline count (list length when present) so the FAQ never claims
   // a different number than the visible airline list.
-  const faqAirlineCount = effectiveAirlineCount(route);
+  const faqAirlineCount = snapshot.airlineCount;
   if (faqAirlineCount != null) {
     items.push({
       question: format(translate('routeFaqAirlineQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
@@ -222,12 +197,12 @@ function buildFaqItems(route, lang) {
   // stop_distribution ({"0": nonstop, "1": one-stop, ...}). Only shown when the
   // route genuinely has both nonstop and connecting options — the interesting
   // case the yes/no direct FAQ can't quantify.
-  if (route.stop_distribution && typeof route.stop_distribution === 'object') {
-    const nonstop = Number(route.stop_distribution['0'] || 0);
-    const withStops = Object.keys(route.stop_distribution).reduce(
-      (sum, k) => (k !== '0' ? sum + Number(route.stop_distribution[k] || 0) : sum),
-      0,
-    );
+  if (snapshot.stops) {
+    // [STOP-CANON] nonstop vs connecting from the ONE snapshot split, so the
+    // FAQ can never disagree with the route-facts breakdown. withStops is the
+    // total minus nonstop (= one-stop + two-plus), by construction.
+    const nonstop = snapshot.stops.nonstop;
+    const withStops = snapshot.stops.total - snapshot.stops.nonstop;
     if (nonstop > 0 && withStops > 0) {
       items.push({
         question: format(translate('routeFaqStopsQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
@@ -307,7 +282,7 @@ function buildBestTimeHtml(route, lang) {
 // text or the client-only live widget. Reuses the existing .route-insight-*
 // card styles. Every card/line is data-gated; the whole section is omitted
 // unless at least two facts are available, and nothing is fabricated.
-function buildRouteFactsHtml(route, lang) {
+function buildRouteFactsHtml(route, lang, snapshot) {
   const loc = getLanguage(lang).locale;
   const small = (t) => `<small style="font-size:.6em;font-weight:700;color:var(--tx3);margin-inline-start:2px">${t}</small>`;
   const card = (valHtml, lbl) => `<div class="route-insight-card"><div class="route-insight-val">${valHtml}</div><div class="route-insight-lbl">${escHtml(lbl)}</div></div>`;
@@ -318,18 +293,15 @@ function buildRouteFactsHtml(route, lang) {
   if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
     cards.push(card(formatHoursMinutes(route.min_duration_min, lang), translate('routeFactFastest', lang)));
   }
-  const factsAirlineCount = effectiveAirlineCount(route);
+  const factsAirlineCount = snapshot.airlineCount;
   if (factsAirlineCount != null) cards.push(card(factsAirlineCount.toLocaleString(loc), translate('routeFactAirlines', lang)));
 
   let breakdownHtml = '';
-  const sd = route.stop_distribution;
-  if (sd && typeof sd === 'object') {
-    const nonstop = Number(sd['0'] || 0);
-    const oneStop = Number(sd['1'] || 0);
-    const twoPlus = Object.keys(sd).reduce((s, k) => (Number(k) >= 2 ? s + Number(sd[k] || 0) : s), 0);
-    const total = nonstop + oneStop + twoPlus;
-    if (total > 0) {
-      cards.push(card(`${Math.round((nonstop / total) * 100)}${small('%')}`, translate('routeFactNonstopShare', lang)));
+  if (snapshot.stops) {
+    // [STOP-CANON] The breakdown + nonstop-share read the ONE snapshot split.
+    const { nonstop, oneStop, twoPlus, nonstopShare } = snapshot.stops;
+    {
+      cards.push(card(`${nonstopShare}${small('%')}`, translate('routeFactNonstopShare', lang)));
       const parts = [];
       if (nonstop > 0) parts.push(format(translate('routeStopsNonstop', lang), { count: nonstop.toLocaleString(loc) }));
       if (oneStop > 0) parts.push(format(translate('routeStopsOneStop', lang), { count: oneStop.toLocaleString(loc) }));
@@ -440,7 +412,7 @@ const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}<
 // the only genuinely runtime-only pieces (a live price, a "minutes ago"
 // count, a computed duration) use a `{placeholder}`.replace(...) at the
 // JS level against an already-translated template string.
-function buildLiveScript(route, lang) {
+function buildLiveScript(route, lang, snapshot) {
   return `<script>
 (function(){
 var PROXY = 'https://api.airpiv.com';
@@ -471,10 +443,10 @@ var L = {
 // it falls back to this canonical value with an honest "last checked on"
 // stamp — so the hero, the price section and the schema never disagree, and the
 // page never calls a days-old number "live".
-var CANON_PRICE = ${(() => { const cp = resolveCanonicalPrice(route); return cp ? cp.amount.toFixed(0) : 'null'; })()};
-var CANON_CCY = ${JSON.stringify((resolveCanonicalPrice(route) || {}).currency || 'EUR')};
-var CANON_DATE = ${JSON.stringify((() => { const cp = resolveCanonicalPrice(route); return cp && cp.checkedAt ? String(cp.checkedAt).slice(0, 10) : null; })())};
-var FRESH_MS = 24 * 60 * 60 * 1000; // "live" freshness window: 24h
+var CANON_PRICE = ${snapshot.price ? snapshot.price.amount.toFixed(0) : 'null'};
+var CANON_CCY = ${JSON.stringify((snapshot.price && snapshot.price.currency) || 'EUR')};
+var CANON_DATE = ${JSON.stringify(snapshot.price && snapshot.price.checkedAt ? String(snapshot.price.checkedAt).slice(0, 10) : null)};
+var FRESH_MS = ${LIVE_PRICE_TTL_MS}; // "live" freshness window, from the central TTL policy (ttl.js)
 function fmtCcy(n){ return CANON_CCY === 'EUR' ? (n + ' €') : CANON_CCY === 'USD' ? ('$' + n) : CANON_CCY === 'GBP' ? ('£' + n) : (n + ' ' + CANON_CCY); }
 function renderCanonicalPrice(box, trustEl){
   if (CANON_PRICE == null) {
@@ -623,47 +595,9 @@ function formatRoutePrice(price, currency, lang) {
   return `${n} ${currency || 'EUR'}`;
 }
 
-// [CANONICAL-PRICE-SOURCE] Phase 1: the SINGLE source of truth for the "from"
-// price the page advertises. Every surface that shows a headline/"from" price —
-// the <title> facet decision, the meta description's "ab/from …" clause, the
-// hero price box's server-side fallback (CANON_PRICE), and the JSON-LD Offer —
-// resolves it through here, so they can never disagree. Before this, the title
-// and meta read `cached_price` while the hero fallback and the Offer read
-// `price_min`, which let a SERP snippet advertise one number while the page and
-// its schema showed another (the "title price ≠ page price" contradiction).
-//
-// Semantics are deliberate and non-fabricated:
-//   • The clause is "ab/from X" = the LOWEST price, so the persisted aggregate
-//     minimum (price_min) is the most correct value AND carries a currency and
-//     a checkedAt (price_updated_at) — so it is preferred, but only when it
-//     clears the same quality bar as the visible price panel (>= 3 samples).
-//   • Otherwise the current cached price the server attaches (cached_price) is
-//     used; it has no exposed timestamp, so checkedAt is null and it is never
-//     labelled "live".
-//   • No valid price → null. Callers must render an explicit "unavailable"
-//     state, never an invented placeholder value.
-// This is distinct from the AVERAGE/typical price (price_avg) shown in the
-// price panel, which is a different, clearly-labelled statistic — not a "from"
-// price — and is intentionally NOT unified with this one.
-function resolveCanonicalPrice(route) {
-  if (route.price_min != null && Number(route.price_min) > 0 && Number(route.price_sample_count) >= 3) {
-    return {
-      amount: Number(route.price_min),
-      currency: route.price_currency || 'EUR',
-      checkedAt: route.price_updated_at || null,
-      source: 'aggregate-min',
-    };
-  }
-  if (route.cached_price != null && Number(route.cached_price) > 0) {
-    return {
-      amount: Number(route.cached_price),
-      currency: route.cached_currency || 'EUR',
-      checkedAt: null,
-      source: 'cached',
-    };
-  }
-  return null;
-}
+// [CANONICAL-PRICE-SOURCE] resolveCanonicalPrice now lives in route-snapshot.js
+// (imported above) and is exposed as snapshot.price. It stays the single "from"
+// price for the title facet, meta description, hero fallback and JSON-LD Offer.
 
 // [ROUTE-SEO-META] Natural-language meta description — one localized sentence
 // naming what the page lets you compare (live prices, flight time, distance,
@@ -693,10 +627,19 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
   });
-  // [ROUTE-CONSISTENCY-GUARD] Surface any data contradiction (airline count vs
-  // list, empty stop distribution) in the build/render log before the page is
-  // served. Non-fatal — logs once per render, never blocks the page.
-  validateRouteConsistency(routeRaw);
+  // [ROUTE-SNAPSHOT] Build the ONE canonical object the whole page reads from
+  // (price, airline count, stop split, durations, distance, freshness). Every
+  // section below is handed this snapshot instead of re-deriving values, so no
+  // two components can disagree.
+  const snapshot = buildRouteSnapshot(routeRaw);
+  // [ROUTE-CONSISTENCY-GUARD] Surface any invariant violation (airline count vs
+  // unique list, stop total, invalid price, origin=destination) in the render
+  // log before the page is served. Non-fatal — logs once per render, never
+  // blocks the page (publication-gating is a separate follow-up, F-2).
+  const consistencyErrors = validateSnapshot(routeRaw, snapshot);
+  if (consistencyErrors.length) {
+    try { console.warn(`[route-consistency] ${routeRaw.slug || '?'} ${consistencyErrors.join('; ')}`); } catch (e) { /* noop */ }
+  }
 
   // [ADMIN-OVERRIDE-ALL-LANGS] custom_title/custom_meta_description/intro_text
   // are admin-authored per route (not per language) — they used to only
@@ -721,7 +664,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   const url = urls[lang];
   // Server-generated from data blocks (never user input) — safe as raw HTML.
   const generatedBodyHtml = (gen && !route.intro_text && route.seo_intro_html) ? route.seo_intro_html : null;
-  const introText = route.intro_text || buildDynamicIntro(route, lang);
+  const introText = route.intro_text || buildDynamicIntro(route, lang, snapshot);
   const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
@@ -831,13 +774,13 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     : '';
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
-  const routeFactsHtml = buildRouteFactsHtml(route, lang);
+  const routeFactsHtml = buildRouteFactsHtml(route, lang, snapshot);
   const priceHtml = buildPriceHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
   // Manual FAQ wins, then generated (matching language), then the template default.
   const faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq
     : (gen && Array.isArray(route.seo_faq) && route.seo_faq.length) ? route.seo_faq
-      : buildFaqItems(route, lang);
+      : buildFaqItems(route, lang, snapshot);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');
 
   // [CTR-TITLE] The <title>/og:title carry the descriptive facet clause and the
@@ -929,7 +872,7 @@ ${relatedArticlesHtml}
   // aggregate price (same quality bar as the visible price panel) and its
   // price/currency come straight from the ONE canonical resolver — so the
   // structured-data price can never disagree with the hero, title or meta.
-  const offerPrice = resolveCanonicalPrice(route);
+  const offerPrice = snapshot.price;
   if (offerPrice && offerPrice.source === 'aggregate-min') {
     flightSchema.offers = {
       '@type': 'Offer',
@@ -1006,7 +949,7 @@ ${relatedArticlesHtml}
     robotsContent,
     headExtra,
     mainContent,
-    scripts: buildLiveScript(route, lang),
+    scripts: buildLiveScript(route, lang, snapshot),
   });
 
   return { html, seo: { title, description, canonicalUrl: url, schema } };
