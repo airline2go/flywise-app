@@ -105,6 +105,10 @@
     <button class="nav-item" onclick="showPage('geo')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z"/></svg></span> المطارات والمدن
     </button>
+    <!-- [FARE-INTEL] Verified fare-rule / baggage CMS — staff-accessible. -->
+    <button class="nav-item" onclick="showPage('fare-rules')">
+      <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="7" width="12" height="14" rx="2"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span> قواعد الأمتعة والتعرفات
+    </button>
     <button class="nav-item" onclick="showPage('errorlogs')">
       <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span> سجل الأخطاء
     </button>
@@ -1011,6 +1015,37 @@
   </div>
 
 
+  <!-- ==================== FARE RULES (FARE INTELLIGENCE) ==================== -->
+  <div class="page" id="page-fare-rules">
+    <div class="page-header">
+      <div>
+        <div class="page-title">قواعد الأمتعة والتعرفات</div>
+        <div class="page-sub">قواعد موثّقة تُثري بيانات Duffel عندما تكون ناقصة — كل قاعدة لها مصدر ودرجة ثقة وتاريخ صلاحية. لا تُستخدم أبداً لتجاوز بيانات العرض المباشر من Duffel.</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openFareRuleEditor(null)">+ قاعدة جديدة</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <input type="text" id="fr-airline-filter" placeholder="🔍 كود IATA لشركة الطيران (مثال LH)" maxlength="3" style="flex:1;min-width:220px;padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px;text-transform:uppercase" oninput="frSearchDebounced()">
+      <select id="fr-active-filter" onchange="frResetAndLoad()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px">
+        <option value="">كل القواعد</option>
+        <option value="true">النشطة فقط</option>
+        <option value="false">غير النشطة</option>
+      </select>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table class="data-table" style="min-width:900px">
+        <thead><tr>
+          <th>شركة</th><th>عائلة التعرفة</th><th>الكابينة</th><th>النوع</th><th>القطع/الوزن</th>
+          <th>مشمول؟</th><th>المصدر</th><th>الثقة</th><th>الصلاحية</th><th></th>
+        </tr></thead>
+        <tbody id="fare-rules-list"><tr><td colspan="10" style="text-align:center;color:var(--tx3);padding:30px">جارٍ التحميل...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="fare-rules-pagination" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+  </div>
+
   <!-- ==================== ERROR LOGS ==================== -->
   <div class="page" id="page-errorlogs">
     <div class="page-header">
@@ -1705,6 +1740,113 @@
       <div class="form-group" style="display:flex;gap:10px">
         <button class="btn btn-ghost" style="flex:1" onclick="closeModal('country-editor-modal')">إلغاء</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveCountry()">💾 حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fare-rule-modal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">
+      <div class="modal-title" id="fare-rule-modal-title">قاعدة تعرفة جديدة</div>
+      <button class="modal-close" onclick="closeModal('fare-rule-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fr-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">كود شركة الطيران (IATA) *</label>
+          <input type="text" class="form-input" id="fr-airline" placeholder="LH" maxlength="3" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label class="form-label">عائلة التعرفة</label>
+          <input type="text" class="form-input" id="fr-family" placeholder="Economy Light">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الكابينة</label>
+          <select class="form-input" id="fr-cabin">
+            <option value="">—</option>
+            <option value="economy">Economy</option>
+            <option value="premium_economy">Premium Economy</option>
+            <option value="business">Business</option>
+            <option value="first">First</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Booking class (RBD)</label>
+          <input type="text" class="form-input" id="fr-booking" placeholder="K" maxlength="4" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع الأمتعة *</label>
+          <select class="form-input" id="fr-baggage-type">
+            <option value="personal_item">Personal Item</option>
+            <option value="cabin">Cabin / Hand</option>
+            <option value="checked">Checked</option>
+            <option value="additional">Additional</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">مشمول؟</label>
+          <select class="form-input" id="fr-included">
+            <option value="">غير معروف</option>
+            <option value="true">نعم</option>
+            <option value="false">لا</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">عدد القطع (pieces)</label>
+          <input type="number" class="form-input" id="fr-pieces" min="0" step="1" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوزن (kg) — أكبر من 0</label>
+          <input type="number" class="form-input" id="fr-weight" min="0" step="0.5" placeholder="23">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الأبعاد</label>
+          <input type="text" class="form-input" id="fr-dimensions" placeholder="40 x 30 x 20 cm">
+        </div>
+        <div class="form-group">
+          <label class="form-label">درجة الثقة</label>
+          <select class="form-input" id="fr-confidence">
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM" selected>MEDIUM</option>
+            <option value="LOW">LOW</option>
+            <option value="UNKNOWN">UNKNOWN</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع المصدر *</label>
+          <select class="form-input" id="fr-source-type">
+            <option value="AIRLINE_OFFICIAL">Airline Official</option>
+            <option value="VERIFIED_PROVIDER">Verified Provider</option>
+            <option value="MANUAL_ADMIN" selected>Manual Admin</option>
+            <option value="DUFFEL">Duffel</option>
+            <option value="UNKNOWN">Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">آخر تحقق (last verified)</label>
+          <input type="date" class="form-input" id="fr-last-verified">
+        </div>
+        <div class="form-group">
+          <label class="form-label">سارية من (effective from)</label>
+          <input type="date" class="form-input" id="fr-eff-from">
+        </div>
+        <div class="form-group">
+          <label class="form-label">سارية حتى (اختياري)</label>
+          <input type="date" class="form-input" id="fr-eff-until">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">رابط المصدر (source URL)</label>
+        <input type="text" class="form-input" id="fr-source-url" placeholder="https://www.lufthansa.com/...">
+      </div>
+      <div class="form-group">
+        <label class="form-label"><input type="checkbox" id="fr-active" checked> نشطة (تُستخدم في المطابقة)</label>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('fare-rule-modal')">إلغاء</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveFareRule()">💾 حفظ</button>
       </div>
     </div>
   </div>

@@ -1788,6 +1788,167 @@ function renderGeoPagination(elId, total, currentPage, totalPages, gotoFn) {
   el.innerHTML = html;
 }
 
+// ============ [FARE-INTEL] Fare rules / baggage CMS ============
+// CRUD against the backend admin-fare-rules endpoints. Same adminFetch /
+// showToast / modal patterns as the airlines section above. Every rule shows
+// its source + confidence + effective window so an admin can see, at a glance,
+// how strongly Airpiv can stand behind it.
+var fareRules = [];
+var frPage = 1, frTotalPages = 1, frSearchTimer = null;
+function frSearchDebounced() { clearTimeout(frSearchTimer); frSearchTimer = setTimeout(frResetAndLoad, 400); }
+function frResetAndLoad() { frPage = 1; loadFareRules(); }
+function frGoToPage(p) { if (p < 1 || p > frTotalPages) return; frPage = p; loadFareRules(); }
+
+async function loadFareRules() {
+  try {
+    var airline = encodeURIComponent(document.getElementById('fr-airline-filter').value.trim().toUpperCase());
+    var active = document.getElementById('fr-active-filter').value;
+    var url = '/admin/fare-rules?page=' + frPage + '&limit=50';
+    if (airline) url += '&airline=' + airline;
+    if (active) url += '&active=' + active;
+    const res = await adminFetch(url);
+    const j = await res.json();
+    if (j.ok) {
+      fareRules = j.rules || [];
+      frTotalPages = j.totalPages || 1;
+      renderFareRulesList();
+      renderGeoPagination('fare-rules-pagination', j.total || 0, frPage, frTotalPages, 'frGoToPage');
+    } else {
+      showToast(j.error || 'فشل تحميل القواعد', 'error');
+    }
+  } catch (e) { console.error('Admin API error:', e); }
+}
+
+function frConfidenceBadge(c) {
+  var map = { HIGH: 'confirmed', MEDIUM: 'pending', LOW: 'pending', UNKNOWN: 'pending' };
+  return '<span class="badge ' + (map[c] || 'pending') + '">' + escHtml(c || 'UNKNOWN') + '</span>';
+}
+function frBagAmount(r) {
+  var parts = [];
+  if (r.pieces != null) parts.push(r.pieces + '×');
+  if (r.weight_kg != null) parts.push(r.weight_kg + ' kg');
+  if (r.dimensions) parts.push(escHtml(r.dimensions));
+  return parts.length ? parts.join(' · ') : '—';
+}
+function frIncluded(r) {
+  if (r.included === true) return '<span class="badge confirmed">✓</span>';
+  if (r.included === false) return '<span class="badge" style="background:#fee;color:#c00">✕</span>';
+  return '—';
+}
+function frEffective(r) {
+  var from = r.effective_from ? String(r.effective_from).slice(0, 10) : '—';
+  var until = r.effective_until ? String(r.effective_until).slice(0, 10) : '∞';
+  return from + ' → ' + until;
+}
+function renderFareRulesList() {
+  var tbody = document.getElementById('fare-rules-list');
+  if (!fareRules.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx3);padding:30px">لا توجد قواعد بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = fareRules.map(function (r) {
+    var inactive = r.active === false ? ' style="opacity:.5"' : '';
+    return '<tr' + inactive + '>' +
+      '<td class="mono">' + escHtml(r.airline_iata || '') + '</td>' +
+      '<td>' + escHtml(r.fare_family || '—') + '</td>' +
+      '<td>' + escHtml(r.cabin_class || '—') + '</td>' +
+      '<td>' + escHtml(r.baggage_type || '—') + '</td>' +
+      '<td>' + frBagAmount(r) + '</td>' +
+      '<td>' + frIncluded(r) + '</td>' +
+      '<td>' + escHtml(r.source_type || '—') + (r.source_url ? ' <a href="' + escHtml(r.source_url) + '" target="_blank" rel="noopener">🔗</a>' : '') + '</td>' +
+      '<td>' + frConfidenceBadge(r.confidence) + '</td>' +
+      '<td style="font-size:11px">' + frEffective(r) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick=\'openFareRuleEditor(' + escJsonAttr(r) + ')\'>✏️</button> ' +
+        (r.active !== false ? '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" title="إغلاق مع حفظ التاريخ" onclick="closeFareRule(\'' + escHtml(r.id) + '\')">📁</button> ' : '') +
+        '<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#ef4444" onclick="deleteFareRule(\'' + escHtml(r.id) + '\')">🗑</button>' +
+      '</td></tr>';
+  }).join('');
+}
+
+function frSetVal(id, v) { document.getElementById(id).value = (v == null ? '' : v); }
+function openFareRuleEditor(rule) {
+  document.getElementById('fare-rule-modal-title').textContent = rule ? 'تعديل قاعدة' : 'قاعدة تعرفة جديدة';
+  frSetVal('fr-id', rule ? rule.id : '');
+  frSetVal('fr-airline', rule ? rule.airline_iata : '');
+  frSetVal('fr-family', rule ? rule.fare_family : '');
+  frSetVal('fr-cabin', rule ? (rule.cabin_class || '') : '');
+  frSetVal('fr-booking', rule ? rule.booking_class : '');
+  frSetVal('fr-baggage-type', rule ? (rule.baggage_type || 'checked') : 'checked');
+  frSetVal('fr-included', rule && rule.included != null ? String(rule.included) : '');
+  frSetVal('fr-pieces', rule ? rule.pieces : '');
+  frSetVal('fr-weight', rule ? rule.weight_kg : '');
+  frSetVal('fr-dimensions', rule ? rule.dimensions : '');
+  frSetVal('fr-confidence', rule ? (rule.confidence || 'MEDIUM') : 'MEDIUM');
+  frSetVal('fr-source-type', rule ? (rule.source_type || 'MANUAL_ADMIN') : 'MANUAL_ADMIN');
+  frSetVal('fr-last-verified', rule && rule.last_verified ? String(rule.last_verified).slice(0, 10) : '');
+  frSetVal('fr-eff-from', rule && rule.effective_from ? String(rule.effective_from).slice(0, 10) : '');
+  frSetVal('fr-eff-until', rule && rule.effective_until ? String(rule.effective_until).slice(0, 10) : '');
+  frSetVal('fr-source-url', rule ? rule.source_url : '');
+  document.getElementById('fr-active').checked = rule ? rule.active !== false : true;
+  document.getElementById('fare-rule-modal').classList.add('open');
+}
+
+function frNumOrNull(id) { var v = document.getElementById(id).value.trim(); return v === '' ? null : Number(v); }
+function frStrOrNull(id) { var v = document.getElementById(id).value.trim(); return v === '' ? null : v; }
+async function saveFareRule() {
+  var id = document.getElementById('fr-id').value;
+  var inc = document.getElementById('fr-included').value;
+  var payload = {
+    airline_iata: document.getElementById('fr-airline').value.trim().toUpperCase(),
+    fare_family: frStrOrNull('fr-family'),
+    cabin_class: frStrOrNull('fr-cabin'),
+    booking_class: frStrOrNull('fr-booking'),
+    baggage_type: document.getElementById('fr-baggage-type').value,
+    included: inc === '' ? null : inc === 'true',
+    pieces: frNumOrNull('fr-pieces'),
+    weight_kg: frNumOrNull('fr-weight'),
+    dimensions: frStrOrNull('fr-dimensions'),
+    confidence: document.getElementById('fr-confidence').value,
+    source_type: document.getElementById('fr-source-type').value,
+    source_url: frStrOrNull('fr-source-url'),
+    last_verified: frStrOrNull('fr-last-verified'),
+    effective_from: frStrOrNull('fr-eff-from'),
+    effective_until: frStrOrNull('fr-eff-until'),
+    active: document.getElementById('fr-active').checked,
+  };
+  // Mirror the server's §28 validation so the admin gets instant feedback.
+  if (!payload.airline_iata) { showToast('⚠️ كود شركة الطيران مطلوب', 'error'); return; }
+  if (payload.weight_kg != null && !(payload.weight_kg > 0)) { showToast('⚠️ الوزن يجب أن يكون أكبر من 0', 'error'); return; }
+  if (payload.pieces != null && !(payload.pieces >= 0)) { showToast('⚠️ عدد القطع يجب أن يكون 0 أو أكثر', 'error'); return; }
+  try {
+    const res = id
+      ? await adminFetch('/admin/fare-rules/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+      : await adminFetch('/admin/fare-rules', { method: 'POST', body: JSON.stringify(payload) });
+    const j = await res.json();
+    if (!j.ok) { showToast(j.error || 'فشل الحفظ', 'error'); return; }
+    if (j.warnings && j.warnings.length) showToast('⚠️ ' + j.warnings.join(' · '), 'error');
+    showToast('💾 تم حفظ القاعدة', 'success');
+    closeModal('fare-rule-modal');
+    loadFareRules();
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function closeFareRule(id) {
+  if (!confirm('إغلاق هذه القاعدة (تنتهي صلاحيتها اليوم وتصبح غير نشطة)؟ يُحفظ سجلها التاريخي.')) return;
+  try {
+    const res = await adminFetch('/admin/fare-rules/' + id + '/close', { method: 'POST', body: JSON.stringify({}) });
+    const j = await res.json();
+    if (j.ok) { showToast('📁 تم إغلاق القاعدة', 'success'); loadFareRules(); }
+    else showToast(j.error || 'فشل الإغلاق', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
+async function deleteFareRule(id) {
+  if (!confirm('حذف هذه القاعدة نهائياً؟ للحفاظ على التاريخ استخدم "إغلاق" بدلاً من الحذف.')) return;
+  try {
+    const res = await adminFetch('/admin/fare-rules/' + id, { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) { showToast('🗑 تم حذف القاعدة', 'success'); loadFareRules(); }
+    else showToast(j.error || 'فشل الحذف', 'error');
+  } catch (e) { showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error'); }
+}
+
 // ============ [ERROR-LOGS] Error logs admin ============
 async function loadErrorLogs() {
   var tbody = document.getElementById('errorlogs-list');
@@ -1879,6 +2040,7 @@ function showPage(name) {
   if (name === 'routes') loadRoutePages();
   if (name === 'geo') loadGeoCities();
   if (name === 'errorlogs') loadErrorLogs();
+  if (name === 'fare-rules') loadFareRules();
   if (name === 'team') loadStaff();
   if (name === 'api') { setApiMonitorPeriod('today'); loadApiCostConfig(); loadRouteScoreConfig(); }
 }
