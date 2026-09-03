@@ -321,12 +321,6 @@
   "eeatReviewedLabel": "Son editör kontrolü",
   "eeatReadingTimeTemplate": "{min} dk okuma",
   "eeatLastDataUpdateLabel": "Son veri güncellemesi",
-  "routeTitleInfo": "{origin} → {destination} Uçuşları | Uçuş süresi, mesafe ve havayolları",
-  "routeMetaBase": "{origin} - {destination} uçuşları",
-  "routeMetaFrom": " {price}'den itibaren",
-  "routeMetaDistance": "Mesafe {distance} km",
-  "routeMetaDirectYes": "Direkt uçuşlar mevcut",
-  "routeMetaDirectAll": "sadece direkt uçuşlar",
   "sitemapLabel": "Site haritası",
   "sitemapPageTitle": "Site haritası – tüm destinasyonlar, havalimanları ve havayolları",
   "sitemapMetaDescription": "Airpiv’in tamamını tek bir sayfadan keşfedin: kapsadığımız tüm ülkeler, şehirler, havalimanları ve havayolları ile en popüler uçuş rotaları.",
@@ -361,5 +355,11 @@
   "priceLabelLive": "Canlı fiyat · Ekonomi · 1 yetişkin",
   "priceLastCheckedTemplate": "Son kontrol: {date}",
   "alternativeAirportLabel": "Alternatif havalimanı",
-  "offersComparedForRouteSuffix": "bu rota için karşılaştırılan teklif"
+  "offersComparedForRouteSuffix": "bu rota için karşılaştırılan teklif",
+  "routeTitlePrimary": "{origin}-{destination} Uçuşları – Fiyatlar, Uçuş Süresi ve Havayolları | Airpiv",
+  "routeTitleFacts": "{origin}-{destination} Uçuşları – Uçuş Süresi ve Mesafe | Airpiv",
+  "routeTitleDirect": "{origin}-{destination} Direkt Uçuşlar | Airpiv",
+  "routeTitleBase": "{origin}-{destination} Uçuşları | Airpiv",
+  "routeMeta": "{origin}-{destination} canlı uçak bileti fiyatlarını, uçuş süresini, mesafeyi, havayollarını ve direkt uçuşları Airpiv’de karşılaştırın.",
+  "routeMetaPrice": " Uçuşlar {price}’den itibaren."
 }
