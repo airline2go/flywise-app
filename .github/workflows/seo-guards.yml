@@ -1,0 +1,114 @@
+name: SEO Guards (live)
+
+# [SEO-GUARDS] Plan P0-2. Runs the LIVE HTTP SEO guards against a deployed site
+# and classifies findings by severity. This complements — it does not replace —
+# the BLOCKING per-PR gate in ci.yml (`web`: lint + the pure-invariant unit
+# tests for canonical / titles / hreflang / country-links / sitemap serialize),
+# which is what actually stops a regression from merging. These guards need a
+# deployed origin to fetch, so they run post-deploy (daily) + on demand, never
+# as a per-PR gate against an undeployed change.
+#
+# Severity policy (documented, enforced by the "Classify & gate" step):
+#   🔴 Critical  → the job FAILS. A live invariant is broken:
+#                    - smoke (response contract + indexability): a sampled page
+#                      is non-200, noindex-when-it-should-index, or thin/bad HTML
+#                    - sitemap: a sitemap URL is noindex / non-self-canonical /
+#                      not-200 / duplicate (the P0-7 sitemap↔indexability rule)
+#                    - hreflang: a cluster is non-reciprocal, canonical outside
+#                      the set, missing x-default, or a duplicate hreflang code
+#   🟡 Warning   → surfaced in the run summary, does NOT fail. Known/expected
+#                    drift that needs eyes but not a page: metadata duplicate
+#                    titles (distinct-airport routes, tracked separately).
+#   ℹ️ Info      → log only.
+#
+# No `|| true`, no bypass: each critical guard's real exit code decides the gate.
+
+on:
+  schedule:
+    - cron: '30 6 * * *' # 06:30 UTC daily (after seo-audit.yml at 06:00)
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Site origin to audit (e.g. a Vercel preview URL). Defaults to production.'
+        required: false
+        default: 'https://airpiv.com'
+
+jobs:
+  seo-guards:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      SITE_BASE: ${{ github.event.inputs.base || 'https://airpiv.com' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Critical guards — capture outcome, keep going for a full report ──
+      - name: 'Critical · Response contract + indexability (smoke)'
+        id: smoke
+        continue-on-error: true
+        run: node scripts/smoke-test.mjs --base="$SITE_BASE"
+
+      - name: 'Critical · Sitemap ↔ indexability'
+        id: sitemap
+        continue-on-error: true
+        run: node scripts/audit-sitemap.mjs --base="$SITE_BASE"
+
+      - name: 'Critical · Hreflang clusters'
+        id: hreflang
+        continue-on-error: true
+        run: node scripts/audit-hreflang.mjs --base="$SITE_BASE"
+
+      # ── Warning guard — report-only, never gates (metadata audits the API
+      #    feed, which is the same regardless of the site preview base). It
+      #    always exits 0, so we surface its finding COUNT explicitly rather
+      #    than relying on a (never-failing) step outcome.
+      - name: 'Warning · Metadata (duplicate titles)'
+        id: metadata
+        continue-on-error: true
+        run: |
+          node scripts/audit-seo-metadata.mjs --json > metadata-report.json
+          node scripts/audit-seo-metadata.mjs
+
+      - name: Publish severity report to run summary
+        if: always()
+        run: |
+          # Metadata is report-only (always exits 0); surface its finding COUNT.
+          meta="n/a"
+          if [ -f metadata-report.json ]; then
+            meta=$(node -e "const r=require('./metadata-report.json'); const d=r.duplicateTitle||{}; console.log((d.pairs||0)+' dup-title groups / '+(d.routes||0)+' routes')" 2>/dev/null || echo "see log")
+          fi
+          {
+            echo "## SEO Guards — \`$SITE_BASE\`"
+            echo ""
+            echo "| Guard | Severity | Result |"
+            echo "| --- | --- | --- |"
+            echo "| Response contract + indexability | 🔴 Critical | ${{ steps.smoke.outcome }} |"
+            echo "| Sitemap ↔ indexability | 🔴 Critical | ${{ steps.sitemap.outcome }} |"
+            echo "| Hreflang clusters | 🔴 Critical | ${{ steps.hreflang.outcome }} |"
+            echo "| Metadata (duplicate titles) | 🟡 Warning (report-only) | $meta |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── The gate: fail ONLY on a critical guard failure. Warning never gates.
+      - name: Classify & gate
+        run: |
+          crit_failed=0
+          for r in "${{ steps.smoke.outcome }}" "${{ steps.sitemap.outcome }}" "${{ steps.hreflang.outcome }}"; do
+            [ "$r" = "failure" ] && crit_failed=1
+          done
+          echo "::warning::Metadata (duplicate titles) is report-only — review the run summary; it never blocks."
+          if [ "$crit_failed" = "1" ]; then
+            echo "::error::A critical SEO guard failed (see the run summary + step logs above)."
+            exit 1
+          fi
+          echo "All critical SEO guards passed."
