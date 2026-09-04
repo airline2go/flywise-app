@@ -1,4 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
+const { robotsMeta } = require('./indexability');
 const { localizeCity, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -178,7 +179,11 @@ ${faqHtml}
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}${extraSchemaHtml ? '\n' + extraSchemaHtml : ''}\n${AIRLINE_CSS}`;
 
   // [THIN-CONTENT-NOINDEX] Same rule as city/country pages.
-  const robotsContent = (locRoutes.length <= 1 && !airline.intro_text) ? 'noindex, follow' : 'index, follow';
+  const robotsContent = robotsMeta({
+    type: 'airline',
+    routeCount: locRoutes.length,
+    hasAdminContent: !!airline.intro_text,
+  });
 
   const html = renderShell({
     lang,

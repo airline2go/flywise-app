@@ -1,4 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
+const { robotsMeta } = require('./indexability');
 const { localizeCity, localizeCountry, localizeAirport, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -247,7 +248,11 @@ ${faqHtml}
   // Always `follow` so link equity flows through either way — matching the
   // city/country/airline rule.
   const hasAdminAirportContent = !!(airport.terminal_info || airport.transit_options || airport.traveler_tips);
-  const robotsContent = (facts.destinationCount <= 1 && !hasAdminAirportContent) ? 'noindex, follow' : 'index, follow';
+  const robotsContent = robotsMeta({
+    type: 'airport',
+    destinationCount: facts.destinationCount,
+    hasAdminContent: hasAdminAirportContent,
+  });
 
   const html = renderShell({
     lang,
