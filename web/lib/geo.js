@@ -11,7 +11,7 @@
 // below instead takes an explicit `index` (built once per request via
 // `getGeoIndex()` in content-api.js, which uses React's `cache()` for
 // request-scoped memoization) rather than reading shared globals.
-import { DEFAULT_LANGUAGE } from './languages';
+import { DEFAULT_LANGUAGE } from './languages.js';
 
 // Pure — builds the same three lookup tables the original setGeoData()
 // populated, but returns them instead of assigning to module state.

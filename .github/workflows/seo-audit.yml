@@ -27,15 +27,21 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
+      # Redirect (not `| tee`) so the step exit code is the AUDIT's, never the
+      # pipe tail's — a crashed/unrunnable audit (e.g. an unresolved import) must
+      # fail this step loudly, not pass silently. The report is echoed back to
+      # the log after it is written, keeping visibility without the pipe.
       - name: Run route data audit
-        run: node scripts/audit-route-data.mjs --json | tee report.json
+        run: |
+          node scripts/audit-route-data.mjs --json > report.json
+          cat report.json
 
       - name: Publish health report to run summary
         if: always()
