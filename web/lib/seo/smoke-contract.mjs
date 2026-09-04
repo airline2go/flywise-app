@@ -115,7 +115,11 @@ function countInternalLinks(root, host) {
 export function evaluatePage(input) {
   const { url, status, contentType, bytes, html, profile = 'ssr', expected = {} } = input;
   const checks = [];
-  const isSsr = profile === 'ssr';
+  // 'sitemap' is the SSR contract PLUS the sitemap-membership invariant: a URL
+  // that appears in a sitemap MUST be indexable (200, not noindex) and
+  // self-canonical, so noindex / cross-canonical become hard errors here.
+  const isSitemap = profile === 'sitemap';
+  const isSsr = profile === 'ssr' || isSitemap;
   const errLevel = isSsr ? SEVERITY.ERROR : SEVERITY.INFO;
 
   // ── transport ──────────────────────────────────────────────────────────
@@ -163,6 +167,13 @@ export function evaluatePage(input) {
   checks.push(check('robots-present', SEVERITY.WARN, !!robots, robots || 'missing (defaults to index,follow)'));
   const isNoindex = !!robots && /noindex/i.test(robots);
   checks.push(check('robots-value', SEVERITY.INFO, true, robots ? robots : 'index,follow (implicit)'));
+  // Sitemap-membership invariant (P0-17): a URL listed in a sitemap must not be
+  // noindex. This is the check that catches backend-flag ↔ renderer drift — the
+  // backend decides sitemap membership, the renderer decides the robots meta,
+  // and they must agree.
+  if (isSitemap) {
+    checks.push(check('sitemap-indexable', SEVERITY.ERROR, !isNoindex, isNoindex ? `in sitemap but ${robots}` : 'indexable'));
+  }
 
   // ── canonical ───────────────────────────────────────────────────────────
   const canonicalEl = root.querySelector('link[rel="canonical"]');
@@ -175,9 +186,11 @@ export function evaluatePage(input) {
     // Self-canonical is the policy for indexable pages (P0-12). A canonical
     // pointing elsewhere is only an ERROR on an indexable SSR page; on a
     // noindex page a cross-canonical can be legitimate, so downgrade to warn.
+    // For a sitemap URL, a cross-canonical is always an error (the canonical
+    // page — not this one — is what belongs in the sitemap).
     checks.push(check(
       'canonical-self',
-      isSsr && !isNoindex ? SEVERITY.ERROR : SEVERITY.WARN,
+      isSitemap || (isSsr && !isNoindex) ? SEVERITY.ERROR : SEVERITY.WARN,
       got === want,
       got === want ? got : `got ${got} want ${want}`,
     ));

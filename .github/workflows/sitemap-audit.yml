@@ -1,0 +1,52 @@
+name: Sitemap Audit
+
+# P0-7 / P0-17: sitemap ↔ indexability consistency audit against a live base
+# URL. Fetches the sitemap index + every child sitemap and checks:
+#   - structural: no duplicate URLs, every loc absolute-https on the canonical
+#     host, no forbidden path shapes;
+#   - live sample: each sampled URL is 200, NOT noindex, and self-canonical
+#     (catches drift between the backend's sitemap-membership flag and the
+#     renderer's robots meta).
+#
+# Manual (workflow_dispatch) for now: the audit currently reports real findings
+# (non-German blog translations canonical to the German URL — P0-14; a static
+# page with malformed JSON-LD — P0-27), so it is intentionally NOT scheduled as
+# an always-red job. Promote to a daily schedule once those are fixed.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base URL to audit (production or a preview URL)'
+        required: false
+        default: 'https://airpiv.com'
+      sample:
+        description: 'URLs to live-check per child sitemap'
+        required: false
+        default: '10'
+
+jobs:
+  sitemap-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run sitemap audit
+        run: |
+          node scripts/audit-sitemap.mjs \
+            --base="${BASE:-https://airpiv.com}" \
+            --sample="${SAMPLE:-10}"
+        env:
+          BASE: ${{ github.event.inputs.base }}
+          SAMPLE: ${{ github.event.inputs.sample }}
