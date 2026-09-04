@@ -1,4 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
+const { robotsMeta } = require('./indexability');
 const { localizeCity, localizeCountry, getAlternativeAirports, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -267,7 +268,11 @@ ${eeatHtml}
   // city), so it must not flip such a page to index. Cities with real
   // connectivity (2+ destinations) carry genuinely distinct stats/FAQ and are
   // indexed. Always `follow` so link equity flows through either way.
-  const robotsContent = (facts.destinationCount <= 1 && !city.intro_text) ? 'noindex, follow' : 'index, follow';
+  const robotsContent = robotsMeta({
+    type: 'city',
+    destinationCount: facts.destinationCount,
+    hasAdminContent: !!city.intro_text,
+  });
 
   const html = renderShell({
     lang,

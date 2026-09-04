@@ -1,4 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
+const { robotsMeta } = require('./indexability');
 const { localizeCity, localizeCountry, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -175,7 +176,12 @@ ${faqHtml}
   // [THIN-CONTENT-NOINDEX] A country reaching at most one distinct destination
   // and with no admin-written intro is thin; richer countries carry real
   // stats/FAQ and are indexed. Always `follow`.
-  const robotsContent = (facts.destinationCount + facts.domesticCount <= 1 && !country.intro_text) ? 'noindex, follow' : 'index, follow';
+  const robotsContent = robotsMeta({
+    type: 'country',
+    destinationCount: facts.destinationCount,
+    domesticCount: facts.domesticCount,
+    hasAdminContent: !!country.intro_text,
+  });
 
   const html = renderShell({
     lang,

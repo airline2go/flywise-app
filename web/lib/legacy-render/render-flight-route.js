@@ -1,4 +1,5 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
+const { robotsMeta } = require('./indexability');
 const { localizeCity, getAlternativeAirports, hasCity } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -940,9 +941,13 @@ ${relatedArticlesHtml}
   // to the index — set noindex,follow so users still reach it but Google
   // doesn't index contradictory content. Narrow by design (see
   // criticalSnapshotErrors); always `follow` to keep link equity flowing.
-  const isThin = !hasRealRouteData && !hasAdminRouteContent;
   const criticalErrors = criticalSnapshotErrors(routeRaw, snapshot);
-  const robotsContent = (isThin || criticalErrors.length) ? 'noindex, follow' : 'index, follow';
+  const robotsContent = robotsMeta({
+    type: 'flight-route',
+    hasRealRouteData,
+    hasAdminContent: hasAdminRouteContent,
+    hasCriticalError: criticalErrors.length > 0,
+  });
 
   const html = renderShell({
     lang,
