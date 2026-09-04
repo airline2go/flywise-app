@@ -661,7 +661,12 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang);
   const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang);
 
-  const urls = urlsFor(`flights/${encodeURIComponent(route.slug)}`);
+  // [ROUTE-CANONICAL] For an exact-duplicate route (same airport pair under a
+  // second slug) render.js sets route.canonicalSlug to the canonical winner, so
+  // canonical AND hreflang point at the winner's URLs (in every language)
+  // instead of this duplicate's own — consolidating the duplicate's indexing.
+  const canonicalSlug = route.canonicalSlug || route.slug;
+  const urls = urlsFor(`flights/${encodeURIComponent(canonicalSlug)}`);
   const url = urls[lang];
   // Server-generated from data blocks (never user input) — safe as raw HTML.
   const generatedBodyHtml = (gen && !route.intro_text && route.seo_intro_html) ? route.seo_intro_html : null;

@@ -10,6 +10,7 @@
 // revalidation of the underlying data.
 import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
+import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
 import { airportEntriesFromRoutes } from '../sitemap-serialize.mjs';
 import { localizeLinks } from '../link-localize.mjs';
 import cityMod from './render-city.js';
@@ -184,6 +185,11 @@ export async function renderFlightRouteHtml(slug, lang) {
   // script did (related-routes.js is its verbatim port) — not the server's
   // /related endpoint — so the "Similar flight routes" section matches 1:1.
   const [routeList, posts] = await Promise.all([listRoutePages(), listBlogPosts(lang)]);
+  // [ROUTE-CANONICAL] If this slug is an exact duplicate of another route (same
+  // airport pair, different slug), point its canonical + hreflang at the
+  // canonical winner instead of itself — the renderer reads route.canonicalSlug.
+  const canonicalWinner = buildCanonicalSlugMap(routeList).get(routeRaw.slug);
+  if (canonicalWinner) routeRaw.canonicalSlug = canonicalWinner;
   const related = computeRelatedRoutes(routeRaw, routeList);
   const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);

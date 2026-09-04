@@ -29,6 +29,7 @@ import {
   sitemapBlog,
 } from './content-api';
 import { LANGUAGE_CODES, urlFor } from './languages';
+import { buildCanonicalSlugMap } from './seo/route-canonical.mjs';
 import {
   airportLastmods,
   urlsetXml,
@@ -62,8 +63,16 @@ function eachLang(relativePath, lastmod, out) {
 export async function buildRouteUrls() {
   const routes = await sitemapRoutes();
   const floor = SEO_TEMPLATE_VERSIONS.routes;
+  // [ROUTE-CANONICAL] Exact-duplicate routes (same airport pair, second slug)
+  // canonical to a winner (P0-28), so only the winner belongs in the sitemap —
+  // a non-self-canonical URL must never be listed. Same slug-only winner rule
+  // the renderer uses, so the two never disagree.
+  const loserSlugs = buildCanonicalSlugMap(routes);
   const urls = [];
-  for (const r of routes) eachLang(`flights/${r.id}`, applyTemplateFloor(r.lastmod, floor), urls);
+  for (const r of routes) {
+    if (loserSlugs.has(r.id)) continue;
+    eachLang(`flights/${r.id}`, applyTemplateFloor(r.lastmod, floor), urls);
+  }
   return urls;
 }
 
