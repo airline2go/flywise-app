@@ -1,0 +1,57 @@
+name: Production Smoke Test
+
+# P0-3: post-deploy smoke test. Fetches a representative sample of live pages
+# (all language homepages + one route/city/country/airport/airline/blog page
+# discovered from the live sitemap) and checks each against the SEO/rendering
+# contract in web/lib/seo/smoke-contract.mjs — not just HTTP 200, but that the
+# raw HTML actually carries the title/description/canonical/hreflang/H1/content/
+# JSON-LD/links Googlebot needs.
+#
+# Runs on demand (workflow_dispatch) against any base URL — production by
+# default, or a Vercel preview URL to smoke a PR before promoting it. It does
+# NOT gate PR merges (the contract LOGIC is unit-tested in the blocking `web`
+# job); this workflow exercises the LIVE deploy, so it is an operational check,
+# not a merge gate. The daily schedule surfaces production regressions between
+# deploys.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base URL to smoke (e.g. https://airpiv.com or a preview URL)'
+        required: false
+        default: 'https://airpiv.com'
+      sample:
+        description: 'SSR URLs to pull per entity type'
+        required: false
+        default: '1'
+  schedule:
+    # 06:00 UTC daily — catches a production SEO regression that no deploy in
+    # this repo caused (e.g. a backend data outage rendering thin/empty pages).
+    - cron: '0 6 * * *'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run production smoke test
+        run: |
+          node scripts/smoke-test.mjs \
+            --base="${BASE:-https://airpiv.com}" \
+            --sample="${SAMPLE:-1}"
+        env:
+          BASE: ${{ github.event.inputs.base }}
+          SAMPLE: ${{ github.event.inputs.sample }}
