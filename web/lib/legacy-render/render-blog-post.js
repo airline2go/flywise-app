@@ -3,6 +3,7 @@ const { escHtml, renderShell, jsonLdScript, speakableSpec } = require('./shell')
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
 const { blogHreflangUrls } = require('./blog-hreflang');
+const { urlFor } = require('./languages');
 
 // blog-post.css is inlined (bundled string, not a <link>) so it isn't a
 // render-blocking round-trip — same reasoning as the flight-route page.
@@ -179,11 +180,22 @@ function copyPostLink(btn) {
 
 function renderBlogPostPage(post, allRoutes, allPosts, lang) {
   const de = lang !== 'en';
-  const url = `https://airpiv.com/${de ? '' : 'en/'}blog/${encodeURIComponent(post.slug)}`;
+  // [BLOG-MULTILANG-CANONICAL] P0-14 safe fix. The canonical MUST be this
+  // language's own URL — previously every non-EN language was treated as German
+  // (`de ? '' : 'en/'`), so /it/blog/… /fr/blog/… etc. rendered a canonical
+  // pointing at the German path and de-indexed themselves. urlFor honours the
+  // real per-language prefix (de unprefixed, the rest under /xx/).
+  const url = urlFor(lang, `blog/${encodeURIComponent(post.slug)}`);
   const deUrl = `https://airpiv.com/blog/${encodeURIComponent(post.slug)}`;
-  // [BLOG-HREFLANG-FIX] Only advertise language alternates that actually
-  // exist — the full rule lives in lib/legacy-render/blog-hreflang.js.
-  const hreflangUrls = blogHreflangUrls(post, de, url, deUrl);
+  // hreflang: de/en keep the existing verified de↔en cross-linking (English
+  // has its own slug via post.slug_en). For the other languages the frontend
+  // has no reliable knowledge of which sibling translations exist under which
+  // slug, so we self-reference only — a valid, never-404 alternate — rather
+  // than inventing links that may 404. Full cross-language hreflang is a
+  // documented follow-up that needs the backend to expose sibling slugs.
+  const hreflangUrls = (lang === 'de' || lang === 'en')
+    ? blogHreflangUrls(post, de, url, deUrl)
+    : { [lang]: url };
   const description = post.meta_description || post.excerpt || `${post.title} — Airpiv Blog`;
   const image = post.cover_image_url || 'https://airpiv.com/og-image.png';
 
@@ -325,7 +337,11 @@ ${prevNextHtml}
   headExtraParts.push(BLOG_POST_HEAD_EXTRA);
 
   const html = renderShell({
-    lang: de ? 'de' : 'en',
+    // The real language — renderShell derives <html lang>, dir (rtl for ar),
+    // og:locale and the localized chrome from it (it already serves all 8
+    // languages for the entity pages). Previously forced to de/en, which
+    // mislabelled every other language's page as German.
+    lang,
     title: `${post.title} | Airpiv Blog`,
     description,
     canonicalUrl: url,
