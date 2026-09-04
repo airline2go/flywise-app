@@ -91,6 +91,35 @@ test('content-api: a non-404 4xx (e.g. 400) fails fast and throws', async () => 
   assert.equal(calls, 1, 'must not retry a non-429 4xx');
 });
 
+// ─── P1-8: listRoutePages walks every page to the COMPLETE set ────────────────
+test('content-api: listRoutePages walks page=0,1,2,… until hasMore is false', async () => {
+  const pages = {
+    0: { routes: [{ slug: 'a' }, { slug: 'b' }], hasMore: true },
+    1: { routes: [{ slug: 'c' }, { slug: 'd' }], hasMore: true },
+    2: { routes: [{ slug: 'e' }], hasMore: false },
+  };
+  const seen = [];
+  globalThis.fetch = async (url) => {
+    const page = new URL(url).searchParams.get('page');
+    seen.push(page);
+    return { ok: true, status: 200, json: async () => pages[page] || { routes: [], hasMore: false } };
+  };
+  const routes = await api.listRoutePages();
+  assert.deepEqual(routes.map((r) => r.slug), ['a', 'b', 'c', 'd', 'e'], 'all pages concatenated');
+  assert.deepEqual(seen, ['0', '1', '2'], 'stopped as soon as hasMore was false');
+});
+
+test('content-api: listRoutePages is backward-safe against a backend with no hasMore (stops after page 0)', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return { ok: true, status: 200, json: async () => ({ routes: [{ slug: 'only' }] }) }; // no hasMore
+  };
+  const routes = await api.listRoutePages();
+  assert.deepEqual(routes.map((r) => r.slug), ['only']);
+  assert.equal(calls, 1, 'must not loop when the server omits hasMore');
+});
+
 // ─── Transport wrapper: null → 404, html → 200 text/html ──────────────────────
 test('serve.htmlResponse: null → 404, html → 200 text/html', async () => {
   const notFound = serve.htmlResponse(null);
