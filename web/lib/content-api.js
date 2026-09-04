@@ -6,7 +6,7 @@
 // it needs, and Next.js's `fetch` cache (see the `next: { revalidate }`
 // option below) handles caching/ISR per-URL automatically.
 import { cache } from 'react';
-import { buildGeoIndex } from './geo';
+import { buildGeoIndex } from './geo.js';
 
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 
