@@ -70,10 +70,25 @@ async function listAirlines() {
   return data.airlines || [];
 }
 
-async function listRoutePages() {
-  const data = await fetchJSON('/route-pages');
-  return data.routes || [];
-}
+// [ROUTE-PAGES-PAGINATION] P1-8. The backend /route-pages feed pages at 1000
+// rows (PostgREST's cap); the catalogue is already larger, so a single fetch
+// truncated the list and biased related-routes / popular-routes / internal
+// linking / entity stats to the first 1000. Walk page=0,1,2,… until the server
+// says hasMore is false — exactly like fetchAllSitemapData — to get the COMPLETE
+// set. Wrapped in cache() so the many renders in one request share one walk.
+//
+// Backward-safe: an older backend that doesn't send `hasMore` returns undefined
+// → we stop after page 0 (the previous single-fetch behaviour), never looping.
+const listRoutePages = cache(async () => {
+  const all = [];
+  for (let page = 0; page < 10000; page++) {
+    const data = await fetchJSON(`/route-pages?page=${page}`);
+    const rows = (data && data.routes) || [];
+    all.push(...rows);
+    if (!data || !data.hasMore || rows.length === 0) break;
+  }
+  return all;
+});
 
 // [MULTILANG-BLOG] German (the source) reads the base list; every other
 // language reads its translated rows via ?lang=xx (served from
