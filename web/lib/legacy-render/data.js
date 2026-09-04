@@ -214,6 +214,18 @@ function hasCity(slug) {
   return !!(slug && Object.prototype.hasOwnProperty.call(CITY_BY_SLUG, slug));
 }
 
+// [COUNTRY-LINK-GUARD] True only for a country CODE that has a real country page
+// (present in the /countries list setGeoData() loaded — the same source the
+// sitemap and the getCountry route trust). Route/airport/city records carry
+// origin/destination country codes for countries that were never given their
+// own page (e.g. SA, AE, FI, CN — only ~20 of the ~27 linked codes have pages),
+// so linking them blindly emits internal links — and BreadcrumbList JSON-LD
+// items — that 404. Callers gate the link on this and fall back to plain text
+// (single links) or drop the entry (chip lists), exactly like hasCity.
+function hasCountry(code) {
+  return !!(code && Object.prototype.hasOwnProperty.call(COUNTRY_BY_CODE, code));
+}
+
 // Map detected city slugs to the localized names of the countries they're in
 // (drives "more articles from <country>"-style groupings).
 function citiesToCountries(slugs, lang) {
@@ -233,5 +245,5 @@ module.exports = {
   setGeoData,
   localizeCity, localizeCountry, localizeAirport,
   getAlternativeAirports, buildIataNameMap, slugForIata,
-  detectCitiesInText, citiesToCountries, cityNameForSlug, hasCity,
+  detectCitiesInText, citiesToCountries, cityNameForSlug, hasCity, hasCountry,
 };

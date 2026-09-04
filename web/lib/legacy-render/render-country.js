@@ -1,6 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { robotsMeta } = require('./indexability');
-const { localizeCity, localizeCountry, hasCity } = require('./data');
+const { localizeCity, localizeCountry, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -102,8 +102,11 @@ function renderCountryPage(country, routes, lang, routeMetaBySlug) {
     ? `<section class="country-chips"><h2>${escHtml(format(translate('countrySectionCities', lang), { country: countryName }))}</h2><div class="country-chip-grid">${chipCities.slice(0, 24).map((c) => `<a class="country-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
     : '';
 
-  const countriesChipsHtml = facts.reachableCountries.length >= 2
-    ? `<section class="country-chips"><h2>${escHtml(format(translate('countrySectionReach', lang), { country: countryName }))}</h2><div class="country-chip-grid">${facts.reachableCountries.slice(0, 20).map((c) => `<a class="country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+  // [COUNTRY-LINK-GUARD] Only chip reachable countries that have a real page
+  // (drop the rest — ~7 linked codes have none → 404).
+  const chipCountries = facts.reachableCountries.filter((c) => hasCountry(c.code));
+  const countriesChipsHtml = chipCountries.length >= 2
+    ? `<section class="country-chips"><h2>${escHtml(format(translate('countrySectionReach', lang), { country: countryName }))}</h2><div class="country-chip-grid">${chipCountries.slice(0, 20).map((c) => `<a class="country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
     : '';
 
   const faqHtml = faqItems.length

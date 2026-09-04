@@ -1,6 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { robotsMeta } = require('./indexability');
-const { localizeCity, localizeCountry, localizeAirport, hasCity } = require('./data');
+const { localizeCity, localizeCountry, localizeAirport, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -86,13 +86,17 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
   // template so pages don't read boilerplate-identical.
   const introText = buildAirportIntro(airport, facts, cityName, lang);
 
-  const countryHref = airport.country ? urlFor(lang, `country/${encodeURIComponent(airport.country)}`) : null;
+  // [COUNTRY-LINK-GUARD] Link the country crumb only when it has a real page
+  // (~7 linked codes have none → 404). Absent → plain text, dropped from JSON-LD.
+  const countryHref = (airport.country && hasCountry(airport.country)) ? urlFor(lang, `country/${encodeURIComponent(airport.country)}`) : null;
   // [CITY-LINK-GUARD] Link the city crumb only when that city has a real page;
   // an airport's city_slug can name a city that was never given one, and an
   // unconditional link (and its BreadcrumbList item) would resolve to a 404.
   const cityHref = (airport.city_slug && hasCity(airport.city_slug)) ? urlFor(lang, `city/${encodeURIComponent(airport.city_slug)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
-  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(countryName || airport.country)}</a><span>›</span>`;
+  if (airport.country) breadcrumbHtml += countryHref
+    ? `<a href="${countryHref}">${escHtml(countryName || airport.country)}</a><span>›</span>`
+    : `<span>${escHtml(countryName || airport.country)}</span><span>›</span>`;
   if (cityHref) breadcrumbHtml += `<a href="${cityHref}">${escHtml(cityName)}</a><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(airport.code)}</span></nav>`;
 
@@ -160,8 +164,12 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
   if (facts.distances) statTiles.push(statTile(`${nfmt(facts.distances.longest.km, lang)}<small>km</small>`, translate('cityStatLongest', lang), facts.distances.longest.name));
   const statsHtml = statTiles.length >= 2 ? `<div class="airport-stats">${statTiles.join('')}</div>` : '';
 
-  const countriesHtml = facts.countries.length >= 2
-    ? `<section class="airport-countries"><h2>${escHtml(format(translate('airportSectionCountries', lang), { code: airport.code }))}</h2><div class="airport-country-grid">${facts.countries.map((c) => `<a class="airport-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+  // [COUNTRY-LINK-GUARD] Only chip countries that have a real page (drop the
+  // rest — a chip is a link, so plain text would be odd; the sitemap-backed
+  // list is the source of truth for which countries are indexable).
+  const chipCountries = facts.countries.filter((c) => hasCountry(c.code));
+  const countriesHtml = chipCountries.length >= 2
+    ? `<section class="airport-countries"><h2>${escHtml(format(translate('airportSectionCountries', lang), { code: airport.code }))}</h2><div class="airport-country-grid">${chipCountries.map((c) => `<a class="airport-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
     : '';
 
   const faqHtml = faqItems.length
@@ -190,7 +198,7 @@ ${faqHtml}
 
   const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
   let pos = 2;
-  if (airport.country) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: countryName || airport.country, item: urlFor(lang, `country/${airport.country}`) });
+  if (airport.country && countryHref) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: countryName || airport.country, item: countryHref });
   if (cityHref) breadcrumbList.push({ '@type': 'ListItem', position: pos++, name: cityName, item: cityHref });
   breadcrumbList.push({ '@type': 'ListItem', position: pos, name: airport.code, item: url });
 

@@ -1,6 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { robotsMeta } = require('./indexability');
-const { localizeCity, hasCity } = require('./data');
+const { localizeCity, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { nfmt } = require('./connection-facts');
@@ -112,8 +112,10 @@ function renderAirlinePage(airline, routes, lang, mostUsedRoutes, routeMetaBySlu
     ? `<section class="airline-chips"><h2>${escHtml(format(translate('airlineSectionDestinations', lang), { airline: airline.name }))}</h2><div class="airline-chip-grid">${linkableCities.slice(0, 24).map((c) => `<a class="airline-chip" href="${pathFor(lang, `city/${encodeURIComponent(c.slug)}`)}">${escHtml(c.name)}</a>`).join('')}</div></section>`
     : '';
 
-  const countriesChipsHtml = facts.countries.length >= 2
-    ? `<section class="airline-chips"><h2>${escHtml(format(translate('airlineSectionReach', lang), { airline: airline.name }))}</h2><div class="airline-chip-grid">${facts.countries.slice(0, 20).map((c) => `<a class="airline-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+  // [COUNTRY-LINK-GUARD] Only chip countries that have a real page (drop the rest).
+  const chipCountries = facts.countries.filter((c) => hasCountry(c.code));
+  const countriesChipsHtml = chipCountries.length >= 2
+    ? `<section class="airline-chips"><h2>${escHtml(format(translate('airlineSectionReach', lang), { airline: airline.name }))}</h2><div class="airline-chip-grid">${chipCountries.slice(0, 20).map((c) => `<a class="airline-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
     : '';
 
   const faqHtml = faqItems.length

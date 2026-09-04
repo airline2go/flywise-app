@@ -1,6 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { robotsMeta } = require('./indexability');
-const { localizeCity, localizeCountry, getAlternativeAirports, hasCity } = require('./data');
+const { localizeCity, localizeCountry, getAlternativeAirports, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { computeCityFacts, buildCityFaqItems, buildCityIntro, nfmt } = require('./city-facts');
@@ -97,9 +97,13 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
   // single shared template so pages don't read boilerplate-identical.
   const introText = city.intro_text || buildCityIntro(city, facts, cityName, lang);
 
-  const countryHref = city.country_code ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
+  // [COUNTRY-LINK-GUARD] Link the country only when it has a real page
+  // (~7 linked codes have none → 404). Absent → plain text, dropped from JSON-LD.
+  const countryHref = (city.country_code && hasCountry(city.country_code)) ? urlFor(lang, `country/${encodeURIComponent(city.country_code)}`) : null;
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
-  if (countryHref) breadcrumbHtml += `<a href="${countryHref}">${escHtml(countryName || city.country_code)}</a><span>›</span>`;
+  if (city.country_code) breadcrumbHtml += countryHref
+    ? `<a href="${countryHref}">${escHtml(countryName || city.country_code)}</a><span>›</span>`
+    : `<span>${escHtml(countryName || city.country_code)}</span><span>›</span>`;
   breadcrumbHtml += `<span>${escHtml(cityName)}</span></nav>`;
 
   const airportsHtml = (city.airport_codes && city.airport_codes.length)
@@ -137,8 +141,10 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
   if (facts.distances) statTiles.push(statTile(`${nfmt(facts.distances.longest.km, lang)}<small>km</small>`, translate('cityStatLongest', lang), facts.distances.longest.name));
   const statsHtml = statTiles.length >= 2 ? `<div class="city-stats">${statTiles.join('')}</div>` : '';
 
-  const countriesHtml = facts.countries.length >= 2
-    ? `<section class="city-countries"><h2>${escHtml(format(translate('citySectionCountries', lang), { city: cityName }))}</h2><div class="city-country-grid">${facts.countries.map((c) => `<a class="city-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
+  // [COUNTRY-LINK-GUARD] Only chip countries that have a real page (drop the rest).
+  const chipCountries = facts.countries.filter((c) => hasCountry(c.code));
+  const countriesHtml = chipCountries.length >= 2
+    ? `<section class="city-countries"><h2>${escHtml(format(translate('citySectionCountries', lang), { city: cityName }))}</h2><div class="city-country-grid">${chipCountries.map((c) => `<a class="city-country-chip" href="${pathFor(lang, `country/${encodeURIComponent(c.code)}`)}">${escHtml(c.name)}<span class="count">${nfmt(c.count, lang)}</span></a>`).join('')}</div></section>`
     : '';
 
   const faqHtml = faqItems.length
@@ -213,7 +219,7 @@ ${eeatHtml}
 </main>`;
 
   const breadcrumbList = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
-  if (city.country_code) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: countryName || city.country_code, item: urlFor(lang, `country/${city.country_code}`) });
+  if (city.country_code && countryHref) breadcrumbList.push({ '@type': 'ListItem', position: 2, name: countryName || city.country_code, item: countryHref });
   breadcrumbList.push({ '@type': 'ListItem', position: breadcrumbList.length + 1, name: cityName, item: url });
 
   const schema = {
