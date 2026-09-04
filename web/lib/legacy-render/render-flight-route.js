@@ -1,6 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { robotsMeta } = require('./indexability');
-const { localizeCity, getAlternativeAirports, hasCity } = require('./data');
+const { localizeCity, getAlternativeAirports, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
@@ -698,7 +698,13 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
-  if (route.destination_country) breadcrumbHtml += `<a href="${urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`)}">${escHtml(route.destination_country)}</a><span>›</span>`;
+  // [COUNTRY-LINK-GUARD] Only link a destination country that has a real page;
+  // ~7 of the linked country codes (SA, AE, FI, …) have none, so an
+  // unconditional link 404s. Absent → plain text in the trail, dropped from JSON-LD.
+  const destCountryHasPage = hasCountry(route.destination_country);
+  if (route.destination_country) breadcrumbHtml += destCountryHasPage
+    ? `<a href="${urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`)}">${escHtml(route.destination_country)}</a><span>›</span>`
+    : `<span>${escHtml(route.destination_country)}</span><span>›</span>`;
   // [CITY-LINK-GUARD] Only link (and list in JSON-LD) a destination city that
   // actually has a page — many route records carry a city_slug for a city that
   // was never given one, so an unconditional link 404s. When absent, keep the
@@ -712,7 +718,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
 
   const breadcrumbItems = [{ '@type': 'ListItem', position: 1, name: translate('homeLabel', lang), item: urlFor(lang, '') }];
   let bcPos = 2;
-  if (route.destination_country) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_country, item: urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`) });
+  if (route.destination_country && destCountryHasPage) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_country, item: urlFor(lang, `country/${encodeURIComponent(route.destination_country)}`) });
   if (route.destination_city_slug && destCityHasPage) breadcrumbItems.push({ '@type': 'ListItem', position: bcPos++, name: route.destination_city, item: urlFor(lang, `city/${encodeURIComponent(route.destination_city_slug)}`) });
   breadcrumbItems.push({ '@type': 'ListItem', position: bcPos, name: `${route.origin_city} → ${route.destination_city}`, item: url });
 
