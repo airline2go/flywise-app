@@ -1,11 +1,15 @@
 name: CI Checks (Frontend)
 
-# [CI-PIPELINE-FIX] Runs on every push/PR to main in the flywise-app
-# (frontend) repo. Checks app.js/admin.js/config.js/build/*.js for syntax
-# errors and every HTML page's inline <script> blocks — the two things
-# most likely to silently break the live site if a typo slips through.
-# The separate build-check job runs the real SSG build against the live
-# backend (non-blocking — see its own comment for why).
+# Production source of truth is the Next.js app in web/ (served via
+# web/app/[lang]/…/route.js -> web/lib/legacy-render/). This pipeline BUILDS
+# AND TESTS that real production app, and those checks are BLOCKING: lint,
+# tests, and the production build must all pass before a change can merge/deploy.
+#
+# The root-level static assets (root *.html, app.js, build/*) are LEGACY. The
+# build/ generators are a deprecated standalone SSG whose output is NOT deployed
+# (see build/README.md). We keep a fast, deterministic syntax check for the
+# still-checked-in legacy assets, but production correctness is gated by the
+# `web` and `web-build` jobs below.
 on:
   push:
     branches: [main]
@@ -13,7 +17,63 @@ on:
     branches: [main]
 
 jobs:
-  syntax-check:
+  # ── BLOCKING: production app lint + unit/integration tests ────────────────
+  # Fully deterministic and offline (generateStaticParams returns []; the test
+  # suite uses fixtures). A failure here must block merge/deploy.
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies (clean, lockfile-exact)
+        run: npm ci
+
+      - name: Lint (production app source)
+        run: npm run lint
+
+      - name: Test (production test suite)
+        run: npm test
+
+  # ── BLOCKING: real production build ───────────────────────────────────────
+  # `next build` does not depend on the backend to enumerate pages
+  # (generateStaticParams returns []), and the pre-build prerender/stamp scripts
+  # are defensive (they warn and exit 0 on any failure), so this is safe to gate
+  # on. A genuine build break (bad import, type/syntax error, bad next.config)
+  # fails here and blocks deploy.
+  web-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies (clean, lockfile-exact)
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+  # ── Legacy static assets: fast deterministic syntax check (blocking) ──────
+  # Catches a typo that would break the still-checked-in root static site.
+  # These are NOT the deployed production frontend, but a syntax error here is
+  # cheap to catch and never a false positive.
+  legacy-syntax-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,28 +82,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: Check app.js syntax
-        run: node --check app.js
+      - name: Check root standalone scripts syntax
+        run: |
+          for f in app.js admin.js config.js analytics.js canonical-fix.js popular-routes.js; do
+            [ -f "$f" ] && node --check "$f"
+          done
 
-      - name: Check admin.js syntax
-        run: node --check admin.js
-
-      - name: Check config.js syntax
-        run: node --check config.js
-
-      - name: Check analytics.js syntax
-        run: node --check analytics.js
-
-      - name: Check canonical-fix.js syntax
-        run: node --check canonical-fix.js
-
-      - name: Check popular-routes.js syntax
-        run: node --check popular-routes.js
-
-      - name: Check build/*.js syntax
+      - name: Check deprecated build/*.js syntax
         run: for f in build/*.js; do node --check "$f"; done
 
-      - name: Check inline <script> blocks in every HTML page
+      - name: Check inline <script> blocks in every root HTML page
         run: |
           node -e "
           const fs = require('fs');
@@ -72,24 +120,3 @@ jobs:
             console.log(\`✅ All inline <script> blocks parsed cleanly across \${htmlFiles.length} HTML files.\`);
           }
           "
-
-  build-check:
-    runs-on: ubuntu-latest
-    # Non-blocking: this exercises the real SSG build (build/generate-pages.js)
-    # against the live backend API. continue-on-error so a live-API hiccup
-    # doesn't fail an unrelated PR — a genuine code bug still shows up loudly
-    # in the job's own log.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run the SSG build
-        run: npm run build

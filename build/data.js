@@ -1,3 +1,9 @@
+// ⚠️ DEPRECATED — NOT the production data layer. The live site renders from
+// web/lib/legacy-render/ (Next.js). This directory is the older standalone SSG,
+// retained only for the non-blocking build-check smoke test; its output is not
+// deployed. Edit web/lib/legacy-render/ + web/translations/, not here. See
+// build/README.md.
+//
 // Shared i18n/data module for the page generator. City/country/airport
 // display names used to live in hardcoded GERMAN_CITY_NAMES/
 // ENGLISH_CITY_NAMES/ENGLISH_COUNTRY_NAMES dictionaries here — they now
