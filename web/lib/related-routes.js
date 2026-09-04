@@ -40,6 +40,13 @@ function computeRelatedRoutes(route, routeList) {
   // useful suggestion.
   const candidates = routeList.filter((r) => r.slug !== route.slug
     && !(r.origin_city === route.destination_city && r.destination_city === route.origin_city)
+    // [RELATED-INDEXABLE] Never suggest a route the backend flags non-indexable
+    // (thin/broken): a "related" link must point at an indexable, crawlable page
+    // (P1-6 / internal-link quality). Only an EXPLICIT indexable===false is
+    // excluded — a missing flag is treated as indexable, matching the sitemap's
+    // [INDEXABLE] convention, so this never empties healthy related sections.
+    // Enabled by P1-8: the full route list now carries the indexable flag.
+    && r.indexable !== false
     && (r.origin_city === route.origin_city || r.destination_city === route.destination_city
       || (route.destination_country && r.destination_country === route.destination_country)));
 
