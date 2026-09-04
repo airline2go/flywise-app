@@ -80,6 +80,21 @@ test('a loser route renders canonical + hreflang pointing at the winner, in ever
   assert.ok(!html.includes('flights/ams-vie'), 'the duplicate slug must not appear in canonical/hreflang');
 });
 
+// ─── F1 redirect safety: single hop, no chains/loops ───────────────────────
+test('no winner is itself a loser — the F1 301 is always a single hop (no chains)', () => {
+  const m = buildCanonicalSlugMap([
+    { slug: 'ams-vie', origin_iata: 'AMS', destination_iata: 'VIE' },
+    { slug: 'amsterdam-vienna', origin_iata: 'AMS', destination_iata: 'VIE' },
+    { slug: 'fra-ber', origin_iata: 'FRA', destination_iata: 'BER' },
+    { slug: 'frankfurt-berlin', origin_iata: 'FRA', destination_iata: 'BER' },
+  ]);
+  for (const winner of m.values()) {
+    assert.equal(m.has(winner), false, `winner ${winner} must not also be a redirect source`);
+  }
+  // and no self-loop: a slug never redirects to itself
+  for (const [loser, winner] of m) assert.notEqual(loser, winner);
+});
+
 test('the winner (no canonicalSlug) still self-canonicals', () => {
   const { html } = renderFlightRoutePage(route({ slug: 'amsterdam-vienna' }), 'en', [], [], []);
   assert.equal(canonical(html), 'https://airpiv.com/en/flights/amsterdam-vienna');

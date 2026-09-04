@@ -1,7 +1,8 @@
 // German flight-route page (unprefixed root) — verbatim legacy HTML, see
 // lib/legacy-render/render.js.
-import { renderFlightRouteHtml } from '@/lib/legacy-render/render';
-import { htmlResponse } from '@/lib/legacy-render/serve';
+import { renderFlightRouteHtml, resolveCanonicalRedirect } from '@/lib/legacy-render/render';
+import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
+import { pathFor } from '@/lib/legacy-render/languages';
 import { listRoutePages } from '@/lib/content-api';
 
 export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
@@ -37,5 +38,8 @@ export async function generateStaticParams() {
 
 export async function GET(_req, { params }) {
   const { slug } = await params;
+  // [F1] A consolidated duplicate slug 301s to its canonical winner (root/de).
+  const winner = await resolveCanonicalRedirect(slug);
+  if (winner) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(winner)}`));
   return htmlResponse(await renderFlightRouteHtml(slug, 'de'));
 }

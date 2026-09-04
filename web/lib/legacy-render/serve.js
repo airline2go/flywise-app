@@ -5,6 +5,13 @@ export function htmlResponse(html) {
   return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
+// [ROUTE-CANONICAL-REDIRECT] F1 — a permanent (301) redirect from a consolidated
+// duplicate URL to its canonical winner. Body-less, with an absolute-path
+// Location; cacheable by the platform like the rendered pages next to it.
+export function redirectResponse(location, status = 301) {
+  return new Response(null, { status, headers: { location } });
+}
+
 // The six non-default languages that live under a /xx/ prefix. German is the
 // unprefixed root, so it is intentionally NOT here — /de/city/… must 404 like
 // production, as must any unknown prefix (/zz/…). Route Handlers aren't wrapped

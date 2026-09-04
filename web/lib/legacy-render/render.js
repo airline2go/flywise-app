@@ -170,6 +170,18 @@ function computeCityRouteLinks(route, routeList, relatedSlugs) {
   };
 }
 
+// [ROUTE-CANONICAL-REDIRECT] F1 — an EXACT-duplicate loser slug (same airport
+// pair served under a second slug, e.g. `ams-vie` beside `amsterdam-vienna`)
+// 301-redirects to its canonical winner instead of rendering a duplicate page.
+// Reuses the P0-28 winner map (buildCanonicalSlugMap) so the redirect target and
+// the <link rel="canonical">/sitemap winner can never disagree. Returns the
+// winner slug, or null when `slug` is a winner or a unique route (render as
+// normal). Single hop by construction: a winner is never itself a loser.
+export async function resolveCanonicalRedirect(slug) {
+  const routeList = await listRoutePages();
+  return buildCanonicalSlugMap(routeList).get(slug) || null;
+}
+
 export async function renderFlightRouteHtml(slug, lang) {
   // [CACHE-VISIBILITY] This function only runs on an ISR cache MISS (first hit
   // of a slug/lang, or a revalidation after the 24h window) — a cache HIT is
@@ -189,7 +201,11 @@ export async function renderFlightRouteHtml(slug, lang) {
   // [ROUTE-CANONICAL] If this slug is an exact duplicate of another route (same
   // airport pair, different slug), point its canonical + hreflang at the
   // canonical winner instead of itself — the renderer reads route.canonicalSlug.
-  const canonicalWinner = buildCanonicalSlugMap(routeList).get(routeRaw.slug);
+  // (A loser normally 301-redirects before it ever renders — see the route
+  // handler + resolveCanonicalRedirect below — but keep the canonical override
+  // as a correctness backstop for any path that renders a loser directly.)
+  const loserMap = buildCanonicalSlugMap(routeList);
+  const canonicalWinner = loserMap.get(routeRaw.slug);
   if (canonicalWinner) routeRaw.canonicalSlug = canonicalWinner;
   // [ROUTE-TITLE-DISAMBIGUATION] If this route shares its city-name title with a
   // DIFFERENT-airport route (not a duplicate — a distinct route, e.g. FRA→HAM vs
@@ -197,8 +213,12 @@ export async function renderFlightRouteHtml(slug, lang) {
   // the two titles are unique. Absent for a route with an already-unique title.
   const titleQualify = buildTitleDisambiguationMap(routeList).get(routeRaw.slug);
   if (titleQualify) routeRaw.titleQualify = titleQualify;
-  const related = computeRelatedRoutes(routeRaw, routeList);
-  const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
+  // [F1-INTERNAL-LINKS] Never emit an internal link to a consolidated loser slug
+  // (it would 301 to the winner) — drop losers from the related/city-link
+  // candidate list so every internal link points straight at the canonical URL.
+  const linkList = loserMap.size ? routeList.filter((r) => !loserMap.has(r.slug)) : routeList;
+  const related = computeRelatedRoutes(routeRaw, linkList);
+  const cityLinks = computeCityRouteLinks(routeRaw, linkList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);
   const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
   console.log(JSON.stringify({ tag: 'flight-render', event: 'cache-miss', slug, lang, duffel: false, ms: Date.now() - t0 }));
