@@ -46,8 +46,11 @@ export function routeLastmod(r) {
 //     routes 2026-08-02 — natural-language titles ("Flights from X to Y …"),
 //                         "| Airpiv" brand suffix, and the data-gated live
 //                         price in the meta description (SEO title/meta rewrite).
+//     routes 2026-09-04 — airport-qualified titles for distinct-airport routes
+//                         sharing one city-name title (P0-29 disambiguation),
+//                         so each such title/H1/description is unique.
 export const SEO_TEMPLATE_VERSIONS = {
-  routes: '2026-08-02',
+  routes: '2026-09-04',
   cities: null,
   countries: null,
   airports: null,

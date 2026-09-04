@@ -11,6 +11,7 @@
 import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
 import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
+import { buildTitleDisambiguationMap } from '../seo/route-title.mjs';
 import { airportEntriesFromRoutes } from '../sitemap-serialize.mjs';
 import { localizeLinks } from '../link-localize.mjs';
 import cityMod from './render-city.js';
@@ -190,6 +191,12 @@ export async function renderFlightRouteHtml(slug, lang) {
   // canonical winner instead of itself — the renderer reads route.canonicalSlug.
   const canonicalWinner = buildCanonicalSlugMap(routeList).get(routeRaw.slug);
   if (canonicalWinner) routeRaw.canonicalSlug = canonicalWinner;
+  // [ROUTE-TITLE-DISAMBIGUATION] If this route shares its city-name title with a
+  // DIFFERENT-airport route (not a duplicate — a distinct route, e.g. FRA→HAM vs
+  // FRA→XFW), tag which endpoint(s) the renderer must qualify with the airport so
+  // the two titles are unique. Absent for a route with an already-unique title.
+  const titleQualify = buildTitleDisambiguationMap(routeList).get(routeRaw.slug);
+  if (titleQualify) routeRaw.titleQualify = titleQualify;
   const related = computeRelatedRoutes(routeRaw, routeList);
   const cityLinks = computeCityRouteLinks(routeRaw, routeList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);

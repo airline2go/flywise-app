@@ -25,6 +25,17 @@ const SECONDARY_AIRPORT_NAMES = {
   BGY: 'Milan-Bergamo',
 };
 
+// [ROUTE-TITLE-DISAMBIGUATION] A readable, UNIQUE airport label for a title/H1
+// that would otherwise collide with a same-city-pair route served from a
+// different airport (e.g. Frankfurt→Hamburg via HAM vs XFW). Prefer the curated
+// proper name ("London-Gatwick (LGW)"); otherwise the (already-localized) city
+// plus its IATA code ("Hamburg (HAM)"). Proper names are language-independent;
+// the city fallback is localized by the caller, so this is correct per-locale.
+function airportLabel(city, iata) {
+  const name = SECONDARY_AIRPORT_NAMES[iata];
+  return name ? `${name} (${iata})` : `${city} (${iata})`;
+}
+
 // [AIRLINE-COUNT-CANON] / [ROUTE-CONSISTENCY-GUARD] both now live in
 // route-snapshot.js: the snapshot's `airlineCount` is the single source of
 // truth (list length authoritative), and `validateSnapshot()` performs the
@@ -570,8 +581,11 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 //   • otherwise the plain "Flights from … to …" base template.
 // Every route's origin/destination pair is unique, so every generated title is
 // unique; the fallbacks exist to shed a facet word, not to disambiguate.
-function buildRouteTitle(route, lang) {
-  const vars = { origin: route.origin_city, destination: route.destination_city };
+// [ROUTE-TITLE-DISAMBIGUATION] `names` (when present) overrides the plain city
+// names with airport-qualified labels so a distinct-airport route on the same
+// city pair gets a UNIQUE title; omitted → the clean city-name title as before.
+function buildRouteTitle(route, lang, names) {
+  const vars = { origin: (names && names.origin) || route.origin_city, destination: (names && names.destination) || route.destination_city };
   // [CANONICAL-PRICE-SOURCE] The "Prices" facet appears only when the ONE
   // canonical price resolver yields a value — the same source the meta
   // description, hero and Offer use, so the title never promises a price the
@@ -609,8 +623,8 @@ function formatRoutePrice(price, currency, lang) {
 // "from {price}" clause is appended. The price value is never generated or
 // estimated: no cached price → the generic sentence stands alone, and the price
 // value never appears in the <title> (only here).
-function buildRouteMetaDescription(route, lang) {
-  const vars = { origin: route.origin_city, destination: route.destination_city };
+function buildRouteMetaDescription(route, lang, names) {
+  const vars = { origin: (names && names.origin) || route.origin_city, destination: (names && names.destination) || route.destination_city };
   const base = format(translate('routeMeta', lang), vars);
   // [CANONICAL-PRICE-SOURCE] The "ab/from …" clause uses the ONE canonical
   // price (same value the title facet, hero fallback and Offer use), so the
@@ -658,8 +672,18 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   // time (route.seo_lang), so it must only be used when it matches the
   // current page's language — otherwise German copy would leak onto /en, /fr, …
   const gen = !!(route.seo_lang && route.seo_lang === lang);
-  const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang);
-  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang);
+  // [ROUTE-TITLE-DISAMBIGUATION] render.js tags a route whose city-name title
+  // collides with a DIFFERENT-airport route (route.titleQualify names which
+  // endpoint varies). Qualify only that endpoint with its airport so the
+  // generated title/description/H1 are unique; an admin/engine override still
+  // wins untouched, and a route with a unique title is unaffected.
+  const q = route.titleQualify;
+  const displayNames = q ? {
+    origin: q.origin ? airportLabel(route.origin_city, route.origin_iata) : route.origin_city,
+    destination: q.destination ? airportLabel(route.destination_city, route.destination_iata) : route.destination_city,
+  } : null;
+  const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang, displayNames);
+  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, displayNames);
 
   // [ROUTE-CANONICAL] For an exact-duplicate route (same airport pair under a
   // second slug) render.js sets route.canonicalSlug to the canonical winner, so
