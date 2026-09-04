@@ -1,3 +1,8 @@
+// ⚠️ DEPRECATED — NOT the production renderer. The live site renders every
+// route/entity/blog page from web/lib/legacy-render/ (Next.js). This directory
+// is the older standalone SSG, retained only for the non-blocking build-check
+// smoke test; its output is not deployed. Edit web/lib/legacy-render/ +
+// web/translations/, not here. See build/README.md.
 const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathPrefix } = require('./languages');
 const { stringsFor } = require('./translate');
 

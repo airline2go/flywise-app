@@ -44,7 +44,7 @@ export default function ContentCalendarClient() {
         else setNote(d.error || 'تعذّر التحميل.');
       })
       .catch(() => setNote('تعذّر التحميل.'));
-  }, []);
+  }, [setPosts, setNote]);
   useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => posts.filter((p) =>
@@ -70,7 +70,7 @@ export default function ContentCalendarClient() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scheduled_at, status: 'scheduled' }),
     }).then((r) => r.json()).then((d) => { if (d.ok && d.post) setPosts((ps) => ps.map((p) => (p.id === id ? d.post : p))); }).catch(() => {});
-  }, []);
+  }, [setPosts]);
 
   const chip = (p) => (
     <div
