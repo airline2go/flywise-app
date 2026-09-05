@@ -142,8 +142,13 @@ test('pageUrls: only canonical https static pages, includes the home page', () =
   const urls = pageUrls();
   assert.deepEqual(validateSitemapUrls(urls), []);
   assert.ok(urls.some((u) => u.loc === 'https://airpiv.com/'));
-  // Home + the 9 named static pages in STATIC_PAGES (cheap-flights,
+  // Home + the named static pages in STATIC_PAGES (cheap-flights,
   // last-minute-flights, about, blog, contact, privacy, terms, refund-policy,
-  // cookies) — all present under public/, so none is a 404 in the sitemap.
-  assert.equal(urls.length, 10);
+  // cookies) + [P1-7] the 5 trust pages (how-it-works, data-sources,
+  // methodology, editorial-policy, transparency) — all present under public/,
+  // so none is a 404 in the sitemap.
+  assert.equal(urls.length, 15);
+  for (const p of ['how-it-works.html', 'data-sources.html', 'methodology.html', 'editorial-policy.html', 'transparency.html']) {
+    assert.ok(urls.some((u) => u.loc === `https://airpiv.com/${p}`), `trust page ${p} present`);
+  }
 });
