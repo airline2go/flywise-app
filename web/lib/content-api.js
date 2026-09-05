@@ -90,6 +90,35 @@ const listRoutePages = cache(async () => {
   return all;
 });
 
+// [P0-4] Persistent route redirects (loser→winner and any hand-added ones).
+// Cached per request like the other feeds. A missing/erroring endpoint degrades
+// to no redirects (the dynamic F1 map still covers live losers) rather than
+// breaking route serving — the frontend may be deployed ahead of the backend.
+const listRouteRedirects = cache(async () => {
+  try {
+    const data = await fetchJSON('/route-redirects');
+    return (data && data.redirects) || [];
+  } catch (e) {
+    console.warn(`[listRouteRedirects] falling back to none: ${e.message}`);
+    return [];
+  }
+});
+
+// Resolve a persistent redirect for a slug. Returns { target, status } or null.
+// Single-hop is guaranteed at write time, but we defensively collapse one extra
+// hop and stop, so a mis-seeded chain can never loop.
+async function resolvePersistentRedirect(slug) {
+  const redirects = await listRouteRedirects();
+  if (!redirects.length) return null;
+  const bySource = new Map(redirects.map((r) => [r.source_slug, r]));
+  let hit = bySource.get(slug);
+  if (!hit) return null;
+  let target = hit.target_slug;
+  const next = bySource.get(target);
+  if (next && next.source_slug !== next.target_slug) target = next.target_slug; // collapse at most one extra hop
+  return { target, status: hit.status_code || 301 };
+}
+
 // [MULTILANG-BLOG] German (the source) reads the base list; every other
 // language reads its translated rows via ?lang=xx (served from
 // blog_post_translations). Replaces the old de/en-only split.
@@ -209,6 +238,7 @@ const getGeoIndex = cache(async () => {
 
 export {
   listCities, listCountries, listAirports, listAirlines, listRoutePages, listBlogPosts,
+  listRouteRedirects, resolvePersistentRedirect,
   getCity, getCountry, getAirport, getAirline, getRoutePage, getRelatedRoutes, getBlogPost,
   getGeoIndex,
   sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapBlog,
