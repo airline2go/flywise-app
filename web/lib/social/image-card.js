@@ -8,8 +8,9 @@
 // a price badge is drawn ONLY when a real price is supplied, mirroring the copy
 // generator's "never fabricate a price" rule.
 
-const LANGUAGES = ['en', 'de', 'es', 'fr', 'it', 'nl', 'ar'];
 const TEMPLATE_TYPES = ['flight_deal', 'city_guide', 'blog_promo'];
+// [P0-10] LANGUAGES is defined below, DERIVED from the label dictionaries that
+// actually exist (TAGLINE/DIRECT_CHIP/KICKER) — see the note there.
 
 // Airpiv brand palette (kept in sync with the admin theme / site dark surface).
 const BRAND = {
@@ -63,6 +64,17 @@ const KICKER = {
   city_guide: { en: 'CITY GUIDE', de: 'CITY-GUIDE', es: 'GUÍA DE CIUDAD', fr: 'GUIDE VILLE', it: 'GUIDA CITTÀ', nl: 'STADSGIDS', ar: 'دليل مدينة' },
   blog_promo: { en: 'AIRPIV JOURNAL', de: 'AIRPIV JOURNAL', es: 'AIRPIV JOURNAL', fr: 'AIRPIV JOURNAL', it: 'AIRPIV JOURNAL', nl: 'AIRPIV JOURNAL', ar: 'مدونة Airpiv' },
 };
+
+// [P0-10] Supported card languages, DERIVED from the label copy that actually
+// exists — a language is supported only when the tagline, the direct chip, and
+// every kicker type have real text for it, so a card never renders English
+// labels mislabeled as another language. Single source of truth; cannot drift
+// from the dictionaries above. Turkish (tr) is in the site's canonical set but
+// has no card copy yet, so it is intentionally excluded until real tr labels
+// are added (we do not AI-translate to fill the gap).
+const LANGUAGES = Object.keys(TAGLINE).filter(
+  (code) => DIRECT_CHIP[code] && TEMPLATE_TYPES.every((t) => KICKER[t] && KICKER[t][code]),
+);
 
 function pick(map, lang) {
   return map[lang] || map.en;

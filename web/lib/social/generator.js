@@ -7,7 +7,15 @@
 // withinLimit }. Never fabricates prices — a price line is emitted ONLY when a
 // real price is supplied, matching the site's "all data is real" principle.
 
-const LANGUAGES = ['en', 'de', 'es', 'fr', 'it', 'nl', 'ar'];
+// [P0-10] The site's canonical language set is EIGHT (see lib/languages.js).
+// Social generation, however, can only emit a language for which REAL, human-
+// authored template copy exists in COPY below — emitting a language without its
+// own copy would silently ship English text mislabeled as that language (the
+// opposite of the "all content is real" principle, and we do NOT AI-translate to
+// fill the gap). Turkish (tr) is part of the canonical set but has no social
+// copy yet, so it is intentionally not generated until real tr templates are
+// added. To avoid drift, the supported set is DERIVED from the copy that
+// actually exists (see SUPPORTED_LANGUAGES below) rather than a hand-kept array.
 
 // Per-platform shape: length budget, how many hashtags to attach, whether the
 // copy leans on emoji, and whether a raw link belongs in the post (Instagram
@@ -145,6 +153,15 @@ const IMAGE_BRIEF = {
 
 // Prepend a leading emoji for platforms that lean on emoji.
 const LEAD_EMOJI = { flight_deal: '✈️', city_guide: '📍', blog_promo: '📝' };
+
+// [P0-10] Supported generation languages, DERIVED from the copy that actually
+// exists — a language is supported only when every template type has real copy
+// for it (so generation never falls back to English mislabeled as another
+// language). This is the single source of truth for "which languages can we
+// post in", and it can never silently drift from the COPY dictionaries.
+const LANGUAGES = Object.keys(COPY.flight_deal).filter(
+  (code) => TEMPLATE_TYPES.every((t) => COPY[t] && COPY[t][code]),
+);
 
 function truncate(text, max) {
   if (text.length <= max) return text;

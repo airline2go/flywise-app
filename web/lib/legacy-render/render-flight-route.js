@@ -3,7 +3,7 @@ const { robotsMeta } = require('./indexability');
 const { getRouteIndexabilityDecision } = require('./route-evidence');
 const { localizeCity, getAlternativeAirports, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
-const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
 const { pickVariant } = require('./content-variants');
 // [ROUTE-SNAPSHOT] Phases 9–14: one canonical object drives the whole page.
 const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice } = require('./route-snapshot');
@@ -239,7 +239,10 @@ function buildFaqItems(route, lang, snapshot) {
     });
   }
 
-  if (route.custom_faq && route.custom_faq.length) return route.custom_faq;
+  // [P0-8] custom_faq is admin-authored in the SOURCE language (German) only —
+  // it must NOT be served on /en, /ar, … where it would leak German copy onto a
+  // non-German page. Other languages fall back to the localized generated FAQ.
+  if (lang === DEFAULT_LANGUAGE && route.custom_faq && route.custom_faq.length) return route.custom_faq;
   return items;
 }
 
@@ -657,12 +660,14 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     try { console.warn(`[route-consistency] ${routeRaw.slug || '?'} ${consistencyErrors.join('; ')}`); } catch (e) { /* noop */ }
   }
 
-  // [ADMIN-OVERRIDE-ALL-LANGS] custom_title/custom_meta_description/intro_text
-  // are admin-authored per route (not per language) — they used to only
-  // apply when lang===DEFAULT_LANGUAGE, silently no-op-ing for the other 6
-  // languages while custom_faq (below) already applied uniformly. Now
-  // consistent: an admin override always wins over the generated template,
-  // regardless of language.
+  // [P0-8] custom_title/custom_meta_description/intro_text are admin-authored in
+  // the SOURCE language (German) only — a single-language field. Applying them on
+  // /en, /ar, /fr, … leaks German copy onto non-German pages. So a manual
+  // override wins ONLY on the German page; every other language uses the
+  // language-matched SEO-engine output (gen) or the localized data-driven
+  // default. Restore all-language overrides once real per-language content
+  // fields exist (documented follow-up).
+  const manual = lang === DEFAULT_LANGUAGE;
   // [ROUTE-SEO-META] Precedence: an admin manual override wins, then the
   // server-side SEO engine's output (route.seo — populated once that system is
   // live; effectiveRouteSeo already folds custom_* over generated seo_*), then
@@ -683,8 +688,8 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     origin: q.origin ? airportLabel(route.origin_city, route.origin_iata) : route.origin_city,
     destination: q.destination ? airportLabel(route.destination_city, route.destination_iata) : route.destination_city,
   } : null;
-  const title = route.custom_title || (gen && route.seo_title) || buildRouteTitle(route, lang, displayNames);
-  const description = route.custom_meta_description || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, displayNames);
+  const title = (manual && route.custom_title) || (gen && route.seo_title) || buildRouteTitle(route, lang, displayNames);
+  const description = (manual && route.custom_meta_description) || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, displayNames);
 
   // [ROUTE-CANONICAL] For an exact-duplicate route (same airport pair under a
   // second slug) render.js sets route.canonicalSlug to the canonical winner, so
@@ -694,8 +699,9 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   const urls = urlsFor(`flights/${encodeURIComponent(canonicalSlug)}`);
   const url = urls[lang];
   // Server-generated from data blocks (never user input) — safe as raw HTML.
-  const generatedBodyHtml = (gen && !route.intro_text && route.seo_intro_html) ? route.seo_intro_html : null;
-  const introText = route.intro_text || buildDynamicIntro(route, lang, snapshot);
+  const manualIntro = manual && route.intro_text;
+  const generatedBodyHtml = (gen && !manualIntro && route.seo_intro_html) ? route.seo_intro_html : null;
+  const introText = manualIntro || buildDynamicIntro(route, lang, snapshot);
   const bookingUrl = `/search/${encodeURIComponent(route.origin_iata)}-${encodeURIComponent(route.destination_iata)}`;
 
   let breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span>`;
@@ -815,7 +821,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   const priceHtml = buildPriceHtml(route, lang);
   const trustHtml = buildTrustHtml(route, lang);
   // Manual FAQ wins, then generated (matching language), then the template default.
-  const faqItems = (route.custom_faq && route.custom_faq.length) ? route.custom_faq
+  const faqItems = (manual && route.custom_faq && route.custom_faq.length) ? route.custom_faq
     : (gen && Array.isArray(route.seo_faq) && route.seo_faq.length) ? route.seo_faq
       : buildFaqItems(route, lang, snapshot);
   const faqHtml = faqItems.map((f) => `<div class="route-faq-item"><div class="route-faq-q">${escHtml(f.question)}</div><div class="route-faq-a">${escHtml(f.answer)}</div></div>`).join('');

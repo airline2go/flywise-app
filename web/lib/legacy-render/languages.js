@@ -1,4 +1,4 @@
-// Canonical list of the platform's 7 languages — the single source of
+// Canonical list of the platform's 8 languages — the single source of
 // truth for build/generate-pages.js and every render-*.js file. Adding
 // language #8 in the future means adding one entry here (plus a
 // translations/{code}.json file and DB-side translation rows) instead of
@@ -49,7 +49,7 @@ function urlFor(code, relativePath) {
   return `https://airpiv.com${pathFor(code, relativePath)}`;
 }
 
-// The same relativePath's full URL in every one of the 7 languages —
+// The same relativePath's full URL in every one of the 8 languages —
 // exactly what renderShell()'s `urls` param (hreflang/hrefLang) expects.
 function urlsFor(relativePath) {
   const out = {};
