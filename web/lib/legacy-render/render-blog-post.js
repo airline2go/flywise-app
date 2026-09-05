@@ -3,7 +3,7 @@ const { escHtml, renderShell, jsonLdScript, speakableSpec } = require('./shell')
 const { detectCitiesInText, citiesToCountries } = require('./data');
 const { computeReadingTime, buildTocAndIds, extractFaq } = require('./blog-post-helpers');
 const { blogHreflangUrls } = require('./blog-hreflang');
-const { urlFor } = require('./languages');
+const { urlFor, pathFor, getLanguage } = require('./languages');
 
 // blog-post.css is inlined (bundled string, not a <link>) so it isn't a
 // render-blocking round-trip — same reasoning as the flight-route page.
@@ -42,11 +42,13 @@ function buildPopularRoutesHtml(post, allRoutes, lang) {
     }
   }
   if (!chosen.length) return '';
-  const flightsHrefBase = de ? '/flights/' : '/en/flights/';
   const cards = chosen.map((r) => {
     const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
     const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
-    return `<a class="post-route-link" href="${flightsHrefBase}${encodeURIComponent(r.slug)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
+    // [P1-9] Link to THIS language's route path (pathFor honours all 8 locales),
+    // not a hardcoded German/English base — previously a non-en page (e.g. /it)
+    // linked at the German /flights/ path.
+    return `<a class="post-route-link" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(oCity)} → ${escHtml(dCity)}</a>`;
   }).join('');
   return `<div class="post-routes"><h2>${heading}</h2><div class="post-routes-grid">${cards}</div></div>`;
 }
@@ -74,10 +76,10 @@ function buildMentionedDestinationsHtml(post, allRoutes, lang) {
     if (dests.length >= 6) break;
   }
   if (!dests.length) return '';
-  const cityHrefBase = de ? '/city/' : '/en/city/';
   const heading = de ? '🌍 Reiseziele im Artikel' : '🌍 Destinations in this article';
   const chips = dests
-    .map((d) => `<a class="post-route-link" href="${cityHrefBase}${encodeURIComponent(d.slug)}">${escHtml(d.name)}</a>`)
+    // [P1-9] Per-language city path, not a hardcoded German/English base.
+    .map((d) => `<a class="post-route-link" href="${pathFor(lang, `city/${encodeURIComponent(d.slug)}`)}">${escHtml(d.name)}</a>`)
     .join('');
   return `<div class="post-routes"><h2>${heading}</h2><div class="post-routes-grid">${chips}</div></div>`;
 }
@@ -204,7 +206,9 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
 
   const pubDate = post.published_at ? new Date(post.published_at) : null;
   const updDate = post.updated_at ? new Date(post.updated_at) : null;
-  const locale = de ? 'de-DE' : 'en-GB';
+  // [P1-9] Date locale from the central language config (all 8 locales), not a
+  // binary de-DE/en-GB that mislabels every other language.
+  const locale = getLanguage(lang).locale;
   const dateStr = pubDate ? pubDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
   const showUpdated = updDate && pubDate && (updDate.getTime() - pubDate.getTime() > 24 * 60 * 60 * 1000);
   const updatedStr = showUpdated ? updDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) : null;
@@ -213,8 +217,12 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: de ? 'Startseite' : 'Home', item: de ? 'https://airpiv.com/' : 'https://airpiv.com/en/' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: de ? 'https://airpiv.com/blog.html' : 'https://airpiv.com/en/blog' },
+      // [P1-9] Home crumb points at THIS language's home (all 8), not a binary
+      // de/en split. Blog crumb points at the only real listing (blog.html) —
+      // /en/blog does not exist (0 English posts); per-language listings are
+      // P0-5. (Crumb labels stay de/en pending translated UI strings.)
+      { '@type': 'ListItem', position: 1, name: de ? 'Startseite' : 'Home', item: urlFor(lang, '') },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://airpiv.com/blog.html' },
       { '@type': 'ListItem', position: 3, name: post.title, item: url },
     ],
   };
@@ -231,7 +239,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     articleSection: 'Reisetipps',
     wordCount,
-    inLanguage: de ? 'de-DE' : 'en-GB',
+    inLanguage: getLanguage(lang).locale,
     speakable: speakableSpec('.post-faq-q'),
   };
 
