@@ -3,7 +3,7 @@
 import { renderFlightRouteHtml, resolveCanonicalRedirect } from '@/lib/legacy-render/render';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
-import { listRoutePages } from '@/lib/content-api';
+import { listRoutePages, resolvePersistentRedirect } from '@/lib/content-api';
 
 export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
@@ -38,7 +38,12 @@ export async function generateStaticParams() {
 
 export async function GET(_req, { params }) {
   const { slug } = await params;
-  // [F1] A consolidated duplicate slug 301s to its canonical winner (root/de).
+  // [P0-4] Persistent redirect FIRST — survives deletion of the loser row, so
+  // an already-discovered old URL keeps 301-ing even after cleanup. Single hop.
+  const persistent = await resolvePersistentRedirect(slug);
+  if (persistent) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(persistent.target)}`), persistent.status);
+  // [F1] Backstop: a live consolidated duplicate 301s to its canonical winner
+  // (covers losers not yet backfilled into route_redirects).
   const winner = await resolveCanonicalRedirect(slug);
   if (winner) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(winner)}`));
   return htmlResponse(await renderFlightRouteHtml(slug, 'de'));

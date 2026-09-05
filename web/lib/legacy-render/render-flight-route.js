@@ -1,5 +1,6 @@
 const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
 const { robotsMeta } = require('./indexability');
+const { getRouteIndexabilityDecision } = require('./route-evidence');
 const { localizeCity, getAlternativeAirports, hasCity, hasCountry } = require('./data');
 const { translate, format } = require('./translate');
 const { LANGUAGES, getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
@@ -966,11 +967,15 @@ ${relatedArticlesHtml}
   // point, or any admin-written intro_text/custom_faq, makes the page
   // genuinely distinct and keeps it indexed. Always `follow` so link equity
   // keeps flowing either way — matching the city/country/airline/airport rule.
-  const hasRealRouteData = route.distance_km != null
-    || route.avg_duration_min != null
-    || (route.airline_count != null && route.airline_count > 0)
-    || (route.stop_distribution && typeof route.stop_distribution === 'object' && Object.keys(route.stop_distribution).length > 0);
-  const hasAdminRouteContent = !!(route.intro_text || (route.custom_faq && route.custom_faq.length));
+  // [SEO-EVIDENCE-POLICY] Indexability comes from the ONE canonical policy
+  // (route-evidence.js — mirror of the backend). distance_km alone is not
+  // evidence when the policy is enforced; until then behaviour is unchanged.
+  // We split the verdict back into the two flags robotsMeta expects: real data
+  // vs. admin content. `hasAdminContent` carries manual editorial content;
+  // `hasRealRouteData` carries a data-driven index verdict.
+  const routeDecision = getRouteIndexabilityDecision(route);
+  const hasAdminRouteContent = routeDecision.manualContent;
+  const hasRealRouteData = routeDecision.indexable && !hasAdminRouteContent;
   // [PUBLICATION-GATE] F-2: a route whose data is genuinely broken/contradictory
   // (invalid route, malformed price, impossible stop total) must not be pushed
   // to the index — set noindex,follow so users still reach it but Google
