@@ -93,3 +93,25 @@ test('[P0-6] a post with no sibling data falls back to self-only (never a 404 al
   const alts = hreflangs(html).filter((h) => h.lang !== 'x-default');
   assert.deepEqual(alts, [{ lang: 'it', href: 'https://airpiv.com/it/blog/roma-milano-guida' }]);
 });
+
+// ── [P1-9] multilingual blog renderer (not binary de/en) ──────────────────
+test('[P1-9] a non-de/en post uses its own locale for inLanguage (it-IT), not en-GB/de-DE', () => {
+  const { html } = renderBlogPostPage(post(), [], [], 'it');
+  assert.match(html, /"inLanguage":\s*"it-IT"/);
+  assert.doesNotMatch(html, /"inLanguage":\s*"(de-DE|en-GB)"/);
+});
+
+test('[P1-9] internal route links on a non-en post use that language path, not German /flights/', () => {
+  const routes = [{
+    slug: 'roma-milano', origin_iata: 'FCO', destination_iata: 'LIN',
+    origin_city: 'Roma', destination_city: 'Milano',
+  }];
+  // Post text mentions the cities so the popular-routes block links them.
+  const p = post({ title: 'Voli Roma Milano', content: '<p>Voli da Roma a Milano, Roma e Milano sono collegate ogni giorno con molti voli diretti tra Roma e Milano.</p>' });
+  const { html } = renderBlogPostPage(p, routes, [], 'it');
+  // If any route link rendered, it must be under /it/flights/, never the German root /flights/.
+  if (/post-route-link/.test(html)) {
+    assert.match(html, /href="\/it\/flights\//);
+    assert.doesNotMatch(html, /href="\/flights\//);
+  }
+});
