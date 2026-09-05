@@ -4,7 +4,7 @@
 // live network run is scripts/audit-sitemap.mjs; this pins the judgement.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { structuralAudit, spreadSample } from '../lib/seo/sitemap-membership.mjs';
+import { structuralAudit, spreadSample, classifyChildSitemap } from '../lib/seo/sitemap-membership.mjs';
 import { evaluatePage } from '../lib/seo/smoke-contract.mjs';
 
 const findCheck = (r, n) => r.checks.find((c) => c.name === n);
@@ -99,4 +99,17 @@ test('sitemap profile: a non-200 URL in a sitemap is an ERROR', () => {
   const res = evaluatePage({ url: 'https://airpiv.com/en/city/gone', status: 404, contentType: 'text/html', html: '<html><body>x</body></html>', profile: 'sitemap' });
   assert.equal(res.ok, false);
   assert.equal(failed(res, 'http-status'), true);
+});
+
+// ── [P1-6] child-sitemap fetch/parse must FAIL, never coerce to empty ──────
+test('classifyChildSitemap: a failed fetch (null) is "unreachable", not empty', () => {
+  assert.equal(classifyChildSitemap(null), 'unreachable');
+});
+test('classifyChildSitemap: a non-sitemap body is "malformed"', () => {
+  assert.equal(classifyChildSitemap('<html><body>404 Not Found</body></html>'), 'malformed');
+  assert.equal(classifyChildSitemap(''), 'malformed');
+});
+test('classifyChildSitemap: a valid urlset / sitemapindex is "ok" (even if empty of <loc>)', () => {
+  assert.equal(classifyChildSitemap('<?xml version="1.0"?><urlset xmlns="x"></urlset>'), 'ok');
+  assert.equal(classifyChildSitemap('<sitemapindex><sitemap><loc>https://airpiv.com/s.xml</loc></sitemap></sitemapindex>'), 'ok');
 });

@@ -115,12 +115,28 @@ export const GSC_ROUTES = [
   { slug: 'dublin-zuerich', origin_city: 'Dublin', destination_city: 'Zürich' },                 // NORMAL · 33
 ];
 
-// The two ranked slices: the prominent card grid, then the pill list.
-export function topStreckenRoutes() {
-  return GSC_ROUTES.slice(0, TOP_STRECKEN_COUNT);
+// [P1-8] Keep only routes that are safe to link from the homepage: the slug is
+// a PUBLISHED + INDEXABLE route page (so not dead / not thin / not missing) AND
+// it is not a persistent-redirect SOURCE (a duplicate loser that would 301). A
+// stale GSC snapshot can name routes that have since gone dead (e.g. a both-dead
+// duplicate) or become a redirect loser — linking to those from the homepage
+// pushes crawlers at invalid URLs, exactly what P1-8 forbids.
+//   validation = { indexableSlugs: Set<slug>, redirectSources: Set<slug> }
+export function filterValidRoutes(routes, validation) {
+  const indexable = (validation && validation.indexableSlugs) || null;
+  const redirects = (validation && validation.redirectSources) || new Set();
+  if (!indexable) return routes; // no validation data → caller decides (see main)
+  return routes.filter((r) => r && r.slug && indexable.has(r.slug) && !redirects.has(r.slug));
 }
-export function beliebteRoutes() {
-  return GSC_ROUTES.slice(TOP_STRECKEN_COUNT);
+
+// The two ranked slices: the prominent card grid, then the pill list. When a
+// validated set is supplied, rank order is preserved and invalid routes drop
+// out (the grid/pills simply shrink — never linking to a bad URL).
+export function topStreckenRoutes(routes = GSC_ROUTES) {
+  return routes.slice(0, TOP_STRECKEN_COUNT);
+}
+export function beliebteRoutes(routes = GSC_ROUTES) {
+  return routes.slice(TOP_STRECKEN_COUNT);
 }
 
 export function escHtml(s) {
@@ -193,13 +209,44 @@ export function injectTopStrecken(html, cardsHtml) {
 
 // Apply both injections. Kept separate + composable so the tests can exercise
 // each container independently.
-export function injectIntoHtml(html) {
-  let out = injectTopStrecken(html, buildTopCardsHtml(topStreckenRoutes()));
-  out = injectPopularLinks(out, buildLinksHtml(beliebteRoutes()));
+export function injectIntoHtml(html, routes = GSC_ROUTES) {
+  let out = injectTopStrecken(html, buildTopCardsHtml(topStreckenRoutes(routes)));
+  out = injectPopularLinks(out, buildLinksHtml(beliebteRoutes(routes)));
   return out;
 }
 
-function main() {
+// [P1-8] Fetch the validation sets from the backend at build time. Returns null
+// if it can't (network/misconfig) so main() can choose the safe fallback rather
+// than inject unvalidated links.
+async function fetchValidation() {
+  const base = process.env.API_BASE || 'https://api.airpiv.com';
+  try {
+    const indexableSlugs = new Set();
+    for (let page = 0; page < 10000; page++) {
+      const res = await fetch(`${base}/route-pages?page=${page}`);
+      if (!res.ok) throw new Error(`/route-pages ${res.status}`);
+      const data = await res.json();
+      for (const r of (data && data.routes) || []) {
+        if (r && r.slug && r.indexable !== false) indexableSlugs.add(r.slug);
+      }
+      if (!data || !data.hasMore) break;
+    }
+    const redirectSources = new Set();
+    try {
+      const rr = await fetch(`${base}/route-redirects`);
+      if (rr.ok) {
+        const d = await rr.json();
+        for (const r of (d && d.redirects) || []) if (r && r.source_slug) redirectSources.add(r.source_slug);
+      }
+    } catch { /* redirects feed optional; absence just means no exclusions */ }
+    return { indexableSlugs, redirectSources };
+  } catch (e) {
+    console.warn(`[prerender-popular-routes] validation fetch failed: ${e.message}`);
+    return null;
+  }
+}
+
+async function main() {
   const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
   const indexPath = join(publicDir, 'index.html');
 
@@ -213,12 +260,28 @@ function main() {
     return;
   }
 
+  // [P1-8] Validate the hardcoded GSC snapshot against live production before
+  // linking anything from the homepage. If validation is unavailable, do NOT
+  // inject a stale/unvalidated set (it could link to a dead/loser URL) — leave
+  // the client-side fallback in place instead.
+  const validation = await fetchValidation();
+  if (!validation) {
+    console.warn('[prerender-popular-routes] no validation data — leaving client-side fallback in place (no unvalidated links injected)');
+    return;
+  }
+  const validRoutes = filterValidRoutes(GSC_ROUTES, validation);
+  const dropped = GSC_ROUTES.length - validRoutes.length;
+  if (!validRoutes.length) {
+    console.warn('[prerender-popular-routes] no valid routes after validation — leaving client-side fallback in place');
+    return;
+  }
+
   const html = readFileSync(indexPath, 'utf8');
-  const next = injectIntoHtml(html);
+  const next = injectIntoHtml(html, validRoutes);
   writeFileSync(indexPath, next);
   console.log(
-    `[prerender-popular-routes] injected ${topStreckenRoutes().length} Top-Strecken cards + ` +
-      `${beliebteRoutes().length} Beliebte-Flugstrecken pills (GSC opportunity order) into public/index.html`
+    `[prerender-popular-routes] injected ${topStreckenRoutes(validRoutes).length} Top-Strecken cards + ` +
+      `${beliebteRoutes(validRoutes).length} Beliebte-Flugstrecken pills (validated; dropped ${dropped} invalid) into public/index.html`
   );
 }
 
@@ -226,10 +289,8 @@ function main() {
 // not when imported by the test suite — importing must have no side effects.
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMain) {
-  try {
-    main();
-  } catch (err) {
+  main().catch((err) => {
     console.warn('[prerender-popular-routes] non-fatal error, skipping:', err && err.message);
     process.exit(0);
-  }
+  });
 }

@@ -43,10 +43,24 @@ export function parseHreflang(html) {
 // with NO alternates as valid AS LONG AS it self-canonicals — Google does not
 // require hreflang on a page served in a single language. Returns a list of
 // error strings — empty means a valid cluster.
-export function auditHreflangCluster({ html, pageUrl, expectedLang, allowSingleLanguage = false }) {
+// [P1-4] The first path segment of a URL, or '' for the root ('/flights/x' →
+// 'flights', 'https://h/fr/flights/x' → 'fr'). Used to check that an alternate's
+// URL actually lives under its hreflang's language prefix.
+function firstPathSegment(url) {
+  try {
+    const p = new URL(url).pathname.replace(/^\/+/, '');
+    return p.split('/')[0] || '';
+  } catch { return null; }
+}
+
+export function auditHreflangCluster({ html, pageUrl, expectedLang, allowSingleLanguage = false, langCodes = null, defaultLang = 'de' }) {
   const errors = [];
   const { canonical, alternates, dupes } = parseHreflang(html);
   const norm = (u) => String(u || '').replace(/\/$/, '');
+  // The set of known prefixed language codes (everything except the default,
+  // which is served unprefixed at the root). Defaults to the canonical 8.
+  const codes = langCodes || ['en', 'de', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
+  const prefixed = new Set(codes.filter((c) => c !== defaultLang));
 
   if (!canonical) errors.push('missing rel=canonical');
   if (alternates.size === 0) {
@@ -81,6 +95,30 @@ export function auditHreflangCluster({ html, pageUrl, expectedLang, allowSingleL
   if (canonical) {
     const urls = new Set([...alternates.values()].map(norm));
     if (!urls.has(norm(canonical))) errors.push(`canonical ${canonical} is not among the hreflang alternates`);
+  }
+
+  // [P1-4] Language ↔ path consistency: a prefixed language's alternate URL must
+  // live under its own /<code>/ segment; the default language's alternate must
+  // be at the root (no language prefix). A mismatch means the alternate points
+  // at the wrong-language page — a silent hreflang error Google acts on.
+  for (const [hl, url] of alternates) {
+    if (hl === 'x-default') continue;
+    const seg = firstPathSegment(url);
+    if (seg == null) { errors.push(`alternate "${hl}" has an unparseable URL ${url}`); continue; }
+    if (prefixed.has(hl)) {
+      if (seg !== hl) errors.push(`alternate hreflang "${hl}" points at a /${seg || '(root)'}/ path, not /${hl}/`);
+    } else if (hl === defaultLang) {
+      if (prefixed.has(seg)) errors.push(`default-language alternate "${hl}" points at a prefixed /${seg}/ path, not the root`);
+    }
+  }
+
+  // [P1-4] x-default must target the site's approved default (the default-lang
+  // alternate), never an arbitrary/current language — an x-default pointing at a
+  // random locale sends the wrong page to unmatched users.
+  if (alternates.has('x-default') && alternates.has(defaultLang)) {
+    if (norm(alternates.get('x-default')) !== norm(alternates.get(defaultLang))) {
+      errors.push(`x-default → ${alternates.get('x-default')} ≠ the ${defaultLang} alternate ${alternates.get(defaultLang)}`);
+    }
   }
   return errors;
 }

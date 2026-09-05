@@ -19,6 +19,7 @@ import {
   TOP_STRECKEN_COUNT,
   topStreckenRoutes,
   beliebteRoutes,
+  filterValidRoutes,
 } from '../scripts/prerender-popular-routes.mjs';
 
 const TEMPLATE = `
@@ -109,4 +110,37 @@ test('GSC_ROUTES is well-formed, in opportunity order, split top-30 / rest', () 
   }
   // Order is the deliverable: highest GSC opportunity first.
   assert.equal(GSC_ROUTES[0].slug, 'hamburg-barcelona-2');
+});
+
+// ── [P1-8] homepage popular-route validation ──────────────────────────────
+test('filterValidRoutes keeps only published+indexable, non-redirect slugs', () => {
+  const routes = [
+    { slug: 'good-a', origin_city: 'A', destination_city: 'B' },
+    { slug: 'dead-b', origin_city: 'C', destination_city: 'D' },     // not indexable/dead
+    { slug: 'loser-c', origin_city: 'E', destination_city: 'F' },    // redirect source
+    { slug: 'good-d', origin_city: 'G', destination_city: 'H' },
+  ];
+  const validation = {
+    indexableSlugs: new Set(['good-a', 'good-d', 'loser-c']),
+    redirectSources: new Set(['loser-c']),
+  };
+  const kept = filterValidRoutes(routes, validation).map((r) => r.slug);
+  assert.deepEqual(kept, ['good-a', 'good-d']);
+});
+
+test('filterValidRoutes without validation data returns input unchanged (caller decides)', () => {
+  const routes = [{ slug: 'x', origin_city: 'A', destination_city: 'B' }];
+  assert.deepEqual(filterValidRoutes(routes, null), routes);
+});
+
+test('injectIntoHtml links ONLY the validated subset, never a dead/loser slug', () => {
+  const valid = [
+    { slug: 'good-a', origin_city: 'A', destination_city: 'B' },
+    { slug: 'good-d', origin_city: 'G', destination_city: 'H' },
+  ];
+  const out = injectIntoHtml(TEMPLATE, valid);
+  assert.ok(out.includes('/flights/good-a'));
+  assert.ok(out.includes('/flights/good-d'));
+  assert.ok(!out.includes('/flights/dead-b'));
+  assert.ok(!out.includes('/flights/loser-c'));
 });

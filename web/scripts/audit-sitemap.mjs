@@ -22,7 +22,7 @@
 // Exit: 0 clean · 1 a structural or live violation · 2 sitemap undiscoverable.
 
 import { evaluatePage, summarize } from '../lib/seo/smoke-contract.mjs';
-import { structuralAudit, spreadSample } from '../lib/seo/sitemap-membership.mjs';
+import { structuralAudit, spreadSample, classifyChildSitemap } from '../lib/seo/sitemap-membership.mjs';
 
 const UA = 'AirpivSitemapAudit/1.0 (+https://airpiv.com; sitemap-indexability check)';
 
@@ -74,10 +74,19 @@ async function main() {
   const childSitemaps = extractLocs(indexXml);
 
   // Collect every URL from every child sitemap, tagged with its child.
+  // [P1-6] A child that is unreachable (non-2xx / network / timeout) or returns
+  // a body that isn't a valid sitemap is a CRITICAL failure — recorded here and
+  // failing the whole audit — NOT silently treated as an empty URL list.
   const byChild = new Map();
   const allEntries = [];
+  const childFailures = [];
   for (const child of childSitemaps) {
     const xml = await fetchText(rebase(child, args.base), args.timeout);
+    const verdict = classifyChildSitemap(xml);
+    if (verdict !== 'ok') {
+      childFailures.push({ child, reason: verdict === 'unreachable' ? 'unreachable / non-2xx' : 'not valid sitemap XML' });
+      continue;
+    }
     const locs = extractLocs(xml);
     byChild.set(child, locs);
     for (const loc of locs) allEntries.push({ loc, sitemap: child });
@@ -101,12 +110,17 @@ async function main() {
 
   const liveSummary = summarize(liveResults);
   const liveViolations = liveResults.filter((r) => !r.ok);
-  const failed = !structural.ok || liveViolations.length > 0;
+  // [P1-6] Any child-sitemap fetch/parse failure fails the audit (CRITICAL).
+  const failed = !structural.ok || liveViolations.length > 0 || childFailures.length > 0;
 
   if (args.json) {
-    console.log(JSON.stringify({ base: args.base, childSitemaps, structural, liveSummary, liveViolations }, null, 2));
+    console.log(JSON.stringify({ base: args.base, childSitemaps, childFailures, structural, liveSummary, liveViolations }, null, 2));
   } else {
     console.log(`Sitemap audit — base ${args.base} · ${childSitemaps.length} child sitemaps · ${structural.total} URLs (${structural.unique} unique)`);
+    if (childFailures.length) {
+      console.log(`Child sitemaps: ❌ ${childFailures.length} CRITICAL fetch/parse failure(s)`);
+      for (const f of childFailures) console.log(`  ❌ ${f.child} — ${f.reason}`);
+    }
     console.log(`Structural: ${structural.ok ? '✅ clean' : '❌ VIOLATIONS'}`);
     if (structural.duplicates.length) console.log(`  duplicates: ${structural.duplicates.length} (e.g. ${structural.duplicates[0].loc} ×${structural.duplicates[0].count})`);
     if (structural.nonHttps.length) console.log(`  non-https/invalid: ${structural.nonHttps.length} (e.g. ${structural.nonHttps[0]})`);
