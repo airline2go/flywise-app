@@ -163,6 +163,10 @@ const sitemapRoutes = () => fetchAllSitemapData('routes');
 const sitemapCities = () => fetchAllSitemapData('cities');
 const sitemapCountries = () => fetchAllSitemapData('countries');
 const sitemapAirlines = () => fetchAllSitemapData('airlines');
+// [P0-10] Single-source airport indexability (authoritative + fallback codes),
+// each item { id, indexable, lastmod }. Empty when the backend feed isn't
+// deployed yet (deploy-order safe) — callers fall back accordingly.
+const sitemapAirports = () => fetchAllSitemapData('airports');
 const sitemapBlog = (lang) => fetchAllSitemapData('blog', lang && lang !== 'de' ? `lang=${encodeURIComponent(lang)}` : '');
 
 // ─── Detail fetches (used by individual pages) ─────────────────────────
@@ -241,5 +245,5 @@ export {
   listRouteRedirects, resolvePersistentRedirect,
   getCity, getCountry, getAirport, getAirline, getRoutePage, getRelatedRoutes, getBlogPost,
   getGeoIndex,
-  sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapBlog,
+  sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapAirports, sitemapBlog,
 };

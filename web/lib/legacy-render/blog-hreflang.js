@@ -1,24 +1,28 @@
-// [BLOG-HREFLANG-FIX] Pure computation of a blog post's hreflang alternate
-// set, split out of render-blog-post.js so it can be unit-tested without
-// pulling that file's node-html-parser dependency (mirrors how
-// revalidate-paths.mjs keeps its pure logic testable). See the render call
-// site for the reasoning; the rule in one place:
+// [P0-6] Pure computation of a blog post's hreflang alternate set from the
+// post's ACTUAL published siblings, split out of render-blog-post.js so it can
+// be unit-tested without that file's node-html-parser dependency.
 //
-//   The blog is German-source with an OPTIONAL English translation
-//   (post.slug_en, which lives under its OWN slug — never the German slug).
-//   The other site languages have no blog at all, so they must never be
-//   advertised. A German post therefore self-references (de) and adds the
-//   English alternate ONLY when slug_en exists; the English page
-//   self-references (en). renderShell derives x-default from the German
-//   entry when present.
-function blogHreflangUrls(post, isGerman, selfUrl, deUrl) {
-  if (isGerman) {
-    if (post && post.slug_en) {
-      return { de: deUrl, en: `https://airpiv.com/en/blog/${encodeURIComponent(post.slug_en)}` };
-    }
-    return { de: deUrl };
+// The rule, in one place:
+//   • The backend now returns `post.alternates` = [{language, slug}] listing the
+//     German source plus every language that truly has a published translation
+//     of THIS post (via post_id), plus legacy inline English (slug_en) when set.
+//   • We emit one hreflang entry per real alternate, each at its own
+//     per-language slug — so entries are reciprocal and never point at a 404.
+//   • A language with no alternate is NEVER advertised.
+//   • x-default is derived by renderShell from the German (default) entry, which
+//     is always present because German is the source — so x-default is stable
+//     and never a random current-language URL.
+//
+// `urlFor(langCode, relativePath)` is injected (kept out of this pure module) so
+// the function stays testable with plain `node --test`.
+function blogHreflangUrls(alternates, urlFor) {
+  const out = {};
+  for (const a of alternates || []) {
+    if (!a || !a.language || !a.slug) continue;
+    if (out[a.language]) continue; // first wins; never duplicate a language
+    out[a.language] = urlFor(a.language, `blog/${encodeURIComponent(a.slug)}`);
   }
-  return { en: selfUrl };
+  return out;
 }
 
 module.exports = { blogHreflangUrls };

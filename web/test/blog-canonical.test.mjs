@@ -54,15 +54,42 @@ test('og:locale follows the real language', () => {
   assert.equal(ogLocale(renderBlogPostPage(post(), [], [], 'ar').html), 'ar_AR');
 });
 
-test('a non-de/en page self-references in hreflang and never points at a sibling that may 404', () => {
-  const { html } = renderBlogPostPage(post(), [], [], 'it');
+test('[P0-6] hreflang lists exactly the post\'s real published siblings (de + it), each at its own slug', () => {
+  const alternates = [
+    { language: 'de', slug: 'rom-mailand-guide' },
+    { language: 'it', slug: 'roma-milano-guida' },
+  ];
+  const { html } = renderBlogPostPage(post({ alternates }), [], [], 'it');
   const alts = hreflangs(html).filter((h) => h.lang !== 'x-default');
-  assert.deepEqual(alts, [{ lang: 'it', href: 'https://airpiv.com/it/blog/roma-milano-guida' }]);
+  assert.deepEqual(alts.sort((a, b) => a.lang.localeCompare(b.lang)), [
+    { lang: 'de', href: 'https://airpiv.com/blog/rom-mailand-guide' },
+    { lang: 'it', href: 'https://airpiv.com/it/blog/roma-milano-guida' },
+  ]);
 });
 
-test('de↔en cross-linking is preserved: a German post with slug_en advertises both', () => {
-  const { html } = renderBlogPostPage(post({ slug: 'billige-fluege', slug_en: 'cheap-flights' }), [], [], 'de');
+test('[P0-6] x-default points at the German (default) alternate, not the current language', () => {
+  const alternates = [
+    { language: 'de', slug: 'rom-mailand-guide' },
+    { language: 'it', slug: 'roma-milano-guida' },
+  ];
+  const { html } = renderBlogPostPage(post({ alternates }), [], [], 'it');
+  const xd = hreflangs(html).find((h) => h.lang === 'x-default');
+  assert.equal(xd.href, 'https://airpiv.com/blog/rom-mailand-guide');
+});
+
+test('[P0-6] de↔en cross-linking: a German post whose siblings are de+en advertises both', () => {
+  const alternates = [
+    { language: 'de', slug: 'billige-fluege' },
+    { language: 'en', slug: 'cheap-flights' },
+  ];
+  const { html } = renderBlogPostPage(post({ slug: 'billige-fluege', alternates }), [], [], 'de');
   const map = Object.fromEntries(hreflangs(html).map((h) => [h.lang, h.href]));
   assert.equal(map.de, 'https://airpiv.com/blog/billige-fluege');
   assert.equal(map.en, 'https://airpiv.com/en/blog/cheap-flights');
+});
+
+test('[P0-6] a post with no sibling data falls back to self-only (never a 404 alternate)', () => {
+  const { html } = renderBlogPostPage(post(), [], [], 'it');
+  const alts = hreflangs(html).filter((h) => h.lang !== 'x-default');
+  assert.deepEqual(alts, [{ lang: 'it', href: 'https://airpiv.com/it/blog/roma-milano-guida' }]);
 });

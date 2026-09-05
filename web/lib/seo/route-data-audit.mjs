@@ -57,6 +57,32 @@ const CHECKS = [
     (r) => `all_direct=true but connecting=${connectingCount(r.stop_distribution)}`],
 ];
 
+// [P0-9] Fields every critical/warning check above depends on. If the data
+// SOURCE has stripped one of these (e.g. the public /route-pages list omits
+// avg_duration_min, stop_distribution, price_*), the corresponding checks would
+// silently never fire and the audit would falsely "pass". So we require each of
+// these keys to be PRESENT on at least one row; a key absent from EVERY row of a
+// non-empty dataset is a CRITICAL `audit-blind` finding — the audit cannot claim
+// to have checked data it never received. (Present-but-null is fine: that is a
+// real "no value", e.g. a route with no observed price.)
+// Only the fields the CRITICAL checks depend on — a source that hides one of
+// these can silently pass a broken row, which is the P0-9 failure mode. The
+// warning-only fields (price_updated_at, insights_updated_at, haul_type) are
+// intentionally NOT required: their absence downgrades a soft check, it does not
+// let a genuinely broken row through.
+const REQUIRED_FIELDS = [
+  'distance_km', 'price_min', 'price_avg', 'price_max', 'avg_duration_min',
+  'min_duration_min', 'airline_count', 'stop_distribution', 'all_direct',
+];
+
+// Returns the required fields that are absent (own-property) from EVERY row.
+export function blindFields(rows) {
+  if (!rows || !rows.length) return [];
+  return REQUIRED_FIELDS.filter(
+    (f) => !rows.some((r) => r && Object.prototype.hasOwnProperty.call(r, f)),
+  );
+}
+
 function isFuture(ts, now = Date.now()) {
   if (!ts) return false;
   const t = new Date(ts).getTime();
@@ -88,6 +114,10 @@ export function auditRoute(row, now = Date.now()) {
 // enabling the Phase 13 stored-scalar-vs-canonical check when the caller has it.
 export function auditRoutes(rows, { uniqueAirlinesBySlug, now = Date.now() } = {}) {
   const issues = [];
+  // [P0-9] Fail loudly if the data source can't see fields the audit checks.
+  for (const f of blindFields(rows)) {
+    issues.push({ slug: null, code: 'audit-blind', severity: 'critical', detail: `field "${f}" absent from every row — data source stripped it; checks depending on it cannot run` });
+  }
   for (const row of rows) {
     issues.push(...auditRoute(row, now));
     if (uniqueAirlinesBySlug && row.airline_count != null) {

@@ -2,7 +2,7 @@
 // functions, no per-request state, safe to share across concurrent
 // requests as-is.
 //
-// Canonical list of the platform's 7 languages — the single source of
+// Canonical list of the platform's 8 languages — the single source of
 // truth for every page/layout in this app. Adding language #8 in the
 // future means adding one entry here (plus a translations/{code}.json
 // file and DB-side translation rows).
@@ -51,7 +51,7 @@ function urlFor(code, relativePath) {
   return `https://airpiv.com${pathFor(code, relativePath)}`;
 }
 
-// The same relativePath's full URL in every one of the 7 languages —
+// The same relativePath's full URL in every one of the 8 languages —
 // exactly what the shared layout's hreflang tags expect.
 function urlsFor(relativePath) {
   const out = {};

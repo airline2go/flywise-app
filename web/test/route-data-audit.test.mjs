@@ -54,3 +54,42 @@ test('auditRoutes summarizes and applies the airline-count-vs-join check when gi
   assert.equal(report.bySeverity.warning, 1);
   assert.equal(report.bySeverity.critical, 0);
 });
+
+// ── [P0-9] audit-blind guard: a field-stripped source must FAIL, not pass ──
+import { blindFields } from '../lib/seo/route-data-audit.mjs';
+
+test('[P0-9] blindFields detects keys absent from every row', () => {
+  // Mirrors the public /route-pages rows, which omit these keys entirely.
+  const stripped = [{ slug: 'a-b', origin_iata: 'A', destination_iata: 'B', distance_km: 500, airline_count: 2, haul_type: 'short-haul', insights_updated_at: null }];
+  const blind = blindFields(stripped);
+  for (const f of ['avg_duration_min', 'stop_distribution', 'price_min', 'all_direct']) {
+    assert.ok(blind.includes(f), `expected ${f} reported blind`);
+  }
+});
+
+test('[P0-9] auditRoutes emits CRITICAL audit-blind when the source stripped fields', () => {
+  const stripped = [{ slug: 'a-b', origin_iata: 'A', destination_iata: 'B', distance_km: 500 }];
+  const report = auditRoutes(stripped);
+  assert.ok(report.byCode['audit-blind'] > 0, 'audit-blind reported');
+  assert.ok(report.bySeverity.critical > 0, 'blindness is critical → cannot pass silently');
+});
+
+test('[P0-9] a full-field dataset has NO audit-blind findings', () => {
+  const report = auditRoutes([CLEAN]);
+  assert.ok(!report.byCode['audit-blind'], 'no blind fields when all keys present');
+});
+
+test('[P0-9] intentionally bad full-field rows are actually caught (audit really fails)', () => {
+  const bad = [
+    { ...CLEAN, slug: 'bad-dur', avg_duration_min: -5 },              // bad-avg-duration
+    { ...CLEAN, slug: 'bad-price', price_min: 200, price_max: 50 },   // price-order
+    { ...CLEAN, slug: 'bad-stops', all_direct: true, stop_distribution: { 0: 3, 1: 4 } }, // all-direct-but-has-stops
+    { ...CLEAN, slug: 'bad-air', airline_count: -1 },                 // negative-airline-count
+  ];
+  const report = auditRoutes(bad);
+  assert.ok(report.byCode['bad-avg-duration'] >= 1);
+  assert.ok(report.byCode['price-order'] >= 1);
+  assert.ok(report.byCode['all-direct-but-has-stops'] >= 1);
+  assert.ok(report.byCode['negative-airline-count'] >= 1);
+  assert.ok(report.bySeverity.critical >= 4);
+});

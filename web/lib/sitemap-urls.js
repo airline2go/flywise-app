@@ -26,6 +26,7 @@ import {
   sitemapCities,
   sitemapCountries,
   sitemapAirlines,
+  sitemapAirports,
   sitemapBlog,
 } from './content-api';
 import { LANGUAGE_CODES, urlFor } from './languages';
@@ -93,15 +94,32 @@ export async function buildCountryUrls() {
 }
 
 export async function buildAirportUrls() {
-  // The airport set + each one's freshest date is derived from the COMPLETE
-  // (paginated) route feed. Indexability exclusion still consults the /airports
-  // list (a thin airport is flagged there); an airport absent from that list is
-  // kept (a fallback page renders for it) — the safe, no-omission default.
-  const [routes, airports] = await Promise.all([sitemapRoutes(), listAirports()]);
-  const nonIndexable = new Set(airports.filter((a) => a.indexable === false).map((a) => a.iata_code));
+  // [P0-10] Airport indexability comes from ONE backend decision
+  // (/sitemap-data/airports) that covers BOTH authoritative and fallback
+  // airports with the exact rule the renderer applies — so a fallback airport
+  // with <2 distinct destinations is noindex in the renderer AND absent here
+  // (previously it leaked into the sitemap because it had no authoritative row
+  // to be flagged false). Freshest per-airport date still comes from the routes
+  // feed. If the backend feed isn't deployed yet, fall back to the prior rule
+  // (routes set minus /airports-flagged-false) so nothing regresses mid-deploy.
+  const [routes, feed] = await Promise.all([sitemapRoutes(), sitemapAirports()]);
+  const routeLastmods = new Map(airportLastmods(routes));
   const floor = SEO_TEMPLATE_VERSIONS.airports;
   const urls = [];
-  for (const [code, lastmod] of airportLastmods(routes)) {
+
+  if (feed && feed.length) {
+    for (const a of feed) {
+      if (a.indexable === false) continue;
+      const lastmod = routeLastmods.get(a.id) || a.lastmod || null;
+      eachLang(`airport/${a.id}`, applyTemplateFloor(lastmod, floor), urls);
+    }
+    return urls;
+  }
+
+  // Deploy-order fallback: prior behaviour.
+  const airports = await listAirports();
+  const nonIndexable = new Set(airports.filter((a) => a.indexable === false).map((a) => a.iata_code));
+  for (const [code, lastmod] of routeLastmods) {
     if (nonIndexable.has(code)) continue;
     eachLang(`airport/${code}`, applyTemplateFloor(lastmod, floor), urls);
   }
