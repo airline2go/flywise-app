@@ -55,3 +55,31 @@ test('surfaces backend-thin (indexable=false) and no-data-signal rows', () => {
   assert.deepEqual(rep.nonIndexable.slugs, ['thin']);
   assert.deepEqual(rep.noDataSignal.slugs, ['empty']);
 });
+
+// ── [P1-3] severity-tiered issues ─────────────────────────────────────────
+import { auditRouteMetadata as audit2 } from '../lib/seo/metadata-audit.mjs';
+
+test('[P1-3] classifies issues by severity and flags the right rows', () => {
+  const rows = [
+    { slug: 'a-b', origin_city: 'A', destination_city: 'B', distance_km: 500, airline_count: 2, indexable: true },   // clean
+    { slug: 'a-b-2', origin_city: 'A', destination_city: 'B', distance_km: 500, airline_count: 2, indexable: true }, // duplicate title of a-b
+    { slug: 'thin', origin_city: 'C', destination_city: 'D', indexable: true },                                       // indexable-thin (HIGH)
+    { slug: 'noidx', origin_city: 'E', destination_city: 'F', distance_km: 900, airline_count: 3, indexable: false }, // noindex-with-data (MEDIUM)
+    { slug: 'broken', origin_city: '', destination_city: 'G', indexable: true },                                      // title-inputs-missing (CRITICAL) + indexable-thin
+  ];
+  const r = audit2(rows);
+  const codes = r.issues.map((i) => i.code);
+  assert.ok(codes.includes('title-inputs-missing'));
+  assert.ok(codes.includes('duplicate-title'));
+  assert.ok(codes.includes('indexable-thin'));
+  assert.ok(codes.includes('noindex-with-data'));
+  assert.equal(r.bySeverity.CRITICAL >= 1, true);
+  assert.equal(r.bySeverity.HIGH >= 2, true); // duplicate-title + indexable-thin
+  assert.equal(r.bySeverity.MEDIUM >= 1, true);
+});
+
+test('[P1-3] declares the checks it cannot run without the rendered head', () => {
+  const r = audit2([{ slug: 'a-b', origin_city: 'A', destination_city: 'B', distance_km: 1, airline_count: 1, indexable: true }]);
+  assert.ok(r.needsRenderLayer.includes('title-length'));
+  assert.ok(r.needsRenderLayer.includes('wrong-language-content'));
+});

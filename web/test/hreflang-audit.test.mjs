@@ -103,3 +103,36 @@ test('a trailing slash on the self URL does not cause a false mismatch', () => {
   });
   assert.deepEqual(errors, []);
 });
+
+// ── [P1-4] language↔path consistency + x-default target ───────────────────
+import { auditHreflangCluster as auditH2 } from '../lib/seo/hreflang-audit.mjs';
+
+test('[P1-4] flags an alternate whose URL is under the wrong language prefix', () => {
+  const html = `
+  <link rel="canonical" href="https://airpiv.com/fr/flights/x">
+  <link rel="alternate" hreflang="de" href="https://airpiv.com/flights/x">
+  <link rel="alternate" hreflang="fr" href="https://airpiv.com/es/flights/x">
+  <link rel="alternate" hreflang="x-default" href="https://airpiv.com/flights/x">`;
+  const errors = auditH2({ html, pageUrl: 'https://airpiv.com/fr/flights/x', expectedLang: 'fr' });
+  assert.ok(errors.some((e) => /hreflang "fr" points at a \/es\//.test(e)), errors.join(' | '));
+});
+
+test('[P1-4] flags x-default that does not point at the default (de) alternate', () => {
+  const html = `
+  <link rel="canonical" href="https://airpiv.com/en/flights/x">
+  <link rel="alternate" hreflang="de" href="https://airpiv.com/flights/x">
+  <link rel="alternate" hreflang="en" href="https://airpiv.com/en/flights/x">
+  <link rel="alternate" hreflang="x-default" href="https://airpiv.com/en/flights/x">`;
+  const errors = auditH2({ html, pageUrl: 'https://airpiv.com/en/flights/x', expectedLang: 'en' });
+  assert.ok(errors.some((e) => /x-default .* ≠ the de alternate/.test(e)), errors.join(' | '));
+});
+
+test('[P1-4] a correct cluster (paths match, x-default=de) still passes', () => {
+  const html = `
+  <link rel="canonical" href="https://airpiv.com/en/flights/x">
+  <link rel="alternate" hreflang="de" href="https://airpiv.com/flights/x">
+  <link rel="alternate" hreflang="en" href="https://airpiv.com/en/flights/x">
+  <link rel="alternate" hreflang="ar" href="https://airpiv.com/ar/flights/x">
+  <link rel="alternate" hreflang="x-default" href="https://airpiv.com/flights/x">`;
+  assert.deepEqual(auditH2({ html, pageUrl: 'https://airpiv.com/en/flights/x', expectedLang: 'en' }), []);
+});
