@@ -30,7 +30,16 @@ function computeRevalidatePaths(entities, languages, pathFor) {
     const base = BASE_PATH[entity.type];
     if (!base) continue;
     if (entity.type === 'blog') {
-      const lang = entity.lang === 'en' ? 'en' : 'de';
+      // [P0-7] A blog post is revalidated in the language the caller named —
+      // NOT collapsed to "en or German". `languages` is the canonical supported
+      // set (from ./languages.js); an unrecognised/absent lang falls back to the
+      // default (first entry, German) instead of silently mis-routing ar/es/fr/
+      // it/nl/tr to /de/.
+      // German is the blog SOURCE language and the site's default (root) — it is
+      // the correct fallback for an unrecognised lang, not languages[0] (which
+      // is English in the canonical list).
+      const supported = new Set((languages || []).map((l) => l.code));
+      const lang = supported.has(entity.lang) ? entity.lang : 'de';
       paths.push(pathFor(lang, `${base}/${entity.slug}`));
     } else {
       for (const l of languages) paths.push(pathFor(l.code, `${base}/${entity.slug}`));

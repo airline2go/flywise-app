@@ -186,15 +186,14 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
   // pointing at the German path and de-indexed themselves. urlFor honours the
   // real per-language prefix (de unprefixed, the rest under /xx/).
   const url = urlFor(lang, `blog/${encodeURIComponent(post.slug)}`);
-  const deUrl = `https://airpiv.com/blog/${encodeURIComponent(post.slug)}`;
-  // hreflang: de/en keep the existing verified de↔en cross-linking (English
-  // has its own slug via post.slug_en). For the other languages the frontend
-  // has no reliable knowledge of which sibling translations exist under which
-  // slug, so we self-reference only — a valid, never-404 alternate — rather
-  // than inventing links that may 404. Full cross-language hreflang is a
-  // documented follow-up that needs the backend to expose sibling slugs.
-  const hreflangUrls = (lang === 'de' || lang === 'en')
-    ? blogHreflangUrls(post, de, url, deUrl)
+  // [P0-6] hreflang is built from the post's REAL published siblings, which the
+  // backend now supplies as post.alternates = [{language, slug}] (German source
+  // + every language with a real translation via post_id + legacy slug_en). Each
+  // entry uses its own per-language slug, so the set is reciprocal and never
+  // points at a 404; renderShell derives x-default from the German entry. If an
+  // older backend payload omits alternates, fall back to self-only.
+  const hreflangUrls = (post.alternates && post.alternates.length)
+    ? blogHreflangUrls(post.alternates, urlFor)
     : { [lang]: url };
   const description = post.meta_description || post.excerpt || `${post.title} — Airpiv Blog`;
   const image = post.cover_image_url || 'https://airpiv.com/og-image.png';

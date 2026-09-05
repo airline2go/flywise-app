@@ -9,21 +9,23 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE_PATH, computeRevalidatePaths, buildIndexNowPayload } from '../lib/revalidate-paths.mjs';
 
-// Mirror of lib/languages.js (7 languages; German is the default, served
+// Mirror of lib/languages.js (8 languages; German is the default, served
 // unprefixed at the root). Kept as a local fixture because languages.js is
-// ESM-via-Next and not loadable by plain `node --test`.
-const LANGUAGES = ['en', 'de', 'ar', 'es', 'fr', 'it', 'nl'].map((code) => ({ code }));
+// ESM-via-Next and not loadable by plain `node --test`. [P0-10] The canonical
+// set is EIGHT — en, de, ar, es, fr, it, nl, tr.
+const LANGUAGES = ['en', 'de', 'ar', 'es', 'fr', 'it', 'nl', 'tr'].map((code) => ({ code }));
 const DEFAULT_LANGUAGE = 'de';
 const pathFor = (code, rel) => `/${code === DEFAULT_LANGUAGE ? '' : code + '/'}${rel}`;
 
 const run = (entities) => computeRevalidatePaths(entities, LANGUAGES, pathFor);
 
-test('route entity → all 7 language variants, German unprefixed', () => {
+test('route entity → all 8 language variants, German unprefixed', () => {
   const paths = run([{ type: 'route', slug: 'muc-pmi' }]);
-  assert.equal(paths.length, 7);
+  assert.equal(paths.length, 8);
   assert.ok(paths.includes('/flights/muc-pmi'), 'German at root');
   assert.ok(paths.includes('/en/flights/muc-pmi'));
   assert.ok(paths.includes('/ar/flights/muc-pmi'));
+  assert.ok(paths.includes('/tr/flights/muc-pmi'), 'Turkish included (P0-10)');
   assert.ok(!paths.includes('/de/flights/muc-pmi'), 'German is never prefixed');
 });
 
@@ -36,20 +38,29 @@ test('city / country / airport / airline each map to the right base path', () =>
   ];
   for (const [type, slug, base] of cases) {
     const paths = run([{ type, slug }]);
-    assert.equal(paths.length, 7, `${type} → 7 langs`);
+    assert.equal(paths.length, 8, `${type} → 8 langs`);
     assert.ok(paths.includes(`/${base}/${slug}`), `${type} German root`);
     assert.ok(paths.includes(`/en/${base}/${slug}`), `${type} English prefixed`);
   }
 });
 
-test('blog is per-language: de → 1 root path, en → 1 prefixed path', () => {
+test('blog is per-language: de → root path, prefixed langs → their own prefix', () => {
   assert.deepEqual(run([{ type: 'blog', slug: 'mein-post', lang: 'de' }]), ['/blog/mein-post']);
   assert.deepEqual(run([{ type: 'blog', slug: 'my-post', lang: 'en' }]), ['/en/blog/my-post']);
 });
 
-test('blog with missing/unknown lang defaults to German', () => {
+test('[P0-7] every supported blog language revalidates its OWN path (no non-English=German)', () => {
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'ar' }]), ['/ar/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'es' }]), ['/es/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'fr' }]), ['/fr/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'it' }]), ['/it/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'nl' }]), ['/nl/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'tr' }]), ['/tr/blog/x']);
+});
+
+test('blog with missing/truly-unknown lang defaults to German (source)', () => {
   assert.deepEqual(run([{ type: 'blog', slug: 'x' }]), ['/blog/x']);
-  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'fr' }]), ['/blog/x']);
+  assert.deepEqual(run([{ type: 'blog', slug: 'x', lang: 'xx' }]), ['/blog/x']);
 });
 
 test('a mixed multi-entity payload (route publish) covers route + city + country', () => {
@@ -62,7 +73,7 @@ test('a mixed multi-entity payload (route publish) covers route + city + country
     { type: 'city', slug: 'munich' },
     { type: 'city', slug: 'palma' },
   ]);
-  assert.equal(paths.length, 5 * 7);
+  assert.equal(paths.length, 5 * 8);
   assert.ok(paths.includes('/flights/muc-pmi'));
   assert.ok(paths.includes('/country/ES'));
   assert.ok(paths.includes('/ar/city/palma'));
@@ -73,7 +84,7 @@ test('duplicate entities are de-duplicated', () => {
     { type: 'city', slug: 'munich' },
     { type: 'city', slug: 'munich' },
   ]);
-  assert.equal(paths.length, 7);
+  assert.equal(paths.length, 8);
 });
 
 test('invalid / unknown entries are skipped, never throw', () => {
