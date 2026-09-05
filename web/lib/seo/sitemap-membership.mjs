@@ -22,6 +22,18 @@ const FORBIDDEN_PATTERNS = [
   /[?#]/, // query strings / fragments — sitemaps list canonical, param-free URLs
 ];
 
+// [P1-6] Classify a child-sitemap fetch result so the auditor can tell a REAL
+// failure apart from an empty-but-valid child. `xml` is the fetched body, or
+// null when the request failed (non-2xx / network / timeout). A failure must be
+// a CRITICAL audit finding — NOT silently coerced to an empty URL list, which
+// would let a broken child sitemap pass the audit.
+//   returns 'unreachable' | 'malformed' | 'ok'
+export function classifyChildSitemap(xml) {
+  if (xml == null) return 'unreachable';
+  if (!/<(?:urlset|sitemapindex)\b/i.test(xml)) return 'malformed';
+  return 'ok';
+}
+
 // entries: array of { loc } (and optionally { lastmod, sitemap }).
 // Returns { total, duplicates: [{loc, count}], nonHttps: [loc], wrongHost:
 // [loc], forbidden: [{loc, reason}], ok }.
