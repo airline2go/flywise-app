@@ -6,7 +6,7 @@ const { stringsFor } = require('./translate');
 // translations/*.json (which previously carried them redundantly, once
 // per language, even though every language's value was the same string).
 const ABOUT_HREF = '/about.html';
-const BLOG_HREF = '/blog.html';
+const BLOG_HREF = '/blog'; // [P0-5 Option A] server-rendered listing (was /blog.html, which now 301s here)
 const CONTACT_HREF = '/contact.html';
 const PRIVACY_HREF = '/privacy.html';
 const TERMS_HREF = '/terms.html';

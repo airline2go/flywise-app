@@ -27,6 +27,16 @@ const nextConfig = {
         destination: 'https://airpiv.com/:path*',
         statusCode: 301,
       },
+      // [P0-5 Option A] The blog listing moved from the static public/blog.html
+      // to a server-rendered /blog (crawlable article links in the raw HTML).
+      // Permanently redirect the old URL to the canonical one. 301 (not 308) to
+      // match the site's other canonical redirects. Internal links already point
+      // at /blog, so this only catches external/legacy inbound links.
+      {
+        source: '/blog.html',
+        destination: '/blog',
+        statusCode: 301,
+      },
     ];
   },
 

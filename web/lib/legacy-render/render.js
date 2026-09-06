@@ -21,6 +21,7 @@ import airportMod from './render-airport.js';
 import airlineMod from './render-airline.js';
 import flightRouteMod from './render-flight-route.js';
 import blogPostMod from './render-blog-post.js';
+import blogListMod from './render-blog-list.js';
 import sitemapMod from './render-sitemap.js';
 import popularMod from './render-popular.js';
 import dataMod from './data.js';
@@ -32,6 +33,7 @@ const { renderAirportPage } = airportMod;
 const { renderAirlinePage } = airlineMod;
 const { renderFlightRoutePage } = flightRouteMod;
 const { renderBlogPostPage } = blogPostMod;
+const { renderBlogListPage } = blogListMod;
 const { renderSitemapPage } = sitemapMod;
 const { renderPopularPage } = popularMod;
 const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
@@ -237,6 +239,15 @@ export async function renderBlogPostHtml(slug, lang) {
   // current language prefix (one canonical set of links serves every language).
   const localized = Object.assign({}, post, { content: localizeLinks(post.content, lang) });
   return renderBlogPostPage(localized, allRoutes, allPosts, lang).html;
+}
+
+// [P0-5 Option A] Server-rendered blog listing (/blog). Fetches the same
+// /blog-posts list the client SPA used, so the article cards + links are in the
+// raw HTML for crawlers. German-only for now (the sole existing listing); the
+// article URLs, their canonicals and their hreflang are untouched.
+export async function renderBlogListHtml(lang) {
+  const posts = await listBlogPosts(lang);
+  return renderBlogListPage(posts, lang).html;
 }
 
 // [HTML-SITEMAP] The crawlable sitemap hub (/sitemap, /en/sitemap, …). Pulls
