@@ -53,7 +53,12 @@ const nextConfig = {
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
-        ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: '/index.html' })),
+        // [P2-4] Each language home now serves its OWN build-time localized file
+        // (public/<lang>.html, emitted by scripts/prerender-localized-homes.mjs)
+        // instead of the verbatim German index.html — so the raw HTML has a self
+        // canonical + correct lang/title on first byte. The browser URL stays
+        // /<lang> (rewrite masks the path); German root still serves index.html.
+        ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: `/${l}.html` })),
         { source: '/search/:pair', destination: '/index.html' },
       ],
       afterFiles: [],
