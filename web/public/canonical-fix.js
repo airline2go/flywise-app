@@ -1,14 +1,19 @@
 (function () {
   var base = 'https://airpiv.com';
 
-  // Language homes that serve this SAME verbatim index.html under a prefix
-  // (German is the unprefixed root). Keep in sync with next.config.mjs
-  // LANG_HOMES and the hreflang tags in <head>.
+  // Language homes served under a prefix. German is BOTH the unprefixed root (/)
+  // and a distinct prefixed home (/de, self-canonical /de). Keep in sync with
+  // next.config.mjs LANG_HOMES, lib/home-i18n.mjs HOME_LANGS, and the hreflang
+  // tags in <head>.
   var HOME_LANGS = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
+  // Prefixes that must self-canonical to /<seg> (includes 'de' so /de does NOT
+  // collapse back to the root — the P2-4 fix; only the bare root / is canonical /).
+  var PREFIXED = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr', 'de'];
 
   var path = window.location.pathname;
   var clean = path.length > 1 ? path.replace(/\/+$/, '') : path; // drop trailing slash (except root)
   var seg = clean.split('/')[1] || '';
+  var isPrefixed = PREFIXED.indexOf(seg) !== -1;
   var lang = HOME_LANGS.indexOf(seg) !== -1 ? seg : 'de';
 
   // [HREFLANG-CANONICAL-FIX] Each language's home URL must be canonical to
@@ -19,7 +24,9 @@
   // just the default page" — defeating the purpose of the hreflang cluster.
   // Derived from the clean pathname only (never a query string), matching
   // the no-trailing-slash convention every other clean URL on the site uses.
-  var canonical = lang === 'de' ? base + '/' : base + '/' + lang;
+  // Only the bare root (no prefix) is canonical '/'; /de and the six other
+  // prefixed homes are canonical to themselves.
+  var canonical = isPrefixed ? base + '/' + seg : base + '/';
   var canonicalEl = document.getElementById('canonical-url');
   if (canonicalEl) canonicalEl.setAttribute('href', canonical);
 
