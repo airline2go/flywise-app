@@ -854,7 +854,7 @@ function _fiBagRow(icon,label,e){
   if(_fiBagUnknown(e)){sub=t("bg_may_vary");}
   else if(e.included===false){icon="\u2715";sub=t("bg_not_incl");}
   else{var wl=_fiBagWeightLabel(e);
-    if(e.confirmed===true){sub=(wl?wl:t("bg_incl_generic"))+dim;badge='<div class="bag-included-badge">'+t("bg_free")+" \u2713</div>";}
+    if(e.confirmed===true){var wlc=(e.weight_confirmed===true)?wl:null;sub=(wlc?wlc:t("bg_incl_generic"))+dim;badge='<div class="bag-included-badge">'+t("bg_free")+" \u2713</div>";}
     else{sub=(wl?wl+" \u00b7 ":"")+t("bg_may_vary")+dim;}}
   var r='<div class="bag-included">';
   r+='<div class="bag-included-ico">'+icon+"</div>";
@@ -880,7 +880,7 @@ function _fiCardNoChip(offer,type,noKey,incKey){
   var e=offer&&offer.baggage&&offer.baggage[type];
   if(e){
     if(e.included===true&&e.confirmed===true){
-      var w=e.weight_kg!=null?(" \u00b7 "+(e.pieces&&e.pieces>1?e.pieces+"\u00d7 ":"")+e.weight_kg+" kg"):"";
+      var w=(e.weight_confirmed===true&&e.weight_kg!=null)?(" \u00b7 "+(e.pieces&&e.pieces>1?e.pieces+"\u00d7 ":"")+e.weight_kg+" kg"):"";
       return '<span class="fbrand-chip yes">\ud83e\uddf3 '+t(incKey)+w+"</span>";
     }
     if(e.included!==false){
