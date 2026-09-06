@@ -49,15 +49,20 @@ const nextConfig = {
   // exist on production (it 404s), so only the root path is rewritten and the
   // React [lang]/search routes are removed.
   async rewrites() {
-    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
+    // [P2-4] German is now also a distinct localized home at /de (self-canonical
+    // /de), in addition to the bare root /. The other seven prefixes are as
+    // before. Keep this list in sync with lib/home-i18n.mjs HOME_LANGS and
+    // public/canonical-fix.js.
+    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr', 'de'];
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
-        // [P2-4] Each language home now serves its OWN build-time localized file
+        // [P2-4] Each language home serves its OWN build-time localized file
         // (public/<lang>.html, emitted by scripts/prerender-localized-homes.mjs)
         // instead of the verbatim German index.html — so the raw HTML has a self
-        // canonical + correct lang/title on first byte. The browser URL stays
-        // /<lang> (rewrite masks the path); German root still serves index.html.
+        // canonical + correct lang/title/body on first byte. The browser URL
+        // stays /<lang> (rewrite masks the path); the bare root / still serves
+        // index.html verbatim (canonical /).
         ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: `/${l}.html` })),
         { source: '/search/:pair', destination: '/index.html' },
       ],
