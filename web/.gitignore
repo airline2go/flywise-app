@@ -17,6 +17,16 @@
 /.next/
 /out/
 
+# [P2-4] build-time localized home files (generated from public/index.html by
+# scripts/prerender-localized-homes.mjs during `npm run build`; not source).
+/public/en.html
+/public/ar.html
+/public/es.html
+/public/fr.html
+/public/it.html
+/public/nl.html
+/public/tr.html
+
 # production
 /build
 
