@@ -153,7 +153,7 @@ export function shardLoc(type, n) {
 // editorial-policy, transparency) are real, index,follow, self-canonical pages
 // with title/description/H1 — they belong in the sitemap. Added alongside the
 // existing marketing/legal set.
-export const STATIC_PAGES = ['', 'cheap-flights.html', 'last-minute-flights.html', 'about.html', 'blog.html', 'contact.html', 'privacy.html', 'terms.html', 'refund-policy.html', 'cookies.html', 'how-it-works.html', 'data-sources.html', 'methodology.html', 'editorial-policy.html', 'transparency.html'];
+export const STATIC_PAGES = ['', 'cheap-flights.html', 'last-minute-flights.html', 'about.html', 'blog', 'contact.html', 'privacy.html', 'terms.html', 'refund-policy.html', 'cookies.html', 'how-it-works.html', 'data-sources.html', 'methodology.html', 'editorial-policy.html', 'transparency.html'];
 
 export function pageUrls() {
   return STATIC_PAGES.map((p) => ({ loc: `${SITE_ORIGIN}/${p}`, lastmod: null }));

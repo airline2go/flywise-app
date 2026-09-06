@@ -222,7 +222,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
       // /en/blog does not exist (0 English posts); per-language listings are
       // P0-5. (Crumb labels stay de/en pending translated UI strings.)
       { '@type': 'ListItem', position: 1, name: de ? 'Startseite' : 'Home', item: urlFor(lang, '') },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://airpiv.com/blog.html' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://airpiv.com/blog' },
       { '@type': 'ListItem', position: 3, name: post.title, item: url },
     ],
   };
@@ -286,7 +286,7 @@ function renderBlogPostPage(post, allRoutes, allPosts, lang) {
   const similarPostsHtml = buildSimilarPostsHtml(post, allPosts, lang);
   const prevNextHtml = buildPrevNextHtml(post, allPosts, lang);
 
-  const blogHref = de ? '/blog.html' : '/en/blog';
+  const blogHref = de ? '/blog' : '/en/blog';
   const homeHref = de ? '/' : '/en/';
 
   const mainContent = `<main id="post-main">

@@ -69,7 +69,7 @@ function renderSitemapPage(data, lang) {
   const mainPages = [
     { href: homeHref(lang), label: translate('homeLabel', lang) },
     { href: pathFor(lang, 'popular'), label: translate('popularLabel', lang) },
-    { href: '/blog.html', label: translate('blogLabel', lang) },
+    { href: '/blog', label: translate('blogLabel', lang) },
     { href: '/about.html', label: translate('aboutLabel', lang) },
     { href: '/contact.html', label: translate('contactLabel', lang) },
     { href: '/how-it-works.html', label: translate('howItWorksLabel', lang) },
