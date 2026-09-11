@@ -641,7 +641,11 @@ function buildRouteMetaDescription(route, lang, names) {
   return base;
 }
 
-function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = []) {
+// `reviewsHtml` (P1-b) is a pre-rendered "Traveler reviews" section (or '' —
+// the default — when the route has too few published reviews to show one).
+// Passed in by render.js so the verbatim base render is unchanged whenever
+// it's empty; see render-reviews.js renderRouteReviewsSection.
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = [], reviewsHtml = '') {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
@@ -866,7 +870,7 @@ ${airlinesHtml}
   <h2>${translate('frequentlyAskedQuestions', lang)}</h2>
   ${faqHtml}
 </section>
-${trustHtml}
+${reviewsHtml}${trustHtml}
 ${relatedRoutesHtml}
 ${moreFromOriginHtml}
 ${moreToDestinationHtml}

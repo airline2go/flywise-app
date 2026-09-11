@@ -37,7 +37,7 @@ const { renderBlogPostPage } = blogPostMod;
 const { renderBlogListPage } = blogListMod;
 const { renderSitemapPage } = sitemapMod;
 const { renderPopularPage } = popularMod;
-const { renderReviewsPage } = reviewsMod;
+const { renderReviewsPage, renderRouteReviewsSection } = reviewsMod;
 const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
 
 // [ROUTE-RELATED-ARTICLES] Blog posts whose text genuinely mentions this
@@ -224,7 +224,15 @@ export async function renderFlightRouteHtml(slug, lang) {
   const related = computeRelatedRoutes(routeRaw, linkList);
   const cityLinks = computeCityRouteLinks(routeRaw, linkList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);
-  const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles).html;
+  // [REVIEWS-P1] This route's own published reviews, server-rendered into the
+  // page. getReviews never throws and renderRouteReviewsSection returns '' below
+  // the min-review threshold (§14), so a route with too few reviews renders
+  // byte-for-byte as before. Reviews are resolved server-side by this route's
+  // real slug (the backend maps slug → published route_id); no client fetch.
+  const reviewsData = await getReviews({ route: slug, limit: 6 });
+  const reviewsHref = lang === 'de' ? '/reviews' : `/${lang}/reviews`;
+  const reviewsSection = renderRouteReviewsSection(reviewsData, lang, reviewsHref);
+  const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles, reviewsSection).html;
   console.log(JSON.stringify({ tag: 'flight-render', event: 'cache-miss', slug, lang, duffel: false, ms: Date.now() - t0 }));
   return out;
 }
