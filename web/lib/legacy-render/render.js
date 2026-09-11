@@ -8,7 +8,7 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts } from '../content-api';
+import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts, getReviews } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
 import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
 import { buildTitleDisambiguationMap } from '../seo/route-title.mjs';
@@ -24,6 +24,7 @@ import blogPostMod from './render-blog-post.js';
 import blogListMod from './render-blog-list.js';
 import sitemapMod from './render-sitemap.js';
 import popularMod from './render-popular.js';
+import reviewsMod from './render-reviews.js';
 import dataMod from './data.js';
 
 const { renderCityPage } = cityMod;
@@ -36,6 +37,7 @@ const { renderBlogPostPage } = blogPostMod;
 const { renderBlogListPage } = blogListMod;
 const { renderSitemapPage } = sitemapMod;
 const { renderPopularPage } = popularMod;
+const { renderReviewsPage } = reviewsMod;
 const { setGeoData, detectCitiesInText, slugForIata } = dataMod;
 
 // [ROUTE-RELATED-ARTICLES] Blog posts whose text genuinely mentions this
@@ -366,4 +368,13 @@ export async function renderPopularHtml(lang) {
     .slice(0, POPULAR_ROUTE_LIMIT);
 
   return renderPopularPage({ destinations, topRoutes, popularAirlines }, lang).html;
+}
+
+// [REVIEWS-P1] Central /reviews hub. Server-renders the live aggregate +
+// published reviews from flywise-server's GET /reviews. No geo/route data
+// needed — just the reviews payload (getReviews never throws; a backend blip
+// yields an empty, non-indexed page).
+export async function renderReviewsHtml(lang) {
+  const data = await getReviews({ limit: 20 });
+  return renderReviewsPage(data, lang).html;
 }

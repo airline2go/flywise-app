@@ -361,5 +361,19 @@
   "priceLabelLive": "Prix en direct · Classe économique · 1 adulte",
   "priceLastCheckedTemplate": "Vérifié le {date}",
   "alternativeAirportLabel": "Aéroport alternatif",
-  "offersComparedForRouteSuffix": "offres comparées pour cette liaison"
+  "offersComparedForRouteSuffix": "offres comparées pour cette liaison",
+  "reviewsLabel": "Avis",
+  "reviewsPageTitle": "Avis sur Airpiv",
+  "reviewsMetaDescription": "Avis réels de voyageurs ayant réservé des vols avec Airpiv. Découvrez les notes et les retours honnêtes sur l'expérience Airpiv.",
+  "reviewsH1": "Ce que les voyageurs disent d'Airpiv",
+  "reviewsIntro": "Retours honnêtes de vrais voyageurs sur la recherche, la comparaison et la réservation de vols avec Airpiv.",
+  "reviewsBasedOn": "Basé sur {count} avis",
+  "reviewsVerified": "Réservation vérifiée",
+  "reviewsEmpty": "Pas encore d'avis — soyez le premier à partager votre expérience Airpiv.",
+  "reviewsAnonymous": "Un voyageur",
+  "reviewsTag_easy_search": "Recherche facile",
+  "reviewsTag_clear_prices": "Prix clairs",
+  "reviewsTag_fast_results": "Résultats rapides",
+  "reviewsTag_good_information": "Bonnes informations",
+  "reviewsTag_easy_booking": "Réservation facile"
 }

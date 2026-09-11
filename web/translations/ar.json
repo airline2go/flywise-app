@@ -361,5 +361,19 @@
   "priceLabelLive": "سعر حيّ · الدرجة الاقتصادية · بالغ واحد",
   "priceLastCheckedTemplate": "آخر فحص بتاريخ {date}",
   "alternativeAirportLabel": "مطار بديل",
-  "offersComparedForRouteSuffix": "عرضًا تمت مقارنته لهذا المسار"
+  "offersComparedForRouteSuffix": "عرضًا تمت مقارنته لهذا المسار",
+  "reviewsLabel": "التقييمات",
+  "reviewsPageTitle": "تقييمات Airpiv",
+  "reviewsMetaDescription": "تقييمات حقيقية من مسافرين حجزوا رحلاتهم عبر Airpiv. اطّلع على التقييمات والآراء الصادقة حول تجربة Airpiv.",
+  "reviewsH1": "ماذا يقول المسافرون عن Airpiv",
+  "reviewsIntro": "آراء صادقة من مسافرين حقيقيين حول البحث عن الرحلات ومقارنتها وحجزها عبر Airpiv.",
+  "reviewsBasedOn": "بناءً على {count} تقييماً",
+  "reviewsVerified": "حجز موثّق",
+  "reviewsEmpty": "لا توجد تقييمات بعد — كن أول من يشارك تجربته مع Airpiv.",
+  "reviewsAnonymous": "مسافر",
+  "reviewsTag_easy_search": "بحث سهل",
+  "reviewsTag_clear_prices": "أسعار واضحة",
+  "reviewsTag_fast_results": "نتائج سريعة",
+  "reviewsTag_good_information": "معلومات جيدة",
+  "reviewsTag_easy_booking": "حجز سهل"
 }
