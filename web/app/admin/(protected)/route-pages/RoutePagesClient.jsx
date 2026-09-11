@@ -312,6 +312,23 @@ export default function RoutePagesClient() {
     else setBanner({ type: 'error', text: data.error || 'فشلت العملية' });
   }
 
+  // [DEAD-ROUTES] حذف جماعي لكل المسارات الميتة. المسار "الميت" اتفحص
+  // فعلياً وأكّدنا إنه مفيش رحلات حقيقية عليه (مختلف عن "مسودة") وهو
+  // مخفي أصلاً عن الموقع — الزر ده بيشيله نهائياً من قاعدة البيانات.
+  // بنجيب العدد الأول عشان التأكيد يكون برقم حقيقي، نفس نمط publishAllDrafts.
+  async function deleteAllDeadRoutes() {
+    const countRes = await fetch('/admin/api/route-pages?status=dead&limit=1');
+    const countData = await countRes.json();
+    const totalDead = countData.ok ? (countData.total || 0) : 0;
+    if (totalDead === 0) { setBanner({ type: 'info', text: 'مفيش مسارات ميتة حالياً' }); return; }
+    if (!confirm(`هتحذف ${totalDead} مسار ميت (مؤكد مفيش رحلات عليهم) نهائياً من قاعدة البيانات. لا يمكن التراجع.\n\nمتأكد؟`)) return;
+    setBanner({ type: 'info', text: `⏳ جارٍ حذف ${totalDead} مسار ميت...` });
+    const res = await fetch('/admin/api/route-pages/dead', { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) { setBanner({ type: 'success', text: `🗑 تم حذف ${data.deleted} مسار ميت بنجاح` }); setPage(1); load(); }
+    else setBanner({ type: 'error', text: data.error || 'فشلت العملية' });
+  }
+
   // ============ [DEAD-ROUTES-HEALTH-CHECK] ============
   // Runs health-check-batch repeatedly (10 routes/call server-side)
   // until every unchecked route has been checked, same loop shape as
@@ -369,6 +386,7 @@ export default function RoutePagesClient() {
           <button type="button" onClick={() => setMatrixModalOpen(true)} style={ghostSmallBtnStyle}>🗺️ مصفوفة المسارات</button>
           <button type="button" onClick={publishAllDrafts} style={ghostSmallBtnStyle}>🚀 نشر كل المسودات</button>
           <button type="button" disabled={healthCheckRunning} onClick={runHealthCheck} style={ghostSmallBtnStyle}>🩺 فحص صحة المسارات</button>
+          <button type="button" onClick={deleteAllDeadRoutes} style={{ ...ghostSmallBtnStyle, color: ADMIN_COLORS.red }}>💀 حذف كل المسارات الميتة</button>
         </div>
       </div>
 
