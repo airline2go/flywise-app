@@ -115,8 +115,10 @@ function renderShell({
 <head>
 <link rel="preconnect" href="https://api.airpiv.com">
 <link rel="dns-prefetch" href="https://api.airpiv.com">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2K257GSWEM"></script>
-<script src="/analytics.js" defer></script>
+<!-- Consent-gated Google tag (GA4 + Google Ads). Loaded ONLY via consent.js —
+     no unconditional gtag/analytics load, so Consent Mode v2 is honoured here
+     exactly as on the SPA pages and there is no duplicate Google tag. -->
+<script src="/consent.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escHtml(title)}</title>
