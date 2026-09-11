@@ -41,9 +41,11 @@ test('when aggregate-min and cached price DISAGREE, every surface shows the aggr
   assert.match(html, /var CANON_PRICE = 60;/);
   assert.match(html, /var CANON_DATE = "2026-07-20";/);
 
-  // JSON-LD Offer = 60.00, matching the hero and meta.
-  assert.match(html, /"price":"60\.00"/);
-  assert.doesNotMatch(html, /"price":"83/);
+  // [P0.3 DATA-TRUTH] The aggregate min is a historically observed figure, not a
+  // live bookable quote, so NO InStock Offer is emitted for it (rule #8). The
+  // one-price invariant still holds for the honest surfaces (title/meta/hero all
+  // show 60, never 83) — we simply do not assert a false availability in JSON-LD.
+  assert.doesNotMatch(html, /"@type":"Offer"/);
 });
 
 test('with only a cached price (no sample-backed min), title/meta/hero use it — and no Offer is emitted', () => {

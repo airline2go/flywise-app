@@ -97,3 +97,22 @@ test('deriveAirlineCount counts a passed list, else the scalar, else null', () =
   assert.equal(deriveAirlineCount({ airline_count: 9 }, []), 9);
   assert.equal(deriveAirlineCount({}, []), null);
 });
+
+// ─── [P0.4] Currency + stale-as-live invariants ────────────────────────────
+test('invalid currency is a critical snapshot error (never reaches a visible price)', () => {
+  const r = R({ price_min: 60, price_sample_count: 5, price_currency: 'euro', price_updated_at: '2026-09-01T00:00:00Z' });
+  const errs = validateSnapshot(r, buildRouteSnapshot(r));
+  assert.ok(errs.some((e) => e.startsWith('invalid-currency')), errs.join(','));
+  assert.ok(criticalSnapshotErrors(r, buildRouteSnapshot(r)).length > 0);
+});
+test('a valid 3-letter currency raises no currency error', () => {
+  const r = R({ price_min: 60, price_sample_count: 5, price_currency: 'EUR', price_updated_at: '2026-09-01T00:00:00Z' });
+  const errs = validateSnapshot(r, buildRouteSnapshot(r));
+  assert.ok(!errs.some((e) => e.startsWith('invalid-currency')), errs.join(','));
+});
+test('priceIsFresh always carries a checkedAt (no stale-as-live)', () => {
+  const fresh = R({ price_min: 60, price_sample_count: 5, price_currency: 'EUR', price_updated_at: new Date().toISOString() });
+  const s = buildRouteSnapshot(fresh);
+  assert.equal(s.priceIsFresh, true);
+  assert.ok(!validateSnapshot(fresh, s).some((e) => e.startsWith('stale-as-live')));
+});
