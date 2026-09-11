@@ -789,6 +789,33 @@ async function resetHealthChecks() {
   }
 }
 
+// [DEAD-ROUTES] حذف جماعي لكل المسارات الميتة. المسار "الميت" اتفحص
+// فعلياً وأكّدنا إنه مفيش رحلات حقيقية عليه (مختلف عن "مسودة")، وهو
+// مخفي أصلاً عن الموقع. الزرار ده بيشيله نهائياً من قاعدة البيانات.
+// بنجيب العدد الأول عشان التأكيد يكون برقم حقيقي، نفس نمط publishAllDrafts.
+async function deleteAllDeadRoutes() {
+  try {
+    const countRes = await adminFetch('/admin/route-pages?status=dead&limit=1');
+    const countJ = await countRes.json();
+    const total = countJ.ok ? (countJ.total || 0) : 0;
+    if (total === 0) { showToast('مفيش مسارات ميتة حالياً', 'info'); return; }
+
+    if (!confirm('هتحذف ' + total.toLocaleString('ar-EG') + ' مسار ميت (مؤكد مفيش رحلات عليهم) نهائياً من قاعدة البيانات. لا يمكن التراجع.\n\nمتأكد؟')) return;
+
+    showToast('⏳ جارٍ حذف ' + total.toLocaleString('ar-EG') + ' مسار ميت...', 'info');
+    const res = await adminFetch('/admin/route-pages/dead', { method: 'DELETE' });
+    const j = await res.json();
+    if (j.ok) {
+      showToast('🗑 تم حذف ' + j.deleted + ' مسار ميت بنجاح', 'success');
+      rpResetAndLoad();
+    } else {
+      showToast(j.error || 'فشلت العملية', 'error');
+    }
+  } catch (e) {
+    showToast('خطأ في الاتصال بالسيرفر — تحقق من الإنترنت', 'error');
+  }
+}
+
 // ============ [BULK-CREATE] إنشاء مسارات بالجملة ============
 var bulkSelectedAirports = []; // [{code, city, country, lat, lng}]
 var bulkSearchDebounce = null;
