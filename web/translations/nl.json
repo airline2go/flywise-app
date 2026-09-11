@@ -361,5 +361,19 @@
   "priceLabelLive": "Live prijs · Economy · 1 volwassene",
   "priceLastCheckedTemplate": "Laatst gecontroleerd op {date}",
   "alternativeAirportLabel": "Alternatieve luchthaven",
-  "offersComparedForRouteSuffix": "aanbiedingen vergeleken voor deze route"
+  "offersComparedForRouteSuffix": "aanbiedingen vergeleken voor deze route",
+  "reviewsLabel": "Beoordelingen",
+  "reviewsPageTitle": "Airpiv Beoordelingen",
+  "reviewsMetaDescription": "Echte beoordelingen van reizigers die vluchten boekten met Airpiv. Bekijk waarderingen en eerlijke feedback over de Airpiv-ervaring.",
+  "reviewsH1": "Wat reizigers over Airpiv zeggen",
+  "reviewsIntro": "Eerlijke feedback van echte reizigers over zoeken, vergelijken en boeken van vluchten met Airpiv.",
+  "reviewsBasedOn": "Gebaseerd op {count} beoordelingen",
+  "reviewsVerified": "Geverifieerde boeking",
+  "reviewsEmpty": "Nog geen beoordelingen — deel als eerste jouw Airpiv-ervaring.",
+  "reviewsAnonymous": "Een reiziger",
+  "reviewsTag_easy_search": "Eenvoudig zoeken",
+  "reviewsTag_clear_prices": "Duidelijke prijzen",
+  "reviewsTag_fast_results": "Snelle resultaten",
+  "reviewsTag_good_information": "Goede informatie",
+  "reviewsTag_easy_booking": "Eenvoudig boeken"
 }

@@ -228,6 +228,26 @@ async function getBlogPost(slug, lang) {
   return (data && data.post) || null;
 }
 
+// [REVIEWS] Published reviews + live aggregate from flywise-server's public
+// GET /reviews. `route` (a published route slug) scopes to one route's
+// section; omit it for the central /reviews page. Never throws — a transient
+// backend blip yields an empty, non-indexed page rather than a failed render.
+async function getReviews({ route = null, limit = 20, offset = 0 } = {}) {
+  const empty = { reviews: [], total: 0, aggregate: { average: null, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } } };
+  const qs = new URLSearchParams();
+  if (route) qs.set('route', route);
+  if (limit) qs.set('limit', String(limit));
+  if (offset) qs.set('offset', String(offset));
+  const q = qs.toString();
+  try {
+    const data = await fetchJSON(`/reviews${q ? `?${q}` : ''}`);
+    if (!data || !data.ok) return empty;
+    return { reviews: data.reviews || [], total: data.total || 0, aggregate: data.aggregate || empty.aggregate };
+  } catch {
+    return empty;
+  }
+}
+
 // ─── Geo index ──────────────────────────────────────────────────────────
 // [REQUEST-SCOPED-CACHE] React's `cache()` memoizes this per-request (per
 // server render pass) — city/country lists are fetched once and the built
@@ -244,6 +264,7 @@ export {
   listCities, listCountries, listAirports, listAirlines, listRoutePages, listBlogPosts,
   listRouteRedirects, resolvePersistentRedirect,
   getCity, getCountry, getAirport, getAirline, getRoutePage, getRelatedRoutes, getBlogPost,
+  getReviews,
   getGeoIndex,
   sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapAirports, sitemapBlog,
 };
