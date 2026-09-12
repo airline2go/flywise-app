@@ -139,6 +139,10 @@ function localizeHead(html, lang) {
   const url = `${SITE}/${lang}`;
   let out = html;
   out = out.replace(/(<html\s+lang=")[^"]*(")/i, (_x, a, b) => a + lang + b);
+  // [P1.9/RTL] Arabic is right-to-left; every other home language is LTR. The
+  // source ships dir="ltr", so set it per language here (the whole home, footer
+  // included, then inherits the correct direction — no separate RTL footer).
+  out = out.replace(/(<html\s+lang="[^"]*"\s+dir=")[^"]*(")/i, (_x, a, b) => a + (lang === 'ar' ? 'rtl' : 'ltr') + b);
   out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escText(m.t)}</title>`);
   out = out.replace(
     /(<link\s+rel="canonical"\s+href=")[^"]*("\s+id="canonical-url")/i,
@@ -224,6 +228,39 @@ export function localizeBody(html, lang, translations) {
   return out;
 }
 
+// [P1.9/P5.1] Manually reviewed footer translations for all 8 home languages.
+// The static homepage footer is authored in German; without these, the /en, /ar,
+// … localized homes leaked the German footer verbatim (the strongest page on the
+// site). These live here — the reviewable home-i18n source — rather than in the
+// minified public/app.js TRANSLATIONS blob, and are merged into the translation
+// dictionary at localize time so the existing [data-i18n] mechanism resolves
+// them in the raw/SSR HTML (no client JS needed). German (de) mirrors the source
+// text so `/` (served verbatim) and `/de` stay identical. NOT machine-generated.
+// The legal disclaimer (ft_legal) is a substantive statement — review before
+// relying on it in a new market.
+export const FOOTER_I18N = {
+  de: { ft_tagline: 'Finde Flüge, die sonst niemand findet. Über 600 Airlines vergleichen – transparent und ohne versteckte Kosten.', ft_discover: 'Entdecken', ft_cheap: 'Günstige Flüge', ft_lastminute: 'Last Minute Flüge', ft_hotels: 'Hotels', ft_cars: 'Mietwagen', ft_company: 'Unternehmen', ft_about: 'Über uns', ft_careers: 'Karriere', ft_press: 'Presse', ft_blog: 'Blog', ft_support: 'Support', ft_faq: 'FAQ', ft_bookings: 'Buchungen', ft_contact: 'Kontakt', ft_privacy: 'Datenschutz', ft_terms: 'AGB', ft_imprint: 'Impressum', ft_refund: 'Stornierung & Erstattung', ft_cookies: 'Cookie-Richtlinie', ft_copyright: '© 2026 Airpiv · Alle Rechte vorbehalten', ft_legal: 'Airpiv ist ein unabhängiger Vermittler von Reisedienstleistungen. Der Beförderungsvertrag kommt direkt zwischen dem Reisenden und der jeweiligen Fluggesellschaft zustande.' },
+  en: { ft_tagline: 'Find flights no one else finds. Compare over 600 airlines — transparent and with no hidden costs.', ft_discover: 'Discover', ft_cheap: 'Cheap flights', ft_lastminute: 'Last-minute flights', ft_hotels: 'Hotels', ft_cars: 'Car rental', ft_company: 'Company', ft_about: 'About us', ft_careers: 'Careers', ft_press: 'Press', ft_blog: 'Blog', ft_support: 'Support', ft_faq: 'FAQ', ft_bookings: 'Bookings', ft_contact: 'Contact', ft_privacy: 'Privacy', ft_terms: 'Terms', ft_imprint: 'Legal notice', ft_refund: 'Cancellation & refund', ft_cookies: 'Cookie policy', ft_copyright: '© 2026 Airpiv · All rights reserved', ft_legal: 'Airpiv is an independent intermediary for travel services. The contract of carriage is concluded directly between the traveller and the respective airline.' },
+  ar: { ft_tagline: 'اعثر على رحلات لا يجدها غيرك. قارن أكثر من 600 شركة طيران — بشفافية وبلا تكاليف خفية.', ft_discover: 'اكتشف', ft_cheap: 'رحلات رخيصة', ft_lastminute: 'رحلات اللحظة الأخيرة', ft_hotels: 'فنادق', ft_cars: 'تأجير سيارات', ft_company: 'الشركة', ft_about: 'من نحن', ft_careers: 'الوظائف', ft_press: 'الصحافة', ft_blog: 'المدونة', ft_support: 'الدعم', ft_faq: 'الأسئلة الشائعة', ft_bookings: 'الحجوزات', ft_contact: 'اتصل بنا', ft_privacy: 'الخصوصية', ft_terms: 'الشروط والأحكام', ft_imprint: 'بيان قانوني', ft_refund: 'الإلغاء والاسترداد', ft_cookies: 'سياسة ملفات تعريف الارتباط', ft_copyright: '© 2026 Airpiv · جميع الحقوق محفوظة', ft_legal: 'Airpiv وسيط مستقل لخدمات السفر. يُبرم عقد النقل مباشرةً بين المسافر وشركة الطيران المعنية.' },
+  es: { ft_tagline: 'Encuentra vuelos que nadie más encuentra. Compara más de 600 aerolíneas: transparente y sin costes ocultos.', ft_discover: 'Descubrir', ft_cheap: 'Vuelos baratos', ft_lastminute: 'Vuelos de última hora', ft_hotels: 'Hoteles', ft_cars: 'Alquiler de coches', ft_company: 'Empresa', ft_about: 'Sobre nosotros', ft_careers: 'Empleo', ft_press: 'Prensa', ft_blog: 'Blog', ft_support: 'Soporte', ft_faq: 'Preguntas frecuentes', ft_bookings: 'Reservas', ft_contact: 'Contacto', ft_privacy: 'Privacidad', ft_terms: 'Términos', ft_imprint: 'Aviso legal', ft_refund: 'Cancelación y reembolso', ft_cookies: 'Política de cookies', ft_copyright: '© 2026 Airpiv · Todos los derechos reservados', ft_legal: 'Airpiv es un intermediario independiente de servicios de viaje. El contrato de transporte se celebra directamente entre el viajero y la aerolínea correspondiente.' },
+  fr: { ft_tagline: "Trouvez des vols que personne d'autre ne trouve. Comparez plus de 600 compagnies aériennes — en toute transparence et sans frais cachés.", ft_discover: 'Découvrir', ft_cheap: 'Vols pas chers', ft_lastminute: 'Vols de dernière minute', ft_hotels: 'Hôtels', ft_cars: 'Location de voitures', ft_company: 'Entreprise', ft_about: 'À propos', ft_careers: 'Carrières', ft_press: 'Presse', ft_blog: 'Blog', ft_support: 'Assistance', ft_faq: 'FAQ', ft_bookings: 'Réservations', ft_contact: 'Contact', ft_privacy: 'Confidentialité', ft_terms: 'Conditions générales', ft_imprint: 'Mentions légales', ft_refund: 'Annulation et remboursement', ft_cookies: 'Politique de cookies', ft_copyright: '© 2026 Airpiv · Tous droits réservés', ft_legal: 'Airpiv est un intermédiaire indépendant de services de voyage. Le contrat de transport est conclu directement entre le voyageur et la compagnie aérienne concernée.' },
+  it: { ft_tagline: 'Trova voli che nessun altro trova. Confronta oltre 600 compagnie aeree — in modo trasparente e senza costi nascosti.', ft_discover: 'Scopri', ft_cheap: 'Voli economici', ft_lastminute: 'Voli last minute', ft_hotels: 'Hotel', ft_cars: 'Autonoleggio', ft_company: 'Azienda', ft_about: 'Chi siamo', ft_careers: 'Lavora con noi', ft_press: 'Stampa', ft_blog: 'Blog', ft_support: 'Assistenza', ft_faq: 'FAQ', ft_bookings: 'Prenotazioni', ft_contact: 'Contatti', ft_privacy: 'Privacy', ft_terms: 'Termini e condizioni', ft_imprint: 'Note legali', ft_refund: 'Cancellazione e rimborso', ft_cookies: 'Informativa sui cookie', ft_copyright: '© 2026 Airpiv · Tutti i diritti riservati', ft_legal: 'Airpiv è un intermediario indipendente di servizi di viaggio. Il contratto di trasporto è concluso direttamente tra il viaggiatore e la rispettiva compagnia aerea.' },
+  nl: { ft_tagline: 'Vind vluchten die niemand anders vindt. Vergelijk meer dan 600 luchtvaartmaatschappijen — transparant en zonder verborgen kosten.', ft_discover: 'Ontdekken', ft_cheap: 'Goedkope vluchten', ft_lastminute: 'Last-minute vluchten', ft_hotels: 'Hotels', ft_cars: 'Autoverhuur', ft_company: 'Bedrijf', ft_about: 'Over ons', ft_careers: 'Vacatures', ft_press: 'Pers', ft_blog: 'Blog', ft_support: 'Ondersteuning', ft_faq: 'Veelgestelde vragen', ft_bookings: 'Boekingen', ft_contact: 'Contact', ft_privacy: 'Privacy', ft_terms: 'Voorwaarden', ft_imprint: 'Colofon', ft_refund: 'Annulering & terugbetaling', ft_cookies: 'Cookiebeleid', ft_copyright: '© 2026 Airpiv · Alle rechten voorbehouden', ft_legal: 'Airpiv is een onafhankelijke bemiddelaar van reisdiensten. De vervoersovereenkomst komt rechtstreeks tot stand tussen de reiziger en de betreffende luchtvaartmaatschappij.' },
+  tr: { ft_tagline: "Kimsenin bulamadığı uçuşları bulun. 600'den fazla havayolunu karşılaştırın — şeffaf ve gizli ücret yok.", ft_discover: 'Keşfet', ft_cheap: 'Ucuz uçuşlar', ft_lastminute: 'Son dakika uçuşları', ft_hotels: 'Oteller', ft_cars: 'Araç kiralama', ft_company: 'Şirket', ft_about: 'Hakkımızda', ft_careers: 'Kariyer', ft_press: 'Basın', ft_blog: 'Blog', ft_support: 'Destek', ft_faq: 'SSS', ft_bookings: 'Rezervasyonlar', ft_contact: 'İletişim', ft_privacy: 'Gizlilik', ft_terms: 'Şartlar', ft_imprint: 'Künye', ft_refund: 'İptal ve iade', ft_cookies: 'Çerez politikası', ft_copyright: '© 2026 Airpiv · Tüm hakları saklıdır', ft_legal: 'Airpiv, seyahat hizmetleri için bağımsız bir aracıdır. Taşıma sözleşmesi doğrudan yolcu ile ilgili havayolu arasında yapılır.' },
+};
+
+// Merge the reviewed footer strings into the app.js translation dictionary so
+// the existing [data-i18n] resolver (translate()) finds them. Footer keys never
+// collide with app keys (ft_* namespace); a per-language shallow merge keeps the
+// German fallback chain intact for any key a language happens to omit.
+function withFooterI18n(translations) {
+  const out = { ...translations };
+  for (const lang of Object.keys(FOOTER_I18N)) {
+    out[lang] = { ...(translations[lang] || {}), ...FOOTER_I18N[lang] };
+  }
+  return out;
+}
+
 // Full transform: head + hreflang + body + internal links. `translations` is the
 // object returned by extractTranslations(appJs).
 //
@@ -243,7 +280,7 @@ export function localizeHomeHtml(html, lang, translations) {
   if (!HOME_META[lang]) throw new Error(`unknown home language: ${lang}`);
   let out = localizeHead(html, lang);
   out = fixHreflangCluster(out);
-  out = localizeBody(out, lang, translations);
+  out = localizeBody(out, lang, withFooterI18n(translations));
   out = localizeLinks(out, lang);
   return out;
 }
