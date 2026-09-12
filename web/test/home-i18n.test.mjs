@@ -57,7 +57,9 @@ test('all 8 languages get a self canonical + correct <html lang>', () => {
   const tr = T();
   for (const lang of HOME_LANGS) {
     const out = localizeHomeHtml(HOME, lang, tr);
-    assert.match(out, new RegExp(`<html lang="${lang}" dir="ltr">`));
+    // [P1.9/RTL] Arabic is right-to-left; every other home language is LTR.
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    assert.match(out, new RegExp(`<html lang="${lang}" dir="${dir}">`));
     assert.match(out, new RegExp(`href="${SITE}/${lang}" id="canonical-url"`));
   }
 });
