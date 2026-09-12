@@ -71,8 +71,9 @@ function renderCountryPage(country, routes, lang, routeMetaBySlug) {
 
   const breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span><span>${escHtml(countryName)}</span></nav>`;
 
-  const fromRoutes = locRoutes.filter((r) => r.origin_country === country.code);
-  const toRoutes = locRoutes.filter((r) => r.destination_country === country.code);
+  // [P0.7] Never link internally to a noindex route (see render-city).
+  const fromRoutes = locRoutes.filter((r) => r.indexable !== false && r.origin_country === country.code);
+  const toRoutes = locRoutes.filter((r) => r.indexable !== false && r.destination_country === country.code);
   function routeCardHtml(r) {
     return `<a class="country-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}">${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</a>`;
   }

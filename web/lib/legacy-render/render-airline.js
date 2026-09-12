@@ -83,16 +83,20 @@ function renderAirlinePage(airline, routes, lang, mostUsedRoutes, routeMetaBySlu
   // Only worth a separate "most flown" highlight when it's a genuine
   // curated subset of a longer full list — for a small airline the two
   // would just be the same handful of routes shown twice.
-  const locMostUsed = (mostUsedRoutes || []).map((r) => Object.assign({}, r, {
+  // [P0.7] Never link internally to a noindex route (see render-city). Both the
+  // full route list and the "most flown" subset are on-page internal links, so
+  // both drop routes the backend marked indexable:false.
+  const locMostUsed = (mostUsedRoutes || []).filter((r) => r.indexable !== false).map((r) => Object.assign({}, r, {
     origin_city: localizeCity(r.origin_city, r.origin_iata, lang),
     destination_city: localizeCity(r.destination_city, r.destination_iata, lang),
   }));
-  const mostUsedSectionHtml = (locMostUsed.length && locRoutes.length > locMostUsed.length)
+  const linkRoutes = locRoutes.filter((r) => r.indexable !== false);
+  const mostUsedSectionHtml = (locMostUsed.length && linkRoutes.length > locMostUsed.length)
     ? `<section class="airline-routes-section"><h2>${translate('airlineMostFlownRoutesLabel', lang)}</h2><div class="airline-route-grid">${locMostUsed.map(routeCardHtml).join('')}</div></section>`
     : '';
 
-  const routesSectionHtml = locRoutes.length
-    ? `<section class="airline-routes-section"><h2>${translate('routesLabel', lang)}</h2><div class="airline-route-grid">${locRoutes.map(routeCardHtml).join('')}</div></section>`
+  const routesSectionHtml = linkRoutes.length
+    ? `<section class="airline-routes-section"><h2>${translate('routesLabel', lang)}</h2><div class="airline-route-grid">${linkRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';
 
   function statTile(value, label) {
