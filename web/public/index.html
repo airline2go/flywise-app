@@ -423,7 +423,7 @@
           <select class="ksel" id="trip-sel" autocomplete="off" data-chg-fn="setTripSel">
             <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
             <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
-            <option value="mc">&#43; Mehrere Städte</option>
+            <option value="mc" data-i18n="trip_mc">&#43; Mehrere Städte</option>
           </select>
           <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
@@ -472,7 +472,7 @@
 
       <!-- Multi-city extra legs -->
       <div id="mc-legs" style="display:none"></div>
-      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" data-fn="mcAddLeg">+ Weiteren Stopp hinzufügen</button>
+      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" data-fn="mcAddLeg" data-i18n="mc_add_stop">+ Weiteren Stopp hinzufügen</button>
 
       <!-- Dates combined field — tap to open calendar -->
       <div class="kfield kdates-field" id="dates-field">
@@ -622,23 +622,23 @@
 </div>
 
 <div class="sec">
-  <div class="sec-top"><h2 class="sec-title">Beliebte Ziele <em>✨</em></h2><button class="sec-link" data-fn="openPg" data-fn-arg="destinations">Alle →</button></div>
+  <div class="sec-top"><h2 class="sec-title"><span data-i18n="home_pop_dest">Beliebte Ziele</span> <em>✨</em></h2><button class="sec-link" data-fn="openPg" data-fn-arg="destinations" data-i18n="home_see_all">Alle →</button></div>
   <div class="dgrid hscroll">
-    <div class="dcard" data-fn="qsHome" data-fn-arg="LIS" data-fn-arg2="Lissabon"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity">Lissabon</div><div class="dco">Portugal · LIS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="BCN" data-fn-arg2="Barcelona"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Barcelona</div><div class="dco">Spanien · BCN</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="DXB" data-fn-arg2="Dubai"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity">Dubai</div><div class="dco">VAE · DXB</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="JFK" data-fn-arg2="New York"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity">New York</div><div class="dco">USA · JFK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="FCO" data-fn-arg2="Rom"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Rom</div><div class="dco">Italien · FCO</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="IST" data-fn-arg2="Istanbul"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity">Istanbul</div><div class="dco">Türkei · IST</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="CAI" data-fn-arg2="Kairo"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity">Kairo</div><div class="dco">Ägypten · CAI</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="AMS" data-fn-arg2="Amsterdam"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity">Amsterdam</div><div class="dco">Niederlande · AMS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="PRG" data-fn-arg2="Prag"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity">Prag</div><div class="dco">Tschechien · PRG</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="ATH" data-fn-arg2="Athen"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity">Athen</div><div class="dco">Griechenland · ATH</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="CPT" data-fn-arg2="Kapstadt"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity">Kapstadt</div><div class="dco">Südafrika · CPT</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div>
-    <div class="dcard" data-fn="qsHome" data-fn-arg="BKK" data-fn-arg2="Bangkok"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity">Bangkok</div><div class="dco">Thailand · BKK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="LIS" data-fn-arg2="Lissabon"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)" data-i18n="tag_trending">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity" data-i18n="city_LIS">Lissabon</div><div class="dco" data-i18n="dco_LIS">Portugal · LIS</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="BCN" data-fn-arg2="Barcelona"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)" data-i18n="tag_cheap">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity" data-i18n="city_BCN">Barcelona</div><div class="dco" data-i18n="dco_BCN">Spanien · BCN</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="DXB" data-fn-arg2="Dubai"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)" data-i18n="tag_top">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity" data-i18n="city_DXB">Dubai</div><div class="dco" data-i18n="dco_DXB">VAE · DXB</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="JFK" data-fn-arg2="New York"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity" data-i18n="city_JFK">New York</div><div class="dco" data-i18n="dco_JFK">USA · JFK</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="FCO" data-fn-arg2="Rom"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity" data-i18n="city_FCO">Rom</div><div class="dco" data-i18n="dco_FCO">Italien · FCO</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="IST" data-fn-arg2="Istanbul"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity" data-i18n="city_IST">Istanbul</div><div class="dco" data-i18n="dco_IST">Türkei · IST</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="CAI" data-fn-arg2="Kairo"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity" data-i18n="city_CAI">Kairo</div><div class="dco" data-i18n="dco_CAI">Ägypten · CAI</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="AMS" data-fn-arg2="Amsterdam"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity" data-i18n="city_AMS">Amsterdam</div><div class="dco" data-i18n="dco_AMS">Niederlande · AMS</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="PRG" data-fn-arg2="Prag"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity" data-i18n="city_PRG">Prag</div><div class="dco" data-i18n="dco_PRG">Tschechien · PRG</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="ATH" data-fn-arg2="Athen"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity" data-i18n="city_ATH">Athen</div><div class="dco" data-i18n="dco_ATH">Griechenland · ATH</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="CPT" data-fn-arg2="Kapstadt"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity" data-i18n="city_CPT">Kapstadt</div><div class="dco" data-i18n="dco_CPT">Südafrika · CPT</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div>
+    <div class="dcard" data-fn="qsHome" data-fn-arg="BKK" data-fn-arg2="Bangkok"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity" data-i18n="city_BKK">Bangkok</div><div class="dco" data-i18n="dco_BKK">Thailand · BKK</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div>
   </div>
 
-  <div class="sec-top"><h2 class="sec-title">Top Strecken <em>→</em></h2></div>
+  <div class="sec-top"><h2 class="sec-title"><span data-i18n="home_top_routes">Top Strecken</span> <em>→</em></h2></div>
   <div class="rgrid2 hscroll" id="top-strecken-grid"><a class="rchip" href="/flights/hamburg-barcelona-2" style="text-decoration:none"><span class="rname">Hamburg → Barcelona</span></a><a class="rchip" href="/flights/hannover-leipzig" style="text-decoration:none"><span class="rname">Hannover → Leipzig</span></a><a class="rchip" href="/flights/ibiza-frankfurt" style="text-decoration:none"><span class="rname">Ibiza → Frankfurt</span></a><a class="rchip" href="/flights/jfk-lax" style="text-decoration:none"><span class="rname">New York → Los Angeles</span></a><a class="rchip" href="/flights/barcelona-palma-de-mallorca" style="text-decoration:none"><span class="rname">Barcelona → Palma de Mallorca</span></a><a class="rchip" href="/flights/hamburg-berlin" style="text-decoration:none"><span class="rname">Hamburg → Berlin</span></a><a class="rchip" href="/flights/copenhagen-berlin" style="text-decoration:none"><span class="rname">Copenhagen → Berlin</span></a><a class="rchip" href="/flights/berlin-copenhagen" style="text-decoration:none"><span class="rname">Berlin → Copenhagen</span></a><a class="rchip" href="/flights/frankfurt-zuerich" style="text-decoration:none"><span class="rname">Frankfurt → Zürich</span></a><a class="rchip" href="/flights/barcelona-amsterdam" style="text-decoration:none"><span class="rname">Barcelona → Amsterdam</span></a><a class="rchip" href="/flights/tenerife-berlin" style="text-decoration:none"><span class="rname">Tenerife → Berlin</span></a><a class="rchip" href="/flights/heringsdorf-leipzig" style="text-decoration:none"><span class="rname">Heringsdorf → Leipzig</span></a><a class="rchip" href="/flights/palma-de-mallorca-malaga" style="text-decoration:none"><span class="rname">Palma de Mallorca → Málaga</span></a><a class="rchip" href="/flights/istanbul-london" style="text-decoration:none"><span class="rname">Istanbul → London</span></a><a class="rchip" href="/flights/fuerteventura-alicante" style="text-decoration:none"><span class="rname">Fuerteventura → Alicante</span></a><a class="rchip" href="/flights/dub-lgw" style="text-decoration:none"><span class="rname">Dublin → London</span></a><a class="rchip" href="/flights/valencia-fuerteventura" style="text-decoration:none"><span class="rname">Valencia → Fuerteventura</span></a><a class="rchip" href="/flights/london-amsterdam" style="text-decoration:none"><span class="rname">London → Amsterdam</span></a><a class="rchip" href="/flights/madrid-ibiza" style="text-decoration:none"><span class="rname">Madrid → Ibiza</span></a><a class="rchip" href="/flights/amsterdam-zuerich" style="text-decoration:none"><span class="rname">Amsterdam → Zürich</span></a><a class="rchip" href="/flights/frankfurt-berlin" style="text-decoration:none"><span class="rname">Frankfurt → Berlin</span></a><a class="rchip" href="/flights/palma-de-mallorca-duesseldorf" style="text-decoration:none"><span class="rname">Palma de Mallorca → Düsseldorf</span></a><a class="rchip" href="/flights/cologne-palma-de-mallorca" style="text-decoration:none"><span class="rname">Cologne → Palma de Mallorca</span></a><a class="rchip" href="/flights/duesseldorf-dresden" style="text-decoration:none"><span class="rname">Düsseldorf → Dresden</span></a><a class="rchip" href="/flights/london-zuerich" style="text-decoration:none"><span class="rname">London → Zürich</span></a><a class="rchip" href="/flights/alicante-ibiza" style="text-decoration:none"><span class="rname">Alicante → Ibiza</span></a><a class="rchip" href="/flights/frankfurt-ibiza" style="text-decoration:none"><span class="rname">Frankfurt → Ibiza</span></a><a class="rchip" href="/flights/malaga-ibiza" style="text-decoration:none"><span class="rname">Málaga → Ibiza</span></a><a class="rchip" href="/flights/palma-de-mallorca-stuttgart" style="text-decoration:none"><span class="rname">Palma de Mallorca → Stuttgart</span></a><a class="rchip" href="/flights/alicante-fuerteventura" style="text-decoration:none"><span class="rname">Alicante → Fuerteventura</span></a></div>
 </div></div>
 
@@ -649,62 +649,62 @@
 <section class="faq-main" aria-label="Häufig gestellte Fragen">
   <div class="faq-wrap">
     <div class="faq-head">
-      <h2 class="faq-title">Häufig gestellte Fragen</h2>
-      <p class="faq-sub">Alles was du über Airpiv wissen musst</p>
+      <h2 class="faq-title" data-i18n="seofaq_title">Häufig gestellte Fragen</h2>
+      <p class="faq-sub" data-i18n="seofaq_sub">Alles was du über Airpiv wissen musst</p>
     </div>
     <div class="faq-list">
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Wie kann ich meine Buchung stornieren?</span>
+          <span data-i18n="seofaq_q1">Wie kann ich meine Buchung stornieren?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Du kannst deine Buchung über unseren Kundenservice stornieren oder direkt gemäß den Tarifbestimmungen deiner Fluggesellschaft. Flexible Tarife ermöglichen eine kostenlose Stornierung bis zu 24 Stunden vor Abflug. Kontaktiere uns unter support@airpiv.com für schnelle Hilfe.</p>
+          <p data-i18n="seofaq_a1">Du kannst deine Buchung über unseren Kundenservice stornieren oder direkt gemäß den Tarifbestimmungen deiner Fluggesellschaft. Flexible Tarife ermöglichen eine kostenlose Stornierung bis zu 24 Stunden vor Abflug. Kontaktiere uns unter support@airpiv.com für schnelle Hilfe.</p>
         </div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Welche Zahlungsmethoden werden unterstützt?</span>
+          <span data-i18n="seofaq_q2">Welche Zahlungsmethoden werden unterstützt?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Airpiv unterstützt alle gängigen Zahlungsmethoden: Visa, Mastercard, American Express, PayPal sowie Sofortüberweisung. Alle Transaktionen sind SSL-verschlüsselt und DSGVO-konform gesichert.</p>
+          <p data-i18n="seofaq_a2">Airpiv unterstützt alle gängigen Zahlungsmethoden: Visa, Mastercard, American Express, PayPal sowie Sofortüberweisung. Alle Transaktionen sind SSL-verschlüsselt und DSGVO-konform gesichert.</p>
         </div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Gibt es versteckte Gebühren bei Airpiv?</span>
+          <span data-i18n="seofaq_q3">Gibt es versteckte Gebühren bei Airpiv?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Nein — bei Airpiv gibt es keine versteckten Gebühren. Alle angezeigten Preise enthalten bereits sämtliche Steuern und obligatorischen Gebühren. Was du siehst, ist der Endpreis.</p>
+          <p data-i18n="seofaq_a3">Nein — bei Airpiv gibt es keine versteckten Gebühren. Alle angezeigten Preise enthalten bereits sämtliche Steuern und obligatorischen Gebühren. Was du siehst, ist der Endpreis.</p>
         </div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Wie finde ich die günstigsten Flüge?</span>
+          <span data-i18n="seofaq_q4">Wie finde ich die günstigsten Flüge?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Airpiv vergleicht in Echtzeit hunderte Airlines gleichzeitig. Für die günstigsten Preise empfehlen wir: frühzeitig buchen (6–8 Wochen vor Abflug), flexible Reisedaten nutzen und den Preisalarm aktivieren.</p>
+          <p data-i18n="seofaq_a4">Airpiv vergleicht in Echtzeit hunderte Airlines gleichzeitig. Für die günstigsten Preise empfehlen wir: frühzeitig buchen (6–8 Wochen vor Abflug), flexible Reisedaten nutzen und den Preisalarm aktivieren.</p>
         </div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Ist meine Buchung sofort bestätigt?</span>
+          <span data-i18n="seofaq_q5">Ist meine Buchung sofort bestätigt?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Ja! Nach erfolgreicher Buchung erhältst du sofort eine Bestätigungs-E-Mail mit deiner Buchungsreferenz. Die Buchung wird direkt bei der Airline bestätigt — keine Wartezeit.</p>
+          <p data-i18n="seofaq_a5">Ja! Nach erfolgreicher Buchung erhältst du sofort eine Bestätigungs-E-Mail mit deiner Buchungsreferenz. Die Buchung wird direkt bei der Airline bestätigt — keine Wartezeit.</p>
         </div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false">
-          <span>Kann ich für mehrere Personen gleichzeitig buchen?</span>
+          <span data-i18n="seofaq_q6">Kann ich für mehrere Personen gleichzeitig buchen?</span>
           <span class="faq-ico">+</span>
         </button>
         <div class="faq-a" hidden>
-          <p>Ja, du kannst Flüge für bis zu 9 Personen gleichzeitig buchen — Erwachsene, Kinder und Kleinkinder. Wähle einfach die Anzahl der Reisenden im Suchformular aus.</p>
+          <p data-i18n="seofaq_a6">Ja, du kannst Flüge für bis zu 9 Personen gleichzeitig buchen — Erwachsene, Kinder und Kleinkinder. Wähle einfach die Anzahl der Reisenden im Suchformular aus.</p>
         </div>
       </div>
 
@@ -719,13 +719,13 @@
             <div class="scb-avatar scb-avatar-dot">👩</div>
           </div>
           <div class="scb-text">
-            <div class="scb-title">Noch Fragen? Wir sind für dich da! 💬</div>
-            <div class="scb-sub"><span class="scb-online-dot"></span> Support-Team ist gerade online</div>
+            <div class="scb-title" data-i18n="scb_title">Noch Fragen? Wir sind für dich da! 💬</div>
+            <div class="scb-sub"><span class="scb-online-dot"></span> <span data-i18n="scb_sub">Support-Team ist gerade online</span></div>
           </div>
         </div>
         <button class="scb-btn brevo-chat-trigger" data-obc>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Live-Chat starten
+          <span data-i18n="scb_btn">Live-Chat starten</span>
         </button>
       </div>
     </div>
@@ -741,7 +741,7 @@
      الصفحة الرئيسية نفسها، مش خريطة الموقع بس.
 -->
 <section id="popular-routes-links-section">
-  <h2 class="sec-title">Beliebte Flugstrecken</h2>
+  <h2 class="sec-title" data-i18n="home_pop_routes">Beliebte Flugstrecken</h2>
   <div id="popular-routes-links" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><a href="/flights/hamburg-duesseldorf" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Hamburg → Düsseldorf</a><a href="/flights/alicante-malaga" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Alicante → Málaga</a><a href="/flights/palma-de-mallorca-hamburg" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Palma de Mallorca → Hamburg</a><a href="/flights/barcelona-zuerich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Barcelona → Zürich</a><a href="/flights/palma-de-mallorca-ibiza" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Palma de Mallorca → Ibiza</a><a href="/flights/palma-de-mallorca-valencia" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Palma de Mallorca → Valencia</a><a href="/flights/barcelona-madrid" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Barcelona → Madrid</a><a href="/flights/munich-cologne" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Munich → Cologne</a><a href="/flights/palma-de-mallorca-berlin" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Palma de Mallorca → Berlin</a><a href="/flights/alicante-berlin" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Alicante → Berlin</a><a href="/flights/cologne-hamburg" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Cologne → Hamburg</a><a href="/flights/madrid-munich-2" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Madrid → Munich</a><a href="/flights/frankfurt-fuerteventura" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Frankfurt → Fuerteventura</a><a href="/flights/ibiza-duesseldorf" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Ibiza → Düsseldorf</a><a href="/flights/cologne-fuerteventura" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Cologne → Fuerteventura</a><a href="/flights/malaga-munich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Málaga → Munich</a><a href="/flights/duesseldorf-weeze" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Düsseldorf → Weeze</a><a href="/flights/barcelona-paris" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Barcelona → Paris</a><a href="/flights/dortmund-stuttgart" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Dortmund → Stuttgart</a><a href="/flights/paris-zuerich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Paris → Zürich</a><a href="/flights/stockholm-zuerich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Stockholm → Zürich</a><a href="/flights/alicante-barcelona" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Alicante → Barcelona</a><a href="/flights/madrid-zuerich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Madrid → Zürich</a><a href="/flights/ibiza-valencia" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Ibiza → Valencia</a><a href="/flights/dublin-zuerich" style="background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--tx);text-decoration:none">Dublin → Zürich</a></div>
 </section>
 
@@ -781,7 +781,7 @@
 </div>
 
 <!-- SUCCESS MODAL -->
-<div class="ov" id="sov"><div class="sbox2"><span class="sico">🎉</span><h2>Buchung erfolgreich!</h2><p>Deine Buchungsreferenz:</p><div class="sref" id="sref">—</div><div id="sov-details" style="margin:10px 0"></div><p style="font-size:11px;color:var(--tx3)">Bestätigung an deine E-Mail gesendet.</p><br><button class="sclose" data-fn="closeBookingSuccessOverlay">Fertig ✓</button></div></div>
+<div class="ov" id="sov"><div class="sbox2"><span class="sico">🎉</span><h2 data-i18n="booking_success_title">Buchung erfolgreich!</h2><p data-i18n="booking_ref_label">Deine Buchungsreferenz:</p><div class="sref" id="sref">—</div><div id="sov-details" style="margin:10px 0"></div><p style="font-size:11px;color:var(--tx3)" data-i18n="booking_conf_sent">Bestätigung an deine E-Mail gesendet.</p><br><button class="sclose" data-fn="closeBookingSuccessOverlay" data-i18n="booking_done_btn">Fertig ✓</button></div></div>
 
 
 
@@ -789,10 +789,10 @@
 
 <!-- COOKIE -->
 <div class="ck" id="ck">
-  <div class="ck-t">🍪 Wir verwenden <strong>technisch notwendige Cookies</strong> für den Betrieb der Website. Keine Tracking- oder Marketing-Cookies. <a href="#" data-fn="openPg" data-fn-arg="privacy" data-pd>Datenschutz</a></div>
+  <div class="ck-t">🍪 <span data-i18n="cookie_text">Wir verwenden technisch notwendige Cookies für den Betrieb der Website. Keine Tracking- oder Marketing-Cookies.</span> <a href="#" data-fn="openPg" data-fn-arg="privacy" data-pd data-i18n="ft_privacy">Datenschutz</a></div>
   <div class="ck-bs">
-    <button class="ck-no">Nur notwendige</button>
-    <button class="ck-ok">Alle akzeptieren ✓</button>
+    <button class="ck-no" data-i18n="cookie_only_necessary">Nur notwendige</button>
+    <button class="ck-ok" data-i18n="cookie_accept_all">Alle akzeptieren ✓</button>
   </div>
 </div>
 <!-- BOTTOM NAV -->
@@ -808,16 +808,16 @@
   ✏️
 </button>
 <!-- ABOUT -->
-<div class="pg" id="pg-about"><div class="pg-hd"><button class="pg-bk">←</button><h2>Über Airpiv</h2></div><div class="pg-b"><div class="ps"><h3>✈️ Wer wir sind</h3><p>Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse.</p></div><div class="ps"><h3>📊 Unsere Zahlen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">600+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">Airlines</div></div><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">150+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">Länder</div></div></div></div><div class="ps"><h3>💬 Kundenbewertungen</h3><div style="background:var(--bg2);border-radius:12px;padding:20px;text-align:center;color:var(--tx3)">
+<div class="pg" id="pg-about"><div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="pg_about_title">Über Airpiv</h2></div><div class="pg-b"><div class="ps"><h3 data-i18n="about_who_h">✈️ Wer wir sind</h3><p data-i18n="about_who_p">Airpiv ist eine moderne Flugsuchmaschine, die hunderte Airlines gleichzeitig durchsucht — keine versteckten Gebühren, keine Kompromisse.</p></div><div class="ps"><h3 data-i18n="about_numbers_h">📊 Unsere Zahlen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">600+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px" data-i18n="about_airlines">Airlines</div></div><div style="background:var(--bg2);border-radius:10px;padding:13px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)">150+</div><div style="font-size:11px;color:var(--tx3);margin-top:2px" data-i18n="about_countries">Länder</div></div></div></div><div class="ps"><h3 data-i18n="about_reviews_h">💬 Kundenbewertungen</h3><div style="background:var(--bg2);border-radius:12px;padding:20px;text-align:center;color:var(--tx3)">
 <div style="font-size:2rem;margin-bottom:8px">⭐</div>
-<div style="font-size:13px;font-weight:600;color:var(--tx)">Sei der Erste, der uns bewertet!</div>
-<div style="font-size:12px;margin-top:6px">Nach deiner Buchung kannst du deine Erfahrung teilen.</div>
+<div style="font-size:13px;font-weight:600;color:var(--tx)" data-i18n="about_review_first">Sei der Erste, der uns bewertet!</div>
+<div style="font-size:12px;margin-top:6px" data-i18n="about_review_sub">Nach deiner Buchung kannst du deine Erfahrung teilen.</div>
 </div></div></div></div>
 <!-- FAQ -->
-<div class="pg" id="pg-faq"><div class="pg-hd"><button class="pg-bk">←</button><h2>Häufige Fragen</h2></div><div class="pg-b"><div class="fqi"><div class="fqq">Wie finde ich den günstigsten Flug? <span class="fqi-ico">+</span></div><div class="fqa">Nutze flexible Datumsoptionen und den Preisalarm. Flüge unter der Woche sind oft günstiger.</div></div><div class="fqi"><div class="fqq">Sind Preise inklusive Steuern? <span class="fqi-ico">+</span></div><div class="fqa">Ja! Alle Preise inkl. aller Steuern und Gebühren. Keine versteckten Kosten.</div></div><div class="fqi"><div class="fqq">Wie funktioniert die Buchung? <span class="fqi-ico">+</span></div><div class="fqa">Flug wählen → Daten eingeben → sicher bezahlen. Sofort Bestätigung per E-Mail.</div></div><div class="fqi"><div class="fqq">Kann ich stornieren? <span class="fqi-ico">+</span></div><div class="fqa">Hängt von der Airline ab. Flexible Tickets meist kostenlos änderbar.</div></div><div class="fqi"><div class="fqq">Wie viel Gepäck darf ich mitnehmen? <span class="fqi-ico">+</span></div><div class="fqa">Handgepäck (~10kg) meist inklusive, Aufgabegepäck oft extra je nach Tarif.</div></div><div class="fqi"><div class="fqq">Ist meine Zahlung sicher? <span class="fqi-ico">+</span></div><div class="fqa">Ja! SSL-verschlüsselt mit modernsten Sicherheitsstandards.</div></div><div class="fqi"><div class="fqq">Was ist der Preisalarm? <span class="fqi-ico">+</span></div><div class="fqa">Benachrichtigt dich per E-Mail wenn der Preis für deine Strecke sinkt.</div></div><div class="fqi"><div class="fqq">Wie erreiche ich den Support? <span class="fqi-ico">+</span></div><div class="fqa">support@airpiv.com oder Live-Chat täglich 8–22 Uhr.</div></div></div></div>
+<div class="pg" id="pg-faq"><div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="pg_faq_title">Häufige Fragen</h2></div><div class="pg-b"><div class="fqi"><div class="fqq"><span data-i18n="faq_q1">Wie finde ich den günstigsten Flug?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a1">Nutze flexible Datumsoptionen und den Preisalarm. Flüge unter der Woche sind oft günstiger.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q2">Sind Preise inklusive Steuern?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a2">Ja! Alle Preise inkl. aller Steuern und Gebühren. Keine versteckten Kosten.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q3">Wie funktioniert die Buchung?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a3">Flug wählen → Daten eingeben → sicher bezahlen. Sofort Bestätigung per E-Mail.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q4">Kann ich stornieren?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a4">Hängt von der Airline ab. Flexible Tickets meist kostenlos änderbar.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q5">Wie viel Gepäck darf ich mitnehmen?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a5">Handgepäck (~10kg) meist inklusive, Aufgabegepäck oft extra je nach Tarif.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q6">Ist meine Zahlung sicher?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a6">Ja! SSL-verschlüsselt mit modernsten Sicherheitsstandards.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q7">Was ist der Preisalarm?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a7">Benachrichtigt dich per E-Mail wenn der Preis für deine Strecke sinkt.</div></div><div class="fqi"><div class="fqq"><span data-i18n="faq_q8">Wie erreiche ich den Support?</span> <span class="fqi-ico">+</span></div><div class="fqa" data-i18n="faq_a8">support@airpiv.com oder Live-Chat täglich 8–22 Uhr.</div></div></div></div>
 <!-- CONTACT -->
 <div class="pg" id="pg-contact">
-  <div class="pg-hd"><button class="pg-bk">←</button><h2>Kontakt</h2></div>
+  <div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="pg_contact_title">Kontakt</h2></div>
   <div class="pg-b">
 
     <!-- Live Chat Banner -->
@@ -843,17 +843,17 @@
           </div>
         </div>
         <div>
-          <div style="font-size:15px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;letter-spacing:-.01em">Sofort-Support per Live-Chat</div>
+          <div style="font-size:15px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;letter-spacing:-.01em" data-i18n="contact_chat_title">Sofort-Support per Live-Chat</div>
           <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;display:flex;align-items:center;gap:5px">
             <span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block;box-shadow:0 0 6px #4ade80"></span>
-            Team ist gerade online · Antwort in &lt;2 Min.
+            <span data-i18n="contact_chat_status">Team ist gerade online · Antwort in &lt;2 Min.</span>
           </div>
         </div>
       </div>
 
       <button class="brevo-chat-trigger" data-obc style="width:100%;background:linear-gradient(135deg,#0FB5A0,#0A9384);color:#fff;border:none;border-radius:13px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 20px rgba(15,181,160,.35);position:relative;z-index:1;letter-spacing:.01em;font-family:'Syne',sans-serif">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Live-Chat jetzt starten
+        <span data-i18n="contact_chat_btn">Live-Chat jetzt starten</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
     </div>
@@ -865,7 +865,7 @@
         <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(15,181,160,.2),rgba(15,181,160,.08));border:1px solid rgba(15,181,160,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0FB5A0" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <div style="font-size:12px;font-weight:700;color:#fff">E-Mail</div>
+        <div style="font-size:12px;font-weight:700;color:#fff" data-i18n="lbl_email">E-Mail</div>
         <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">support@airpiv.com</div>
       </a>
       <div style="background:linear-gradient(135deg,#0A1822,#16283a);border-radius:14px;padding:16px 12px;text-align:center;border:1px solid rgba(15,181,160,.18);position:relative;overflow:hidden">
@@ -873,28 +873,28 @@
         <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(15,181,160,.2),rgba(15,181,160,.08));border:1px solid rgba(15,181,160,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0FB5A0" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
-        <div style="font-size:12px;font-weight:700;color:#fff">Erreichbar</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">Täglich 8–22 Uhr</div>
+        <div style="font-size:12px;font-weight:700;color:#fff" data-i18n="contact_card_reach">Erreichbar</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px" data-i18n="contact_card_hours">Täglich 8–22 Uhr</div>
       </div>
     </div>
 
     <!-- Contact Form -->
-    <div class="ps"><h3>📬 Nachricht schreiben</h3>
+    <div class="ps"><h3 data-i18n="contact_form_h">📬 Nachricht schreiben</h3>
       <div class="ctf">
         <div class="fgrid">
-          <div class="fg"><label>Name</label><input class="fi" id="ct-name" placeholder="Max Mustermann"></div>
-          <div class="fg"><label>E-Mail</label><input class="fi" id="ct-email" type="email" placeholder="max@mail.de"></div>
+          <div class="fg"><label data-i18n="contact_lbl_name">Name</label><input class="fi" id="ct-name" data-i18n-placeholder="contact_ph_name" placeholder="Max Mustermann"></div>
+          <div class="fg"><label data-i18n="lbl_email">E-Mail</label><input class="fi" id="ct-email" type="email" data-i18n-placeholder="contact_ph_email" placeholder="max@mail.de"></div>
         </div>
-        <div class="fg" style="margin-bottom:8px"><label>Betreff</label><input class="fi" id="ct-sub2" placeholder="Womit können wir helfen?"></div>
-        <div class="fg" style="margin-bottom:8px"><label>Nachricht</label><textarea class="fi" id="ct-msg" style="min-height:100px;resize:vertical" placeholder="Deine Nachricht..."></textarea></div>
-        <button id="ct-send-btn" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">Senden ✉️</button>
+        <div class="fg" style="margin-bottom:8px"><label data-i18n="contact_lbl_subject">Betreff</label><input class="fi" id="ct-sub2" data-i18n-placeholder="contact_ph_subject" placeholder="Womit können wir helfen?"></div>
+        <div class="fg" style="margin-bottom:8px"><label data-i18n="contact_lbl_message">Nachricht</label><textarea class="fi" id="ct-msg" style="min-height:100px;resize:vertical" data-i18n-placeholder="contact_ph_message" placeholder="Deine Nachricht..."></textarea></div>
+        <button id="ct-send-btn" style="width:100%;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer" data-i18n="contact_send_btn">Senden ✉️</button>
       </div>
     </div>
 
   </div>
 </div>
 <!-- PRIVACY -->
-<div class="pg" id="pg-destinations"><div class="pg-hd"><button class="pg-bk">←</button><h2>Alle Ziele</h2></div><div class="pg-b"><div class="dgrid" style="grid-template-columns:repeat(2,1fr);gap:12px"><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="LIS" data-fn-arg2="Lissabon"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity">Lissabon</div><div class="dco">Portugal · LIS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="BCN" data-fn-arg2="Barcelona"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Barcelona</div><div class="dco">Spanien · BCN</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="DXB" data-fn-arg2="Dubai"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity">Dubai</div><div class="dco">VAE · DXB</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="JFK" data-fn-arg2="New York"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity">New York</div><div class="dco">USA · JFK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="FCO" data-fn-arg2="Rom"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity">Rom</div><div class="dco">Italien · FCO</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="IST" data-fn-arg2="Istanbul"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity">Istanbul</div><div class="dco">Türkei · IST</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="CAI" data-fn-arg2="Kairo"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity">Kairo</div><div class="dco">Ägypten · CAI</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="AMS" data-fn-arg2="Amsterdam"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity">Amsterdam</div><div class="dco">Niederlande · AMS</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="PRG" data-fn-arg2="Prag"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity">Prag</div><div class="dco">Tschechien · PRG</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="ATH" data-fn-arg2="Athen"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity">Athen</div><div class="dco">Griechenland · ATH</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="CPT" data-fn-arg2="Kapstadt"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity">Kapstadt</div><div class="dco">Südafrika · CPT</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="BKK" data-fn-arg2="Bangkok"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity">Bangkok</div><div class="dco">Thailand · BKK</div><div class="dbot"><span class="dfr">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div></div></div></div>
+<div class="pg" id="pg-destinations"><div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="home_all_dest">Alle Ziele</h2></div><div class="pg-b"><div class="dgrid" style="grid-template-columns:repeat(2,1fr);gap:12px"><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="LIS" data-fn-arg2="Lissabon"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-h" style="background:rgba(220,60,30,.85)" data-i18n="tag_trending">🔥 Trendig</div><div class="dthumb-emoji">🏖️</div></div><div class="dbody"><div class="dcity" data-i18n="city_LIS">Lissabon</div><div class="dco" data-i18n="dco_LIS">Portugal · LIS</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="LIS">€89</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="BCN" data-fn-arg2="Barcelona"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-c" style="background:rgba(0,140,100,.85)" data-i18n="tag_cheap">✓ Günstig</div><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity" data-i18n="city_BCN">Barcelona</div><div class="dco" data-i18n="dco_BCN">Spanien · BCN</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="BCN">€67</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="DXB" data-fn-arg2="Dubai"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dtag dt-n" style="background:rgba(180,130,0,.85)" data-i18n="tag_top">⭐ Top</div><div class="dthumb-emoji">🌆</div></div><div class="dbody"><div class="dcity" data-i18n="city_DXB">Dubai</div><div class="dco" data-i18n="dco_DXB">VAE · DXB</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="DXB">€299</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="JFK" data-fn-arg2="New York"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🗽</div></div><div class="dbody"><div class="dcity" data-i18n="city_JFK">New York</div><div class="dco" data-i18n="dco_JFK">USA · JFK</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="JFK">€389</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="FCO" data-fn-arg2="Rom"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏛️</div></div><div class="dbody"><div class="dcity" data-i18n="city_FCO">Rom</div><div class="dco" data-i18n="dco_FCO">Italien · FCO</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="FCO">€72</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="IST" data-fn-arg2="Istanbul"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🕌</div></div><div class="dbody"><div class="dcity" data-i18n="city_IST">Istanbul</div><div class="dco" data-i18n="dco_IST">Türkei · IST</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="IST">€58</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="CAI" data-fn-arg2="Kairo"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🐫</div></div><div class="dbody"><div class="dcity" data-i18n="city_CAI">Kairo</div><div class="dco" data-i18n="dco_CAI">Ägypten · CAI</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="CAI">€199</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="AMS" data-fn-arg2="Amsterdam"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🚲</div></div><div class="dbody"><div class="dcity" data-i18n="city_AMS">Amsterdam</div><div class="dco" data-i18n="dco_AMS">Niederlande · AMS</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="AMS">€48</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="PRG" data-fn-arg2="Prag"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏰</div></div><div class="dbody"><div class="dcity" data-i18n="city_PRG">Prag</div><div class="dco" data-i18n="dco_PRG">Tschechien · PRG</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="PRG">€54</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="ATH" data-fn-arg2="Athen"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏺</div></div><div class="dbody"><div class="dcity" data-i18n="city_ATH">Athen</div><div class="dco" data-i18n="dco_ATH">Griechenland · ATH</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="ATH">€79</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="CPT" data-fn-arg2="Kapstadt"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🏔️</div></div><div class="dbody"><div class="dcity" data-i18n="city_CPT">Kapstadt</div><div class="dco" data-i18n="dco_CPT">Südafrika · CPT</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="CPT">€520</span></div></div></div><div class="dcard" data-close-pg="destinations" data-fn="qsHome" data-fn-arg="BKK" data-fn-arg2="Bangkok"><div class="dthumb" style="background:linear-gradient(135deg,#0A1822,#16283a)"><div class="dthumb-emoji">🛕</div></div><div class="dbody"><div class="dcity" data-i18n="city_BKK">Bangkok</div><div class="dco" data-i18n="dco_BKK">Thailand · BKK</div><div class="dbot"><span class="dfr" data-i18n="price_from">ab</span><span class="damt dyn-price" data-code="BKK">€459</span></div></div></div></div></div></div>
 <div class="pg" id="pg-privacy"><div class="pg-hd"><button class="pg-bk">←</button><h2>Datenschutz</h2></div><div class="pg-b"><div class="ps"><h3>1. Datenschutzerklärung</h3><p>Bei Airpiv legen wir größten Wert auf den Schutz deiner persönlichen Daten. Diese Erklärung informiert dich über Art, Umfang und Zweck der Verarbeitung personenbezogener Daten auf Airpiv.</p></div>
 <div class="ps"><h3>2. Welche Daten wir erheben</h3><p>Wir erheben ausschließlich die Daten, die für die Durchführung deiner Buchung notwendig sind:</p>
 <ul><li>Vollständiger Name</li><li>Geburtsdatum</li><li>Reisepassnummer (falls von der Airline gefordert)</li><li>E-Mail-Adresse</li><li>Telefonnummer</li></ul></div>
@@ -917,13 +917,13 @@
 
 <!-- MY BOOKINGS -->
 <div class="pg" id="pg-bookings">
-  <div class="pg-hd"><button class="pg-bk">←</button><h2>Meine Buchungen</h2></div>
+  <div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="pg_bookings_title">Meine Buchungen</h2></div>
   <div class="pg-b">
     <div id="bookings-list">
       <div style="text-align:center;padding:48px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🎫</div>
-        <div style="font-size:15px;font-weight:700;color:var(--tx)">Noch keine Buchungen</div>
-        <div style="font-size:13px;color:var(--tx3);margin-top:6px">Deine gebuchten Flüge erscheinen hier</div>
+        <div style="font-size:15px;font-weight:700;color:var(--tx)" data-i18n="bookings_empty_title">Noch keine Buchungen</div>
+        <div style="font-size:13px;color:var(--tx3);margin-top:6px" data-i18n="bookings_empty_sub">Deine gebuchten Flüge erscheinen hier</div>
       </div>
     </div>
   </div>
@@ -931,7 +931,7 @@
 
 <!-- REFERRAL PROGRAM -->
 <div class="pg" id="pg-referral">
-  <div class="pg-hd"><button class="pg-bk">←</button><h2>🎁 Freunde einladen</h2></div>
+  <div class="pg-hd"><button class="pg-bk">←</button><h2 data-i18n="pg_referrals_title">🎁 Freunde einladen</h2></div>
   <div class="pg-b">
     <div id="referral-body" style="max-width:520px;margin:0 auto;padding:4px"></div>
   </div>
@@ -1165,8 +1165,8 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
       <div class="rp-edit-row" style="grid-template-columns:1fr;margin-bottom:8px">
         <div class="ksel-wrap">
           <select class="ksel" id="rpe-trip-sel" data-chg-fn="rpSetTripSel">
-            <option value="rr">&#8644; Hin- und Rückreise</option>
-            <option value="ow">&#8594; Einfache Fahrt</option>
+            <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
+            <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
           </select>
           <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
