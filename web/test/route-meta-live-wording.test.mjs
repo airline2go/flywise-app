@@ -20,11 +20,15 @@ const LANGS = ['de', 'en', 'es', 'fr', 'it', 'nl', 'tr', 'ar'];
 // "live"/"real-time" claims per language that must not qualify the price.
 const LIVE_CLAIMS = [/\blive\b/i, /in tiempo real/i, /en direct\b/i, /\bcanlı\b/i, /Live-/i];
 
-test('no routeMeta string calls prices live/real-time', () => {
+test('no route-meta string (frame or facet nouns) calls prices live/real-time', () => {
+  const KEYS = ['routeMetaFrame', 'routeMetaNoFacets', 'routeMetaFacetPrices', 'routeMetaFacetDuration', 'routeMetaFacetDistance', 'routeMetaFacetAirlines', 'routeMetaFacetDirect'];
   for (const l of LANGS) {
-    const meta = JSON.parse(readFileSync(join(trDir, `${l}.json`), 'utf8')).routeMeta || '';
-    for (const re of LIVE_CLAIMS) {
-      assert.ok(!re.test(meta), `${l} routeMeta contains a live-price claim: ${meta}`);
+    const t = JSON.parse(readFileSync(join(trDir, `${l}.json`), 'utf8'));
+    for (const key of KEYS) {
+      const s = t[key] || '';
+      for (const re of LIVE_CLAIMS) {
+        assert.ok(!re.test(s), `${l} ${key} contains a live-price claim: ${s}`);
+      }
     }
   }
 });

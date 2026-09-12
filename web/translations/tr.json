@@ -364,7 +364,6 @@
   "routeTitleDistance": "{origin}-{destination} Uçuşları – Mesafe | Airpiv",
   "routeTitleDirect": "{origin}-{destination} Direkt Uçuşlar | Airpiv",
   "routeTitleBase": "{origin}-{destination} Uçuşları | Airpiv",
-  "routeMeta": "{origin}-{destination} uçak bileti fiyatlarını, uçuş süresini, mesafeyi, havayollarını ve direkt uçuşları Airpiv’de karşılaştırın.",
   "routeMetaPrice": " Uçuşlar {price}’den itibaren.",
   "reviewsLabel": "Yorumlar",
   "reviewsPageTitle": "Airpiv Yorumları",
@@ -380,5 +379,12 @@
   "reviewsTag_fast_results": "Hızlı sonuçlar",
   "reviewsTag_good_information": "İyi bilgi",
   "reviewsTag_easy_booking": "Kolay rezervasyon",
-  "reviewsRouteHeading": "Yolcu yorumları"
+  "reviewsRouteHeading": "Yolcu yorumları",
+  "routeMetaFrame": "{origin}-{destination} {facets} Airpiv’de karşılaştırın.",
+  "routeMetaNoFacets": "{origin}-{destination} uçuşlarını Airpiv’de bul.",
+  "routeMetaFacetPrices": "uçak bileti fiyatlarını",
+  "routeMetaFacetDuration": "uçuş süresini",
+  "routeMetaFacetDistance": "mesafeyi",
+  "routeMetaFacetAirlines": "havayollarını",
+  "routeMetaFacetDirect": "direkt uçuşları"
 }

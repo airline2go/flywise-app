@@ -329,7 +329,6 @@
   "routeTitleDistance": "Vluchten van {origin} naar {destination} – Afstand | Airpiv",
   "routeTitleDirect": "Directe vluchten van {origin} naar {destination} | Airpiv",
   "routeTitleBase": "Vluchten van {origin} naar {destination} | Airpiv",
-  "routeMeta": "Vergelijk vliegprijzen, vliegtijd, afstand, luchtvaartmaatschappijen en directe vluchten van {origin} naar {destination}.",
   "routeMetaPrice": " Vluchten vanaf {price}.",
   "sitemapLabel": "Sitemap",
   "sitemapPageTitle": "Sitemap – alle bestemmingen, luchthavens en luchtvaartmaatschappijen",
@@ -380,5 +379,12 @@
   "reviewsTag_fast_results": "Snelle resultaten",
   "reviewsTag_good_information": "Goede informatie",
   "reviewsTag_easy_booking": "Eenvoudig boeken",
-  "reviewsRouteHeading": "Beoordelingen van reizigers"
+  "reviewsRouteHeading": "Beoordelingen van reizigers",
+  "routeMetaFrame": "Vergelijk {facets} van {origin} naar {destination} op Airpiv.",
+  "routeMetaNoFacets": "Vind vluchten van {origin} naar {destination} op Airpiv.",
+  "routeMetaFacetPrices": "vliegprijzen",
+  "routeMetaFacetDuration": "vliegtijd",
+  "routeMetaFacetDistance": "afstand",
+  "routeMetaFacetAirlines": "luchtvaartmaatschappijen",
+  "routeMetaFacetDirect": "directe vluchten"
 }

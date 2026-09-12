@@ -65,16 +65,35 @@ test('a data-poor route falls back to the plain base title', () => {
 });
 
 // ─── Meta: localized sentence + a REAL live price when one exists ─────────
-test('meta appends the real live "from" price when a cached price exists (de)', () => {
-  const m = buildRouteMetaDescription(R({ cached_price: 83, cached_currency: 'EUR', distance_km: 1297, direct_flight_available: true }), 'de');
+test('[P2.2] meta names all real facets and appends the live "from" price (de)', () => {
+  const m = buildRouteMetaDescription(R({ cached_price: 83, cached_currency: 'EUR', distance_km: 1297, avg_duration_min: 90, airline_count: 3, direct_flight_available: true }), 'de');
   assert.equal(m, 'Vergleiche Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden. Flüge ab 83 €.');
+});
+
+test('[P2.2] meta names ONLY the facets the route actually has — never a missing flight time/airlines (de)', () => {
+  // price + distance + direct, but NO real duration and NO airline count:
+  // "Flugzeit" and "Airlines" must not appear.
+  const m = buildRouteMetaDescription(R({ cached_price: 83, cached_currency: 'EUR', distance_km: 1297, direct_flight_available: true }), 'de');
+  assert.equal(m, 'Vergleiche Flugpreise, Entfernung und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden. Flüge ab 83 €.');
+  assert.doesNotMatch(m, /Flugzeit|Airlines/);
 });
 
 test('meta omits the price clause entirely when there is no cached price', () => {
   const m = buildRouteMetaDescription(R({ distance_km: 1297, direct_flight_available: true }), 'de');
-  assert.equal(m, 'Vergleiche Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden.');
+  assert.equal(m, 'Vergleiche Entfernung und Direktflüge von Amsterdam nach Rom. Jetzt Flüge auf Airpiv finden.');
   assert.doesNotMatch(m, /→/);
   assert.doesNotMatch(m, /\d+\s?€|ab \d/);
+});
+
+test('[P2.2] a route with no facets at all falls back to the plain "find flights" sentence (no facet list)', () => {
+  assert.equal(buildRouteMetaDescription(R({ destination_city: 'Rome' }), 'de'), 'Finde Flüge von Amsterdam nach Rome. Jetzt auf Airpiv finden.');
+  assert.equal(buildRouteMetaDescription(R({ destination_city: 'Rome' }), 'en'), 'Find flights from Amsterdam to Rome on Airpiv.');
+});
+
+test('[P2.2] a distance-only route names only distance (no flight-time/airlines/direct claim)', () => {
+  const m = buildRouteMetaDescription(R({ destination_city: 'Rome', distance_km: 1297 }), 'en');
+  assert.equal(m, 'Compare distance from Amsterdam to Rome on Airpiv.');
+  assert.doesNotMatch(m, /flight time|airlines|direct/i);
 });
 
 test('a zero/invalid cached price never produces a price clause (never fabricated)', () => {
@@ -82,14 +101,21 @@ test('a zero/invalid cached price never produces a price clause (never fabricate
   assert.doesNotMatch(buildRouteMetaDescription(R({ cached_price: null }), 'de'), /ab /);
 });
 
-test('meta localizes, with and without price (English)', () => {
+test('[P2.2] meta localizes and names only real facets, with and without price (English)', () => {
+  // no facets → plain fallback (no facet list)
   assert.equal(
     buildRouteMetaDescription(R({ destination_city: 'Rome' }), 'en'),
-    'Compare flight prices, flight time, distance, airlines and direct flights from Amsterdam to Rome on Airpiv.',
+    'Find flights from Amsterdam to Rome on Airpiv.',
   );
+  // a cached price → the prices facet only (no fabricated flight time/airlines)
   assert.equal(
     buildRouteMetaDescription(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR' }), 'en'),
-    'Compare flight prices, flight time, distance, airlines and direct flights from Amsterdam to Rome on Airpiv. Flights from 83 €.',
+    'Compare flight prices from Amsterdam to Rome on Airpiv. Flights from 83 €.',
+  );
+  // all facets present → the full localized list
+  assert.equal(
+    buildRouteMetaDescription(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR', avg_duration_min: 90, distance_km: 1297, airline_count: 3, direct_flight_available: true }), 'en'),
+    'Compare flight prices, flight time, distance, airlines, and direct flights from Amsterdam to Rome on Airpiv. Flights from 83 €.',
   );
 });
 

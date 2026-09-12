@@ -329,7 +329,6 @@
   "routeTitleDistance": "Voli da {origin} a {destination} – Distanza | Airpiv",
   "routeTitleDirect": "Voli diretti da {origin} a {destination} | Airpiv",
   "routeTitleBase": "Voli da {origin} a {destination} | Airpiv",
-  "routeMeta": "Confronta prezzi, durata del volo, distanza e compagnie aeree da {origin} a {destination}.",
   "routeMetaPrice": " Voli da {price}.",
   "sitemapLabel": "Mappa del sito",
   "sitemapPageTitle": "Mappa del sito – tutte le destinazioni, aeroporti e compagnie",
@@ -380,5 +379,12 @@
   "reviewsTag_fast_results": "Risultati rapidi",
   "reviewsTag_good_information": "Buone informazioni",
   "reviewsTag_easy_booking": "Prenotazione facile",
-  "reviewsRouteHeading": "Recensioni dei viaggiatori"
+  "reviewsRouteHeading": "Recensioni dei viaggiatori",
+  "routeMetaFrame": "Confronta {facets} da {origin} a {destination} su Airpiv.",
+  "routeMetaNoFacets": "Trova voli da {origin} a {destination} su Airpiv.",
+  "routeMetaFacetPrices": "prezzi",
+  "routeMetaFacetDuration": "durata del volo",
+  "routeMetaFacetDistance": "distanza",
+  "routeMetaFacetAirlines": "compagnie aeree",
+  "routeMetaFacetDirect": "voli diretti"
 }
