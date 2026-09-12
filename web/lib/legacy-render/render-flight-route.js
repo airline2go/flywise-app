@@ -906,17 +906,17 @@ ${relatedArticlesHtml}
   };
   if (route.distance_km != null) flightSchema.flightDistance = `${route.distance_km} km`;
   if (route.avg_duration_min != null) flightSchema.estimatedFlightDuration = isoDuration(route.avg_duration_min);
-  // [PRICE-OFFER-SCHEMA] Emit an Offer with the lowest observed fare so Google
-  // can surface a price for the route. Gated on the SAME quality bar as the
-  // visible "average prices" panel (a real min from >= 3 samples) — never a
-  // fabricated or single-sample outlier quote. priceCurrency mirrors the
-  // persisted aggregate; the price is the lowest observed fare (price_min).
-  // [CANONICAL-PRICE-SOURCE] The Offer is emitted only for the sample-backed
-  // aggregate price (same quality bar as the visible price panel) and its
-  // price/currency come straight from the ONE canonical resolver — so the
-  // structured-data price can never disagree with the hero, title or meta.
+  // [PRICE-OFFER-SCHEMA] [P0.3 DATA-TRUTH] An Offer with availability:InStock
+  // tells Google this fare is bookable RIGHT NOW. A price_min aggregate is a
+  // historically OBSERVED minimum, not a live bookable quote — even when the
+  // aggregate was recomputed recently — so emitting InStock for it is a false
+  // availability signal (rule #8: no "historical price + InStock"). We therefore
+  // emit an Offer ONLY for a genuinely live, fresh price (source 'live' AND
+  // within the price TTL). The server snapshot has no live source today, so no
+  // Offer is emitted from aggregate/cached data; the hook stays correct for when
+  // a live price is wired in. Regression: web/test/route-offer-schema.test.mjs.
   const offerPrice = snapshot.price;
-  if (offerPrice && offerPrice.source === 'aggregate-min') {
+  if (offerPrice && offerPrice.source === 'live' && snapshot.priceIsFresh === true) {
     flightSchema.offers = {
       '@type': 'Offer',
       price: offerPrice.amount.toFixed(2),

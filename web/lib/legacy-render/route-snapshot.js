@@ -129,6 +129,16 @@ function validateSnapshot(route, snapshot) {
   if (snapshot.price && !(snapshot.price.amount > 0 && snapshot.price.currency)) {
     errors.push(`invalid-price: ${JSON.stringify(snapshot.price)}`);
   }
+  // [P0.4] The currency must be a plausible ISO-4217 3-letter code, so a
+  // malformed value can never reach a visible price or an Offer's priceCurrency.
+  if (snapshot.price && snapshot.price.currency && !/^[A-Z]{3}$/.test(snapshot.price.currency)) {
+    errors.push(`invalid-currency: ${JSON.stringify(snapshot.price.currency)}`);
+  }
+  // [P0.4] A price flagged fresh ("current") must actually carry a timestamp —
+  // guards against a future refactor labelling a timestamp-less value as live.
+  if (snapshot.priceIsFresh && !(snapshot.price && snapshot.price.checkedAt)) {
+    errors.push('stale-as-live: priceIsFresh without a checkedAt timestamp');
+  }
   // Origin must differ from destination.
   if (snapshot.origin && snapshot.destination && snapshot.origin === snapshot.destination) {
     errors.push(`origin-equals-destination: ${snapshot.origin}`);
@@ -146,7 +156,7 @@ function validateSnapshot(route, snapshot) {
 // (Phase 0). An `airline-count-mismatch` between a STALE stored scalar and the
 // authoritative list is a data-ops warning, not a visible contradiction, so it
 // is intentionally NOT critical.
-const CRITICAL_PREFIXES = ['origin-equals-destination', 'invalid-price', 'stop-total-mismatch'];
+const CRITICAL_PREFIXES = ['origin-equals-destination', 'invalid-price', 'invalid-currency', 'stop-total-mismatch'];
 function criticalSnapshotErrors(route, snapshot) {
   return validateSnapshot(route, snapshot).filter((e) => CRITICAL_PREFIXES.some((p) => e.startsWith(p)));
 }
