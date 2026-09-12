@@ -24,7 +24,6 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/shared-layout.css">
-<script type="application/ld+json" id="page-schema">{}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Airpiv","url":"https://airpiv.com","logo":"https://airpiv.com/apple-touch-icon.png"}</script>
 <link rel="stylesheet" href="/flights-promo.css">
 <style>
@@ -154,18 +153,25 @@ fetch(PROXY + '/route-pages')
         }
       });
 
-      document.getElementById('page-schema').textContent = JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "itemListElement": priced.map(function (p, idx) {
-          return {
-            "@type": "ListItem",
-            "position": idx + 1,
-            "name": p.route.origin_city + ' → ' + p.route.destination_city,
-            "url": "https://airpiv.com/flights/" + p.route.slug
-          };
-        })
-      });
+      // [P1.6] ItemList schema يُنشأ فقط عند وجود محتوى فعلي، ويُحقن في DOM
+      // الحيّ. HTML الأولي لا يشحن أي schema فارغ (placeholder فارغ {} اتشال).
+      if (priced.length) {
+        var _ld = document.createElement('script');
+        _ld.type = 'application/ld+json';
+        _ld.textContent = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "itemListElement": priced.map(function (p, idx) {
+            return {
+              "@type": "ListItem",
+              "position": idx + 1,
+              "name": p.route.origin_city + ' → ' + p.route.destination_city,
+              "url": "https://airpiv.com/flights/" + p.route.slug
+            };
+          })
+        });
+        document.head.appendChild(_ld);
+      }
     });
   })
   .catch(function () {
