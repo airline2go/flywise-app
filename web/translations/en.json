@@ -322,11 +322,13 @@
   "eeatReadingTimeTemplate": "{min} min read",
   "eeatLastDataUpdateLabel": "Last data update",
   "routeTitlePrimary": "Flights from {origin} to {destination} – Prices, Flight Time & Airlines | Airpiv",
+  "routeTitlePriceDuration": "Flights from {origin} to {destination} – Prices & Flight Time | Airpiv",
+  "routeTitlePriceAirlines": "Flights from {origin} to {destination} – Prices & Airlines | Airpiv",
+  "routeTitlePriceOnly": "Flights from {origin} to {destination} – Prices | Airpiv",
   "routeTitleFacts": "Flights from {origin} to {destination} – Flight Time & Distance | Airpiv",
   "routeTitleDistance": "Flights from {origin} to {destination} – Distance | Airpiv",
   "routeTitleDirect": "Direct Flights from {origin} to {destination} | Airpiv",
   "routeTitleBase": "Flights from {origin} to {destination} | Airpiv",
-  "routeMeta": "Compare flight prices, flight time, distance, airlines and direct flights from {origin} to {destination} on Airpiv.",
   "routeMetaPrice": " Flights from {price}.",
   "sitemapLabel": "Sitemap",
   "sitemapPageTitle": "Sitemap – all destinations, airports & airlines",
@@ -377,5 +379,12 @@
   "reviewsTag_fast_results": "Fast results",
   "reviewsTag_good_information": "Good information",
   "reviewsTag_easy_booking": "Easy booking",
-  "reviewsRouteHeading": "Traveler reviews"
+  "reviewsRouteHeading": "Traveler reviews",
+  "routeMetaFrame": "Compare {facets} from {origin} to {destination} on Airpiv.",
+  "routeMetaNoFacets": "Find flights from {origin} to {destination} on Airpiv.",
+  "routeMetaFacetPrices": "flight prices",
+  "routeMetaFacetDuration": "flight time",
+  "routeMetaFacetDistance": "distance",
+  "routeMetaFacetAirlines": "airlines",
+  "routeMetaFacetDirect": "direct flights"
 }

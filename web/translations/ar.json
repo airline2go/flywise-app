@@ -322,11 +322,13 @@
   "eeatReadingTimeTemplate": "{min} دقيقة قراءة",
   "eeatLastDataUpdateLabel": "آخر تحديث للبيانات",
   "routeTitlePrimary": "رحلات طيران من {origin} إلى {destination} | الأسعار ومدة الرحلة | Airpiv",
+  "routeTitlePriceDuration": "رحلات طيران من {origin} إلى {destination} | الأسعار ومدة الرحلة | Airpiv",
+  "routeTitlePriceAirlines": "رحلات طيران من {origin} إلى {destination} | الأسعار وشركات الطيران | Airpiv",
+  "routeTitlePriceOnly": "رحلات طيران من {origin} إلى {destination} | الأسعار | Airpiv",
   "routeTitleFacts": "رحلات من {origin} إلى {destination} | شركات الطيران والمسافة | Airpiv",
   "routeTitleDistance": "رحلات من {origin} إلى {destination} | المسافة | Airpiv",
   "routeTitleDirect": "رحلات مباشرة من {origin} إلى {destination} | Airpiv",
   "routeTitleBase": "رحلات من {origin} إلى {destination} | Airpiv",
-  "routeMeta": "قارن أسعار الرحلات المباشرة، مدة الرحلة، المسافة وشركات الطيران بين {origin} و{destination} على Airpiv.",
   "routeMetaPrice": " رحلات تبدأ من {price}.",
   "sitemapLabel": "خريطة الموقع",
   "sitemapPageTitle": "خريطة الموقع – جميع الوجهات والمطارات وشركات الطيران",
@@ -377,5 +379,12 @@
   "reviewsTag_fast_results": "نتائج سريعة",
   "reviewsTag_good_information": "معلومات جيدة",
   "reviewsTag_easy_booking": "حجز سهل",
-  "reviewsRouteHeading": "تقييمات المسافرين"
+  "reviewsRouteHeading": "تقييمات المسافرين",
+  "routeMetaFrame": "قارن {facets} بين {origin} و{destination} على Airpiv.",
+  "routeMetaNoFacets": "ابحث عن رحلات بين {origin} و{destination} على Airpiv.",
+  "routeMetaFacetPrices": "أسعار الرحلات",
+  "routeMetaFacetDuration": "مدة الرحلة",
+  "routeMetaFacetDistance": "المسافة",
+  "routeMetaFacetAirlines": "شركات الطيران",
+  "routeMetaFacetDirect": "الرحلات المباشرة"
 }

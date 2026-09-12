@@ -322,11 +322,13 @@
   "eeatReadingTimeTemplate": "{min} min leestijd",
   "eeatLastDataUpdateLabel": "Laatste gegevensupdate",
   "routeTitlePrimary": "Vluchten van {origin} naar {destination} – Prijzen, vliegtijd en airlines | Airpiv",
+  "routeTitlePriceDuration": "Vluchten van {origin} naar {destination} – Prijzen & vliegtijd | Airpiv",
+  "routeTitlePriceAirlines": "Vluchten van {origin} naar {destination} – Prijzen & airlines | Airpiv",
+  "routeTitlePriceOnly": "Vluchten van {origin} naar {destination} – Prijzen | Airpiv",
   "routeTitleFacts": "Vluchten van {origin} naar {destination} – Afstand en vliegtijd | Airpiv",
   "routeTitleDistance": "Vluchten van {origin} naar {destination} – Afstand | Airpiv",
   "routeTitleDirect": "Directe vluchten van {origin} naar {destination} | Airpiv",
   "routeTitleBase": "Vluchten van {origin} naar {destination} | Airpiv",
-  "routeMeta": "Vergelijk vliegprijzen, vliegtijd, afstand, luchtvaartmaatschappijen en directe vluchten van {origin} naar {destination}.",
   "routeMetaPrice": " Vluchten vanaf {price}.",
   "sitemapLabel": "Sitemap",
   "sitemapPageTitle": "Sitemap – alle bestemmingen, luchthavens en luchtvaartmaatschappijen",
@@ -377,5 +379,12 @@
   "reviewsTag_fast_results": "Snelle resultaten",
   "reviewsTag_good_information": "Goede informatie",
   "reviewsTag_easy_booking": "Eenvoudig boeken",
-  "reviewsRouteHeading": "Beoordelingen van reizigers"
+  "reviewsRouteHeading": "Beoordelingen van reizigers",
+  "routeMetaFrame": "Vergelijk {facets} van {origin} naar {destination} op Airpiv.",
+  "routeMetaNoFacets": "Vind vluchten van {origin} naar {destination} op Airpiv.",
+  "routeMetaFacetPrices": "vliegprijzen",
+  "routeMetaFacetDuration": "vliegtijd",
+  "routeMetaFacetDistance": "afstand",
+  "routeMetaFacetAirlines": "luchtvaartmaatschappijen",
+  "routeMetaFacetDirect": "directe vluchten"
 }

@@ -602,12 +602,21 @@ function buildRouteTitle(route, lang, names) {
   // route falls back to the distance-only title, which names no flight time (and
   // in Arabic, where the facts title named airlines, no airlines either).
   const hasRealDuration = route.avg_duration_min != null || route.min_duration_min != null;
+  const hasAirlines = route.airline_count != null && route.airline_count > 0;
   const isDirect = route.all_direct === true || route.direct_flight_available === true;
-  const key = hasPrice ? 'routeTitlePrimary'
-    : (hasDistance && hasRealDuration) ? 'routeTitleFacts'
-      : hasDistance ? 'routeTitleDistance'
-        : isDirect ? 'routeTitleDirect'
-          : 'routeTitleBase';
+  // [P2.1 DATA-TRUTH] The title names only facets the route actually has. The
+  // three-facet "Prices, Flight Time & Airlines" primary is used ONLY when all
+  // three are real; otherwise the title steps down to the richest truthful
+  // variant (price+duration, price+airlines, price, duration+distance, distance,
+  // direct) rather than asserting a flight time or airline count it lacks.
+  const key = (hasPrice && hasRealDuration && hasAirlines) ? 'routeTitlePrimary'
+    : (hasPrice && hasRealDuration) ? 'routeTitlePriceDuration'
+      : (hasPrice && hasAirlines) ? 'routeTitlePriceAirlines'
+        : hasPrice ? 'routeTitlePriceOnly'
+          : (hasDistance && hasRealDuration) ? 'routeTitleFacts'
+            : hasDistance ? 'routeTitleDistance'
+              : isDirect ? 'routeTitleDirect'
+                : 'routeTitleBase';
   return format(translate(key, lang), vars);
 }
 
@@ -634,13 +643,35 @@ function formatRoutePrice(price, currency, lang) {
 // "from {price}" clause is appended. The price value is never generated or
 // estimated: no cached price → the generic sentence stands alone, and the price
 // value never appears in the <title> (only here).
+// [P2.2 DATA-TRUTH] The meta description names ONLY the facets this route
+// actually has — never "flight time", "airlines" or "direct flights" when that
+// evidence is absent (same rule as the P2.1 title ladder and P0.1). Present
+// facets are joined with the locale's own conjunction ("und"/"and"/"et"/…) via
+// Intl.ListFormat; a route with no facets at all falls back to a plain
+// "find flights …" sentence rather than listing facets it can't back up.
 function buildRouteMetaDescription(route, lang, names) {
   const vars = { origin: (names && names.origin) || route.origin_city, destination: (names && names.destination) || route.destination_city };
-  const base = format(translate('routeMeta', lang), vars);
+  const cp = resolveCanonicalPrice(route);
+  const facets = [];
+  if (cp) facets.push(translate('routeMetaFacetPrices', lang));
+  // flight-time is claimed only from a REAL observed duration — distance alone
+  // is never flight-time evidence.
+  if (route.avg_duration_min != null || route.min_duration_min != null) facets.push(translate('routeMetaFacetDuration', lang));
+  if (route.distance_km != null) facets.push(translate('routeMetaFacetDistance', lang));
+  if (route.airline_count != null && route.airline_count > 0) facets.push(translate('routeMetaFacetAirlines', lang));
+  if (route.all_direct === true || route.direct_flight_available === true) facets.push(translate('routeMetaFacetDirect', lang));
+
+  let base;
+  if (facets.length === 0) {
+    base = format(translate('routeMetaNoFacets', lang), vars);
+  } else {
+    const locale = getLanguage(lang).locale;
+    const facetList = new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(facets);
+    base = format(translate('routeMetaFrame', lang), { ...vars, facets: facetList });
+  }
   // [CANONICAL-PRICE-SOURCE] The "ab/from …" clause uses the ONE canonical
   // price (same value the title facet, hero fallback and Offer use), so the
   // SERP snippet never advertises a figure the page itself doesn't show.
-  const cp = resolveCanonicalPrice(route);
   if (cp) {
     const price = formatRoutePrice(cp.amount, cp.currency, lang);
     return base + format(translate('routeMetaPrice', lang), { price });

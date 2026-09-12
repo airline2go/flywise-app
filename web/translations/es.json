@@ -322,11 +322,13 @@
   "eeatReadingTimeTemplate": "{min} min de lectura",
   "eeatLastDataUpdateLabel": "Última actualización de datos",
   "routeTitlePrimary": "Vuelos de {origin} a {destination} – Precios, duración y aerolíneas | Airpiv",
+  "routeTitlePriceDuration": "Vuelos de {origin} a {destination} – Precios y duración | Airpiv",
+  "routeTitlePriceAirlines": "Vuelos de {origin} a {destination} – Precios y aerolíneas | Airpiv",
+  "routeTitlePriceOnly": "Vuelos de {origin} a {destination} – Precios | Airpiv",
   "routeTitleFacts": "Vuelos de {origin} a {destination} – Distancia y duración | Airpiv",
   "routeTitleDistance": "Vuelos de {origin} a {destination} – Distancia | Airpiv",
   "routeTitleDirect": "Vuelos directos de {origin} a {destination} | Airpiv",
   "routeTitleBase": "Vuelos de {origin} a {destination} | Airpiv",
-  "routeMeta": "Compara precios de vuelos, duración del vuelo, distancia, aerolíneas y vuelos directos entre {origin} y {destination}.",
   "routeMetaPrice": " Vuelos desde {price}.",
   "sitemapLabel": "Mapa del sitio",
   "sitemapPageTitle": "Mapa del sitio: todos los destinos, aeropuertos y aerolíneas",
@@ -377,5 +379,12 @@
   "reviewsTag_fast_results": "Resultados rápidos",
   "reviewsTag_good_information": "Buena información",
   "reviewsTag_easy_booking": "Reserva fácil",
-  "reviewsRouteHeading": "Opiniones de viajeros"
+  "reviewsRouteHeading": "Opiniones de viajeros",
+  "routeMetaFrame": "Compara {facets} entre {origin} y {destination} en Airpiv.",
+  "routeMetaNoFacets": "Encuentra vuelos entre {origin} y {destination} en Airpiv.",
+  "routeMetaFacetPrices": "precios de vuelos",
+  "routeMetaFacetDuration": "duración del vuelo",
+  "routeMetaFacetDistance": "distancia",
+  "routeMetaFacetAirlines": "aerolíneas",
+  "routeMetaFacetDirect": "vuelos directos"
 }

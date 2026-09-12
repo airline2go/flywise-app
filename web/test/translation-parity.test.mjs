@@ -33,7 +33,7 @@ test('no language has an empty-string value (silent blank on the page)', () => {
 });
 
 test('the route title/meta keys the renderer uses exist in every language', () => {
-  for (const k of ['routeTitlePrimary', 'routeTitleFacts', 'routeTitleDirect', 'routeTitleBase', 'routeMeta', 'routeMetaPrice']) {
+  for (const k of ['routeTitlePrimary', 'routeTitleFacts', 'routeTitleDirect', 'routeTitleBase', 'routeMetaFrame', 'routeMetaNoFacets', 'routeMetaFacetPrices', 'routeMetaFacetDuration', 'routeMetaFacetDistance', 'routeMetaFacetAirlines', 'routeMetaFacetDirect', 'routeMetaPrice']) {
     for (const c of CODES) assert.ok(dicts[c][k] != null, `${c}.json missing ${k}`);
   }
 });
