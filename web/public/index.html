@@ -329,9 +329,9 @@
 <div class="ov" id="baginfo-ov" role="dialog" aria-modal="true" aria-label="Gepäcksübersicht" style="align-items:flex-end;padding:0">
   <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -8px 30px rgba(0,0,0,.15)">
     <div style="width:36px;height:4px;background:var(--bd2);border-radius:4px;margin:0 auto 16px"></div>
-    <div id="baginfo-title" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--tx);margin-bottom:14px">Gepäcksübersicht</div>
+    <div id="baginfo-title" data-i18n="baginfo_title" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--tx);margin-bottom:14px">Gepäcksübersicht</div>
     <div id="baginfo-rows"></div>
-    <button id="baginfo-close-btn" data-fn="closeBagInfo" style="margin-top:16px;width:100%;background:var(--bg2);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--tx);cursor:pointer">Schließen</button>
+    <button id="baginfo-close-btn" data-fn="closeBagInfo" data-i18n="close_btn" style="margin-top:16px;width:100%;background:var(--bg2);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--tx);cursor:pointer">Schließen</button>
   </div>
 </div>
 
@@ -410,7 +410,7 @@
       <!-- Coming Soon Message (for hotels/cars) -->
       <div class="coming-soon-msg" id="coming-soon-msg">
         <div class="coming-soon-icon" id="coming-soon-icon">🏨</div>
-        <div class="coming-soon-title" id="coming-soon-title">Demnächst</div>
+        <div class="coming-soon-title" id="coming-soon-title" data-i18n="coming_soon_title">Demnächst</div>
         <div class="coming-soon-sub" id="coming-soon-sub">Hotelbuchung kommt bald. Bleib dran!</div>
       </div>
 
@@ -518,7 +518,7 @@
     <div class="ti-badge" title="256-bit SSL Verschlüsselung">🔒 SSL Sicher</div>
     <div class="ti-badge" title="Datenschutz nach EU-Standard">🇪🇺 Datenschutzfreundlich gemäß EU-Richtlinien</div>
     <div class="tdiv"></div>
-    <div class="ti">⚡ Sofort-Bestätigung</div><div class="tdiv"></div>
+    <div class="ti" data-i18n="ti_instant">⚡ Sofort-Bestätigung</div><div class="tdiv"></div>
     <div class="ti">💰 Transparente Preise</div><div class="tdiv"></div>
     <div class="ti">🛡 Sichere Zahlung</div><div class="tdiv"></div>
     <div class="ti">🌐 600+ Airlines</div>
@@ -526,7 +526,7 @@
 </div>
 
 <div aria-live="polite" aria-atomic="true" id="search-announce" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap"></div>
-<div class="loader" id="loader"><div class="lplane">✈️</div><div class="ltxt">Suche die besten Verbindungen...</div><div class="lsub" id="lsub">600+ Airlines werden durchsucht</div><div class="pbar"><div class="pfill" id="pfill"></div></div></div>
+<div class="loader" id="loader"><div class="lplane">✈️</div><div class="ltxt" data-i18n="ltxt_searching">Suche die besten Verbindungen...</div><div class="lsub" id="lsub">600+ Airlines werden durchsucht</div><div class="pbar"><div class="pfill" id="pfill"></div></div></div>
 <div class="ebox" id="ebox"><div class="ein">⚠️ <span id="emsg"></span></div></div>
 
 <div class="rw" id="rw">
@@ -535,23 +535,23 @@
     <button id="mfbtn" data-tfsb>⚙️ Filter</button>
   </div>
   <div class="quick-filters" id="quick-filters" style="display:none">
-    <button class="qf-chip" id="qfc-direct" data-qft="direct">
+    <button class="qf-chip" id="qfc-direct" data-qft="direct" data-i18n="qf_direct">
       ✈ Direktflug
     </button>
-    <button class="qf-chip" id="qfc-bag" data-qft="bag">
+    <button class="qf-chip" id="qfc-bag" data-qft="bag" data-i18n="qf_baggage">
       🎒 Mit Gepäck
     </button>
-    <button class="qf-chip" id="qfc-cheap" data-sortby-chip="price">
+    <button class="qf-chip" id="qfc-cheap" data-sortby-chip="price" data-i18n="qf_cheapest">
       💰 Günstigste
     </button>
-    <button class="qf-chip" id="qfc-fast" data-sortby-chip="dur">
+    <button class="qf-chip" id="qfc-fast" data-sortby-chip="dur" data-i18n="qf_fastest">
       ⚡ Schnellste
     </button>
-    <button class="qf-chip" id="qfc-filter" data-tfsc>
+    <button class="qf-chip" id="qfc-filter" data-tfsc data-i18n="qf_allfilters">
       ⚙️ Alle Filter
     </button>
   </div>
-  <div class="alert-box"><div><div class="alert-t">🔔 Preisalarm aktivieren</div><div class="alert-s">Benachrichtigung wenn der Preis fällt</div></div><button class="alert-btn" id="alert-btn" data-set-alert>Alarm einrichten</button></div>
+  <div class="alert-box"><div><div class="alert-t">🔔 Preisalarm aktivieren</div><div class="alert-s" data-i18n="alert_subscribe">Benachrichtigung wenn der Preis fällt</div></div><button class="alert-btn" id="alert-btn" data-set-alert>Alarm einrichten</button></div>
   <div class="pgph" id="pgph" style="display:none"><div class="pgph-t"><span>📊 Preisverlauf — nächste 7 Tage</span><span id="pgmin" style="color:var(--teal2)"></span></div><div class="pgph-bars" id="pgbars"></div><div class="pgph-lbls" id="pglbls"></div></div>
   <div class="stabs">
     <button class="stb" id="st-best" data-sortby="best"><div class="stb-t">⭐ Beste</div><div class="stb-p" id="sp-best">—</div><div class="stb-d" id="sd-best"></div></button>
@@ -589,7 +589,7 @@
       </div>
 
       <div class="filter-section">
-        <div class="filter-section-title">Max. Preis</div>
+        <div class="filter-section-title" data-i18n="filter_maxprice">Max. Preis</div>
         <div class="filter-price-row">
           <span>€0</span><span id="pval">€9999</span>
         </div>
@@ -612,11 +612,11 @@
         <div id="f-airlines"></div>
       </div>
 
-      <button class="filter-reset" data-resetf>↺ Filter zurücksetzen</button>
+      <button class="filter-reset" data-resetf data-i18n="filter_reset">↺ Filter zurücksetzen</button>
     </div>
     <div class="rmain">
       <div id="offers-list"></div>
-      <div class="lm-wrap" id="lmw"><button class="lm-btn" data-fn="loadMore">Mehr Flüge anzeigen ↓</button></div>
+      <div class="lm-wrap" id="lmw"><button class="lm-btn" data-fn="loadMore" data-i18n="load_more">Mehr Flüge anzeigen ↓</button></div>
     </div>
   </div>
 </div>
@@ -761,21 +761,21 @@
 <!-- 404 Section (shown when needed) -->
 <div id="page-404" style="display:none;text-align:center;padding:60px 20px;min-height:50vh;display:none;flex-direction:column;align-items:center;justify-content:center">
   <div style="font-size:4rem;margin-bottom:16px">✈️</div>
-  <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;color:var(--tx);margin-bottom:8px">Seite nicht gefunden</h2>
-  <p style="color:var(--tx3);margin-bottom:24px">Die gesuchte Seite existiert nicht.</p>
+  <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;color:var(--tx);margin-bottom:8px" data-i18n="nf_title">Seite nicht gefunden</h2>
+  <p style="color:var(--tx3);margin-bottom:24px" data-i18n="nf_sub">Die gesuchte Seite existiert nicht.</p>
   <button data-scroll-top style="background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">← Zur Startseite</button>
 </div>
 
 <!-- PAX MODAL -->
 <div class="ov" id="pov">
   <div class="pm">
-    <div class="mhd"><h3>Reisende & Gepäck</h3><button class="mx" data-fn="closePaxModal">✕</button></div>
-    <div class="prow"><div><div class="plbl">Erwachsene</div><div class="psub">ab 12 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="a" data-chp-d="-1">−</button><span class="pnum" id="pa">1</span><button class="pcb" data-chp-k="a" data-chp-d="1">+</button></div></div>
-    <div class="prow"><div><div class="plbl">Kinder</div><div class="psub">2–11 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="c" data-chp-d="-1">−</button><span class="pnum" id="pc">0</span><button class="pcb" data-chp-k="c" data-chp-d="1">+</button></div></div>
-    <div class="prow"><div><div class="plbl">Kleinkinder</div><div class="psub">unter 2 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="i" data-chp-d="-1">−</button><span class="pnum" id="pi">0</span><button class="pcb" data-chp-k="i" data-chp-d="1">+</button></div></div>
-    <div class="prow" style="border-top:2px solid var(--bg2);margin-top:4px;padding-top:14px"><div><div class="plbl">🧳 Aufgabegepäck</div><div class="psub">Pro Person</div></div><div class="pctrl"><button class="pcb" data-chp-k="b" data-chp-d="-1">−</button><span class="pnum" id="pb">0</span><button class="pcb" data-chp-k="b" data-chp-d="1">+</button></div></div>
-    <div class="prow"><div><div class="plbl">🎒 Handgepäck</div><div class="psub">bis 10kg · Kabine</div></div><div class="pctrl"><button class="pcb" data-chp-k="h" data-chp-d="-1">−</button><span class="pnum" id="ph">1</span><button class="pcb" data-chp-k="h" data-chp-d="1">+</button></div></div>
-    <div class="prow" style="border:none"><div class="plbl">Klasse</div><select class="pmsel" id="cabin"><option value="economy">Economy</option><option value="premium_economy">Premium Economy</option><option value="business">Business</option><option value="first">First Class</option></select></div>
+    <div class="mhd"><h3 data-i18n="pax_bag_title">Reisende & Gepäck</h3><button class="mx" data-fn="closePaxModal">✕</button></div>
+    <div class="prow"><div><div class="plbl" data-i18n="plbl_adults">Erwachsene</div><div class="psub">ab 12 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="a" data-chp-d="-1">−</button><span class="pnum" id="pa">1</span><button class="pcb" data-chp-k="a" data-chp-d="1">+</button></div></div>
+    <div class="prow"><div><div class="plbl" data-i18n="plbl_children">Kinder</div><div class="psub">2–11 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="c" data-chp-d="-1">−</button><span class="pnum" id="pc">0</span><button class="pcb" data-chp-k="c" data-chp-d="1">+</button></div></div>
+    <div class="prow"><div><div class="plbl" data-i18n="plbl_infants">Kleinkinder</div><div class="psub">unter 2 Jahre</div></div><div class="pctrl"><button class="pcb" data-chp-k="i" data-chp-d="-1">−</button><span class="pnum" id="pi">0</span><button class="pcb" data-chp-k="i" data-chp-d="1">+</button></div></div>
+    <div class="prow" style="border-top:2px solid var(--bg2);margin-top:4px;padding-top:14px"><div><div class="plbl" data-i18n="plbl_checked">🧳 Aufgabegepäck</div><div class="psub">Pro Person</div></div><div class="pctrl"><button class="pcb" data-chp-k="b" data-chp-d="-1">−</button><span class="pnum" id="pb">0</span><button class="pcb" data-chp-k="b" data-chp-d="1">+</button></div></div>
+    <div class="prow"><div><div class="plbl" data-i18n="plbl_carry">🎒 Handgepäck</div><div class="psub">bis 10kg · Kabine</div></div><div class="pctrl"><button class="pcb" data-chp-k="h" data-chp-d="-1">−</button><span class="pnum" id="ph">1</span><button class="pcb" data-chp-k="h" data-chp-d="1">+</button></div></div>
+    <div class="prow" style="border:none"><div class="plbl" data-i18n="plbl_class">Klasse</div><select class="pmsel" id="cabin"><option value="economy">Economy</option><option value="premium_economy">Premium Economy</option><option value="business">Business</option><option value="first">First Class</option></select></div>
     <button class="pmdone" data-savepax>Fertig ✓</button>
   </div>
 </div>
@@ -1062,7 +1062,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
     <!-- Footer -->
     <div class="bflow-foot">
       <div id="bflow-pricelink-wrap" style="display:none;text-align:center;margin-bottom:8px"><button data-fn="openPriceDetails" style="background:none;border:none;color:var(--teal2);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline" id="bflow-pricelink">Preisdetails anzeigen</button></div>
-      <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" data-clear-compliance-err><span class="compliance-text">Ich bestätige die <a href="#" data-fn="openPg" data-fn-arg="terms" data-pd>AGB</a> und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></label></div>
+      <div class="compliance-wrap" id="bflow-compliance-wrap" style="display:none"><label class="compliance-label"><input type="checkbox" id="bflow-compliance-check" data-clear-compliance-err><span class="compliance-text"><span data-i18n="compliance_pre">Ich bestätige die</span> <a href="#" data-fn="openPg" data-fn-arg="terms" data-pd data-i18n="ft_terms">AGB</a> <span data-i18n="compliance_post">und Tarifbedingungen der Fluggesellschaft und bin rechtmäßiger Inhaber der Zahlungsmethode.</span></span></label></div>
     <button class="bflow-btn" id="bflow-btn" data-fn="bflowNext">
         <span id="bflow-btn-txt">Weiter</span>
         <span class="bflow-price" id="bflow-btn-price"></span>
@@ -1111,7 +1111,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
         </div>
 
         <div class="filter-section">
-          <div class="filter-section-title">Max. Preis</div>
+          <div class="filter-section-title" data-i18n="filter_maxprice">Max. Preis</div>
           <div class="filter-price-row">
             <span>€0</span><span id="pval2">€9999</span>
           </div>
@@ -1227,7 +1227,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
     </div>
     <div id="rp-offers-list"></div>
     <div style="text-align:center;padding:14px 0;display:none" id="rp-lmw">
-      <button class="lm-btn" data-rplm>Mehr Flüge anzeigen ↓</button>
+      <button class="lm-btn" data-rplm data-i18n="load_more">Mehr Flüge anzeigen ↓</button>
     </div>
   </div>
 </div>
@@ -1241,8 +1241,8 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
       <button data-print style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🖨 Drucken</button>
     </div>
     <div class="confirm-tick">✓</div>
-    <h1>Buchung bestätigt!</h1>
-    <div class="confirm-hd-sub">Ihre Buchungsbestätigung</div>
+    <h1 data-i18n="confirm_title">Buchung bestätigt!</h1>
+    <div class="confirm-hd-sub" data-i18n="confirm_sub">Ihre Buchungsbestätigung</div>
     <div style="text-align:center">
       <div class="confirm-ref" id="conf-ref">—</div>
     </div>
@@ -1259,30 +1259,30 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
       <button data-cdsg style="background:var(--bg2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--tx2)">✕</button>
     </div>
     <div class="dsgvo-body">
-      <div class="dsgvo-badge">✓ DSGVO-konform &nbsp;|&nbsp; ✓ PCI-DSS gesichert &nbsp;|&nbsp; ✓ SSL-verschlüsselt</div>
+      <div class="dsgvo-badge" data-i18n="dsgvo_badge">✓ DSGVO-konform &nbsp;|&nbsp; ✓ PCI-DSS gesichert &nbsp;|&nbsp; ✓ SSL-verschlüsselt</div>
 
       <div class="dsgvo-section">
-        <h4>🛡 Wie wir Ihre Daten schützen</h4>
-        <p>Alle sensiblen Daten (Name, Geburtsdatum, Reisepass, Kreditkartendaten) werden ausschließlich verschlüsselt übertragen. Wir verwenden SSL/TLS-Verschlüsselung nach Industriestandard.</p>
+        <h4 data-i18n="dp_h1">🛡 Wie wir Ihre Daten schützen</h4>
+        <p data-i18n="dp_p1">Alle sensiblen Daten (Name, Geburtsdatum, Reisepass, Kreditkartendaten) werden ausschließlich verschlüsselt übertragen. Wir verwenden SSL/TLS-Verschlüsselung nach Industriestandard.</p>
       </div>
 
       <div class="dsgvo-section">
-        <h4>✈ Weitergabe an Airlines & Duffel</h4>
-        <p>Ihre Passagierdaten werden ausschließlich zur Ticket-Ausstellung an Duffel (unseren Technologiepartner) und die jeweilige Fluggesellschaft weitergegeben. Eine Weitergabe an Dritte erfolgt nicht.</p>
+        <h4 data-i18n="dp_h2">✈ Weitergabe an Airlines & Duffel</h4>
+        <p data-i18n="dp_p2">Ihre Passagierdaten werden ausschließlich zur Ticket-Ausstellung an Duffel (unseren Technologiepartner) und die jeweilige Fluggesellschaft weitergegeben. Eine Weitergabe an Dritte erfolgt nicht.</p>
       </div>
 
       <div class="dsgvo-section">
-        <h4>💳 Kreditkartendaten</h4>
-        <p>Kreditkartendaten werden nach PCI-DSS-Standard verarbeitet. Wir speichern keine vollständigen Kartendaten auf unseren Servern. Die Zahlungsabwicklung erfolgt ausschließlich über verschlüsselte, zertifizierte Kanäle.</p>
+        <h4 data-i18n="dp_h3">💳 Kreditkartendaten</h4>
+        <p data-i18n="dp_p3">Kreditkartendaten werden nach PCI-DSS-Standard verarbeitet. Wir speichern keine vollständigen Kartendaten auf unseren Servern. Die Zahlungsabwicklung erfolgt ausschließlich über verschlüsselte, zertifizierte Kanäle.</p>
       </div>
 
       <div class="dsgvo-section">
-        <h4>📋 Ihre Rechte (DSGVO)</h4>
-        <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten. Kontaktieren Sie uns unter: <a href="mailto:privacy@airpiv.com">privacy@airpiv.com</a></p>
+        <h4 data-i18n="dp_h4">📋 Ihre Rechte (DSGVO)</h4>
+        <p><span data-i18n="dp_p4">Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten. Kontaktieren Sie uns unter:</span> <a href="mailto:privacy@airpiv.com">privacy@airpiv.com</a></p>
       </div>
     </div>
     <div class="dsgvo-foot">
-      <button class="dsgvo-close-btn" data-cdsg>Verstanden ✓</button>
+      <button class="dsgvo-close-btn" data-cdsg data-i18n="dsgvo_understood">Verstanden ✓</button>
     </div>
   </div>
 </div>
@@ -1371,7 +1371,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
       <div style="font-size:18px;font-weight:800;color:var(--tx)" id="pd-total-val">—</div>
     </div>
     <div style="font-size:11px;color:var(--tx3);margin-top:8px;line-height:1.5" id="pd-note"></div>
-    <button data-cpd style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn">Schließen</button>
+    <button data-cpd style="width:100%;margin-top:16px;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer" id="pd-close-btn" data-i18n="close_btn">Schließen</button>
   </div>
 </div>
 <div class="seat-confirm-ov" id="price-changed-ov" role="dialog" aria-modal="true">
@@ -1421,7 +1421,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
     <div class="dob-ym-pick" id="dob-ym-pick">
       <div class="dob-ym-hd">
         <button data-fn="closeDobYmPick" style="background:var(--bg2);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--tx2)">←</button>
-        <span id="dob-ym-title">Jahr wählen</span>
+        <span id="dob-ym-title" data-i18n="dob_year">Jahr wählen</span>
       </div>
       <div class="dob-ym-grid" id="dob-ym-grid"></div>
     </div>
@@ -1450,7 +1450,7 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
     <!-- Footer -->
     <div class="dob-cal-foot">
       <button class="dob-cal-cancel" data-cdc>Abbrechen</button>
-      <button class="dob-cal-confirm" id="dob-cal-confirm" data-fn="confirmDobCal" disabled>Bestätigen</button>
+      <button class="dob-cal-confirm" id="dob-cal-confirm" data-fn="confirmDobCal" disabled data-i18n="confirm">Bestätigen</button>
     </div>
   </div>
 </div>
