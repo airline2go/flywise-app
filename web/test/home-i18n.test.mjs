@@ -149,3 +149,41 @@ test('HOME_META covers every home language with title/description/og-locale', ()
     assert.ok(HOME_META[lang].t && HOME_META[lang].d && HOME_META[lang].ogl);
   }
 });
+
+// [P1.7/P1.8] A language home must link into its OWN language cluster: the
+// prerendered popular-routes pills (/flights/…) become /{lang}/flights/… on the
+// localized homes, so the strongest page never sends /en, /ar, … users and
+// Googlebot to the German route pages. German stays unprefixed (its own cluster),
+// and .html static pages / assets / the root are never rewritten.
+test('localizeHomeHtml localizes popular-route internal links per language (P1.7/P1.8)', () => {
+  const HOME = `<!DOCTYPE html><html lang="de" dir="ltr"><head>
+<title>${escText(HOME_META.de.t)}</title>
+<meta name="description" content="${escAttr(HOME_META.de.d)}">
+<link rel="canonical" href="https://airpiv.com/" id="canonical-url">
+<link rel="alternate" hreflang="de" href="https://airpiv.com/">
+</head><body>
+<h1 data-i18n="hero_title1">Günstige Flüge</h1>
+<div id="popular-routes-links">
+<a href="/flights/hamburg-duesseldorf">Hamburg → Düsseldorf</a>
+<a href="/flights/berlin-muenchen">Berlin → München</a>
+</div>
+<a href="/cheap-flights.html">Günstige Flüge</a>
+<a href="/styles.css">css</a>
+<a href="/">home</a>
+</body></html>`;
+  const en = localizeHomeHtml(HOME, 'en', extractTranslations('TRANSLATIONS={"de":{"hero_title1":"Günstige Flüge"},"en":{"hero_title1":"Cheap flights"}};'));
+  // route links are now /en/flights/…
+  assert.match(en, /href="\/en\/flights\/hamburg-duesseldorf"/);
+  assert.match(en, /href="\/en\/flights\/berlin-muenchen"/);
+  // no unprefixed /flights/ German link survives on the English home
+  assert.doesNotMatch(en, /href="\/flights\//);
+  // static .html pages, assets and the root are NOT rewritten (would 404)
+  assert.match(en, /href="\/cheap-flights\.html"/);
+  assert.match(en, /href="\/styles\.css"/);
+  assert.match(en, /href="\/"/);
+
+  // German home keeps the unprefixed cluster (no /de/flights rewrite)
+  const de = localizeHomeHtml(HOME, 'de', extractTranslations('TRANSLATIONS={"de":{"hero_title1":"Günstige Flüge"}};'));
+  assert.match(de, /href="\/flights\/hamburg-duesseldorf"/);
+  assert.doesNotMatch(de, /href="\/de\/flights\//);
+});

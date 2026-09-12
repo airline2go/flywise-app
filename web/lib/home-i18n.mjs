@@ -22,6 +22,7 @@
 // a redundant client-side safety net that now re-applies identical values.
 
 import { parse } from 'node-html-parser';
+import { localizeLinks } from './link-localize.mjs';
 
 export const SITE = 'https://airpiv.com';
 
@@ -223,12 +224,26 @@ export function localizeBody(html, lang, translations) {
   return out;
 }
 
-// Full transform: head + hreflang + body. `translations` is the object returned
-// by extractTranslations(appJs).
+// Full transform: head + hreflang + body + internal links. `translations` is the
+// object returned by extractTranslations(appJs).
+//
+// [P1.7/P1.8] The final pass localizes root-relative internal SEO links so a
+// language home links into ITS OWN language cluster. The prerendered
+// popular-routes pills are stamped as `/flights/…` — the UNPREFIXED
+// (German/default) canonical — so without this the /en, /ar, … homes would send
+// Googlebot and users to the German version of every route from the strongest
+// page on the site (a cross-language internal-link + crawl-signal defect). We
+// reuse the shared, unit-tested localizeLinks() (the same rewrite the blog-post
+// renderer uses): it rewrites /flights,/city,/country,/airport,/airline to
+// /{lang}/…, and deliberately leaves `.html` static pages, assets, anchors, the
+// root, already-prefixed links and per-language-slug /blog untouched. The pill
+// anchor TEXT is city names only — language-neutral, exempt from the
+// German-leakage rule (P5.1).
 export function localizeHomeHtml(html, lang, translations) {
   if (!HOME_META[lang]) throw new Error(`unknown home language: ${lang}`);
   let out = localizeHead(html, lang);
   out = fixHreflangCluster(out);
   out = localizeBody(out, lang, translations);
+  out = localizeLinks(out, lang);
   return out;
 }
