@@ -358,6 +358,7 @@
   "offersComparedForRouteSuffix": "bu rota için karşılaştırılan teklif",
   "routeTitlePrimary": "{origin}-{destination} Uçuşları – Fiyatlar, Uçuş Süresi ve Havayolları | Airpiv",
   "routeTitleFacts": "{origin}-{destination} Uçuşları – Uçuş Süresi ve Mesafe | Airpiv",
+  "routeTitleDistance": "{origin}-{destination} Uçuşları – Mesafe | Airpiv",
   "routeTitleDirect": "{origin}-{destination} Direkt Uçuşlar | Airpiv",
   "routeTitleBase": "{origin}-{destination} Uçuşları | Airpiv",
   "routeMeta": "{origin}-{destination} canlı uçak bileti fiyatlarını, uçuş süresini, mesafeyi, havayollarını ve direkt uçuşları Airpiv’de karşılaştırın.",

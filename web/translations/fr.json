@@ -323,6 +323,7 @@
   "eeatLastDataUpdateLabel": "Dernière mise à jour des données",
   "routeTitlePrimary": "Vols de {origin} à {destination} – Prix, durée et compagnies | Airpiv",
   "routeTitleFacts": "Vols de {origin} à {destination} – Distance et durée | Airpiv",
+  "routeTitleDistance": "Vols de {origin} à {destination} – Distance | Airpiv",
   "routeTitleDirect": "Vols directs de {origin} à {destination} | Airpiv",
   "routeTitleBase": "Vols de {origin} à {destination} | Airpiv",
   "routeMeta": "Comparez les prix en direct, la durée du vol, la distance et les compagnies aériennes entre {origin} et {destination}.",

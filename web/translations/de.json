@@ -323,6 +323,7 @@
   "eeatLastDataUpdateLabel": "Letzte Datenaktualisierung",
   "routeTitlePrimary": "Flüge von {origin} nach {destination} – Preise, Flugzeit & Airlines | Airpiv",
   "routeTitleFacts": "Flüge von {origin} nach {destination} – Flugzeit & Entfernung | Airpiv",
+  "routeTitleDistance": "Flüge von {origin} nach {destination} – Entfernung | Airpiv",
   "routeTitleDirect": "Direktflüge von {origin} nach {destination} | Airpiv",
   "routeTitleBase": "Flüge von {origin} nach {destination} | Airpiv",
   "routeMeta": "Vergleiche Live-Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von {origin} nach {destination}. Jetzt Flüge auf Airpiv finden.",

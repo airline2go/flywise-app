@@ -36,9 +36,16 @@ test('title localizes (English primary, with price)', () => {
   );
 });
 
-test('without a cached price the title sheds "Prices" and uses the distance/time fallback', () => {
+test('[P2.1] without a price and without a real duration, a distance-only route uses the distance-only title (no flight-time claim)', () => {
   assert.equal(
     buildRouteTitle(R({ destination_city: 'Rome', distance_km: 1297 }), 'en'),
+    'Flights from Amsterdam to Rome – Distance | Airpiv',
+  );
+});
+
+test('[P2.1] with a REAL observed duration the route keeps the Flight Time & Distance title', () => {
+  assert.equal(
+    buildRouteTitle(R({ destination_city: 'Rome', distance_km: 1297, avg_duration_min: 135 }), 'en'),
     'Flights from Amsterdam to Rome – Flight Time & Distance | Airpiv',
   );
 });
