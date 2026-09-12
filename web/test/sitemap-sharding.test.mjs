@@ -142,13 +142,17 @@ test('pageUrls: only canonical https static pages, includes the home page', () =
   const urls = pageUrls();
   assert.deepEqual(validateSitemapUrls(urls), []);
   assert.ok(urls.some((u) => u.loc === 'https://airpiv.com/'));
-  // Home + the named static pages in STATIC_PAGES (cheap-flights,
-  // last-minute-flights, about, blog, contact, privacy, terms, refund-policy,
-  // cookies) + [P1-7] the 5 trust pages (how-it-works, data-sources,
-  // methodology, editorial-policy, transparency) — all present under public/,
-  // so none is a 404 in the sitemap.
-  assert.equal(urls.length, 15);
+  // Home + the SEO/landing static pages (cheap-flights, last-minute-flights,
+  // about, blog, contact) + [P1-7] the 5 trust pages (how-it-works,
+  // data-sources, methodology, editorial-policy, transparency) — all present
+  // under public/ and index,follow, so none is a 404 or a noindex in the sitemap.
+  // [P1.5] The legal/utility pages (privacy, terms, refund-policy, cookies) are
+  // noindex,follow and therefore intentionally absent (11 = 15 − 4).
+  assert.equal(urls.length, 11);
   for (const p of ['how-it-works.html', 'data-sources.html', 'methodology.html', 'editorial-policy.html', 'transparency.html']) {
     assert.ok(urls.some((u) => u.loc === `https://airpiv.com/${p}`), `trust page ${p} present`);
+  }
+  for (const p of ['privacy.html', 'terms.html', 'refund-policy.html', 'cookies.html']) {
+    assert.ok(!urls.some((u) => u.loc === `https://airpiv.com/${p}`), `noindex legal page ${p} must be absent`);
   }
 });
