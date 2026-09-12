@@ -122,8 +122,9 @@ function renderAirportPage(airport, routes, lang, routeMetaBySlug) {
     return `<a class="airport-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(r.slug)}`)}"><span class="airport-route-top"><span>${escHtml(r.origin_city)}<span class="arrow">→</span>${escHtml(r.destination_city)}</span>${kmBadge}</span>${hl ? `<span class="haul-tag">${hl}</span>` : ''}</a>`;
   }
 
-  const fromRoutes = locRoutes.filter((r) => r.origin_iata === airport.code);
-  const toRoutes = locRoutes.filter((r) => r.destination_iata === airport.code);
+  // [P0.7] Never link internally to a noindex route (see render-city).
+  const fromRoutes = locRoutes.filter((r) => r.indexable !== false && r.origin_iata === airport.code);
+  const toRoutes = locRoutes.filter((r) => r.indexable !== false && r.destination_iata === airport.code);
   const fromSectionHtml = fromRoutes.length
     ? `<section class="airport-routes-section"><h2>${translate('departuresFrom', lang)} ${escHtml(airport.code)}</h2><div class="airport-route-grid">${fromRoutes.map(routeCardHtml).join('')}</div></section>`
     : '';

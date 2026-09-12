@@ -110,8 +110,13 @@ function renderCityPage(city, routes, lang, routeMetaBySlug) {
     ? `<div class="city-hero-airports">${city.airport_codes.map((a) => `<a href="${pathFor(lang, `airport/${encodeURIComponent(a)}`)}" class="city-airport-badge">${escHtml(a)}</a>`).join('')}</div>`
     : '';
 
-  const fromRoutes = locRoutes.filter((r) => r.origin_city_slug === city.city_slug);
-  const toRoutes = locRoutes.filter((r) => r.destination_city_slug === city.city_slug);
+  // [P0.7] Never link internally to a noindex route. The backend attaches the
+  // canonical `indexable` verdict to each hub route; a route explicitly marked
+  // indexable:false (no verified flight evidence under the enforced policy) is
+  // dropped from the on-page route cards. Absent flag (older backend/fixtures)
+  // keeps the route — preserving prior behaviour.
+  const fromRoutes = locRoutes.filter((r) => r.indexable !== false && r.origin_city_slug === city.city_slug);
+  const toRoutes = locRoutes.filter((r) => r.indexable !== false && r.destination_city_slug === city.city_slug);
   function routeCardHtml(r) {
     const km = meta[r.slug] && meta[r.slug].distance_km;
     const kmBadge = typeof km === 'number' && km > 0
