@@ -1023,7 +1023,16 @@ ${relatedArticlesHtml}
   // `hasRealRouteData` carries a data-driven index verdict.
   const routeDecision = getRouteIndexabilityDecision(route);
   const hasAdminRouteContent = routeDecision.manualContent;
-  const hasRealRouteData = routeDecision.indexable && !hasAdminRouteContent;
+  // [P0.7 SINGLE-SOURCE-OF-TRUTH] The backend owns the evidence policy. When the
+  // API sends an explicit `indexable` verdict (route-pages/:slug and the list
+  // feed both do), honor it verbatim so the policy flip is controlled in ONE
+  // place — SEO_EVIDENCE_POLICY_ENFORCED on the server — and this frontend needs
+  // no policy env of its own (it can't reliably carry one on the static host).
+  // Fall back to the local decision only when the flag is absent (older backend
+  // or offline fixtures), preserving prior behaviour and every existing test.
+  const apiIndexable = typeof route.indexable === 'boolean' ? route.indexable : null;
+  const indexableVerdict = apiIndexable != null ? apiIndexable : routeDecision.indexable;
+  const hasRealRouteData = indexableVerdict && !hasAdminRouteContent;
   // [PUBLICATION-GATE] F-2: a route whose data is genuinely broken/contradictory
   // (invalid route, malformed price, impossible stop total) must not be pushed
   // to the index — set noindex,follow so users still reach it but Google
