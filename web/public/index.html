@@ -423,7 +423,7 @@
           <select class="ksel" id="trip-sel" autocomplete="off" data-chg-fn="setTripSel">
             <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
             <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
-            <option value="mc">&#43; Mehrere Städte</option>
+            <option value="mc" data-i18n="trip_mc">&#43; Mehrere Städte</option>
           </select>
           <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
@@ -472,7 +472,7 @@
 
       <!-- Multi-city extra legs -->
       <div id="mc-legs" style="display:none"></div>
-      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" data-fn="mcAddLeg">+ Weiteren Stopp hinzufügen</button>
+      <button id="mc-add-btn" style="display:none;width:100%;background:transparent;border:2px dashed var(--teal);border-radius:12px;padding:12px;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px" data-fn="mcAddLeg" data-i18n="mc_add_stop">+ Weiteren Stopp hinzufügen</button>
 
       <!-- Dates combined field — tap to open calendar -->
       <div class="kfield kdates-field" id="dates-field">
@@ -789,10 +789,10 @@
 
 <!-- COOKIE -->
 <div class="ck" id="ck">
-  <div class="ck-t">🍪 Wir verwenden <strong>technisch notwendige Cookies</strong> für den Betrieb der Website. Keine Tracking- oder Marketing-Cookies. <a href="#" data-fn="openPg" data-fn-arg="privacy" data-pd>Datenschutz</a></div>
+  <div class="ck-t">🍪 <span data-i18n="cookie_text">Wir verwenden technisch notwendige Cookies für den Betrieb der Website. Keine Tracking- oder Marketing-Cookies.</span> <a href="#" data-fn="openPg" data-fn-arg="privacy" data-pd data-i18n="ft_privacy">Datenschutz</a></div>
   <div class="ck-bs">
-    <button class="ck-no">Nur notwendige</button>
-    <button class="ck-ok">Alle akzeptieren ✓</button>
+    <button class="ck-no" data-i18n="cookie_only_necessary">Nur notwendige</button>
+    <button class="ck-ok" data-i18n="cookie_accept_all">Alle akzeptieren ✓</button>
   </div>
 </div>
 <!-- BOTTOM NAV -->
@@ -922,8 +922,8 @@
     <div id="bookings-list">
       <div style="text-align:center;padding:48px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🎫</div>
-        <div style="font-size:15px;font-weight:700;color:var(--tx)">Noch keine Buchungen</div>
-        <div style="font-size:13px;color:var(--tx3);margin-top:6px">Deine gebuchten Flüge erscheinen hier</div>
+        <div style="font-size:15px;font-weight:700;color:var(--tx)" data-i18n="bookings_empty_title">Noch keine Buchungen</div>
+        <div style="font-size:13px;color:var(--tx3);margin-top:6px" data-i18n="bookings_empty_sub">Deine gebuchten Flüge erscheinen hier</div>
       </div>
     </div>
   </div>
@@ -1165,8 +1165,8 @@ E-Mail: <a href="mailto:support@airpiv.com">support@airpiv.com</a></p>
       <div class="rp-edit-row" style="grid-template-columns:1fr;margin-bottom:8px">
         <div class="ksel-wrap">
           <select class="ksel" id="rpe-trip-sel" data-chg-fn="rpSetTripSel">
-            <option value="rr">&#8644; Hin- und Rückreise</option>
-            <option value="ow">&#8594; Einfache Fahrt</option>
+            <option value="rr" data-i18n="trip_rr">&#8644; Hin- und Rückreise</option>
+            <option value="ow" data-i18n="trip_ow">&#8594; Einfache Fahrt</option>
           </select>
           <svg class="ksel-arr" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
