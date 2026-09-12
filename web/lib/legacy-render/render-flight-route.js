@@ -596,11 +596,18 @@ function buildRouteTitle(route, lang, names) {
   // rest of the page can't back up.
   const hasPrice = resolveCanonicalPrice(route) != null;
   const hasDistance = route.distance_km != null;
+  // [P2.1 DATA-TRUTH] The "Flight Time & Distance" facet title claims a flight
+  // time, so it may be used ONLY when a real observed duration exists — distance
+  // alone is never flight-time evidence (same rule as P0.1). A distance-only
+  // route falls back to the distance-only title, which names no flight time (and
+  // in Arabic, where the facts title named airlines, no airlines either).
+  const hasRealDuration = route.avg_duration_min != null || route.min_duration_min != null;
   const isDirect = route.all_direct === true || route.direct_flight_available === true;
   const key = hasPrice ? 'routeTitlePrimary'
-    : hasDistance ? 'routeTitleFacts'
-      : isDirect ? 'routeTitleDirect'
-        : 'routeTitleBase';
+    : (hasDistance && hasRealDuration) ? 'routeTitleFacts'
+      : hasDistance ? 'routeTitleDistance'
+        : isDirect ? 'routeTitleDirect'
+          : 'routeTitleBase';
   return format(translate(key, lang), vars);
 }
 
