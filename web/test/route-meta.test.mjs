@@ -22,7 +22,7 @@ const R = (over) => Object.assign(
 
 // ─── Title: natural language, brand suffix, never a price value ────────────
 test('title uses natural language, ends in the brand, and never contains a price value', () => {
-  const t = buildRouteTitle(R({ cached_price: 83, cached_currency: 'EUR' }), 'de');
+  const t = buildRouteTitle(R({ cached_price: 83, cached_currency: 'EUR', avg_duration_min: 90, airline_count: 3 }), 'de');
   assert.equal(t, 'Flüge von Amsterdam nach Rom – Preise, Flugzeit & Airlines | Airpiv');
   assert.doesNotMatch(t, /→/);
   assert.doesNotMatch(t, /€|\bab \d|\d+\s?€/);
@@ -31,7 +31,7 @@ test('title uses natural language, ends in the brand, and never contains a price
 
 test('title localizes (English primary, with price)', () => {
   assert.equal(
-    buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83 }), 'en'),
+    buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83, avg_duration_min: 90, airline_count: 3 }), 'en'),
     'Flights from Amsterdam to Rome – Prices, Flight Time & Airlines | Airpiv',
   );
 });
@@ -114,7 +114,7 @@ test('German page uses the engine-generated title/meta/body/FAQ when seo_lang ma
 });
 
 test('a non-German page does NOT use German generated content — localized default instead', () => {
-  const route = R({ seo_lang: 'de', seo_title: 'ENGINE DE TITLE', seo_meta_description: 'ENGINE DE META', seo_intro_html: '<p>Einzigartig.</p>', seo_faq: [{ question: 'X', answer: 'Y' }], destination_city: 'Rome', distance_km: 1297, direct_flight_available: true, cached_price: 83, cached_currency: 'EUR' });
+  const route = R({ seo_lang: 'de', seo_title: 'ENGINE DE TITLE', seo_meta_description: 'ENGINE DE META', seo_intro_html: '<p>Einzigartig.</p>', seo_faq: [{ question: 'X', answer: 'Y' }], destination_city: 'Rome', distance_km: 1297, direct_flight_available: true, cached_price: 83, cached_currency: 'EUR', avg_duration_min: 90, airline_count: 3 });
   const html = renderFlightRoutePage(route, 'en', [], { fromOrigin: [], toDestination: [] }).html;
   assert.doesNotMatch(html, /ENGINE DE TITLE/);
   // the actual <section> tag, not the class name (always present in the
@@ -136,7 +136,7 @@ test('a manual intro_text suppresses the generated body (manual wins)', () => {
 });
 
 test('with no manual/engine content, the generated default title+meta render', () => {
-  const html = renderFlightRoutePage(R({ distance_km: 1297, cached_price: 83, cached_currency: 'EUR', direct_flight_available: true }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
+  const html = renderFlightRoutePage(R({ distance_km: 1297, cached_price: 83, cached_currency: 'EUR', direct_flight_available: true, avg_duration_min: 90, airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] }).html;
   assert.match(html, /<title>Flüge von Amsterdam nach Rom – Preise, Flugzeit &amp; Airlines \| Airpiv<\/title>/);
   assert.match(html, /<meta name="description" content="Vergleiche Flugpreise, Flugzeit, Entfernung, Airlines und Direktflüge von Amsterdam nach Rom\. Jetzt Flüge auf Airpiv finden\. Flüge ab 83 €\.">/);
 });
@@ -145,4 +145,22 @@ test('with no manual/engine content, the generated default title+meta render', (
 test('the visible <h1> strips the facet clause and the brand', () => {
   const html = renderFlightRoutePage(R({ destination_city: 'Rome', cached_price: 83, cached_currency: 'EUR' }), 'en', [], { fromOrigin: [], toDestination: [] }).html;
   assert.match(html, /<h1>Flights from Amsterdam to Rome<\/h1>/);
+});
+
+// ─── [P2.1] title facet ladder: name only facets that are real ─────────────
+test('[P2.1] price-only route (no duration, no airlines) → Prices title, no false facets', () => {
+  const t = buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83 }), 'en');
+  assert.equal(t, 'Flights from Amsterdam to Rome – Prices | Airpiv');
+});
+test('[P2.1] price + real duration (no airlines) → Prices & Flight Time', () => {
+  const t = buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83, avg_duration_min: 90 }), 'en');
+  assert.equal(t, 'Flights from Amsterdam to Rome – Prices & Flight Time | Airpiv');
+});
+test('[P2.1] price + airlines (no duration) → Prices & Airlines', () => {
+  const t = buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83, airline_count: 4 }), 'en');
+  assert.equal(t, 'Flights from Amsterdam to Rome – Prices & Airlines | Airpiv');
+});
+test('[P2.1] price + duration + airlines → full primary', () => {
+  const t = buildRouteTitle(R({ destination_city: 'Rome', cached_price: 83, avg_duration_min: 90, airline_count: 4 }), 'en');
+  assert.equal(t, 'Flights from Amsterdam to Rome – Prices, Flight Time & Airlines | Airpiv');
 });

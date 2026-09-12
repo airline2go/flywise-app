@@ -602,12 +602,21 @@ function buildRouteTitle(route, lang, names) {
   // route falls back to the distance-only title, which names no flight time (and
   // in Arabic, where the facts title named airlines, no airlines either).
   const hasRealDuration = route.avg_duration_min != null || route.min_duration_min != null;
+  const hasAirlines = route.airline_count != null && route.airline_count > 0;
   const isDirect = route.all_direct === true || route.direct_flight_available === true;
-  const key = hasPrice ? 'routeTitlePrimary'
-    : (hasDistance && hasRealDuration) ? 'routeTitleFacts'
-      : hasDistance ? 'routeTitleDistance'
-        : isDirect ? 'routeTitleDirect'
-          : 'routeTitleBase';
+  // [P2.1 DATA-TRUTH] The title names only facets the route actually has. The
+  // three-facet "Prices, Flight Time & Airlines" primary is used ONLY when all
+  // three are real; otherwise the title steps down to the richest truthful
+  // variant (price+duration, price+airlines, price, duration+distance, distance,
+  // direct) rather than asserting a flight time or airline count it lacks.
+  const key = (hasPrice && hasRealDuration && hasAirlines) ? 'routeTitlePrimary'
+    : (hasPrice && hasRealDuration) ? 'routeTitlePriceDuration'
+      : (hasPrice && hasAirlines) ? 'routeTitlePriceAirlines'
+        : hasPrice ? 'routeTitlePriceOnly'
+          : (hasDistance && hasRealDuration) ? 'routeTitleFacts'
+            : hasDistance ? 'routeTitleDistance'
+              : isDirect ? 'routeTitleDirect'
+                : 'routeTitleBase';
   return format(translate(key, lang), vars);
 }
 
