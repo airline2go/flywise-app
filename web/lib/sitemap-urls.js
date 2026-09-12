@@ -28,6 +28,7 @@ import {
   sitemapAirlines,
   sitemapAirports,
   sitemapBlog,
+  getReviews,
 } from './content-api';
 import { LANGUAGE_CODES, urlFor } from './languages';
 import { buildCanonicalSlugMap } from './seo/route-canonical.mjs';
@@ -158,6 +159,20 @@ export async function buildPopularUrls() {
   return urls;
 }
 
+// [REVIEWS] The central /reviews hub in every language — but ONLY when it is
+// actually indexable (§27). The page renders `noindex` while it has zero
+// published reviews (thin), so it must not be listed until real reviews exist;
+// we gate on the live global aggregate. getReviews never throws, so a backend
+// blip simply omits /reviews (conservative) rather than listing a page that
+// might be noindex. No per-entry lastmod (a hub page, like /popular).
+export async function buildReviewsUrls() {
+  const { aggregate } = await getReviews({ limit: 1 });
+  if (!aggregate || !aggregate.count) return [];
+  const urls = [];
+  for (const lang of LANGS) urls.push({ loc: urlFor(lang, 'reviews'), lastmod: null });
+  return urls;
+}
+
 // Static marketing/legal pages (home + about + legal). The list + serialization
 // live in sitemap-serialize.mjs (pageUrls) so they're unit-testable without
 // importing this module's content-api/react dependency chain.
@@ -179,6 +194,7 @@ export const SITEMAP_TYPES = [
   { name: 'airlines', build: buildAirlineUrls },
   { name: 'blog', build: buildBlogUrls },
   { name: 'popular', build: buildPopularUrls },
+  { name: 'reviews', build: buildReviewsUrls },
 ];
 export const SITEMAP_BUILDERS = Object.fromEntries(SITEMAP_TYPES.map((t) => [t.name, t.build]));
 
