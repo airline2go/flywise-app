@@ -8,7 +8,7 @@ window.APP_CONFIG = {
   if (document.querySelector('script[data-fw-search-session]')) return;
   var s = document.createElement('script');
   s.src = '/search-session.js';
-  s.defer = true;
+  s.async = false;
   s.setAttribute('data-fw-search-session', '1');
   (document.head || document.documentElement).appendChild(s);
 })();
