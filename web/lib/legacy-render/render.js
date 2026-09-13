@@ -270,6 +270,17 @@ export async function renderFlightRouteHtml(slug, lang) {
   // (it would 301 to the winner) — drop losers from the related/city-link
   // candidate list so every internal link points straight at the canonical URL.
   const linkList = loserMap.size ? routeList.filter((r) => !loserMap.has(r.slug)) : routeList;
+  // [F2-RECIPROCAL] The return-direction route (destination→origin), taken from
+  // linkList so it is guaranteed indexable and non-consolidated (a loser is
+  // already filtered out) — i.e. a slug that actually renders, never a 301/404.
+  // computeRelatedRoutes deliberately EXCLUDES this reverse direction from the
+  // "similar routes" grid, so surfacing it here as one explicit, labelled
+  // "return flight" link is what makes the Ibiza⇄Frankfurt-style pair reciprocal
+  // without duplicating it in the related grid. null when the reverse route
+  // doesn't exist as its own page.
+  const reverseRoute = (routeRaw.origin_iata && routeRaw.destination_iata)
+    ? (linkList.find((r) => r.origin_iata === routeRaw.destination_iata && r.destination_iata === routeRaw.origin_iata) || null)
+    : null;
   const related = computeRelatedRoutes(routeRaw, linkList);
   const cityLinks = computeCityRouteLinks(routeRaw, linkList, new Set(related.map((x) => x.slug)));
   const relatedArticles = computeRelatedArticles(routeRaw, posts);
@@ -281,7 +292,7 @@ export async function renderFlightRouteHtml(slug, lang) {
   const reviewsData = await getReviews({ route: slug, limit: 6 });
   const reviewsHref = lang === 'de' ? '/reviews' : `/${lang}/reviews`;
   const reviewsSection = renderRouteReviewsSection(reviewsData, lang, reviewsHref);
-  const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles, reviewsSection).html;
+  const out = renderFlightRoutePage(routeRaw, lang, related, cityLinks, relatedArticles, reviewsSection, reverseRoute).html;
   console.log(JSON.stringify({ tag: 'flight-render', event: 'cache-miss', slug, lang, duffel: false, ms: Date.now() - t0 }));
   return out;
 }

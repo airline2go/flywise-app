@@ -145,3 +145,21 @@ test('the winner (no canonicalSlug) still self-canonicals', () => {
   const { html } = renderFlightRoutePage(route({ slug: 'amsterdam-vienna' }), 'en', [], [], []);
   assert.equal(canonical(html), 'https://airpiv.com/en/flights/amsterdam-vienna');
 });
+
+// ─── F2: reciprocal return-flight internal link ─────────────────────────────
+const reverse = { slug: 'wien-amsterdam', origin_city: 'Wien', origin_iata: 'VIE', destination_city: 'Amsterdam', destination_iata: 'AMS' };
+
+test('renders one labelled return-flight link when the reverse route exists', () => {
+  const { html } = renderFlightRoutePage(route({ slug: 'amsterdam-vienna' }), 'en', [], [], [], '', reverse);
+  assert.ok(html.includes('Return flight'), 'the return-flight heading is shown');
+  assert.ok(html.includes('href="/en/flights/wien-amsterdam"'), 'links to the reverse-direction route page');
+  // Localised endpoints (VIE → Vienna) and the → separator, exactly one card.
+  assert.ok(html.includes('Vienna → Amsterdam'), 'reverse card shows localized city names');
+  assert.equal((html.match(/flights\/wien-amsterdam/g) || []).length, 1, 'exactly one reverse link, not a spammy block');
+});
+
+test('omits the return-flight section entirely when no reverse route is passed', () => {
+  const { html } = renderFlightRoutePage(route({ slug: 'amsterdam-vienna' }), 'en', [], [], [], '', null);
+  assert.ok(!html.includes('Return flight'), 'no return-flight heading');
+  assert.ok(!html.includes('wien-amsterdam'), 'no reverse link');
+});
