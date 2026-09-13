@@ -29,6 +29,7 @@ function buildOpportunityReport(rawRows, overlay = {}) {
     return {
       url: r.url,
       slug: r.slug,
+      pageType: r.pageType, // 'flight-route' | 'city' | 'airport' | 'airline' | 'country' | 'blog' | 'home'
       language: r.language,
       primaryQuery: r.primaryQuery, // null when the export had no query column
       impressions: r.impressions,

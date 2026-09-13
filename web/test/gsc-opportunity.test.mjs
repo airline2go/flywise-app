@@ -116,8 +116,11 @@ test('normalizeGscRows dedupes duplicate/per-query rows into one aggregated per-
 test('normalizeGscRows tolerates junk rows without throwing', () => {
   assert.deepEqual(normalizeGscRows(null), []);
   assert.deepEqual(normalizeGscRows('nope'), []);
+  // Junk (null / empty / no-URL) is dropped; a real entity URL is kept and typed.
   const rows = normalizeGscRows([null, {}, { foo: 'bar' }, { page: '/city/x', impressions: 5, position: 3 }]);
-  assert.equal(rows.length, 0); // none are flights URLs / usable
+  assert.equal(rows.length, 1); // the /city/x row is now a recognized entity page
+  assert.equal(rows[0].pageType, 'city');
+  assert.equal(rows[0].slug, 'x');
 });
 
 test('clicks stay null (unknown) when no row carried a click value', () => {
