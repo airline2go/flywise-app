@@ -44,13 +44,17 @@ test('parses an Arabic GSC Pages export (localized headers, dot decimals)', () =
   ].join('\n');
   const { rows, meta } = parseGscCsv(csv);
   assert.deepEqual(meta.columns, { url: 0, clicks: 1, impressions: 2, position: 4 });
-  // The bare "/" home page (no /flights/ slug) is dropped by the normalizer.
+  // Every entity page is kept now — including the bare "/" home page, which is a
+  // real ranking page (pageType 'home'), not junk to drop.
   const report = buildOpportunityReport(rows);
-  assert.equal(report.length, 2);
+  assert.equal(report.length, 3);
   assert.equal(report[0].slug, 'madrid-ibiza'); // BREAKOUT sorts first
   assert.equal(report[0].category, 'BREAKOUT');
   assert.equal(report[1].slug, 'hamburg-barcelona-2');
   assert.equal(report[1].category, 'VERY_HIGH');
+  const home = report.find((r) => r.pageType === 'home');
+  assert.ok(home, 'home page should be included');
+  assert.equal(home.slug, 'home');
 });
 
 test('strips a UTF-8 BOM and ignores blank trailing lines', () => {
