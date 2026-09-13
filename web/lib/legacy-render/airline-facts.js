@@ -53,7 +53,17 @@ function computeAirlineFacts(airline, routes, routeMetaBySlug, lang) {
     countries,
     countryCount: countries.length,
     distances,
-    hub: typeof airline.hubAirport === 'string' && airline.hubAirport ? airline.hubAirport : null,
+    // [HUB-PROVENANCE] Only an ADMIN-VERIFIED hub (airline.hubSource === 'admin',
+    // i.e. airlines.hub_iata was hand-set) may be asserted as the airline's "main
+    // hub" — in the intro sentence, the hub FAQ (which also feeds FAQPage JSON-LD)
+    // and the definitive hub badge. The server's INFERRED hub (the airport most
+    // frequent across the routes WE observe) is often wrong — e.g. KLM inferred
+    // as FRA (really AMS), Air Transat as LAX (really YUL) — because observations
+    // are catalogue-biased, so stating it as the official hub is misinformation.
+    // The inferred value is still surfaced, but only under an honest
+    // "most-served on our routes" label (topAirport), never as a fact-claim.
+    hub: (airline.hubSource === 'admin' && typeof airline.hubAirport === 'string' && airline.hubAirport) ? airline.hubAirport : null,
+    topAirport: (airline.hubSource !== 'admin' && typeof airline.hubAirport === 'string' && airline.hubAirport) ? airline.hubAirport : null,
   };
 }
 

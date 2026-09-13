@@ -128,6 +128,7 @@
   "routeFaqAltAirportsQuestion": "{destination} yakınında başka havalimanları var mı?",
   "routeFaqAltAirportsAnswer": "{destination} şehrine ayrıca {airports} hizmet verir; fiyat veya kolaylık açısından karşılaştırmaya değer olabilir.",
   "airlineHubLabel": "Merkez üs",
+  "airlineTopAirportLabel": "Rotalarımızda en çok hizmet verilen havalimanı",
   "airlineMostFlownRoutesLabel": "En çok uçulan rotalar",
   "airportTravelerInfoHeading": "Yolcu bilgileri",
   "airportDistanceCityCenterLabel": "Şehir merkezine uzaklık",
