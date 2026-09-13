@@ -1,14 +1,14 @@
 (function () {
   var base = 'https://airpiv.com';
 
-  // Language homes served under a prefix. German is BOTH the unprefixed root (/)
-  // and a distinct prefixed home (/de, self-canonical /de). Keep in sync with
+  // Language homes served under a prefix. German is the unprefixed root (/) only
+  // — there is no /de home (/de 301-redirects to /). Keep in sync with
   // next.config.mjs LANG_HOMES, lib/home-i18n.mjs HOME_LANGS, and the hreflang
   // tags in <head>.
   var HOME_LANGS = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
-  // Prefixes that must self-canonical to /<seg> (includes 'de' so /de does NOT
-  // collapse back to the root — the P2-4 fix; only the bare root / is canonical /).
-  var PREFIXED = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr', 'de'];
+  // Prefixes that must self-canonical to /<seg>. German is NOT here: the only
+  // German URL is the bare root / (canonical /); /de 301s to / and never renders.
+  var PREFIXED = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
 
   var path = window.location.pathname;
   var clean = path.length > 1 ? path.replace(/\/+$/, '') : path; // drop trailing slash (except root)

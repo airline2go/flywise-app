@@ -17,19 +17,23 @@
 //
 // scripts/prerender-localized-homes.mjs writes one public/<lang>.html per
 // language; next.config.mjs rewrites /<lang> → /<lang>.html. URLs are unchanged.
-// The German root (/) keeps serving index.html verbatim (canonical /); /de is a
-// distinct self-canonical German page (canonical /de). canonical-fix.js stays as
-// a redundant client-side safety net that now re-applies identical values.
+// The German root (/) keeps serving index.html verbatim (canonical /); there is
+// no separate /de page — /de 301-redirects to /. canonical-fix.js stays as a
+// redundant client-side safety net that re-applies identical values.
 
 import { parse } from 'node-html-parser';
 import { localizeLinks } from './link-localize.mjs';
 
 export const SITE = 'https://airpiv.com';
 
-// Every language that gets its own build-time public/<lang>.html. German IS
-// included here (served at /de, self-canonical /de) — but the bare root / still
-// serves index.html verbatim (canonical /), so both German URLs exist by design.
-export const HOME_LANGS = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr', 'de'];
+// Every language that gets its own build-time public/<lang>.html.
+// German is NOT a prefixed home: it is served as the verbatim public/index.html
+// at the bare root `/` (canonical `/`, hreflang de→`/`), which is exactly what
+// the sitemap lists and what all SSR entity pages point their `de` alternate at
+// (unprefixed root). Only the seven non-default languages get a generated
+// /<lang> home. `/de` 301-redirects to `/` (see next.config.mjs) so there is one
+// German URL, not two — resolving the former dual-canonical (/ vs /de) duplicate.
+export const HOME_LANGS = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
 
 // title (t), description (d), og:locale (ogl) per language — mirrors
 // public/canonical-fix.js META, plus a `de` entry (the values already static in
@@ -136,7 +140,9 @@ export function translate(translations, lang, key) {
 function localizeHead(html, lang) {
   const m = HOME_META[lang];
   if (!m) throw new Error(`unknown home language: ${lang}`);
-  const url = `${SITE}/${lang}`;
+  // German is the unprefixed root (its canonical is `/`, not `/de`); every other
+  // language is self-canonical at `/<lang>`.
+  const url = lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`;
   let out = html;
   out = out.replace(/(<html\s+lang=")[^"]*(")/i, (_x, a, b) => a + lang + b);
   // [P1.9/RTL] Arabic is right-to-left; every other home language is LTR. The
@@ -168,14 +174,15 @@ function setMetaProp(html, prop, value) {
   return html.replace(re, (_x, a, b) => a + escAttr(value) + b);
 }
 
-// [P2-4] The <de> alternate must point at the real German page /de (a distinct
-// self-canonical URL) instead of the root, so the hreflang cluster and every
-// page's self-canonical agree. x-default stays on the root (/). Idempotent, and
-// applied to the root index.html too so the whole cluster is consistent.
+// The German alternate must point at the bare root `/` — the single German URL
+// (canonical `/`, the one the sitemap lists and every SSR page's `de` alternate
+// targets). This normalizes any stray `/de` in a source cluster back to `/`, so
+// every generated home advertises `de → /` and no page resurrects the retired
+// second German URL. x-default also stays on `/`. Idempotent.
 export function fixHreflangCluster(html) {
   return html.replace(
-    /(<link\s+rel="alternate"\s+hreflang="de"\s+href="https:\/\/airpiv\.com)\/(">)/i,
-    (_x, a, b) => `${a}/de${b}`,
+    /(<link\s+rel="alternate"\s+hreflang="de"\s+href="https:\/\/airpiv\.com)\/de(">)/i,
+    (_x, a, b) => `${a}/${b}`,
   );
 }
 

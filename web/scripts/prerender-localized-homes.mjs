@@ -49,8 +49,11 @@ function assertGeneratedFile(html, lang, translations) {
   if (!new RegExp(`<html\\s+lang="${lang}"`).test(html)) throw new Error(`${lang}.html: <html lang> is not "${lang}"`);
   if (!html.includes(`href="${url}" id="canonical-url"`)) throw new Error(`${lang}.html: canonical is not self (${url})`);
   if (!html.includes(`<title>${escText(HOME_META[lang].t)}</title>`)) throw new Error(`${lang}.html: <title> not localized`);
-  // hreflang cluster consistency: de alternate must point at /de.
-  if (!html.includes('hreflang="de" href="https://airpiv.com/de"')) throw new Error(`${lang}.html: hreflang de not /de`);
+  // hreflang cluster consistency: the German alternate points at the bare root
+  // `/` (the single German URL — sitemap-listed, self-canonical), never a
+  // retired `/de`.
+  if (!html.includes('hreflang="de" href="https://airpiv.com/"')) throw new Error(`${lang}.html: hreflang de not root /`);
+  if (html.includes('hreflang="de" href="https://airpiv.com/de"')) throw new Error(`${lang}.html: hreflang de still points at retired /de`);
   if (lang !== 'de') {
     // The German homepage title/description must NOT survive in another language.
     if (html.includes(`<title>${escText(HOME_META.de.t)}</title>`)) throw new Error(`${lang}.html: German <title> leaked`);

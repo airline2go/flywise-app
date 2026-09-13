@@ -37,6 +37,16 @@ const nextConfig = {
         destination: '/blog',
         statusCode: 301,
       },
+      // German has ONE URL: the bare root /. The former distinct /de home is
+      // retired (it created a dual-canonical / vs /de duplicate that contradicted
+      // the sitemap and every SSR page, whose `de` alternate targets the
+      // unprefixed root). /de 301s to / so any already-discovered /de link
+      // consolidates onto the canonical root.
+      {
+        source: '/de',
+        destination: '/',
+        statusCode: 301,
+      },
     ];
   },
 
@@ -59,11 +69,11 @@ const nextConfig = {
   // exist on production (it 404s), so only the root path is rewritten and the
   // React [lang]/search routes are removed.
   async rewrites() {
-    // [P2-4] German is now also a distinct localized home at /de (self-canonical
-    // /de), in addition to the bare root /. The other seven prefixes are as
-    // before. Keep this list in sync with lib/home-i18n.mjs HOME_LANGS and
-    // public/canonical-fix.js.
-    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr', 'de'];
+    // The seven non-default languages each serve their own build-time localized
+    // home (public/<lang>.html). German is NOT here: it is the verbatim root /
+    // (see the /de → / 301 in redirects() above). Keep this list in sync with
+    // lib/home-i18n.mjs HOME_LANGS and public/canonical-fix.js.
+    const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
