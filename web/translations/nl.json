@@ -129,6 +129,7 @@
   "routeFaqAltAirportsQuestion": "Zijn er andere luchthavens in de buurt van {destination}?",
   "routeFaqAltAirportsAnswer": "{destination} wordt ook bediend door {airports}, wat de moeite waard kan zijn om te vergelijken qua prijs of gemak.",
   "airlineHubLabel": "Hub",
+  "airlineTopAirportLabel": "Meest bediende luchthaven op onze routes",
   "airlineMostFlownRoutesLabel": "Meest gevlogen routes",
   "airportTravelerInfoHeading": "Reizigersinformatie",
   "airportDistanceCityCenterLabel": "Afstand tot stadscentrum",

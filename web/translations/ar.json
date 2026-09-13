@@ -129,6 +129,7 @@
   "routeFaqAltAirportsQuestion": "هل توجد مطارات أخرى قريبة من {destination}؟",
   "routeFaqAltAirportsAnswer": "تخدم {destination} أيضاً مطارات {airports}، وقد يستحق الأمر مقارنتها من ناحية السعر أو الراحة.",
   "airlineHubLabel": "المحور الرئيسي",
+  "airlineTopAirportLabel": "الأكثر ظهورًا على مساراتنا",
   "airlineMostFlownRoutesLabel": "أكثر الخطوط تشغيلاً",
   "airportTravelerInfoHeading": "معلومات للمسافر",
   "airportDistanceCityCenterLabel": "المسافة عن مركز المدينة",

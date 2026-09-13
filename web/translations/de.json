@@ -129,6 +129,7 @@
   "routeFaqAltAirportsQuestion": "Gibt es weitere Flughäfen in der Nähe von {destination}?",
   "routeFaqAltAirportsAnswer": "{destination} wird auch von {airports} angeflogen — ein Vergleich kann sich hinsichtlich Preis oder Komfort lohnen.",
   "airlineHubLabel": "Drehkreuz",
+  "airlineTopAirportLabel": "Meistbedienter Flughafen auf unseren Strecken",
   "airlineMostFlownRoutesLabel": "Meistgeflogene Strecken",
   "airportTravelerInfoHeading": "Informationen für Reisende",
   "airportDistanceCityCenterLabel": "Entfernung zum Stadtzentrum",

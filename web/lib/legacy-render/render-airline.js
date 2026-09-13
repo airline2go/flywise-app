@@ -72,8 +72,17 @@ function renderAirlinePage(airline, routes, lang, mostUsedRoutes, routeMetaBySlu
 
   const breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span><span>${escHtml(airline.name)}</span></nav>`;
 
-  const hubAirportHtml = airline.hubAirport
-    ? `<a class="airline-hub-badge" href="${pathFor(lang, `airport/${encodeURIComponent(airline.hubAirport)}`)}">✈ ${translate('airlineHubLabel', lang)}: ${escHtml(airline.hubAirport)}</a>`
+  // [HUB-PROVENANCE] An admin-verified hub gets the definitive "Hub" label; an
+  // inferred top airport gets an honest "most-served on our routes" label
+  // instead of a false hub claim (see airline-facts.js). Both link to the
+  // airport page; neither renders when the airline has no hub/top airport.
+  const hubBadge = facts.hub
+    ? { code: facts.hub, label: translate('airlineHubLabel', lang) }
+    : facts.topAirport
+      ? { code: facts.topAirport, label: translate('airlineTopAirportLabel', lang) }
+      : null;
+  const hubAirportHtml = hubBadge
+    ? `<a class="airline-hub-badge" href="${pathFor(lang, `airport/${encodeURIComponent(hubBadge.code)}`)}">✈ ${escHtml(hubBadge.label)}: ${escHtml(hubBadge.code)}</a>`
     : '';
 
   function routeCardHtml(r) {

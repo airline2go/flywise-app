@@ -129,6 +129,7 @@
   "routeFaqAltAirportsQuestion": "Ci sono altri aeroporti vicino a {destination}?",
   "routeFaqAltAirportsAnswer": "{destination} è servita anche da {airports}, che può valere la pena confrontare per prezzo o comodità.",
   "airlineHubLabel": "Hub principale",
+  "airlineTopAirportLabel": "Aeroporto più servito sulle nostre rotte",
   "airlineMostFlownRoutesLabel": "Tratte più frequenti",
   "airportTravelerInfoHeading": "Informazioni per i viaggiatori",
   "airportDistanceCityCenterLabel": "Distanza dal centro città",
