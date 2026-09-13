@@ -56,6 +56,52 @@ test('rows missing a slug or IATA code are skipped safely', () => {
   assert.equal(m.size, 0);
 });
 
+// ─── renderability guard (never 301 → 404) ─────────────────────────────────
+// A canonical winner MUST be a slug the route DETAIL endpoint can serve. List-
+// feed membership is not proof of that (a list row can have no servable detail),
+// so an optional isRenderable predicate filters candidates before a winner is
+// picked. These pin the guarantee: the map can never map a loser to a non-
+// renderable winner — the exact defect that made a ranking page 301 into a 404.
+test('winner selection skips a non-renderable preferred (city-name) slug', () => {
+  // City-name slug is preferred by the slug-only rule but does NOT render;
+  // the renderable IATA slug must win instead — never a 301 → 404.
+  const renderable = new Set(['ams-vie']); // amsterdam-vienna is a dead list-only row
+  assert.equal(
+    pickCanonicalSlug(['ams-vie', 'amsterdam-vienna'], (s) => renderable.has(s)),
+    'ams-vie',
+  );
+});
+
+test('buildCanonicalSlugMap never maps a loser to a non-renderable winner', () => {
+  const rows = [
+    { slug: 'ams-vie', origin_iata: 'AMS', destination_iata: 'VIE' }, // renders
+    { slug: 'amsterdam-vienna', origin_iata: 'AMS', destination_iata: 'VIE' }, // dead list-only row
+  ];
+  const renderable = new Set(['ams-vie']);
+  const m = buildCanonicalSlugMap(rows, (s) => renderable.has(s));
+  // The dead city-name slug is a loser now, redirecting to the renderable IATA winner.
+  assert.equal(m.get('amsterdam-vienna'), 'ams-vie');
+  // And the target is guaranteed renderable — the core invariant.
+  for (const winner of m.values()) assert.ok(renderable.has(winner), `winner ${winner} must render`);
+});
+
+test('a pair with NO renderable slug is dropped entirely (no redirect at all)', () => {
+  const rows = [
+    { slug: 'aaa-bbb', origin_iata: 'AAA', destination_iata: 'BBB' },
+    { slug: 'ghost-city', origin_iata: 'AAA', destination_iata: 'BBB' },
+  ];
+  const m = buildCanonicalSlugMap(rows, () => false); // nothing renders
+  assert.equal(m.size, 0, 'no consolidation when no slug in the pair renders');
+});
+
+test('with no predicate the winner rule is unchanged (sitemap parity preserved)', () => {
+  const rows = [
+    { slug: 'fra-ber', origin_iata: 'FRA', destination_iata: 'BER' },
+    { slug: 'frankfurt-berlin', origin_iata: 'FRA', destination_iata: 'BER' },
+  ];
+  assert.equal(buildCanonicalSlugMap(rows).get('fra-ber'), 'frankfurt-berlin');
+});
+
 // ─── renderer override ─────────────────────────────────────────────────────
 const require = createRequire(import.meta.url);
 const { setGeoData } = require('../lib/legacy-render/data.js');

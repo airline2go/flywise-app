@@ -8,9 +8,9 @@
 // via data.setGeoData(); we populate them per-process from the same /cities +
 // /countries lists the build script used. content-api's fetch cache handles
 // revalidation of the underlying data.
-import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, listRoutePages, getBlogPost, listBlogPosts, getReviews } from '../content-api';
+import { listCities, listCountries, listAirports, listAirlines, getCity, getCountry, getAirport, getAirline, getRoutePage, routeRenders, listRoutePages, getBlogPost, listBlogPosts, getReviews, resolvePersistentRedirect } from '../content-api';
 import { computeRelatedRoutes } from '../related-routes';
-import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
+import { buildCanonicalSlugMap, groupSlugsByPair } from '../seo/route-canonical.mjs';
 import { buildTitleDisambiguationMap } from '../seo/route-title.mjs';
 import { airportEntriesFromRoutes } from '../sitemap-serialize.mjs';
 import { localizeLinks } from '../link-localize.mjs';
@@ -181,9 +181,58 @@ function computeCityRouteLinks(route, routeList, relatedSlugs) {
 // the <link rel="canonical">/sitemap winner can never disagree. Returns the
 // winner slug, or null when `slug` is a winner or a unique route (render as
 // normal). Single hop by construction: a winner is never itself a loser.
+//
+// [RENDERABILITY-GUARD] The winner is now verified against the route DETAIL
+// endpoint before it is ever returned: a slug that only exists in the /route-
+// pages LIST feed but has no servable detail must NEVER be a redirect target
+// (that is the 301 → 404 bug that dropped ranking pages). We probe only the
+// slugs that share `slug`'s airport pair — the map is empty unless a pair has
+// 2+ slugs — so this costs at most a couple of (ISR-cached) detail fetches and
+// only for a slug that is already a consolidation candidate.
 export async function resolveCanonicalRedirect(slug) {
   const routeList = await listRoutePages();
-  return buildCanonicalSlugMap(routeList).get(slug) || null;
+  // Fast path: under the slug-only rule, is this slug even a loser? If not, no
+  // consolidation applies and we never touch the detail endpoint.
+  if (!buildCanonicalSlugMap(routeList).has(slug)) return null;
+  // It is a consolidation candidate — verify renderability of its pair-mates and
+  // pick a winner only among slugs that actually render.
+  const pairMates = pairMatesForSlug(routeList, slug);
+  const renderable = new Set();
+  await Promise.all(pairMates.map(async (s) => { if (await routeRenders(s)) renderable.add(s); }));
+  const winner = buildCanonicalSlugMap(routeList, (s) => renderable.has(s)).get(slug) || null;
+  return winner && winner !== slug ? winner : null;
+}
+
+// The other slugs (including `slug`) that share `slug`'s airport pair.
+function pairMatesForSlug(routeList, slug) {
+  for (const slugs of groupSlugsByPair(routeList).values()) {
+    if (slugs.includes(slug)) return [...new Set(slugs)];
+  }
+  return [slug];
+}
+
+// [VERIFIED-REDIRECT] The ONE place that decides whether a flight-route request
+// redirects, and to where — used by both the German (root) and the localized
+// route handlers so the "never redirect to a non-renderable route" guarantee
+// lives in a single spot instead of being duplicated per handler. Order matches
+// the previous inline logic: a persistent (admin/loser-cleanup) redirect wins
+// over the live canonical backstop. The difference is that BOTH candidate
+// targets are now verified renderable before we commit to the redirect:
+//   • persistent target that no longer renders → skip it, fall through;
+//   • canonical winner is already renderability-verified inside
+//     resolveCanonicalRedirect.
+// If nothing verifies, we return null and the caller renders the slug itself
+// (an honest 200 when it has data, or an honest 404 when it does not) — never a
+// 301 to a 404. Returns { target, status } or null. The target is the canonical
+// SLUG only; the caller wraps it with pathFor(lang, …) for the right language.
+export async function resolveFlightRedirect(slug) {
+  const persistent = await resolvePersistentRedirect(slug);
+  if (persistent && persistent.target !== slug && (await routeRenders(persistent.target))) {
+    return { target: persistent.target, status: persistent.status || 301 };
+  }
+  const winner = await resolveCanonicalRedirect(slug);
+  if (winner) return { target: winner, status: 301 };
+  return null;
 }
 
 export async function renderFlightRouteHtml(slug, lang) {

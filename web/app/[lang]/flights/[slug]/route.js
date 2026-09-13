@@ -2,10 +2,9 @@
 // for the requested language, see lib/legacy-render/render.js. Route Handlers
 // aren't wrapped by [lang]/layout.js, so the language prefix is validated here:
 // an unknown or default-language (/de/…) prefix 404s, matching production.
-import { renderFlightRouteHtml, resolveCanonicalRedirect } from '@/lib/legacy-render/render';
+import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
 import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
-import { resolvePersistentRedirect } from '@/lib/content-api';
 
 export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
@@ -16,11 +15,10 @@ export function generateStaticParams() {
 export async function GET(_req, { params }) {
   const { lang, slug } = await params;
   if (!isPrefixedLang(lang)) return htmlResponse(null);
-  // [P0-4] Persistent redirect FIRST — durable across loser-row deletion.
-  const persistent = await resolvePersistentRedirect(slug);
-  if (persistent) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(persistent.target)}`), persistent.status);
-  // [F1] Backstop for live losers not yet in route_redirects.
-  const winner = await resolveCanonicalRedirect(slug);
-  if (winner) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(winner)}`));
+  // [VERIFIED-REDIRECT] Persistent redirect then canonical backstop, applied by
+  // resolveFlightRedirect — which only ever returns a target that renders, so no
+  // localized URL can 301 into a 404 either. null → render the slug in `lang`.
+  const redirect = await resolveFlightRedirect(slug);
+  if (redirect) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
   return htmlResponse(await renderFlightRouteHtml(slug, lang));
 }
