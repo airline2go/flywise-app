@@ -6,5 +6,6 @@ window.APP_CONFIG = {
   // The site-wide Google tag (G-2K257GSWEM) is loaded once by consent.js and
   // reused to also initialise Google Ads (no second gtag/GA/Ads script).
   GOOGLE_ADS_CONVERSION_ID: "AW-18336159187",
-  GOOGLE_ADS_PURCHASE_LABEL: "6phDCL3BqvAcENOrrqdE"
+  GOOGLE_ADS_PURCHASE_LABEL: "6phDCL3BqvAcENOrrqdE",
+  TURNSTILE_SITE_KEY: ""
 };
