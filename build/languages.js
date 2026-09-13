@@ -1,3 +1,11 @@
+// ============================================================================
+// ⚠️  DEPRECATED — NOT the production renderer.
+// Production renders every route/entity/blog page through web/lib/legacy-render/
+// (served by web/app/[lang]/…/route.js). Editing THIS file does NOT affect the
+// live site. These generators are retained only for the non-blocking build-check
+// CI smoke test; their HTML is deployed nowhere. See build/README.md — make
+// changes in web/, never here.
+// ============================================================================
 // Canonical list of the platform's 7 languages — the single source of
 // truth for build/generate-pages.js and every render-*.js file. Adding
 // language #8 in the future means adding one entry here (plus a
