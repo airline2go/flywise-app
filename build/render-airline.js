@@ -1,3 +1,11 @@
+// ============================================================================
+// ⚠️  DEPRECATED — NOT the production renderer.
+// Production renders every route/entity/blog page through web/lib/legacy-render/
+// (served by web/app/[lang]/…/route.js). Editing THIS file does NOT affect the
+// live site. These generators are retained only for the non-blocking build-check
+// CI smoke test; their HTML is deployed nowhere. See build/README.md — make
+// changes in web/, never here.
+// ============================================================================
 // ⚠️ DEPRECATED — NOT the production renderer. The live site renders this
 // page type from web/lib/legacy-render/ (Next.js). Edit there + web/translations/,
 // not here. This copy is retained only for the non-blocking build-check CI

@@ -1,3 +1,11 @@
+// ============================================================================
+// ⚠️  DEPRECATED — NOT the production renderer.
+// Production renders every route/entity/blog page through web/lib/legacy-render/
+// (served by web/app/[lang]/…/route.js). Editing THIS file does NOT affect the
+// live site. These generators are retained only for the non-blocking build-check
+// CI smoke test; their HTML is deployed nowhere. See build/README.md — make
+// changes in web/, never here.
+// ============================================================================
 // [BUILD-STABILITY] Small, isolated fetch layer — bounded concurrency, a
 // per-request timeout, a short retry for transient failures, and pacing to
 // avoid bursting the API's rate limiter. Kept deliberately simple (no

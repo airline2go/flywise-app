@@ -1,3 +1,11 @@
+// ============================================================================
+// ⚠️  DEPRECATED — NOT the production renderer.
+// Production renders every route/entity/blog page through web/lib/legacy-render/
+// (served by web/app/[lang]/…/route.js). Editing THIS file does NOT affect the
+// live site. These generators are retained only for the non-blocking build-check
+// CI smoke test; their HTML is deployed nowhere. See build/README.md — make
+// changes in web/, never here.
+// ============================================================================
 const fs = require('fs');
 const path = require('path');
 const { LANGUAGE_CODES, DEFAULT_LANGUAGE } = require('./languages');

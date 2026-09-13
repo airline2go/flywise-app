@@ -102,16 +102,27 @@ test('[P1-9] a non-de/en post uses its own locale for inLanguage (it-IT), not en
 });
 
 test('[P1-9] internal route links on a non-en post use that language path, not German /flights/', () => {
+  // Geo must be populated so the CONTEXTUAL matcher (detectCitiesInText +
+  // slugForIata) recognizes Roma/Milano and links the route — the blog→route
+  // block is contextual-only (#16), it no longer falls back to generic routes.
+  setGeoData(
+    [
+      { city_slug: 'roma', airport_codes: ['FCO'], translations: { de: 'Rom', en: 'Rome', it: 'Roma' } },
+      { city_slug: 'milano', airport_codes: ['LIN'], translations: { de: 'Mailand', en: 'Milan', it: 'Milano' } },
+    ],
+    [{ code: 'IT', translations: { de: 'Italien', en: 'Italy', it: 'Italia' } }],
+  );
   const routes = [{
     slug: 'roma-milano', origin_iata: 'FCO', destination_iata: 'LIN',
     origin_city: 'Roma', destination_city: 'Milano',
   }];
-  // Post text mentions the cities so the popular-routes block links them.
-  const p = post({ title: 'Voli Roma Milano', content: '<p>Voli da Roma a Milano, Roma e Milano sono collegate ogni giorno con molti voli diretti tra Roma e Milano.</p>' });
+  // Post text mentions the cities (as IATA codes, always detected) so the
+  // contextual popular-routes block links them.
+  const p = post({ title: 'Voli FCO LIN', content: '<p>Voli da FCO a LIN, collegamenti diretti ogni giorno.</p>' });
   const { html } = renderBlogPostPage(p, routes, [], 'it');
-  // If any route link rendered, it must be under /it/flights/, never the German root /flights/.
-  if (/post-route-link/.test(html)) {
-    assert.match(html, /href="\/it\/flights\//);
-    assert.doesNotMatch(html, /href="\/flights\//);
-  }
+  // The contextual block rendered a route link; it must be under /it/flights/,
+  // never the German root /flights/.
+  assert.match(html, /href="\/it\/flights\/roma-milano"/);
+  assert.doesNotMatch(html, /href="\/flights\//);
+  setGeoData([], []); // restore the file's shared empty-geo baseline
 });

@@ -1,3 +1,11 @@
+// ============================================================================
+// ⚠️  DEPRECATED — NOT the production renderer.
+// Production renders every route/entity/blog page through web/lib/legacy-render/
+// (served by web/app/[lang]/…/route.js). Editing THIS file does NOT affect the
+// live site. These generators are retained only for the non-blocking build-check
+// CI smoke test; their HTML is deployed nowhere. See build/README.md — make
+// changes in web/, never here.
+// ============================================================================
 // [STRICT-VALIDATION] Every generated page must carry real SEO content
 // before it's written — a page failing this check is skipped entirely
 // (never published with missing/empty SEO elements), matching the "no

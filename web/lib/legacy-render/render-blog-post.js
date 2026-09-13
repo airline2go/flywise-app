@@ -23,25 +23,25 @@ function buildPopularRoutesHtml(post, allRoutes, lang) {
   const de = lang !== 'en';
   const { localizeCity, slugForIata } = require('./data');
   const detectedSlugs = new Set(detectCitiesInText(`${post.title || ''} ${(post.content || '').replace(/<[^>]+>/g, ' ')}`));
-  if (!allRoutes || !allRoutes.length) return '';
-  let heading = de ? '✈ Beliebte Flugverbindungen' : '✈ Popular flight routes';
-  let chosen = allRoutes.slice(0, 4);
-  if (detectedSlugs.size) {
-    // Score by canonical city slug (resolved from each route's airport codes),
-    // so the exact route the article is about — both cities matched — ranks
-    // first, regardless of language or spelling.
-    const scored = allRoutes.map((r) => {
-      const oMatch = detectedSlugs.has(slugForIata(r.origin_iata));
-      const dMatch = detectedSlugs.has(slugForIata(r.destination_iata));
-      return { route: r, score: (oMatch ? 1 : 0) + (dMatch ? 1 : 0) };
-    }).filter((s) => s.score > 0);
-    if (scored.length) {
-      scored.sort((a, b) => b.score - a.score);
-      chosen = scored.map((s) => s.route).slice(0, 4);
-      heading = de ? '✈ Passende Flugverbindungen' : '✈ Matching flight routes';
-    }
-  }
-  if (!chosen.length) return '';
+  // [CONTEXTUAL-ONLY] (#16/#18) Link ONLY the routes this article actually
+  // mentions — a route whose origin or destination city appears in the post.
+  // The previous generic fallback (the first 4 routes of the list, "Popular
+  // flight routes") put the SAME unrelated links on every article that mentioned
+  // no known city: repetitive, low-value internal links that dilute relevance
+  // rather than build it. With no contextual match we now render nothing.
+  if (!allRoutes || !allRoutes.length || !detectedSlugs.size) return '';
+  // Score by canonical city slug (resolved from each route's airport codes), so
+  // the exact route the article is about — both cities matched — ranks first,
+  // regardless of language or spelling.
+  const scored = allRoutes.map((r) => {
+    const oMatch = detectedSlugs.has(slugForIata(r.origin_iata));
+    const dMatch = detectedSlugs.has(slugForIata(r.destination_iata));
+    return { route: r, score: (oMatch ? 1 : 0) + (dMatch ? 1 : 0) };
+  }).filter((s) => s.score > 0);
+  if (!scored.length) return '';
+  scored.sort((a, b) => b.score - a.score);
+  const chosen = scored.map((s) => s.route).slice(0, 4);
+  const heading = de ? '✈ Passende Flugverbindungen' : '✈ Matching flight routes';
   const cards = chosen.map((r) => {
     const oCity = localizeCity(r.origin_city, r.origin_iata, lang);
     const dCity = localizeCity(r.destination_city, r.destination_iata, lang);
@@ -367,4 +367,4 @@ ${prevNextHtml}
   return { html, seo: { title: `${post.title} | Airpiv Blog`, description, canonicalUrl: url, schema: articleSchema } };
 }
 
-module.exports = { renderBlogPostPage };
+module.exports = { renderBlogPostPage, buildPopularRoutesHtml };
