@@ -588,21 +588,27 @@ try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin:
 // [ROUTE-TITLE-DISAMBIGUATION] `names` (when present) overrides the plain city
 // names with airport-qualified labels so a distinct-airport route on the same
 // city pair gets a UNIQUE title; omitted → the clean city-name title as before.
-function buildRouteTitle(route, lang, names) {
+function buildRouteTitle(route, lang, snapshot, names) {
+  // Self-sufficient: derive the canonical snapshot from the route when a caller
+  // (e.g. a unit test) doesn't pass one, so this function ALWAYS gates facets on
+  // the SSOT rather than the raw row — there is no non-snapshot code path.
+  snapshot = snapshot || buildRouteSnapshot(route);
   const vars = { origin: (names && names.origin) || route.origin_city, destination: (names && names.destination) || route.destination_city };
-  // [CANONICAL-PRICE-SOURCE] The "Prices" facet appears only when the ONE
-  // canonical price resolver yields a value — the same source the meta
-  // description, hero and Offer use, so the title never promises a price the
-  // rest of the page can't back up.
-  const hasPrice = resolveCanonicalPrice(route) != null;
-  const hasDistance = route.distance_km != null;
+  // [SNAPSHOT-FACET-GATE] Every facet the title claims is gated on the ONE
+  // canonical snapshot — the same object the hero, route-facts, intro, FAQ and
+  // JSON-LD read — not on the raw route row. This closes the last leak where the
+  // title could advertise a facet (airlines/price/duration) computed differently
+  // from what the page actually shows (e.g. the stale scalar airline_count=19
+  // vs. the list-authoritative snapshot.airlineCount=8 the facts card displays).
+  const hasPrice = snapshot.price != null;
+  const hasDistance = snapshot.distanceKm != null;
   // [P2.1 DATA-TRUTH] The "Flight Time & Distance" facet title claims a flight
   // time, so it may be used ONLY when a real observed duration exists — distance
   // alone is never flight-time evidence (same rule as P0.1). A distance-only
   // route falls back to the distance-only title, which names no flight time (and
   // in Arabic, where the facts title named airlines, no airlines either).
-  const hasRealDuration = route.avg_duration_min != null || route.min_duration_min != null;
-  const hasAirlines = route.airline_count != null && route.airline_count > 0;
+  const hasRealDuration = snapshot.avgDurationMin != null || snapshot.minDurationMin != null;
+  const hasAirlines = snapshot.airlineCount != null && snapshot.airlineCount > 0;
   const isDirect = route.all_direct === true || route.direct_flight_available === true;
   // [P2.1 DATA-TRUTH] The title names only facets the route actually has. The
   // three-facet "Prices, Flight Time & Airlines" primary is used ONLY when all
@@ -649,16 +655,23 @@ function formatRoutePrice(price, currency, lang) {
 // facets are joined with the locale's own conjunction ("und"/"and"/"et"/…) via
 // Intl.ListFormat; a route with no facets at all falls back to a plain
 // "find flights …" sentence rather than listing facets it can't back up.
-function buildRouteMetaDescription(route, lang, names) {
+function buildRouteMetaDescription(route, lang, snapshot, names) {
+  // Self-sufficient (see buildRouteTitle): derive the snapshot when none is
+  // passed, so facet gating and the "from" price always come from the SSOT.
+  snapshot = snapshot || buildRouteSnapshot(route);
   const vars = { origin: (names && names.origin) || route.origin_city, destination: (names && names.destination) || route.destination_city };
-  const cp = resolveCanonicalPrice(route);
+  // [SNAPSHOT-FACET-GATE] The meta description names ONLY facets the snapshot
+  // backs (the same SSOT the title and visible sections use), so a SERP snippet
+  // can never advertise a price/duration/airline facet the page itself doesn't
+  // show — and the "from" price clause below reuses snapshot.price verbatim.
+  const cp = snapshot.price;
   const facets = [];
   if (cp) facets.push(translate('routeMetaFacetPrices', lang));
   // flight-time is claimed only from a REAL observed duration — distance alone
   // is never flight-time evidence.
-  if (route.avg_duration_min != null || route.min_duration_min != null) facets.push(translate('routeMetaFacetDuration', lang));
-  if (route.distance_km != null) facets.push(translate('routeMetaFacetDistance', lang));
-  if (route.airline_count != null && route.airline_count > 0) facets.push(translate('routeMetaFacetAirlines', lang));
+  if (snapshot.avgDurationMin != null || snapshot.minDurationMin != null) facets.push(translate('routeMetaFacetDuration', lang));
+  if (snapshot.distanceKm != null) facets.push(translate('routeMetaFacetDistance', lang));
+  if (snapshot.airlineCount != null && snapshot.airlineCount > 0) facets.push(translate('routeMetaFacetAirlines', lang));
   if (route.all_direct === true || route.direct_flight_available === true) facets.push(translate('routeMetaFacetDirect', lang));
 
   let base;
@@ -730,8 +743,8 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     origin: q.origin ? airportLabel(route.origin_city, route.origin_iata) : route.origin_city,
     destination: q.destination ? airportLabel(route.destination_city, route.destination_iata) : route.destination_city,
   } : null;
-  const title = (manual && route.custom_title) || (gen && route.seo_title) || buildRouteTitle(route, lang, displayNames);
-  const description = (manual && route.custom_meta_description) || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, displayNames);
+  const title = (manual && route.custom_title) || (gen && route.seo_title) || buildRouteTitle(route, lang, snapshot, displayNames);
+  const description = (manual && route.custom_meta_description) || (gen && route.seo_meta_description) || buildRouteMetaDescription(route, lang, snapshot, displayNames);
 
   // [ROUTE-CANONICAL] For an exact-duplicate route (same airport pair under a
   // second slug) render.js sets route.canonicalSlug to the canonical winner, so
