@@ -100,28 +100,32 @@ test('CSP meta + hashed inline script are byte-identical after localization', ()
   assert.match(out, /<svg viewBox="0 0 5 3"><rect width="5" height="3" fill="#000"\/><\/svg>/);
 });
 
-test('DE is a distinct self-canonical German page (/de), body stays German', () => {
-  const out = localizeHomeHtml(HOME, 'de', T());
-  assert.match(out, /<html lang="de" dir="ltr">/);
-  assert.match(out, /href="https:\/\/airpiv\.com\/de" id="canonical-url">/);
-  assert.match(out, /<span data-i18n="hero_title1">Günstige Flüge suchen<\/span>/);
+test('German is the bare root only — /de is not a generated prefixed home', () => {
+  // German is served verbatim at / (canonical /); it is not in HOME_LANGS and is
+  // never localized into a /de page. /de 301-redirects to / (next.config.mjs).
+  assert.ok(!HOME_LANGS.includes('de'), 'de must not be a generated prefixed home');
 });
 
-test('hreflang cluster: de → /de, x-default → root, on every page', () => {
+test('hreflang cluster: de → root /, x-default → root, on every generated home', () => {
   for (const lang of HOME_LANGS) {
     const out = localizeHomeHtml(HOME, lang, T());
-    assert.match(out, /hreflang="de" href="https:\/\/airpiv\.com\/de"/);
+    // The German alternate is the bare root — the single German URL — never /de.
+    assert.match(out, /hreflang="de" href="https:\/\/airpiv\.com\/"/);
+    assert.doesNotMatch(out, /hreflang="de" href="https:\/\/airpiv\.com\/de"/);
     assert.match(out, /hreflang="x-default" href="https:\/\/airpiv\.com\/"/);
     assert.match(out, /hreflang="en" href="https:\/\/airpiv\.com\/en"/);
   }
 });
 
-test('fixHreflangCluster is idempotent (does not double-append /de)', () => {
-  const once = fixHreflangCluster(HOME);
-  const twice = fixHreflangCluster(once);
-  assert.equal(once, twice);
-  assert.match(twice, /hreflang="de" href="https:\/\/airpiv\.com\/de"/);
-  assert.doesNotMatch(twice, /airpiv\.com\/de\/de/);
+test('fixHreflangCluster normalizes a stray de→/de back to root, idempotently', () => {
+  // A source that (wrongly) points de at /de is normalized back to the root; a
+  // source already on / is left unchanged. Both are idempotent.
+  const stray = HOME.replace('hreflang="de" href="https://airpiv.com/"', 'hreflang="de" href="https://airpiv.com/de"');
+  const fixed = fixHreflangCluster(stray);
+  assert.match(fixed, /hreflang="de" href="https:\/\/airpiv\.com\/"/);
+  assert.doesNotMatch(fixed, /airpiv\.com\/de"/);
+  assert.equal(fixHreflangCluster(fixed), fixed); // idempotent
+  assert.equal(fixHreflangCluster(HOME), HOME);   // already-root is untouched
 });
 
 test('URLs are unchanged: no localized file rewrites an interior path or slug', () => {
