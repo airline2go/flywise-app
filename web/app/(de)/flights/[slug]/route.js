@@ -1,9 +1,9 @@
 // German flight-route page (unprefixed root) — verbatim legacy HTML, see
 // lib/legacy-render/render.js.
-import { renderFlightRouteHtml, resolveCanonicalRedirect } from '@/lib/legacy-render/render';
+import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
-import { listRoutePages, resolvePersistentRedirect } from '@/lib/content-api';
+import { listRoutePages } from '@/lib/content-api';
 
 export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
@@ -38,13 +38,11 @@ export async function generateStaticParams() {
 
 export async function GET(_req, { params }) {
   const { slug } = await params;
-  // [P0-4] Persistent redirect FIRST — survives deletion of the loser row, so
-  // an already-discovered old URL keeps 301-ing even after cleanup. Single hop.
-  const persistent = await resolvePersistentRedirect(slug);
-  if (persistent) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(persistent.target)}`), persistent.status);
-  // [F1] Backstop: a live consolidated duplicate 301s to its canonical winner
-  // (covers losers not yet backfilled into route_redirects).
-  const winner = await resolveCanonicalRedirect(slug);
-  if (winner) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(winner)}`));
+  // [VERIFIED-REDIRECT] Persistent (admin/loser-cleanup) redirect first, then the
+  // live canonical-consolidation backstop — resolveFlightRedirect applies both in
+  // that order and, crucially, only ever returns a target that actually renders,
+  // so a discovered old URL can never 301 into a 404. null → render the slug.
+  const redirect = await resolveFlightRedirect(slug);
+  if (redirect) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
   return htmlResponse(await renderFlightRouteHtml(slug, 'de'));
 }

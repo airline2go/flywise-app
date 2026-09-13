@@ -216,6 +216,28 @@ async function getRoutePage(slug) {
   return (data && data.route) || null;
 }
 
+// [RENDERABILITY-GUARD] Does the route DETAIL endpoint actually return a
+// servable page for this slug? The /route-pages LIST feed can carry a slug that
+// has no servable detail, so a canonical/persistent redirect that trusted list
+// membership could 301 to a URL that then 404s. This is the ONE source of truth
+// the redirect layer consults before emitting any redirect: a target is only
+// eligible if `routeRenders(target)` is true. Wrapped in cache() so verifying a
+// handful of pair-mates per request costs at most one detail fetch each (and
+// those fetches are themselves ISR-cached in content-api). getRoutePage returns
+// null on a genuine 404 without throwing, so a missing target reads as
+// "does not render" rather than blowing up the request.
+const routeRenders = cache(async (slug) => {
+  if (!slug) return false;
+  try {
+    return !!(await getRoutePage(slug));
+  } catch {
+    // A transient upstream error must not be read as "dead" (that would suppress
+    // a valid redirect). Treat it as renderable — the redirect is retried next
+    // request, and this only ever runs for a slug the map/table already trusts.
+    return true;
+  }
+});
+
 async function getRelatedRoutes(slug) {
   const data = await fetchDetailOrNull(`/route-pages/${encodeURIComponent(slug)}/related`);
   return (data && data.related) || [];
@@ -263,7 +285,7 @@ const getGeoIndex = cache(async () => {
 export {
   listCities, listCountries, listAirports, listAirlines, listRoutePages, listBlogPosts,
   listRouteRedirects, resolvePersistentRedirect,
-  getCity, getCountry, getAirport, getAirline, getRoutePage, getRelatedRoutes, getBlogPost,
+  getCity, getCountry, getAirport, getAirline, getRoutePage, routeRenders, getRelatedRoutes, getBlogPost,
   getReviews,
   getGeoIndex,
   sitemapRoutes, sitemapCities, sitemapCountries, sitemapAirlines, sitemapAirports, sitemapBlog,
