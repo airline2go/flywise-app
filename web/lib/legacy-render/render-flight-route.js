@@ -696,7 +696,7 @@ function buildRouteMetaDescription(route, lang, snapshot, names) {
 // the default — when the route has too few published reviews to show one).
 // Passed in by render.js so the verbatim base render is unchanged whenever
 // it's empty; see render-reviews.js renderRouteReviewsSection.
-function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = [], reviewsHtml = '') {
+function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, relatedArticles = [], reviewsHtml = '', reverseRoute = null) {
   const route = Object.assign({}, routeRaw, {
     origin_city: localizeCity(routeRaw.origin_city, routeRaw.origin_iata, lang),
     destination_city: localizeCity(routeRaw.destination_city, routeRaw.destination_iata, lang),
@@ -871,6 +871,16 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
     ? `<section class="route-citylinks-section"><h2>${translate('routeRelatedArticles', lang)}</h2><div class="related-routes-grid">${relatedArticles.map((p) => `<a class="related-route-card" href="${pathFor(lang, `blog/${encodeURIComponent(p.slug)}`)}">${escHtml(p.title)}</a>`).join('')}</div></section>`
     : '';
 
+  // [F2-RECIPROCAL] The return-direction route (destination→origin) as one
+  // explicit, clearly-labelled internal link — genuinely useful (the return
+  // journey) and NOT keyword spam: a single contextual card, not a generated
+  // block. render.js passes reverseRoute only when that route actually renders
+  // (present in the indexable, non-consolidated route list), so this link can
+  // never point at a 404 or a 301. Absent → nothing rendered.
+  const returnFlightHtml = reverseRoute
+    ? `<section class="route-citylinks-section"><h2>${translate('returnFlightHeading', lang)}</h2><div class="related-routes-grid"><a class="related-route-card" href="${pathFor(lang, `flights/${encodeURIComponent(reverseRoute.slug)}`)}">${escHtml(localizeCity(reverseRoute.origin_city, reverseRoute.origin_iata, lang))} → ${escHtml(localizeCity(reverseRoute.destination_city, reverseRoute.destination_iata, lang))}</a></div></section>`
+    : '';
+
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang, snapshot);
   const priceHtml = buildPriceHtml(route, lang);
@@ -922,6 +932,7 @@ ${airlinesHtml}
   ${faqHtml}
 </section>
 ${reviewsHtml}${trustHtml}
+${returnFlightHtml}
 ${relatedRoutesHtml}
 ${moreFromOriginHtml}
 ${moreToDestinationHtml}
