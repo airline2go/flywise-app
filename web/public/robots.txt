@@ -1,6 +1,6 @@
 # Airpiv robots policy.
 # NOTE: robots.txt is advisory only — enforcement of the blocks below happens
-# at the edge (see web/middleware.js), which returns 403 before any page
+# in the Next.js Proxy (see web/proxy.js), which returns 403 before any page
 # renders. This file just makes our intent explicit to well-behaved crawlers.
 
 # Search engines we want — full access to all SEO pages, no crawl-delay.

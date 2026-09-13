@@ -1,9 +1,20 @@
 // ─────────────────────────────────────────────────────────────
-// Edge bot guard — runs BEFORE any Route Handler (i.e. before the
-// flight-route SEO pages render), so an unwanted crawler is refused at the
-// edge and never burns Fluid Active CPU generating a page. This is the
-// firewall layer robots.txt can't provide: robots.txt is advisory, this is
-// enforced.
+// Bot guard (Next.js Proxy — the file convention formerly called
+// `middleware`, renamed in Next 16; see node_modules/next/dist/docs/01-app/
+// 03-api-reference/03-file-conventions/proxy.md). Runs BEFORE any Route
+// Handler (i.e. before the flight-route SEO pages render), so an unwanted
+// crawler is refused and never burns Fluid Active CPU generating a page.
+// This is the firewall layer robots.txt can't provide: robots.txt is
+// advisory, this is enforced.
+//
+// RUNTIME NOTE: Proxy runs on the Node.js runtime (Next 16 default; the
+// `runtime` config option is not allowed in a Proxy file and throws). This
+// used to be edge middleware — but the guard's whole point, short-circuiting
+// blocked bots with a 403 before the page renders, is unchanged: the block
+// still happens before render, only in the Node runtime instead of at the
+// edge. The logic below uses only runtime-agnostic request APIs
+// (NextResponse, req.headers, req.nextUrl), so nothing here depends on which
+// runtime it runs in.
 //
 // Design rules (see the audit):
 //   • NEVER block the search engines we actually want (Googlebot, Bingbot,
@@ -16,11 +27,11 @@
 //   • Duffel is never involved in a page render (proven in the audit), so this
 //     layer is purely about Vercel CPU, not API cost.
 //
-// NOTE on Googlebot verification: the edge runtime can't do reverse-DNS, so the
-// allow-list is user-agent based. That is safe here because "allow" grants no
-// privilege — a spoofed Googlebot only receives the same public, cache-served
-// HTML any visitor gets. Reverse-DNS / IP verification belongs at the Vercel
-// WAF layer (see vercel-waf-rules in the audit) if stricter proof is wanted.
+// NOTE on Googlebot verification: the allow-list is user-agent based. That is
+// safe here because "allow" grants no privilege — a spoofed Googlebot only
+// receives the same public, cache-served HTML any visitor gets. Reverse-DNS /
+// IP verification belongs at the Vercel WAF layer (see vercel-waf-rules in the
+// audit) if stricter proof is wanted.
 
 import { NextResponse } from 'next/server';
 
@@ -65,7 +76,7 @@ function classify(ua) {
   return { kind: s.includes('bot') || s.includes('crawler') || s.includes('spider') ? 'otherbot' : 'human', bot: null };
 }
 
-export function middleware(req) {
+export function proxy(req) {
   const ua = req.headers.get('user-agent') || '';
   const { kind, bot } = classify(ua);
   const path = req.nextUrl.pathname;
