@@ -7,6 +7,7 @@
 // option below) handles caching/ISR per-URL automatically.
 import { cache } from 'react';
 import { buildGeoIndex } from './geo.js';
+import { getRouteLocale } from './route-locale-context.js';
 
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 
@@ -179,8 +180,8 @@ const sitemapBlog = (lang) => fetchAllSitemapData('blog', lang && lang !== 'de' 
 // [NOT-FOUND-IS-NULL] A detail endpoint returning 404 means the entity simply
 // doesn't exist (e.g. an airport code like LBG that appears in search but has no
 // page). That's a legitimate "not found", not a server error — return null so
-// the route handler answers a clean 404 instead of letting the throw bubble to
-// a 500 (bad for SEO — Google reads 500 as "site broken" — and it floods the
+// the route handler answers a clean 404 instead of letting the throw bubble to a
+// 500 (bad for SEO — Google reads 500 as "site broken" — and it floods the
 // error logs). Any non-404 failure still throws.
 async function fetchDetailOrNull(path) {
   try {
@@ -211,8 +212,29 @@ async function getAirline(code) {
   return data && data.airline ? { airline: data.airline, routes: data.routes || [], mostUsedRoutes: data.mostUsedRoutes || [] } : null;
 }
 
-async function getRoutePage(slug) {
-  const data = await fetchDetailOrNull(`/route-pages/${encodeURIComponent(slug)}`);
+// [LOCALIZED-ROUTE-SEO] Secondary-language route pages use the dedicated
+// backend endpoint so the 1,746 generated localized SEO records actually reach
+// the server-rendered HTML. The legacy renderer consumes flat route.seo_* fields,
+// so the effective localized SEO object is flattened here without changing the
+// renderer contract. German keeps the existing primary endpoint unchanged.
+async function getRoutePage(slug, lang = getRouteLocale()) {
+  const encoded = encodeURIComponent(slug);
+  if (lang && lang !== 'de') {
+    const data = await fetchDetailOrNull(`/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`);
+    if (!data || !data.route) return null;
+    const route = data.route;
+    const seo = route.seo || {};
+    return {
+      ...route,
+      seo_lang: lang,
+      seo_title: seo.title || null,
+      seo_meta_description: seo.metaDescription || null,
+      seo_intro_html: seo.introHtml || null,
+      seo_faq: Array.isArray(seo.faq) ? seo.faq : null,
+      localized_hreflang: data.hreflang || [],
+    };
+  }
+  const data = await fetchDetailOrNull(`/route-pages/${encoded}`);
   return (data && data.route) || null;
 }
 
