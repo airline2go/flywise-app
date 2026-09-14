@@ -5,6 +5,7 @@
 import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
 import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
+import { withRouteLocale } from '@/lib/route-locale-context';
 
 export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
 export const dynamicParams = true;
@@ -20,5 +21,5 @@ export async function GET(_req, { params }) {
   // localized URL can 301 into a 404 either. null → render the slug in `lang`.
   const redirect = await resolveFlightRedirect(slug);
   if (redirect) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
-  return htmlResponse(await renderFlightRouteHtml(slug, lang));
+  return withRouteLocale(lang, async () => htmlResponse(await renderFlightRouteHtml(slug, lang)));
 }
