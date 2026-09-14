@@ -8,7 +8,6 @@ const SIMILAR_TRIP_DISTANCE_TOLERANCE_KM = 500;
 function scoreRelatedRoute(route, candidate) {
   const sameOrigin = candidate.origin_city === route.origin_city;
   const sameDestination = candidate.destination_city === route.destination_city;
-  const sameEndpoint = sameOrigin || sameDestination;
   const sameCityPair = sameOrigin && sameDestination;
   const sameHaul = !!(route.haul_type && candidate.haul_type === route.haul_type);
   const similarDistance = route.distance_km != null && candidate.distance_km != null
