@@ -19,12 +19,55 @@ LANGUAGE_CODES.forEach((code) => {
   if (!DICTS[code]) throw new Error(`legacy-render/translate: missing translations for "${code}"`);
 });
 
+// [SEO-ROUTE-TEMPLATES] Route pages target a very explicit search intent:
+// users want flights FROM one city TO another and want to compare fares and
+// airlines. Keep the primary query terms near the beginning of title/description
+// and avoid promising "book" functionality on a page whose primary CTA is
+// flight search/comparison. These are localized per language rather than
+// translating only the surrounding chrome.
+const ROUTE_SEO_TEMPLATES = {
+  en: {
+    routeTitleTemplate: 'Cheap flights from {origin} to {destination} | Compare prices & airlines',
+    routeDescriptionTemplate: 'Compare cheap flights from {origin} ({originCode}) to {destination} ({destCode}). See airlines, flight times and available fares with Airpiv.',
+  },
+  de: {
+    routeTitleTemplate: 'Günstige Flüge von {origin} nach {destination} | Preise & Airlines vergleichen',
+    routeDescriptionTemplate: 'Vergleiche günstige Flüge von {origin} ({originCode}) nach {destination} ({destCode}). Sieh Airlines, Flugzeiten und verfügbare Preise mit Airpiv.',
+  },
+  ar: {
+    routeTitleTemplate: 'رحلات طيران رخيصة من {origin} إلى {destination} | قارن الأسعار وشركات الطيران',
+    routeDescriptionTemplate: 'قارن الرحلات الرخيصة من {origin} ({originCode}) إلى {destination} ({destCode}). شاهد شركات الطيران وأوقات الرحلات والأسعار المتاحة عبر Airpiv.',
+  },
+  es: {
+    routeTitleTemplate: 'Vuelos baratos de {origin} a {destination} | Compara precios y aerolíneas',
+    routeDescriptionTemplate: 'Compara vuelos baratos de {origin} ({originCode}) a {destination} ({destCode}). Consulta aerolíneas, duración y precios disponibles con Airpiv.',
+  },
+  fr: {
+    routeTitleTemplate: 'Vols pas chers de {origin} à {destination} | Comparez prix et compagnies',
+    routeDescriptionTemplate: 'Comparez les vols pas chers de {origin} ({originCode}) à {destination} ({destCode}). Consultez les compagnies, durées de vol et tarifs disponibles avec Airpiv.',
+  },
+  it: {
+    routeTitleTemplate: 'Voli economici da {origin} a {destination} | Confronta prezzi e compagnie',
+    routeDescriptionTemplate: 'Confronta voli economici da {origin} ({originCode}) a {destination} ({destCode}). Scopri compagnie, durata del volo e tariffe disponibili con Airpiv.',
+  },
+  nl: {
+    routeTitleTemplate: 'Goedkope vluchten van {origin} naar {destination} | Vergelijk prijzen en airlines',
+    routeDescriptionTemplate: 'Vergelijk goedkope vluchten van {origin} ({originCode}) naar {destination} ({destCode}). Bekijk airlines, vliegtijden en beschikbare prijzen met Airpiv.',
+  },
+  tr: {
+    routeTitleTemplate: '{origin} - {destination} ucuz uçuşlar | Fiyatları ve havayollarını karşılaştır',
+    routeDescriptionTemplate: '{origin} ({originCode}) - {destination} ({destCode}) ucuz uçuşları karşılaştırın. Havayollarını, uçuş sürelerini ve mevcut fiyatları Airpiv ile görün.',
+  },
+};
+
 // [I18N-FALLBACK] language -> English -> German -> the raw key itself.
 // English is the fallback-of-first-resort (not German) because it's the
 // platform's most complete secondary language and the one most likely to
 // still make sense to a reader of any of the other 5 non-German languages,
 // mirroring app.js's own t()/tL() fallback chain shape.
 function translate(key, lang) {
+  const seoTemplate = ROUTE_SEO_TEMPLATES[lang] && ROUTE_SEO_TEMPLATES[lang][key];
+  if (seoTemplate) return seoTemplate;
   const dict = DICTS[lang];
   if (dict && dict[key] != null) return dict[key];
   if (DICTS.en && DICTS.en[key] != null) return DICTS.en[key];
