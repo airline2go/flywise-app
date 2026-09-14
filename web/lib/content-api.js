@@ -1,11 +1,8 @@
 // Thin fetch/service layer for flywise-server's public content endpoints
 // (`content.routes.js`) — all unauthenticated GETs, zero auth complexity.
-// This is the Phase 0/1 replacement for flywise-app/build/generate-pages.js's
-// fetchWithRetry()-based list/detail fetching: instead of one batch script
-// fetching everything up front, each page component fetches only the data
-// it needs, and Next.js's `fetch` cache handles caching/ISR per-URL automatically.
 import { cache } from 'react';
 import { buildGeoIndex } from './geo.js';
+import { getRouteLocale } from './route-locale-context.js';
 
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 const DEFAULT_REVALIDATE = 86400;
@@ -115,10 +112,7 @@ async function getAirline(code) {
   return data && data.airline ? { airline: data.airline, routes: data.routes || [], mostUsedRoutes: data.mostUsedRoutes || [] } : null;
 }
 
-// Localized route SEO is stored separately from the primary German route row.
-// For secondary languages, consume the dedicated endpoint and flatten its
-// effective SEO fields into the legacy renderer's route.seo_* contract.
-async function getRoutePage(slug, lang = 'de') {
+async function getRoutePage(slug, lang = getRouteLocale()) {
   const encoded = encodeURIComponent(slug);
   if (lang && lang !== 'de') {
     const data = await fetchDetailOrNull(`/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`);
