@@ -49,13 +49,30 @@ function computeRelatedRoutes(route, routeList) {
       || r.destination_city === route.destination_city
       || (route.destination_country && r.destination_country === route.destination_country)));
 
-  return candidates
+  const ranked = candidates
     .map((c) => scoreRelatedRoute(route, c))
     .sort((a, b) => (b.score - a.score)
       || ((b.candidate.route_score || 0) - (a.candidate.route_score || 0))
-      || String(a.candidate.slug).localeCompare(String(b.candidate.slug)))
-    .slice(0, RELATED_ROUTE_LIMIT)
-    .map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
+      || String(a.candidate.slug).localeCompare(String(b.candidate.slug)));
+
+  // Multiple airport-specific records can represent the same city-to-city
+  // journey. Keep the strongest representative instead of spending the whole
+  // six-link budget on near-duplicates. This makes the module's internal-link
+  // graph more useful to travelers and avoids turning a route page into a
+  // keyword-heavy directory of airport variants.
+  const seenCityPairs = new Set();
+  const deduped = [];
+  for (const item of ranked) {
+    const o = String(item.candidate.origin_city || '').trim().toLocaleLowerCase();
+    const d = String(item.candidate.destination_city || '').trim().toLocaleLowerCase();
+    const pairKey = `${o}→${d}`;
+    if (seenCityPairs.has(pairKey)) continue;
+    seenCityPairs.add(pairKey);
+    deduped.push(item);
+    if (deduped.length >= RELATED_ROUTE_LIMIT) break;
+  }
+
+  return deduped.map(({ candidate, reasonKey }) => Object.assign({}, candidate, { reasonKey }));
 }
 
 export { computeRelatedRoutes, scoreRelatedRoute };
