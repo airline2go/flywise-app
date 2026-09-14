@@ -68,6 +68,46 @@ function deriveStops(route) {
   return { nonstop, oneStop, twoPlus, total, nonstopShare: Math.round((nonstop / total) * 100) };
 }
 
+// [SEO-QUALITY-SIGNALS] Search-facing pages should be able to distinguish a
+// merely renderable route from a route with enough first-party facts to satisfy
+// the query immediately. These signals are intentionally descriptive only in
+// this phase: publication/indexability policy remains in route-evidence.js.
+// Keeping the signals in the canonical snapshot prevents the renderer from
+// inventing different definitions for the hero, meta, FAQ and structured data.
+function deriveSeoSignals(route, snapshot) {
+  const facts = {
+    hasDistance: snapshot.distanceKm != null && snapshot.distanceKm > 0,
+    hasDuration: snapshot.avgDurationMin != null && snapshot.avgDurationMin > 0,
+    hasFastestDuration: snapshot.minDurationMin != null && snapshot.minDurationMin > 0,
+    hasAirlines: snapshot.airlineCount != null && snapshot.airlineCount > 0,
+    hasStops: !!snapshot.stops,
+    hasPrice: !!(snapshot.price && snapshot.price.amount > 0),
+    hasFreshPrice: !!snapshot.priceIsFresh,
+    hasPriceSamples: Number(route.price_sample_count || 0) >= 3,
+    hasItineraries: Number(route.itinerary_count || 0) > 0,
+    hasDirectFlightSignal: route.direct_flight_available != null,
+  };
+
+  // Count only independent route facts that can materially answer common
+  // flight-route queries. This is not a ranking score and must never be shown
+  // to users; it is a stable renderer signal for choosing richer page sections.
+  const independentFactCount = [
+    facts.hasDistance,
+    facts.hasDuration,
+    facts.hasAirlines,
+    facts.hasStops,
+    facts.hasPrice,
+    facts.hasItineraries,
+    facts.hasDirectFlightSignal,
+  ].filter(Boolean).length;
+
+  return {
+    ...facts,
+    independentFactCount,
+    searchIntentReady: independentFactCount >= 3,
+  };
+}
+
 // Build the canonical snapshot for a route row. `route` is the raw row (already
 // localized city names are fine — this only reads codes/numbers/timestamps).
 function buildRouteSnapshot(route, now = Date.now()) {
@@ -77,7 +117,7 @@ function buildRouteSnapshot(route, now = Date.now()) {
     || (route.intelligence && route.intelligence.operational && route.intelligence.operational.updatedAt)
     || null;
 
-  return {
+  const snapshot = {
     routeId: route.slug || null,
     origin: route.origin_iata || null,
     destination: route.destination_iata || null,
@@ -99,6 +139,9 @@ function buildRouteSnapshot(route, now = Date.now()) {
     routeUpdatedAt,
     routeDataIsFresh: routeUpdatedAt ? isFresh(routeUpdatedAt, ROUTE_DATA_TTL_MS, now) : false,
   };
+
+  snapshot.seoSignals = deriveSeoSignals(route, snapshot);
+  return snapshot;
 }
 
 // [ROUTE-CONSISTENCY-GUARD] Phase 10/13: returns the list of invariant
@@ -161,4 +204,4 @@ function criticalSnapshotErrors(route, snapshot) {
   return validateSnapshot(route, snapshot).filter((e) => CRITICAL_PREFIXES.some((p) => e.startsWith(p)));
 }
 
-module.exports = { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice, deriveAirlineCount, deriveStops };
+module.exports = { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice, deriveAirlineCount, deriveStops, deriveSeoSignals };
