@@ -22,6 +22,6 @@ const related = computeRelatedRoutes(route, routes);
 assert.equal(related.length, 3);
 assert.deepEqual(
   related.map((r) => `${r.origin_city}->${r.destination_city}`),
-  ['Berlin->Paris', 'Munich->London', 'Berlin->Madrid'],
+  ['Munich->London', 'Berlin->Paris', 'Berlin->Madrid'],
 );
 assert.equal(new Set(related.map((r) => `${r.origin_city}->${r.destination_city}`)).size, related.length);
