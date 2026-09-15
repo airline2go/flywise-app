@@ -10,7 +10,9 @@
     "build": "node scripts/prerender-popular-routes.mjs && node scripts/prerender-blog-list.mjs && node scripts/stamp-assets.mjs && node scripts/prerender-localized-homes.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
+    "seo:flight-evidence": "node scripts/seo-flight-evidence-gate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
