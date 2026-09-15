@@ -32,14 +32,19 @@
   function setNamed(name, value) { var el = document.querySelector('meta[name="' + name + '"]'); if (el) el.setAttribute('content', value); }
   function setProp(prop, value) { var el = document.querySelector('meta[property="' + prop + '"]'); if (el) el.setAttribute('content', value); }
 
-  /* [AIRPIV-AUTOCOMPLETE-UI-V9-LOADER]
-     Keep the existing canonical script intact while loading the shared UI fix.
-     The script is loaded once and works on all search surfaces. */
+  /* Shared autocomplete UI layers. */
   if (!document.querySelector('script[data-airpiv-autocomplete-v9]')) {
     var s = document.createElement('script');
     s.src = '/autocomplete-ui-v9.js';
     s.async = false;
     s.setAttribute('data-airpiv-autocomplete-v9', '1');
     (document.head || document.documentElement).appendChild(s);
+  }
+  if (!document.querySelector('script[data-airpiv-autocomplete-v10]')) {
+    var v10 = document.createElement('script');
+    v10.src = '/autocomplete-fix-v10.js';
+    v10.async = false;
+    v10.setAttribute('data-airpiv-autocomplete-v10', '1');
+    (document.head || document.documentElement).appendChild(v10);
   }
 })();
