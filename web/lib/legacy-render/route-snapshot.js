@@ -17,18 +17,31 @@ const { PRICE_TTL_MS, ROUTE_DATA_TTL_MS, isFresh } = require('./ttl');
 
 // [CANONICAL-PRICE-SOURCE] The single "from" price resolver (Phase 1), now the
 // snapshot's price field so title/meta/hero/Offer all read one value. Order:
-//   1. sample-backed aggregate minimum (price_min, >=3 samples) — the correct
-//      "from"/lowest value, and it carries a currency + checkedAt.
-//   2. the current cached price (cached_price) — no exposed timestamp.
-//   3. null — callers render an explicit "unavailable" state, never an invented
+//   1. observed aggregate minimum (price_min, at least 1 sample) — the correct
+//      "from"/lowest observed value, and it carries a currency + checkedAt.
+//   2. observed aggregate average (price_avg, at least 1 sample) — fallback for
+//      routes where a minimum is unavailable while an observed average exists.
+//   3. the current cached price (cached_price) — no exposed timestamp.
+//   4. null — callers render an explicit "unavailable" state, never an invented
 //      placeholder value.
+// This keeps the hero price visible whenever the route already has persisted
+// observed fare evidence, without triggering a new live Duffel search.
 function resolveCanonicalPrice(route) {
-  if (route.price_min != null && Number(route.price_min) > 0 && Number(route.price_sample_count) >= 3) {
+  const sampleCount = Number(route.price_sample_count || 0);
+  if (route.price_min != null && Number(route.price_min) > 0 && sampleCount >= 1) {
     return {
       amount: Number(route.price_min),
       currency: route.price_currency || 'EUR',
       checkedAt: route.price_updated_at || null,
       source: 'aggregate-min',
+    };
+  }
+  if (route.price_avg != null && Number(route.price_avg) > 0 && sampleCount >= 1) {
+    return {
+      amount: Number(route.price_avg),
+      currency: route.price_currency || 'EUR',
+      checkedAt: route.price_updated_at || null,
+      source: 'aggregate-avg',
     };
   }
   if (route.cached_price != null && Number(route.cached_price) > 0) {
