@@ -8,7 +8,11 @@ import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-ren
 import { pathFor } from '@/lib/legacy-render/languages';
 import { withRouteLocale } from '@/lib/route-locale-context';
 
-export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
+// Route catalogue changes can happen outside a frontend deploy; keep the
+// on-demand safety-net short enough that a newly published route does not
+// remain a cached 404 for a full day. Admin publishes still revalidate
+// immediately through /api/revalidate.
+export const revalidate = 3600;
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
