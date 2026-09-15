@@ -38,7 +38,7 @@ function airportPairKey(origin, destination) {
 /**
  * Resolve only safe, already-existing aliases:
  * 1. exact published slug (no redirect);
- * 2. case/Unicode/punctuation-normalized form, if unique;
+ * 2. case/Unicode/punctuation-normalized form, if it exists;
  * 3. legacy city-pair slug, only when exactly one published route matches;
  * 4. otherwise null, leaving the normal renderer to return a real 404.
  *
@@ -62,7 +62,7 @@ export async function resolveRouteSlugAlias(slug) {
 
   // Explicit airport-pair normalization handles legacy uppercase IATA paths
   // without accepting fuzzy airport-code corrections.
-  const airportKey = normalized ? normalized : requested.toLowerCase();
+  const airportKey = normalized || requested.toLowerCase();
   const airportMatches = published.filter((route) =>
     airportPairKey(route.origin_iata, route.destination_iata) === airportKey
   );
@@ -72,11 +72,11 @@ export async function resolveRouteSlugAlias(slug) {
 
   // Old city-pair URLs are safe only when the city pair maps to one published
   // route. If multiple airports serve either city, we refuse to guess.
-  const key = pairKey(...requested.split('-').filter(Boolean));
-  if (!key) return null;
+  const requestedCityPair = normalizeToken(requested);
+  if (!requestedCityPair) return null;
 
   const cityMatches = published.filter((route) =>
-    pairKey(route.origin_city, route.destination_city) === key
+    pairKey(route.origin_city, route.destination_city) === requestedCityPair
   );
   if (cityMatches.length === 1 && cityMatches[0].slug !== requested) {
     return cityMatches[0].slug;
