@@ -35,12 +35,29 @@ function airportPairKey(origin, destination) {
   return /^[a-z0-9]{3}$/.test(a) && /^[a-z0-9]{3}$/.test(b) ? `${a}-${b}` : null;
 }
 
+function confusableIataAliases(slug) {
+  const parts = String(slug || '').toLowerCase().split('-');
+  if (parts.length !== 2 || !parts.every((part) => /^[a-z]{3}$/.test(part))) return [];
+
+  const variants = new Set();
+  for (let index = 0; index < 2; index += 1) {
+    for (const [from, to] of [['i', 'l'], ['l', 'i']]) {
+      if (!parts[index].includes(from)) continue;
+      const next = [...parts];
+      next[index] = next[index].replace(from, to);
+      variants.add(next.join('-'));
+    }
+  }
+  return [...variants];
+}
+
 /**
  * Resolve only safe, already-existing aliases:
  * 1. exact published slug (no redirect);
  * 2. case/Unicode/punctuation-normalized form, if it exists;
- * 3. legacy city-pair slug, only when exactly one published route matches;
- * 4. otherwise null, leaving the normal renderer to return a real 404.
+ * 3. one-character I/l IATA confusable, only when it maps to an exact route;
+ * 4. legacy city-pair slug, only when exactly one published route matches;
+ * 5. otherwise null, leaving the normal renderer to return a real 404.
  *
  * We deliberately do NOT use fuzzy edit-distance or arbitrary airport guesses.
  * A typo must never silently redirect to a different route and dilute signals.
@@ -60,8 +77,6 @@ export async function resolveRouteSlugAlias(slug) {
     return normalized;
   }
 
-  // Explicit airport-pair normalization handles legacy uppercase IATA paths
-  // without accepting fuzzy airport-code corrections.
   const airportKey = normalized || requested.toLowerCase();
   const airportMatches = published.filter((route) =>
     airportPairKey(route.origin_iata, route.destination_iata) === airportKey
@@ -69,6 +84,11 @@ export async function resolveRouteSlugAlias(slug) {
   if (airportMatches.length === 1 && airportMatches[0].slug !== requested) {
     return airportMatches[0].slug;
   }
+
+  // OCR/keyboard-confusable I/l is accepted only for a strict two-IATA slug
+  // and only when the replacement produces an exact published route.
+  const confusableMatches = confusableIataAliases(normalized || requested).filter((candidate) => byExact.has(candidate));
+  if (confusableMatches.length === 1) return confusableMatches[0];
 
   // Old city-pair URLs are safe only when the city pair maps to one published
   // route. If multiple airports serve either city, we refuse to guess.
