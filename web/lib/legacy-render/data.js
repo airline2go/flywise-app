@@ -1,5 +1,5 @@
 // Shared i18n/data module for the page generator. City/country/airport
-a// display names used to live in hardcoded GERMAN_CITY_NAMES/
+// display names used to live in hardcoded GERMAN_CITY_NAMES/
 // ENGLISH_CITY_NAMES/ENGLISH_COUNTRY_NAMES dictionaries here — they now
 // come from the database (city_translations/country_translations,
 // fetched once via GET /cities and GET /countries and handed to
