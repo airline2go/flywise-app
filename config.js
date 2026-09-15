@@ -13,16 +13,11 @@ window.APP_CONFIG = {
   (document.head || document.documentElement).appendChild(s);
 })();
 
-// [MULTILINGUAL-SEARCH] Resolve origin/destination against the bundled AP
-// dataset before falling back to the server/Duffel places endpoint. AP already
-// contains the site's supported localized city names; this layer makes matching
-// accent/case/punctuation/Arabic-normalization tolerant and searches every
-// localized name field instead of requiring an English query.
 (function () {
   if (typeof window === 'undefined') return;
 
   function fold(value) {
-    return String(value == null ? '')
+    return String(value == null ? '' : value)
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
@@ -43,11 +38,11 @@ window.APP_CONFIG = {
   }
 
   function esc(value) {
-    return String(value == null ? '')
+    return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/\"/g, '&quot;');
   }
 
   function render(side, rows, drop) {
