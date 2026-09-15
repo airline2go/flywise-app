@@ -6,7 +6,11 @@ import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
 import { listRoutePages } from '@/lib/content-api';
 
-export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh immediately via /api/revalidate
+// Route catalogue changes can happen outside a frontend deploy; keep the
+// on-demand safety-net short enough that a newly published route does not
+// remain a cached 404 for a full day. Admin publishes still revalidate
+// immediately through /api/revalidate.
+export const revalidate = 3600;
 export const dynamicParams = true;
 
 // [PRERENDER-TOP-ROUTES] Prerender only the highest-value German flight routes
