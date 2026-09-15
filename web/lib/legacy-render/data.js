@@ -1,5 +1,5 @@
 // Shared i18n/data module for the page generator. City/country/airport
-// display names used to live in hardcoded GERMAN_CITY_NAMES/
+a// display names used to live in hardcoded GERMAN_CITY_NAMES/
 // ENGLISH_CITY_NAMES/ENGLISH_COUNTRY_NAMES dictionaries here — they now
 // come from the database (city_translations/country_translations,
 // fetched once via GET /cities and GET /countries and handed to
@@ -10,6 +10,18 @@ const { DEFAULT_LANGUAGE } = require('./languages');
 let CITY_BY_SLUG = {};
 let IATA_TO_SLUG = {};
 let COUNTRY_BY_CODE = {};
+
+// [ARABIC-ROUTE-NAMES] Some published route pairs use airports whose city
+// entity is intentionally not in the published city directory. Those routes
+// otherwise fall back to English on /ar/flights/... . Keep this small map
+// limited to actual published route IATA codes; city pages remain database-
+// driven. Proper Arabic transliterations are used, not English fallbacks.
+const ARABIC_ROUTE_CITY_NAMES = {
+  AUH: 'أبو ظبي', BRU: 'بروكسل', BUD: 'بودابست', CGD: 'تشانغده', ORD: 'شيكاغو',
+  DOH: 'الدوحة', HEL: 'هلسنكي', JED: 'جدة', KWI: 'مدينة الكويت', LAX: 'لوس أنجلوس',
+  MAN: 'مانشستر', MXP: 'ميلانو', MCT: 'مسقط', JFK: 'نيويورك', NCE: 'نيس',
+  OSL: 'أوسلو', PRG: 'براغ', RUH: 'الرياض', ARN: 'ستوكهولم', WAW: 'وارسو',
+};
 
 // [CITY-RECOGNITION] Dynamic recognition dataset, rebuilt by setGeoData() from
 // the live city list — replaces the old hardcoded KNOWN_CITIES/CITY_COUNTRY_*
@@ -102,6 +114,7 @@ function resolveTranslation(translations, lang, fallbackName) {
 function localizeCity(name, iata, lang) {
   const slug = iata && IATA_TO_SLUG[iata];
   const city = slug && CITY_BY_SLUG[slug];
+  if (lang === 'ar' && iata && ARABIC_ROUTE_CITY_NAMES[iata]) return ARABIC_ROUTE_CITY_NAMES[iata];
   return resolveTranslation(city && city.translations, lang, name);
 }
 
@@ -155,6 +168,7 @@ function buildIataNameMap(lang) {
     const name = resolveTranslation(city.translations, lang, city.name);
     (city.airport_codes || []).forEach((code) => { map[code] = name; });
   });
+  if (lang === 'ar') Object.assign(map, ARABIC_ROUTE_CITY_NAMES);
   return map;
 }
 
@@ -220,7 +234,7 @@ function hasCity(slug) {
 // origin/destination country codes for countries that were never given their
 // own page (e.g. SA, AE, FI, CN — only ~20 of the ~27 linked codes have pages),
 // so linking them blindly emits internal links — and BreadcrumbList JSON-LD
-// items — that 404. Callers gate the link on this and fall back to plain text
+// items that 404. Callers gate the link on this and fall back to plain text
 // (single links) or drop the entry (chip lists), exactly like hasCity.
 function hasCountry(code) {
   return !!(code && Object.prototype.hasOwnProperty.call(COUNTRY_BY_CODE, code));
