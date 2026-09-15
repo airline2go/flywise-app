@@ -29,7 +29,7 @@ export default function ExactDuffelMonitorClient() {
   const [usage, setUsage] = useState(null);
   const [attempts, setAttempts] = useState(null);
   const [offset, setOffset] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const query = useMemo(() => {
@@ -43,22 +43,42 @@ export default function ExactDuffelMonitorClient() {
     return p.toString();
   }, [from, to, source, trigger, status, routeOrigin, routeDestination, q, offset]);
 
+  const fetchData = useCallback(async () => {
+    const [u, a] = await Promise.all([
+      fetch(`/admin/api/duffel-api-usage?${query}`),
+      fetch(`/admin/api/duffel-api-attempts?${query}`),
+    ]);
+    const [ud, ad] = await Promise.all([u.json(), a.json()]);
+    if (!u.ok || !ud.ok) throw new Error(ud.error || 'فشل تحميل إحصائيات Duffel');
+    if (!a.ok || !ad.ok) throw new Error(ad.error || 'فشل تحميل سجل المحاولات');
+    return { ud, ad };
+  }, [query]);
+
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const [u, a] = await Promise.all([
-        fetch(`/admin/api/duffel-api-usage?${query}`),
-        fetch(`/admin/api/duffel-api-attempts?${query}`),
-      ]);
-      const [ud, ad] = await Promise.all([u.json(), a.json()]);
-      if (!u.ok || !ud.ok) throw new Error(ud.error || 'فشل تحميل إحصائيات Duffel');
-      if (!a.ok || !ad.ok) throw new Error(ad.error || 'فشل تحميل سجل المحاولات');
+      const { ud, ad } = await fetchData();
       setUsage(ud); setAttempts(ad);
     } catch (e) { setError(e.message || 'فشل تحميل البيانات'); }
     finally { setLoading(false); }
-  }, [query]);
+  }, [fetchData]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchData()
+      .then(({ ud, ad }) => {
+        if (cancelled) return;
+        setUsage(ud);
+        setAttempts(ad);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message || 'فشل تحميل البيانات');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [fetchData]);
 
   const totals = usage?.totals || {};
   const maxDay = Math.max(...(usage?.daily || []).map((d) => Number(d.billable_attempts || 0)), 1);
