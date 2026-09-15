@@ -15,6 +15,17 @@ window.APP_CONFIG = {
 (function(){
   'use strict';
   if(typeof window==='undefined'||typeof document==='undefined') return;
+  /* [AIRPIV-AUTOCOMPLETE-V8] Selection must happen on click only.
+     Pointer/mouse down previously fired a second selection path on mobile,
+     so the first tap could clear the field before the click committed it. */
+  window.addEventListener('pointerdown',function(ev){
+    var t=ev.target&&ev.target.closest?ev.target.closest('.fw-ac-item'):null;
+    if(t) ev.stopImmediatePropagation();
+  },true);
+  window.addEventListener('mousedown',function(ev){
+    var t=ev.target&&ev.target.closest?ev.target.closest('.fw-ac-item'):null;
+    if(t) ev.stopImmediatePropagation();
+  },true);
   var MAX_RESULTS=8,MIN_QUERY=2,LANG_COLUMNS={de:2,en:4,ar:5,es:7,fr:8,it:9,nl:10,tr:11},cache=null;
   function fold(v){return String(v==null?'':v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/ة/g,'ه').replace(/ـ/g,'').replace(/ß/g,'ss').replace(/[øØ]/g,'o').replace(/[æÆ]/g,'ae').replace(/[œŒ]/g,'oe').replace(/[łŁ]/g,'l').replace(/[đðÐ]/g,'d').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();}
   function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
