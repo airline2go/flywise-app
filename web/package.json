@@ -10,13 +10,14 @@
     "build": "node scripts/prerender-popular-routes.mjs && node scripts/prerender-blog-list.mjs && node scripts/stamp-assets.mjs && node scripts/prerender-localized-homes.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "seo:route-integrity": "node scripts/seo-route-integrity.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
     "next": "16.2.10",
     "node-html-parser": "^9.0.0",
-    "pdf-lib": "^1.17.1",
+    "pdf-lib": "^1.17.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.9.2"
