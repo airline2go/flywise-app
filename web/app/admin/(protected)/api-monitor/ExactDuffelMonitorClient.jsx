@@ -18,8 +18,8 @@ function Stat({ title, value, sub, danger }) {
 }
 
 export default function ExactDuffelMonitorClient() {
-  const [from, setFrom] = useState(daysAgo(6));
-  const [to, setTo] = useState(today());
+  const [from, setFrom] = useState(() => daysAgo(6));
+  const [to, setTo] = useState(() => today());
   const [source, setSource] = useState('');
   const [trigger, setTrigger] = useState('');
   const [status, setStatus] = useState('');
