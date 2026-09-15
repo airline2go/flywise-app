@@ -42,9 +42,11 @@ test('stops is null when there is no positive total or no distribution', () => {
 });
 
 // ─── Price (Phase 1/11) ────────────────────────────────────────────────────
-test('price prefers the sample-backed aggregate min, else cached, else null', () => {
+test('price prefers the observed aggregate min, then observed average, then cached, else null', () => {
   assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 9, price_currency: 'EUR', cached_price: 83 })).price.amount, 60);
-  assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 2, cached_price: 83 })).price.amount, 83);
+  assert.equal(buildRouteSnapshot(R({ price_avg: 70, price_sample_count: 1, price_currency: 'EUR', cached_price: 83 })).price.amount, 70);
+  assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 1, cached_price: 83 })).price.amount, 60);
+  assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 0, cached_price: 83 })).price.amount, 83);
   assert.equal(buildRouteSnapshot(R({})).price, null);
 });
 

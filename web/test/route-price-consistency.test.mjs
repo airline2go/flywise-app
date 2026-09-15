@@ -22,7 +22,7 @@ const render = (over, lang = 'de') => renderFlightRoutePage(R(over), lang, [], l
 
 // ─── The core invariant: one price, everywhere ─────────────────────────────
 test('when aggregate-min and cached price DISAGREE, every surface shows the aggregate min', () => {
-  // price_min (60, sample-backed) is the correct "from" value; cached_price (83)
+  // price_min (60, observed) is the correct "from" value; cached_price (83)
   // is a different, timestamp-less figure. Before Phase 1 the title/meta would
   // advertise 83 while the hero fallback and Offer showed 60 — the exact
   // contradiction this guards against.
@@ -48,7 +48,7 @@ test('when aggregate-min and cached price DISAGREE, every surface shows the aggr
   assert.doesNotMatch(html, /"@type":"Offer"/);
 });
 
-test('with only a cached price (no sample-backed min), title/meta/hero use it — and no Offer is emitted', () => {
+test('with only a cached price (no persisted aggregate), title/meta/hero use it — and no Offer is emitted', () => {
   const over = { cached_price: 49, cached_currency: 'EUR', distance_km: 1297 };
   const { html, seo } = render(over);
   const cp = resolveCanonicalPrice(R(over));
@@ -60,7 +60,7 @@ test('with only a cached price (no sample-backed min), title/meta/hero use it �
   assert.match(seo.description, /ab 49 €/);        // meta "from" clause
   assert.match(html, /var CANON_PRICE = 49;/);     // hero fallback
   assert.match(html, /var CANON_DATE = null;/);    // no timestamp → never "live"
-  // No sample-backed aggregate → no structured-data Offer (quality bar unmet),
+  // No persisted aggregate → no structured-data Offer (quality bar unmet),
   // rather than a fabricated-quality Offer from the timestamp-less cached value.
   assert.doesNotMatch(html, /"@type":"Offer"/);
 });
@@ -80,18 +80,17 @@ test('zero, negative and malformed prices are rejected — never advertised, nev
   assert.equal(resolveCanonicalPrice(R({ cached_price: -5 })), null);
   assert.equal(resolveCanonicalPrice(R({ price_min: 0, price_sample_count: 9 })), null);
   assert.equal(resolveCanonicalPrice(R({ price_min: -10, price_sample_count: 9 })), null);
-  // A sample-backed min below the quality bar is ignored (falls through to cached, here absent).
-  assert.equal(resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 2 })), null);
+  assert.equal(resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 0 })), null);
 });
 
-test('a below-threshold aggregate min falls back to the cached price, not the unqualified min', () => {
-  const cp = resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 2, cached_price: 83, cached_currency: 'EUR' }));
-  assert.equal(cp.amount, 83);
-  assert.equal(cp.source, 'cached');
+test('an observed aggregate min with one sample is preferred over cached price', () => {
+  const cp = resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 1, cached_price: 83, cached_currency: 'EUR' }));
+  assert.equal(cp.amount, 60);
+  assert.equal(cp.source, 'aggregate-min');
 });
 
 test('currency is carried from the chosen source, not assumed EUR', () => {
-  const gbp = resolveCanonicalPrice(R({ price_min: 40, price_sample_count: 5, price_currency: 'GBP' }));
+  const gbp = resolveCanonicalPrice(R({ price_min: 40, price_sample_count: 1, price_currency: 'GBP' }));
   assert.equal(gbp.currency, 'GBP');
-  assert.match(buildRouteMetaDescription(R({ price_min: 40, price_sample_count: 5, price_currency: 'GBP' }), 'en'), /from £40/);
+  assert.match(buildRouteMetaDescription(R({ price_min: 40, price_sample_count: 1, price_currency: 'GBP' }), 'en'), /from £40/);
 });
