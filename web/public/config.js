@@ -17,16 +17,15 @@ window.APP_CONFIG = {
 
 /*
  * Canonical multilingual place resolver.
+ * Local AP data is authoritative for place resolution. Existing autocomplete
+ * is only allowed to remain as a fallback when AP has no candidate.
  *
- * This runs against the real #from-in / #to-in controls and the AP dataset
- * already loaded by app.js. It is intentionally local-first: every keystroke
- * is resolved against AP; the existing app autocomplete remains the fallback
- * when AP has no useful candidates. Nothing is sent to Duffel as a raw city
- * string.
+ * The critical invariant is enforced twice:
+ *   1) every user edit immediately invalidates the old IATA;
+ *   2) search re-validates the current visible text against the IATA.
  *
- * Important invariant:
- *   input text != selected canonical place => selected IATA is invalidated.
- * This prevents stale state such as "Riyadh" with IBZ from reaching search.
+ * Listeners are installed on window capture, before document/input handlers
+ * installed by app.js, so a stale app autocomplete state cannot win the race.
  */
 (function () {
   'use strict';
@@ -77,16 +76,23 @@ window.APP_CONFIG = {
       var code = String(row[0] || '').toUpperCase();
       if (!/^[A-Z0-9]{3}$/.test(code)) continue;
 
+      /* Index every textual field: do not assume one fixed language schema. */
       var values = [];
       for (var j = 0; j < row.length; j++) {
         if (typeof row[j] === 'string' && row[j].trim()) values.push(row[j]);
+      }
+      values = unique(values);
+      if (typeof window.apLocalizedCityName === 'function') {
+        try {
+          var localized = window.apLocalizedCityName(row);
+          if (localized) values.push.apply(values, unique([localized]));
+        } catch (_) {}
       }
       values = unique(values);
       if (!values.length) continue;
 
       var entry = { row: row, code: code, values: values };
       entries.push(entry);
-
       for (var v = 0; v < values.length; v++) {
         var value = values[v];
         (exact[value] || (exact[value] = [])).push(entry);
@@ -106,7 +112,6 @@ window.APP_CONFIG = {
   function score(entry, query) {
     var q = fold(query), compactQ = q.replace(/ /g, ''), qt = q.split(' ').filter(Boolean), best = 0;
     if (!q) return 0;
-
     for (var i = 0; i < entry.values.length; i++) {
       var value = entry.values[i], compactValue = value.replace(/ /g, ''), vt = value.split(' ');
       if (value === q) best = Math.max(best, 1200);
@@ -122,12 +127,9 @@ window.APP_CONFIG = {
   }
 
   function resolve(query) {
-    var data = build();
-    if (!data) return [];
-    var q = fold(query);
-    if (!q) return [];
-
-    var key = q.slice(0, 5), pool = data.prefix[key] || data.entries;
+    var data = build(), q = fold(query);
+    if (!data || !q) return [];
+    var pool = data.prefix[q.slice(0, 5)] || data.entries;
     var out = [], seen = Object.create(null);
     for (var i = 0; i < pool.length; i++) {
       var entry = pool[i];
@@ -154,23 +156,18 @@ window.APP_CONFIG = {
   function airport(row) { return row[1] || row[2] || row[0]; }
   function country(row) { return row[3] || ''; }
 
-  function clearCanonical(side, keepText) {
+  function clearCanonical(side) {
     var input = document.getElementById(side + '-in');
     var sub = document.getElementById(side + '-sub');
-    var drop = document.getElementById(side + '-ac');
     window[side + 'I'] = '';
     window[side + 'C'] = '';
     window[side + 'A'] = '';
     if (input) {
       input.removeAttribute('data-fw-iata');
       input.removeAttribute('data-iata');
-      if (!keepText) input.value = '';
+      input.removeAttribute('data-fw-selected');
     }
     if (sub) sub.textContent = '';
-    if (drop) {
-      drop.innerHTML = '';
-      drop.classList.remove('open');
-    }
   }
 
   function render(side, input, drop, results) {
@@ -194,24 +191,22 @@ window.APP_CONFIG = {
 
   function commit(side, row) {
     var code = String(row[0] || '').toUpperCase();
-    var c = city(row);
-    var a = airport(row);
+    var c = city(row), a = airport(row);
     var input = document.getElementById(side + '-in');
     var sub = document.getElementById(side + '-sub');
     var drop = document.getElementById(side + '-ac');
-    if (!/^[A-Z0-9]{3}$/.test(code)) return false;
+    if (!/^[A-Z0-9]{3}$/.test(code) || !input) return false;
 
-    if (input) {
-      input.value = c;
-      input.setAttribute('data-fw-iata', code);
-      input.setAttribute('data-iata', code);
-    }
-    if (sub) sub.textContent = a + ' · ' + code;
+    input.value = c;
+    input.setAttribute('data-fw-iata', code);
+    input.setAttribute('data-iata', code);
+    input.setAttribute('data-fw-selected', fold(c));
     window[side + 'I'] = code;
     window[side + 'C'] = c;
     window[side + 'A'] = a;
+    if (sub) sub.textContent = a + ' · ' + code;
     hide(drop, input);
-    if (input) input.dispatchEvent(new CustomEvent('fw-place-selected', {
+    input.dispatchEvent(new CustomEvent('fw-place-selected', {
       bubbles: true,
       detail: { side: side, iata: code, city: c, airport: a }
     }));
@@ -222,21 +217,31 @@ window.APP_CONFIG = {
     var input = document.getElementById(side + '-in');
     if (input) input.focus();
     var announce = document.getElementById('search-announce');
-    if (announce) announce.textContent = 'Bitte wählen Sie einen gültigen Flughafen aus der Vorschlagsliste.';
+    if (announce) announce.textContent = 'Please select a valid airport from the suggestions.';
     var box = document.getElementById('ebox'), msg = document.getElementById('emsg');
     if (box && msg) {
-      msg.textContent = 'Bitte wählen Sie ' + (side === 'from' ? 'den Abflugort' : 'das Reiseziel') + ' aus der Vorschlagsliste.';
+      msg.textContent = 'Please select ' + (side === 'from' ? 'the departure' : 'the destination') + ' from the suggestions.';
       box.classList.add('show');
       setTimeout(function () { box.classList.remove('show'); }, 4500);
     }
   }
 
-  function canonicalMatchesInput(side) {
+  function iataMatchesCurrentText(side) {
     var input = document.getElementById(side + '-in');
     var code = String(window[side + 'I'] || '').toUpperCase();
-    var selectedCity = fold(window[side + 'C'] || '');
     var value = fold(input ? input.value : '');
-    return /^[A-Z0-9]{3}$/.test(code) && !!selectedCity && !!value && selectedCity === value;
+    if (!/^[A-Z0-9]{3}$/.test(code) || !value) return false;
+
+    var selected = input && input.getAttribute('data-fw-selected');
+    if (selected && selected === value && input.getAttribute('data-fw-iata') === code) return true;
+
+    /* Also validate legacy/existing app state against AP, so stale IBZ cannot
+       survive while the visible field says e.g. رياض / Riyadh. */
+    var candidates = resolve(value);
+    for (var i = 0; i < candidates.length; i++) {
+      if (candidates[i].entry.code === code) return true;
+    }
+    return false;
   }
 
   function onInput(ev) {
@@ -245,15 +250,9 @@ window.APP_CONFIG = {
     var side = input.id === 'from-in' ? 'from' : 'to';
     var query = input.value.trim();
 
-    /* Any user edit invalidates the previous canonical selection immediately. */
-    window[side + 'I'] = '';
-    window[side + 'C'] = '';
-    window[side + 'A'] = '';
-    input.removeAttribute('data-fw-iata');
-    input.removeAttribute('data-iata');
+    clearCanonical(side);
     var sub = document.getElementById(side + '-sub');
     if (sub) sub.textContent = '';
-
     var drop = document.getElementById(side + '-ac');
     if (!drop) return;
     if (query.length < MIN_QUERY) { hide(drop, input); return; }
@@ -261,7 +260,6 @@ window.APP_CONFIG = {
     var results = resolve(query);
     if (!results.length) {
       hide(drop, input);
-      /* Let the existing app autocomplete perform its server/Duffel fallback. */
       return;
     }
 
@@ -270,35 +268,31 @@ window.APP_CONFIG = {
     render(side, input, drop, results);
   }
 
-  function onClick(ev) {
+  function onSelectionPointer(ev) {
     var el = ev.target && ev.target.closest ? ev.target.closest('.fw-ac-item') : null;
-    if (el) {
-      var side = el.getAttribute('data-fw-ac-side');
-      var code = el.getAttribute('data-fw-ac-code');
-      var data = build();
-      if (data && side && code) {
-        for (var i = 0; i < data.entries.length; i++) {
-          if (data.entries[i].code === code) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
-            commit(side, data.entries[i].row);
-            return;
-          }
-        }
-      }
+    if (!el) return;
+    var side = el.getAttribute('data-fw-ac-side'), code = el.getAttribute('data-fw-ac-code'), data = build();
+    if (!data || !side || !code) return;
+    for (var i = 0; i < data.entries.length; i++) {
+      if (data.entries[i].code !== code) continue;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+      commit(side, data.entries[i].row);
+      return;
     }
+  }
 
-    /* Guard every real search submit against stale/non-canonical place state. */
-    var searchButton = ev.target && ev.target.closest ? ev.target.closest('[data-fn="doSearch"]') : null;
-    if (!searchButton) return;
-    if (!canonicalMatchesInput('from')) {
+  function onSearch(ev) {
+    var target = ev.target && ev.target.closest ? ev.target.closest('[data-fn="doSearch"], [type="submit"]') : null;
+    if (!target) return;
+    if (!iataMatchesCurrentText('from')) {
       ev.preventDefault(); ev.stopPropagation();
       if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
       showError('from');
       return;
     }
-    if (!canonicalMatchesInput('to')) {
+    if (!iataMatchesCurrentText('to')) {
       ev.preventDefault(); ev.stopPropagation();
       if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
       showError('to');
@@ -306,14 +300,36 @@ window.APP_CONFIG = {
   }
 
   function init() {
-    if (window.__fwMultilingualResolverV3) return;
-    window.__fwMultilingualResolverV3 = true;
-    document.addEventListener('input', onInput, true);
-    document.addEventListener('click', onClick, true);
+    if (window.__fwMultilingualResolverV4) return;
+    window.__fwMultilingualResolverV4 = true;
+
+    /* Window capture runs before document capture and delegated app handlers. */
+    window.addEventListener('input', onInput, true);
+    window.addEventListener('change', onInput, true);
+    window.addEventListener('search', onInput, true);
+    window.addEventListener('compositionend', onInput, true);
+    window.addEventListener('pointerdown', onSelectionPointer, true);
+    window.addEventListener('mousedown', onSelectionPointer, true);
+    window.addEventListener('click', onSelectionPointer, true);
+    window.addEventListener('submit', onSearch, true);
+    window.addEventListener('click', onSearch, true);
+    window.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter') return;
+      var input = ev.target;
+      if (!input || (input.id !== 'from-in' && input.id !== 'to-in')) return;
+      var side = input.id === 'from-in' ? 'from' : 'to';
+      if (!iataMatchesCurrentText(side)) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+        showError(side);
+      }
+    }, true);
+
     window.__fwMultilingualResolverDiagnostics = function () {
       var d = build();
       return {
         installed: true,
+        version: 'V4',
         apAvailable: !!d,
         apCount: d ? d.entries.length : 0,
         fields: d && d.entries[0] ? d.entries[0].row.length : 0,
