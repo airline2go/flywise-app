@@ -102,6 +102,14 @@ nav.topnav {
   margin-left: auto;
   align-items: center;
 }
+/* Arabic pages are true RTL: logo on the right, search on the left. */
+html[dir="rtl"] .navi {
+  flex-direction: row-reverse;
+}
+html[dir="rtl"] .navr {
+  margin-left: 0;
+  margin-right: auto;
+}
 .btn-t {
   background: var(--teal);
   color: #fff;
