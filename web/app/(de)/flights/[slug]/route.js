@@ -1,6 +1,7 @@
 // German flight-route page (unprefixed root) — verbatim legacy HTML, see
 // lib/legacy-render/render.js.
 import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
+import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
 import { listRoutePages } from '@/lib/content-api';
@@ -38,11 +39,18 @@ export async function generateStaticParams() {
 
 export async function GET(_req, { params }) {
   const { slug } = await params;
-  // [VERIFIED-REDIRECT] Persistent (admin/loser-cleanup) redirect first, then the
-  // live canonical-consolidation backstop — resolveFlightRedirect applies both in
-  // that order and, crucially, only ever returns a target that actually renders,
-  // so a discovered old URL can never 301 into a 404. null → render the slug.
+
+  // Safe alias normalization runs before canonical consolidation. It only
+  // redirects to an existing published route and never guesses between
+  // multiple airport variants. This preserves link equity without creating
+  // redirect chains or 301 -> 404 targets.
+  const alias = await resolveRouteSlugAlias(slug);
+  if (alias) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(alias)}`), 301);
+
+  // Persistent/admin redirects and canonical consolidation remain the
+  // authoritative SEO layer after alias normalization.
   const redirect = await resolveFlightRedirect(slug);
   if (redirect) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
+
   return htmlResponse(await renderFlightRouteHtml(slug, 'de'));
 }
