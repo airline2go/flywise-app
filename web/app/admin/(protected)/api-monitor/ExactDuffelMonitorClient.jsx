@@ -105,7 +105,7 @@ export default function ExactDuffelMonitorClient() {
         {!usage?.daily?.length && <div style={muted}>لا توجد محاولات مسجلة ضمن الفترة.</div>}
       </section>
       <section style={panel}><h2 style={h2}>حسب المصدر والـtrigger</h2>
-        <div style={{ overflowX: 'auto' }}><table style={table}><thead><tr><th>source</th><th>trigger</th><th>attempts</th><th>billable</th><th>success</th><th>failed</th></tr></thead><tbody>{sources.map((x, i) => <tr key={`${x.source}-${x.trigger}-${i}`}><td>{x.source || '—'}</td><td>{x.trigger || '—'}</td><td>{int(x.outbound_attempts)}</td><td>{int(x.billable_attempts)}</td><td>{int(x.successful_attempts)}</td><td>{int(x.failed_or_incomplete_attempts)}</td></tr>)}</tbody></table></div>
+        <div style={{ overflowX: 'auto' }}><table style={table}><thead><tr><th>source</th><th>trigger</th><th>attempts</th><th>billable</th><th>success</th><th>failed</th></tr></thead><tbody>{sources.map((x) => <tr key={`${x.source}-${x.trigger}`}><td>{x.source || '—'}</td><td>{x.trigger || '—'}</td><td>{int(x.outbound_attempts)}</td><td>{int(x.billable_attempts)}</td><td>{int(x.successful_attempts)}</td><td>{int(x.failed_or_incomplete_attempts)}</td></tr>)}</tbody></table></div>
       </section>
     </div>
 
