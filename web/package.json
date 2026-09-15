@@ -11,13 +11,12 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "seo:route-integrity": "node scripts/seo-route-integrity.mjs"
+    "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
+    "seo:flight-evidence": "node scripts/seo-flight-evidence-gate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
     "next": "16.2.10",
-    "node-html-parser": "^9.0.0",
-    "pdf-lib": "^1.17.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.9.2"
