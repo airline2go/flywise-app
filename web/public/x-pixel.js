@@ -5,9 +5,6 @@
  * app already has one trackEvent() layer; this file bridges that real event
  * stream to X without changing booking/search behaviour or sending passenger
  * PII.
- *
- * X Conversion Event IDs are intentionally not invented. Populate
- * window.AIRPIV_X_EVENT_IDS with IDs copied from X Events Manager.
  */
 (function () {
   'use strict';
@@ -19,15 +16,15 @@
   var MAX_ATTEMPTS = 600;
 
   var EVENT_IDS = {
-    search_started: null,
-    search: null,
-    search_results: null,
-    search_results_loaded: null,
-    select_item: null,
-    offer_selected: null,
-    begin_checkout: null,
-    checkout_started: null,
-    payment_started: null,
+    search_started: 'tw-rf8jx-rfcc7',
+    search: 'tw-rf8jx-rfcc7',
+    search_results: 'tw-rf8jx-rfcc8',
+    search_results_loaded: 'tw-rf8jx-rfcc8',
+    select_item: 'tw-rf8jx-rfcca',
+    offer_selected: 'tw-rf8jx-rfcca',
+    begin_checkout: 'tw-rf8jx-rfcc9',
+    checkout_started: 'tw-rf8jx-rfcc9',
+    payment_started: 'tw-rf8jx-rfcc9',
     purchase: null,
     payment_success: null,
     booking_completed: null,
