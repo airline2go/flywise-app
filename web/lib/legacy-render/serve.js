@@ -22,7 +22,7 @@ export function htmlResponse(html) {
   // claims that are not part of the permitted route-derived evidence model.
   // Remove only the affected sentence so supported route facts remain intact.
   if (isCityPage) {
-    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat|gefragtesten|beliebtesten|most popular|most demanded|más populares|plus populaires|più popolari|populairste|en popüler)[^.!?]*[.!?]?/gi;
+    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat|gefragtesten|beliebtesten|most popular|most demanded|más populares|plus populaires|più popolari|populairste|en popüler)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
       const detector = new RegExp(unsupportedSentence.source, 'i');
       if (!detector.test(inner)) return full;
@@ -31,9 +31,8 @@ export function htmlResponse(html) {
     });
 
     // Keep visible FAQ content, but do not attempt regex surgery inside JSON.
-    // The previous response-boundary object-removal regex could leave a
-    // syntactically invalid FAQPage array. Removing the whole optional FAQPage
-    // JSON-LD block is fail-closed and leaves the remaining schema valid.
+    // Removing the whole optional FAQPage JSON-LD block is fail-closed and
+    // leaves the remaining schema valid rather than risking malformed JSON.
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '');
   }
 
@@ -41,7 +40,7 @@ export function htmlResponse(html) {
 }
 
 // [ROUTE-CANONICAL-REDIRECT] F1 — a permanent (301) redirect from a consolidated
-a duplicate URL to its canonical winner. Body-less, with an absolute-path
+// duplicate URL to its canonical winner. Body-less, with an absolute-path
 // Location; cacheable by the platform like the rendered pages next to it.
 export function redirectResponse(location, status = 301) {
   return new Response(null, { status, headers: { location } });
