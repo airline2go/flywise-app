@@ -30,6 +30,7 @@ import {
   sitemapBlog,
   getReviews,
 } from './content-api';
+import { listLocalizedRouteSitemap } from './localized-route-sitemap';
 import { LANGUAGE_CODES, urlFor } from './languages';
 import { buildCanonicalSlugMap } from './seo/route-canonical.mjs';
 import {
@@ -70,10 +71,31 @@ export async function buildRouteUrls() {
   // a non-self-canonical URL must never be listed. Same slug-only winner rule
   // the renderer uses, so the two never disagree.
   const loserSlugs = buildCanonicalSlugMap(routes);
+  const canonicalRoutes = routes.filter((r) => r && r.id && !loserSlugs.has(r.id));
   const urls = [];
-  for (const r of routes) {
-    if (loserSlugs.has(r.id)) continue;
-    eachLang(`flights/${r.id}`, applyTemplateFloor(r.lastmod, floor), urls);
+
+  // German is the primary route catalogue. Secondary languages must come from
+  // the backend's generated locale rows, otherwise we can publish /xx/flights/*
+  // URLs that correctly return 404 when localized SEO was never generated.
+  const deRoutes = new Map(canonicalRoutes.map((r) => [r.id, r]));
+  for (const r of canonicalRoutes) {
+    urls.push({
+      loc: urlFor('de', `flights/${r.id}`),
+      lastmod: applyTemplateFloor(r.lastmod, floor),
+    });
+  }
+
+  for (const lang of LANGS) {
+    if (lang === 'de') continue;
+    const localized = await listLocalizedRouteSitemap(lang);
+    for (const item of localized) {
+      const route = deRoutes.get(item.id);
+      if (!route) continue;
+      urls.push({
+        loc: urlFor(lang, `flights/${item.id}`),
+        lastmod: applyTemplateFloor(item.lastmod || route.lastmod, floor),
+      });
+    }
   }
   return urls;
 }
