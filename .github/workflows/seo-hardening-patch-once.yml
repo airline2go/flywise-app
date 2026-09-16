@@ -1,0 +1,60 @@
+name: Airpiv SEO route hardening (one-shot)
+on:
+  push:
+    branches: [fix/airpiv-seo-hardening-final-2026-09-16]
+permissions:
+  contents: write
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Patch route badges and regression coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          shell_path = Path('web/lib/legacy-render/shell.js')
+          shell = shell_path.read_text()
+          old = '''  const sanitizedMainContent = String(mainContent || '')\n    .replace(/<section class=\\"route-besttime-section\\">[\\s\\S]*?<\\/section>/g, '')\n    .replace(/<div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"><\\/div><div class=\\"route-faq-a\\"><\\/div><\\/div>/g, '');'''
+          new = '''  const sanitizedMainContent = String(mainContent || '')\n    .replace(/<section class=\\"route-besttime-section\\">[\\s\\S]*?<\\/section>/g, '')\n    .replace(/<div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"><\\/div><div class=\\"route-faq-a\\"><\\/div><\\/div>/g, '')\n    .replace(/<div class=\\"route-hero-badges\\">[\\s\\S]*?<\\/div>/g, '');'''
+          if shell.count(old) != 1:
+              raise SystemExit(f'route badge sanitizer anchor count: {shell.count(old)}')
+          shell_path.write_text(shell.replace(old, new, 1))
+
+          test_path = Path('web/test/seo-route-hardening.test.mjs')
+          test = test_path.read_text()
+          anchor = "const sitemapPath = path.resolve(process.cwd(), 'app/sitemap-shard/[file]/route.js');"
+          addition = '''const rendered = shell.renderShell({\n  lang: 'de',\n  title: 'Test',\n  description: 'Test',\n  canonicalUrl: 'https://airpiv.com/flights/test-test',\n  urls: { de: 'https://airpiv.com/flights/test-test', en: 'https://airpiv.com/en/flights/test-test' },\n  mainContent: '<div class=\\"route-hero-badges\\"><span>✓ 600+ Airlines</span></div><section class=\\"route-besttime-section\\"><p>Best time Tuesday</p></section><div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"></div><div class=\\"route-faq-a\\"></div></div>',\n});\nassert.doesNotMatch(rendered, /route-hero-badges/);\nassert.doesNotMatch(rendered, /600\\+ Airlines/);\nassert.doesNotMatch(rendered, /Best time Tuesday/);\n\nconst faqSchema = shell.jsonLdScript({\n  '@context': 'https://schema.org',\n  '@type': 'WebPage',\n  mainEntity: {\n    '@type': 'FAQPage',\n    mainEntity: [\n      { name: '', acceptedAnswer: { text: '' } },\n      { name: 'Valid', acceptedAnswer: { text: 'Valid answer' } },\n    ],\n  },\n});\nassert.ok(faqSchema.includes('\\"name\\":\\"Valid\\"'));\nassert.ok(!faqSchema.includes('\\"name\\":\\"\\"'));\n\n'''
+          if test.count(anchor) != 1:
+              raise SystemExit('test anchor count mismatch')
+          test_path.write_text(test.replace(anchor, addition + anchor, 1))
+          PY
+      - name: Verify production suite
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run seo:flight-evidence
+          npm run seo:route-integrity
+          npm run build
+      - name: Commit patch and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/seo-hardening-patch-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web .github/workflows/seo-hardening-patch-once.yml
+          git commit -m 'fix(seo): remove unsupported route hero claims'
+          git push origin HEAD:fix/airpiv-seo-hardening-final-2026-09-16
