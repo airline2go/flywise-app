@@ -17,6 +17,24 @@ test('distance_km alone is NEVER evidence; airline_count=0 is NEVER evidence', (
   assert.equal(hasVerifiedFlightEvidence({ airline_count: 0, distance_km: 500 }), false);
 });
 
+test('malformed stop distribution is NEVER evidence', () => {
+  assert.equal(hasVerifiedFlightEvidence({ stop_distribution: { '0': 0, '1': 0 } }), false);
+  assert.equal(hasVerifiedFlightEvidence({ stop_distribution: { x: 4 } }), false);
+  assert.equal(hasVerifiedFlightEvidence({ stop_distribution: { '0': 2.5 } }), false);
+});
+
+test('evidence policy is fail-closed when the environment flag is unset', () => {
+  const old = process.env.SEO_EVIDENCE_POLICY_ENFORCED;
+  delete process.env.SEO_EVIDENCE_POLICY_ENFORCED;
+  try {
+    assert.equal(getRouteIndexabilityDecision({ distance_km: 500 }).indexable, false);
+    assert.equal(getRouteIndexabilityDecision({ avg_duration_min: 120 }).indexable, true);
+  } finally {
+    if (old == null) delete process.env.SEO_EVIDENCE_POLICY_ENFORCED;
+    else process.env.SEO_EVIDENCE_POLICY_ENFORCED = old;
+  }
+});
+
 for (const c of fixture.cases) {
   test(`enforced parity: ${c.name} → ${c.enforced}`, () => {
     assert.equal(getRouteIndexabilityDecision(c.route, { enforce: true }).indexable, c.enforced);
