@@ -1,5 +1,6 @@
 const DUFFEL_LOGO_BASE = "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/";
 
+// Same-origin image endpoint: the browser never needs direct Duffel image access.
 export const runtime = "nodejs";
 
 function fallbackSvg(code) {
