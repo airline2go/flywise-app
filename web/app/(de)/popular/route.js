@@ -5,7 +5,12 @@
 import { renderPopularHtml } from '@/lib/legacy-render/render';
 import { htmlResponse } from '@/lib/legacy-render/serve';
 
-export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh affected entity pages immediately via /api/revalidate
+// [BUILD-SAFETY] This hub performs a catalogue-wide ranking (including
+// per-airline route counts). Keep it out of the deployment-time static export:
+// the page is still server-rendered and cached by the platform, but one slow
+// upstream catalogue fetch cannot fail an otherwise healthy deployment.
+export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 export async function GET() {
   return htmlResponse(await renderPopularHtml('de'));
