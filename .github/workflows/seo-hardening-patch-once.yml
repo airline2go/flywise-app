@@ -29,7 +29,9 @@ jobs:
           window = range(start, min(start + 8, len(lines)))
           if not any('route-hero-badges' in lines[i] for i in window):
               faq_line = next(i for i in window if 'route-faq-item' in lines[i])
-              lines.insert(faq_line + 1, r'''    .replace(/<div class="route-hero-badges">[\s\S]*?<\/div>/g, '');''')
+              bs = chr(92)
+              line = '    .replace(/<div class="route-hero-badges">' + bs + 's' + bs + 'S]*?' + bs + '<' + bs + '/div>/g, "");'
+              lines.insert(faq_line, line)
               shell_path.write_text('\n'.join(lines) + '\n')
 
           ttl = Path('web/lib/legacy-render/ttl.js')
