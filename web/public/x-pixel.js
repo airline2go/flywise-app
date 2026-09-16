@@ -46,5 +46,9 @@
     if (attempts < MAX_ATTEMPTS) window.setTimeout(waitForConsent, 500);
   }
 
+  window.addEventListener('airpiv:ad-consent-granted', function () {
+    init();
+  });
+
   waitForConsent();
 }());

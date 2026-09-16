@@ -81,6 +81,10 @@
   function applyConsent(state) {
     window.airpivConsentState = { analytics: !!state.analytics, ad: !!state.ad };
 
+    if (window.airpivConsentState.ad) {
+      try { window.dispatchEvent(new CustomEvent('airpiv:ad-consent-granted')); } catch (e) {}
+    }
+
     if (state.analytics) {
       gtag('consent', 'update', { analytics_storage: 'granted' });
     }
