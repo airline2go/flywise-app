@@ -7,8 +7,10 @@ const ROUTES_PER_PAGE = 500;
 
 function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
   const locale = getLanguage(lang).locale;
-  const title = `${translate('sitemapPageTitle', lang)} — Flight routes ${page}`;
-  const description = `Airpiv flight route directory, page ${page} of ${totalPages}.`;
+  const title = lang === 'en' ? `Flight routes sitemap ${page} | Airpiv` : `Flugrouten-Sitemap ${page} | Airpiv`;
+  const description = lang === 'en'
+    ? `Browse 500 real, indexable Airpiv flight routes. Page ${page} of ${totalPages}.`
+    : `500 echte, indexierbare Airpiv-Flugrouten durchsuchen. Seite ${page} von ${totalPages}.`;
   const urls = urlsFor(`sitemap/routes/${page}`);
   const url = urls[lang];
 
@@ -26,7 +28,7 @@ function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
     : '';
 
   const breadcrumbHtml = `<nav class="breadcrumb" aria-label="Breadcrumb"><a href="${homeHref(lang)}">${translate('homeLabel', lang)}</a><span>›</span><a href="${pathFor(lang, 'sitemap')}">${translate('sitemapLabel', lang)}</a><span>›</span><span>Flight routes ${page}</span></nav>`;
-  const mainContent = `<main id="route-sitemap-main"><div id="route-sitemap-content">${breadcrumbHtml}<h1>${escHtml(title)}</h1><p>Browse real, indexable Airpiv flight routes. Page ${page} of ${totalPages}.</p><ul class="sitemap-links sitemap-routes">${routeItems}</ul>${paginationHtml}</div></main>`;
+  const mainContent = `<main id="route-sitemap-main"><div id="route-sitemap-content">${breadcrumbHtml}<h1>${escHtml(title)}</h1><p>${escHtml(description)}</p><ul class="sitemap-links sitemap-routes">${routeItems}</ul>${paginationHtml}</div></main>`;
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -48,7 +50,7 @@ function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
   const headExtra = `${jsonLdScript(schema)}\n${jsonLdScript(breadcrumbSchema)}<style>.breadcrumb{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--tx3);margin-bottom:14px;flex-wrap:wrap}.breadcrumb a{color:var(--teal);text-decoration:none}.sitemap-links{list-style:none;margin:0;padding:0;column-width:220px;column-gap:28px}.sitemap-links li{break-inside:avoid;margin:0 0 8px;font-size:13.5px;line-height:1.4}.sitemap-links a{color:var(--tx);text-decoration:none}.sitemap-links a:hover{color:var(--teal)}@media(max-width:480px){.sitemap-links{column-width:155px;column-gap:16px}}</style>`;
   const html = renderShell({
     lang,
-    title: `${title} | Airpiv`,
+    title,
     description,
     canonicalUrl: url,
     urls,
@@ -56,7 +58,7 @@ function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
     headExtra,
     mainContent,
   });
-  return { html, seo: { title: `${title} | Airpiv`, description, canonicalUrl: url, schema } };
+  return { html, seo: { title, description, canonicalUrl: url, schema } };
 }
 
 module.exports = { renderRouteSitemapPage, ROUTES_PER_PAGE };
