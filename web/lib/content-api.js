@@ -19,6 +19,13 @@ const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 // refresh affected pages immediately via /api/revalidate regardless of this
 // window. 86400s = 24 hours.
 const DEFAULT_REVALIDATE = 86400;
+// [ROUTE-SEO-FRESHNESS] Route pages are the SEO surface whose generated content
+// and evidence can change independently of a frontend deploy. Keep route-detail
+// API data on a 15-minute ISR window so a backend SEO/data correction cannot be
+// hidden behind the generic 24-hour entity cache. This is still heavily cached
+// and never triggers a Duffel search: /route-pages/:slug is persisted catalogue
+// data only.
+const ROUTE_DETAIL_REVALIDATE = 900;
 
 // [RESILIENCE] Bounded retry with backoff for transient upstream failures
 // (network errors, 429 rate-limits, 5xx). This restores the retry behavior the
@@ -183,9 +190,9 @@ const sitemapBlog = (lang) => fetchAllSitemapData('blog', lang && lang !== 'de' 
 // the route handler answers a clean 404 instead of letting the throw bubble to a
 // 500 (bad for SEO — Google reads 500 as "site broken" — and it floods the
 // error logs). Any non-404 failure still throws.
-async function fetchDetailOrNull(path) {
+async function fetchDetailOrNull(path, options = {}) {
   try {
-    return await fetchJSON(path);
+    return await fetchJSON(path, options);
   } catch (e) {
     if (e && e.status === 404) return null;
     throw e;
@@ -220,7 +227,7 @@ async function getAirline(code) {
 async function getRoutePage(slug, lang = getRouteLocale()) {
   const encoded = encodeURIComponent(slug);
   if (lang && lang !== 'de') {
-    const data = await fetchDetailOrNull(`/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`);
+    const data = await fetchDetailOrNull(`/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
     if (!data || !data.route) return null;
     const route = data.route;
     const seo = route.seo || {};
@@ -234,7 +241,7 @@ async function getRoutePage(slug, lang = getRouteLocale()) {
       localized_hreflang: data.hreflang || [],
     };
   }
-  const data = await fetchDetailOrNull(`/route-pages/${encoded}`);
+  const data = await fetchDetailOrNull(`/route-pages/${encoded}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   return (data && data.route) || null;
 }
 
