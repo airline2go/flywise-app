@@ -1,0 +1,122 @@
+name: Airpiv SEO final hardening
+on:
+  push:
+    branches: [fix/route-seo-evidence-hardening-2026-09-16]
+permissions:
+  contents: write
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/route-seo-evidence-hardening-2026-09-16
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Apply final route SEO hardening
+        working-directory: web
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def edit(path, fn):
+              p = Path(path)
+              s = p.read_text()
+              n = fn(s)
+              if n == s:
+                  raise SystemExit(f'No change made to {path}; refusing silent no-op')
+              p.write_text(n)
+
+          # Route sitemap children are 15m; the sitemap index remains 1h.
+          edit('app/sitemap-routes.xml/route.js', lambda s: s.replace('export const revalidate = 900;', 'export const revalidate = 900;'))
+          edit('app/sitemap-shard/[file]/route.js', lambda s: s.replace('export const revalidate = 3600;', 'export const revalidate = 900;').replace("'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',", "'cache-control': 'public, max-age=900, stale-while-revalidate=86400',"))
+
+          # Add the requested fastest-flight wording to the existing shell override map.
+          edit('lib/legacy-render/shell.js', lambda s: s.replace(
+              "const originalTranslate = translationModule.translate;",
+              """const FASTEST_ROUTE_COPY = {
+            en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',
+            de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',
+            ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',
+            es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',
+            fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',
+            it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',
+            nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',
+            tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',
+          };
+          for (const [lang, value] of Object.entries(FASTEST_ROUTE_COPY)) {
+            if (ROUTE_COPY_OVERRIDES[lang]) ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer = value;
+          }
+
+          const originalTranslate = translationModule.translate;"""))
+
+          # Renderer: fastest FAQ is valid whenever min_duration_min is a real positive persisted value;
+          # it no longer depends on avg_duration_min and never implies nonstop.
+          edit('lib/legacy-render/render-flight-route.js', lambda s: s
+              .replace("if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {", "if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {")
+              .replace("// a nonstop option pulls it below the mixed average); otherwise it would just\n  // restate the duration FAQ. Real Phase 1 data, never fabricated.", "// The minimum is a persisted observed route value; wording is descriptive only and never infers nonstop.")
+              .replace("const items = [bestTimeFaqItem, haulQuestion];", "// Booking-timing advice is omitted unless explicit historical pricing/schedule evidence exists.\n  // No such evidence is part of the current route snapshot, so do not publish a guess.\n  const items = [haulQuestion];")
+              .replace("function buildBestTimeHtml(route, lang) {\n  if (route.distance_km == null) return '';", "function buildBestTimeHtml(route, lang) {\n  // No historical pricing/schedule evidence is persisted for this renderer; suppress unsupported booking advice.\n  return '';")
+          )
+
+          # Regression contract: fastest answer must not contain a nonstop claim in any locale.
+          edit('test/route-evidence.test.mjs', lambda s: s + "\n")
+          Path('test/seo-route-hardening.test.mjs').write_text(r'''import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const shell = require('../lib/legacy-render/shell.js');
+const { renderFlightRoutePage } = require('../lib/legacy-render/render-flight-route.js');
+
+const langs = ['en', 'de', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
+
+test('fastest-flight override exists in all eight languages and is descriptive', () => {
+  for (const lang of langs) {
+    const value = shell.ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer;
+    assert.ok(value && value.includes('{duration}'), `${lang} fastest override missing duration placeholder`);
+    assert.doesNotMatch(value, /nonstop|non-stop|direkt|sans escale|sin escalas|senza scalo|rechtstreeks|aktarmasız/i);
+  }
+});
+
+test('route with minimum observed duration does not infer nonstop', () => {
+  const route = {
+    slug: 'test-origin-test-destination', origin_iata: 'AAA', destination_iata: 'BBB',
+    origin_city: 'Origin', destination_city: 'Destination', origin_country: 'AA', destination_country: 'BB',
+    min_duration_min: 95, avg_duration_min: 180, distance_km: 500,
+    airline_count: 2, stop_distribution: { '0': 1, '1': 2 },
+  };
+  const { html } = renderFlightRoutePage(route, 'en', [], []);
+  assert.match(html, /shortest observed flight time/i);
+  assert.doesNotMatch(html, /shortest observed flight time[^<]{0,180}nonstop/i);
+  assert.doesNotMatch(html, /route-besttime-section/);
+});
+
+test('comparison route never emits FlightReservation schema', () => {
+  const route = {
+    slug: 'test-origin-test-destination', origin_iata: 'AAA', destination_iata: 'BBB',
+    origin_city: 'Origin', destination_city: 'Destination', origin_country: 'AA', destination_country: 'BB',
+    avg_duration_min: 180, airline_count: 2, price_min: 49, price_currency: 'EUR', price_sample_count: 3,
+  };
+  const { html } = renderFlightRoutePage(route, 'en', [], []);
+  assert.doesNotMatch(html, /FlightReservation/);
+});
+''')
+          PY
+      - name: Verify
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm test
+      - name: Remove one-shot workflow and commit
+        run: |
+          rm -f .github/workflows/airpiv-seo-finalize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web .github/workflows/airpiv-seo-finalize.yml
+          git commit -m "fix(seo): harden route FAQ evidence and sitemap freshness"
+          git push origin HEAD:fix/route-seo-evidence-hardening-2026-09-16
