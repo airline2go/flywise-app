@@ -22,14 +22,22 @@ function revalidateOf(relPath) {
   return Number(m[1]);
 }
 
-test('entity page routes use the documented ROUTE_PAGE_REVALIDATE_S', () => {
-  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js', 'app/(de)/city/[slug]/route.js']) {
+test('route page uses the documented ROUTE_PAGE_REVALIDATE_S', () => {
+  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js']) {
     assert.equal(revalidateOf(p), ttl.ROUTE_PAGE_REVALIDATE_S, `${p} revalidate must equal ROUTE_PAGE_REVALIDATE_S`);
   }
 });
 
-test('sitemap routes use the documented SITEMAP_REVALIDATE_S', () => {
-  for (const p of ['app/sitemap.xml/route.js', 'app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {
-    assert.equal(revalidateOf(p), ttl.SITEMAP_REVALIDATE_S, `${p} revalidate must equal SITEMAP_REVALIDATE_S`);
+test('entity page uses the documented ENTITY_PAGE_REVALIDATE_S', () => {
+  assert.equal(revalidateOf('app/(de)/city/[slug]/route.js'), ttl.ENTITY_PAGE_REVALIDATE_S);
+});
+
+test('sitemap index uses the documented SITEMAP_REVALIDATE_S', () => {
+  assert.equal(revalidateOf('app/sitemap.xml/route.js'), ttl.SITEMAP_REVALIDATE_S);
+});
+
+test('route sitemap child uses the documented SITEMAP_CHILD_REVALIDATE_S', () => {
+  for (const p of ['app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {
+    assert.equal(revalidateOf(p), ttl.SITEMAP_CHILD_REVALIDATE_S, `${p} revalidate must equal SITEMAP_CHILD_REVALIDATE_S`);
   }
 });

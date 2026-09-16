@@ -1,4 +1,4 @@
-const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');
+const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec, routeCopyOverride } = require('./shell');
 const { robotsMeta } = require('./indexability');
 const { getRouteIndexabilityDecision } = require('./route-evidence');
 const { localizeCity, getAlternativeAirports, hasCity, hasCountry } = require('./data');
@@ -132,17 +132,9 @@ function buildFaqItems(route, lang, snapshot) {
       question: format(translate('routeFaqAirportQuestion', lang), { destination: route.destination_city }),
       answer: format(translate('routeFaqAirportAnswer', lang), { destCode: route.destination_iata }),
     };
-  const bestTimeFaqItem = route.distance_km != null
-    ? {
-      question: format(translate('routeFaqBestTimeQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: translate(`routeFaqBestTimeAnswer${haulSuffix(route)}`, lang),
-    }
-    : {
-      question: format(translate('routeFaqCheapestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: translate('routeFaqCheapestAnswer', lang),
-    };
-
-  const items = [bestTimeFaqItem, haulQuestion];
+  // Booking-timing advice requires explicit historical pricing or schedule evidence.
+  // The current route snapshot exposes neither, so no such FAQ is emitted.
+  const items = [haulQuestion];
 
   // [CONTENT-VARIATION-2] Previously this FAQ item only ever existed
   // client-side (buildLiveScript(), appended to the DOM after page load,
@@ -199,10 +191,10 @@ function buildFaqItems(route, lang, snapshot) {
   // time is a persisted field AND is genuinely shorter than the average (i.e.
   // a nonstop option pulls it below the mixed average); otherwise it would just
   // restate the duration FAQ. Real Phase 1 data, never fabricated.
-  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
+  if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {
     items.push({
       question: format(translate('routeFaqFastestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
-      answer: format(translate('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),
+      answer: format(routeCopyOverride('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),
     });
   }
 
@@ -254,7 +246,8 @@ function buildFaqItems(route, lang, snapshot) {
 // sentence deterministically per-route so two routes sharing every other
 // signal still read differently.
 function buildBestTimeHtml(route, lang) {
-  if (route.distance_km == null) return '';
+  // Do not publish booking-window/"best time" claims without historical pricing or schedule evidence.
+  return '';
   const isLongHaul = route.haul_type === 'long-haul';
   const isDomestic = !!(route.origin_country && route.destination_country && route.origin_country === route.destination_country);
   // Body text names the haul category, so it is three-way (domestic + not).
@@ -306,7 +299,7 @@ function buildRouteFactsHtml(route, lang, snapshot) {
   const cards = [];
   if (route.distance_km != null) cards.push(card(`${route.distance_km.toLocaleString(loc)}${small('km')}`, translate('routeFactDistance', lang)));
   if (route.avg_duration_min != null) cards.push(card(formatHoursMinutes(route.avg_duration_min, lang), translate('routeFactAvgDuration', lang)));
-  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
+  if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {
     cards.push(card(formatHoursMinutes(route.min_duration_min, lang), translate('routeFactFastest', lang)));
   }
   const factsAirlineCount = snapshot.airlineCount;

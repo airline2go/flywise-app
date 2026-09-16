@@ -1,6 +1,25 @@
 const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathPrefix, pathFor } = require('./languages');
 const { stringsFor } = require('./translate');
 
+// Route-specific descriptive copy overrides. These deliberately avoid any
+// nonstop inference: the duration is observed, while itinerary type can vary.
+const ROUTE_COPY_OVERRIDES = {
+  routeFaqFastestAnswer: {
+    en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',
+    de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',
+    ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',
+    es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',
+    fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',
+    it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',
+    nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',
+    tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',
+  },
+};
+
+function routeCopyOverride(key, lang) {
+  return (ROUTE_COPY_OVERRIDES[key] && ROUTE_COPY_OVERRIDES[key][lang]) || '';
+}
+
 // Fixed, identical-across-every-language site paths — never real
 // "translated" content, so these live here as constants rather than in
 // translations/*.json (which previously carried them redundantly, once
@@ -176,4 +195,4 @@ ${scripts}
 `;
 }
 
-module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec };
+module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec, ROUTE_COPY_OVERRIDES, routeCopyOverride };
