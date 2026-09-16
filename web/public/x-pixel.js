@@ -16,18 +16,26 @@
   var MAX_ATTEMPTS = 600;
 
   var EVENT_IDS = {
+    // X Ads Manager: Search
     search_started: 'tw-rf8jx-rfcc7',
     search: 'tw-rf8jx-rfcc7',
-    search_results: 'tw-rf8jx-rfcc8',
-    search_results_loaded: 'tw-rf8jx-rfcc8',
-    select_item: 'tw-rf8jx-rfcca',
-    offer_selected: 'tw-rf8jx-rfcca',
-    begin_checkout: 'tw-rf8jx-rfcc9',
-    checkout_started: 'tw-rf8jx-rfcc9',
-    payment_started: 'tw-rf8jx-rfcc9',
-    purchase: null,
+
+    // X Ads Manager: View Content
+    select_item: 'tw-rf8jx-rfcc8',
+    offer_selected: 'tw-rf8jx-rfcc8',
+
+    // X Ads Manager: Checkout Initiated
+    begin_checkout: 'tw-rf8jx-rfcca',
+    checkout_started: 'tw-rf8jx-rfcca',
+
+    // X Ads Manager: Purchase
+    purchase: 'tw-rf8jx-rfcc9',
+    booking_completed: 'tw-rf8jx-rfcc9',
+
+    search_results: null,
+    search_results_loaded: null,
+    payment_started: null,
     payment_success: null,
-    booking_completed: null,
     booking_cancelled: null,
     lead: null,
     api_error: null
