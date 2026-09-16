@@ -12,6 +12,7 @@ import { listRoutePages } from '@/lib/content-api';
 // remain a cached 404 for more than 15 minutes. Admin publishes still revalidate
 // immediately through /api/revalidate.
 export const revalidate = 900;
+export const dynamic = 'force-static';
 export const dynamicParams = true;
 
 // [PRERENDER-TOP-ROUTES] Prerender only the highest-value German flight routes
@@ -53,7 +54,7 @@ export async function GET(_req, { params }) {
   if (alias) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(alias)}`), 301);
 
   // Persistent/admin redirects and canonical consolidation remain the
-  // authoritative SEO layer after alias normalization.
+  // authoritative SEO consolidation layer after alias normalization.
   const redirect = await resolveFlightRedirect(slug);
   if (redirect) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
 
