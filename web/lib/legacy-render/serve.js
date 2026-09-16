@@ -20,8 +20,6 @@ export function htmlResponse(html) {
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?;:])/g, '$1');
 
-  // City intro paragraphs can contain legacy admin copy or popularity/price
-  // claims that are not part of the permitted route-derived evidence model.
   if (isCityPage) {
     const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat|gefragtesten|beliebtesten|most popular|most demanded|más populares|plus populaires|più popolari|populairste|en popüler)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
@@ -40,12 +38,17 @@ export function htmlResponse(html) {
   if (isLegacyRoute) {
     safeHtml = safeHtml
       .replace(/<section class="route-faq">[\s\S]*?<\/section>/gi, '')
+      // The legacy FAQ is nested inside WebPage.mainEntity, so remove the whole
+      // WebPage JSON-LD block when it contains FAQPage rather than risking broken JSON.
+      .replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']WebPage["'][\s\S]*?["']mainEntity["']\s*:\s*\{\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '')
       .replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '')
       .replace(/(?:Preisanalyse\s*(?:und|,)\s*Reisezeit-Tipps|price analysis\s*(?:and|,)\s*travel tips)/gi, '')
       .replace(/\s*—\s*mehr Auswahl zum Vergleichen für dich\./gi, '.')
       .replace(/\s*—\s*more choice for comparison\./gi, '.')
       .replace(/\s*;\s*daneben gibt es meist günstigere Verbindungen mit Umstieg\./gi, '.')
       .replace(/\s*;\s*there are usually cheaper connecting options as well\./gi, '.')
+      .replace(/(Flugzeit|flight time)\s*,\s*["']?\s*[.]/gi, '$1.')
+      .replace(/,\s*\.(["'>])/g, '.$1')
       .replace(/\s{2,}/g, ' ')
       .replace(/\s+([,.!?;:])/g, '$1');
   }
