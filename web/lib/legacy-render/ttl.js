@@ -1,53 +1,31 @@
-// [TTL-POLICY] Phase 12: the SINGLE source of truth for every freshness
-// window in the SEO render path. Before this, the only freshness rule was a
-// bare `FRESH_MS = 24h` literal buried inside the flight-route live script;
-// any other "is this fresh?" decision risked drifting to a different number.
-// Every consumer — the client live-price "live" gate, the snapshot's data
-// freshness, and the ISR revalidation windows — now derives from here so the
-// policy lives in exactly one place.
+// [TTL-POLICY] Single source of truth for SEO freshness windows.
 //
-// CommonJS to match the other legacy-render modules (they are required, not
-// imported, by the generators).
-//
-// [F-3] The ISR `revalidate` values below can't be *imported* by the route
-// files — Next.js requires `export const revalidate` to be a statically-
-// analyzable literal — so those files keep the literal and this module is their
-// documented source of truth. test/ttl-policy.test.mjs parses the route-file
-// literals and asserts they equal these constants, so the two can't drift.
-
+// Client live-price freshness, persisted-price freshness, route-data freshness
+// and Next ISR windows are intentionally separate concerns. These values mirror
+// the actual production route handlers; tests parse those literal revalidate
+// values so the policy cannot silently drift.
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-// A client-fetched live price is only labelled "live" when its check is within
-// this window; older checks fall back to the canonical snapshot price with an
-// honest "last checked on" stamp (never called "live").
 const LIVE_PRICE_TTL_MS = 24 * HOUR;
-
-// How long a persisted price aggregate (price_min/avg/max) is considered a
-// current indicative figure for display. Beyond it the value is stale and
-// should be treated with lower confidence (not surfaced as a fresh price).
 const PRICE_TTL_MS = 7 * DAY;
-
-// How long the route's operational intelligence (distance/duration/stops/
-// airlines) is considered current. Route structure changes slowly, so this is
-// deliberately long.
 const ROUTE_DATA_TTL_MS = 30 * DAY;
 
-// The route page ISR safety-net intentionally revalidates every 15 minutes.
-// This matches app/[lang]/flights/[slug]/route.js and app/(de)/flights/[slug]/route.js:
-// a new/removed route should not remain a cached 404 for a full day. Persisted
-// content fetches remain separately cached by content-api at their own 24h
-// window, while admin publishes explicitly revalidate affected pages sooner.
-const ROUTE_PAGE_REVALIDATE_S = 15 * 60;
+// Flight-route pages are on-demand ISR and need a short safety-net because the
+// route catalogue can change outside a frontend deployment.
+const ROUTE_PAGE_REVALIDATE_S = 15 * MINUTE / 1000;
 
-// Sitemaps use the same 15-minute safety window as route pages so newly
-// published/retired routes surface quickly without rebuilding on every request.
-const SITEMAP_REVALIDATE_S = 15 * 60;
+// Entity pages (city/country/airport/airline) intentionally revalidate more
+// slowly because their catalogue content changes much less frequently.
+const ENTITY_PAGE_REVALIDATE_S = 24 * HOUR / 1000;
 
-// True when `checkedAt` (anything Date can parse) is within `ttlMs` of `now`.
-// A missing/invalid/future timestamp is NOT fresh — we never label uncertain
-// data as current.
+// The sitemap index is a 1h safety-net. Route child sitemaps are separately
+// refreshed every 15m, so new/removed routes propagate without rebuilding the
+// whole index on every request.
+const SITEMAP_REVALIDATE_S = HOUR / 1000;
+const SITEMAP_CHILD_REVALIDATE_S = 15 * MINUTE / 1000;
+
 function isFresh(checkedAt, ttlMs, now = Date.now()) {
   if (!checkedAt) return false;
   const t = new Date(checkedAt).getTime();
@@ -61,6 +39,8 @@ module.exports = {
   PRICE_TTL_MS,
   ROUTE_DATA_TTL_MS,
   ROUTE_PAGE_REVALIDATE_S,
+  ENTITY_PAGE_REVALIDATE_S,
   SITEMAP_REVALIDATE_S,
+  SITEMAP_CHILD_REVALIDATE_S,
   isFresh,
 };
