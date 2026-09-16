@@ -6,7 +6,11 @@
 import { renderSitemapHtml } from '@/lib/legacy-render/render';
 import { htmlResponse } from '@/lib/legacy-render/serve';
 
-export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh affected entity pages immediately via /api/revalidate
+// [BUILD-SAFETY] The sitemap reads the live catalogue and must not block a
+// deployment when the backend/API shield rejects build-time requests.
+// It remains server-rendered and cached by the platform at runtime.
+export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 export async function GET() {
   return htmlResponse(await renderSitemapHtml('de'));
