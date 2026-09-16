@@ -38,6 +38,11 @@ export function htmlResponse(html) {
     // Keep the remaining JSON-LD blocks valid. FAQPage is optional here and the
     // legacy generator is not safe to edit with object-level regex surgery.
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '');
+
+    // Fail closed on popularity-labelled city ItemList schema. The destination
+    // links remain useful as ordinary navigation, but "popular" is an
+    // unsupported ranking claim unless backed by an explicit ranking source.
+    safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']ItemList["'][\s\S]*?["']name["']\s*:\s*["'][^"']*(?:popular|beliebte|beliebtesten|populares|populaires|popolari|populairste|popüler)[^"']*["'][\s\S]*?<\/script>/gi, '');
   }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
