@@ -1,7 +1,7 @@
 // [PER-TYPE-SITEMAPS] The sitemap index (/sitemap.xml, a dynamic route) points
 // at one sitemap per ENTITY TYPE (sitemap-routes.xml, -cities, -countries,
 // -airports, -airlines, -blog, -popular, -pages) instead of one per LANGUAGE.
-// Each per-type file carries that type's URLs in EVERY language, which makes
+// Each per-content-type file carries that type's URLs in EVERY language, which makes
 // per-content-type indexing diagnosable in Search Console (routes vs cities vs
 // airports coverage, each in its own report).
 //
@@ -151,10 +151,15 @@ export async function buildBlogUrls() {
 export async function buildPopularUrls() {
   // The crawlable hub pages (/sitemap + /popular) in every language — no
   // meaningful per-entry lastmod, so they carry none.
+  // The route-directory seed pages are included here deliberately: XML sitemap
+  // discovery gives Googlebot a guaranteed entry point into the paginated HTML
+  // route graph, which then exposes every canonical/indexable route through
+  // ordinary followable links. These are discovery hubs, not search-result pages.
   const urls = [];
   for (const lang of LANGS) {
     urls.push({ loc: urlFor(lang, 'sitemap'), lastmod: null });
     urls.push({ loc: urlFor(lang, 'popular'), lastmod: null });
+    urls.push({ loc: urlFor(lang, 'sitemap/routes/1'), lastmod: null });
   }
   return urls;
 }
