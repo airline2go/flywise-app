@@ -18,11 +18,11 @@ export function htmlResponse(html) {
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?;:])/g, '$1');
 
-  // City intro paragraphs can contain legacy admin copy such as “over 600
-  // airlines”, “book directly”, or “no hidden fees”. Remove only the affected
-  // sentence from the visible city body; route/fact sentences remain intact.
+  // City intro paragraphs can contain legacy admin copy or popularity/price
+  // claims that are not part of the permitted route-derived evidence model.
+  // Remove only the affected sentence so supported route facts remain intact.
   if (isCityPage) {
-    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat)[^.!?]*[.!?]?/gi;
+    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat|gefragtesten|beliebtesten|most popular|most demanded|más populares|plus populaires|più popolari|populairste|en popüler)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
       const detector = new RegExp(unsupportedSentence.source, 'i');
       if (!detector.test(inner)) return full;
@@ -30,38 +30,18 @@ export function htmlResponse(html) {
       return cleaned ? `<p>${cleaned}</p>` : '';
     });
 
-    // Popularity and price-comparison claims are not part of the permitted
-    // route-derived city evidence model. Remove their visible FAQ cards and
-    // corresponding FAQPage JSON-LD entries together, so structured data cannot
-    // retain a claim that was removed from the rendered page.
-    const unsupportedFaqNames = [
-      'Was ist die beliebteste Route ab',
-      'Was sind die beliebtesten Ziele ab',
-      'What is the most popular route from',
-      'What are the most popular destinations from',
-      '¿Cuál es la ruta más popular desde',
-      '¿Cuáles son los destinos más populares desde',
-      'Quelle est la route la plus populaire depuis',
-      'Quels sont les destinations les plus populaires depuis',
-      'Qual è la rotta più popolare da',
-      'Quali sono le destinazioni più popolari da',
-      'Wat is de populairste route vanaf',
-      'Wat zijn de populairste bestemmingen vanaf',
-      'En popüler rota',
-      'En popüler destinasyonlar'
-    ];
-    for (const name of unsupportedFaqNames) {
-      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      safeHtml = safeHtml.replace(new RegExp(`<div class="city-faq-item">[\\s\\S]*?<div class="city-faq-q">${escaped}[^<]*<\\/div>[\\s\\S]*?<\\/div>`, 'gi'), '');
-    }
-    safeHtml = safeHtml.replace(/\{"@type":"Question","name":"(?:Was ist die beliebteste Route ab|Was sind die beliebtesten Ziele ab|What is the most popular route from|What are the most popular destinations from|¿Cuál es la ruta más popular desde|¿Cuáles son los destinos más populares desde|Quelle est la route la plus populaire depuis|Quels sont les destinations les plus populaires depuis|Qual è la rotta più popolare da|Quali sono le destinazioni più popolari da|Wat is de populairste route vanaf|Wat zijn de populairste bestemmingen vanaf|En popüler rota|En popüler destinasyonlar)[^"]*"[^}]*\},?/gi, '');
+    // Keep visible FAQ content, but do not attempt regex surgery inside JSON.
+    // The previous response-boundary object-removal regex could leave a
+    // syntactically invalid FAQPage array. Removing the whole optional FAQPage
+    // JSON-LD block is fail-closed and leaves the remaining schema valid.
+    safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '');
   }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
 // [ROUTE-CANONICAL-REDIRECT] F1 — a permanent (301) redirect from a consolidated
-// duplicate URL to its canonical winner. Body-less, with an absolute-path
+a duplicate URL to its canonical winner. Body-less, with an absolute-path
 // Location; cacheable by the platform like the rendered pages next to it.
 export function redirectResponse(location, status = 301) {
   return new Response(null, { status, headers: { location } });
