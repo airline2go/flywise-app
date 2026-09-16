@@ -117,7 +117,7 @@ test('airline count alone is insufficient evidence for indexing', () => {
 });
 
 test('route with observed airline count plus real duration is indexed', () => {
-  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3, min_duration_min: 90 }), 'de', [], { fromOrigin: [], toDestination: [] });
+  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3, min_duration_min: 90, avg_duration_min: 120 }), 'de', [], { fromOrigin: [], toDestination: [] });
   assert.equal(robotsFrom(html), 'index, follow');
 });
 
