@@ -1,0 +1,38 @@
+name: Airpiv SEO verification
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      API_BASE: https://flywise-server-eu.onrender.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Diagnose deployed route API payload
+        run: |
+          node - <<'NODE'
+          const base = process.env.API_BASE;
+          for (const path of ['/route-pages?page=0', '/route-pages/dwc-bru']) {
+            const res = await fetch(base + path);
+            const body = await res.json();
+            const sample = body.routes?.[0] || body.route || {};
+            console.log(JSON.stringify({ path, status: res.status, keys: Object.keys(sample).sort(), evidence: { avg_duration_min: sample.avg_duration_min, min_duration_min: sample.min_duration_min, stop_distribution: sample.stop_distribution, price_sample_count: sample.price_sample_count, itinerary_count: sample.itinerary_count, indexable: sample.indexable } }, null, 2));
+          }
+          NODE
+      - run: npm run lint
+      - run: npm test
+      - run: npm run seo:flight-evidence
+      - run: npm run seo:route-integrity
+      - run: npm run build

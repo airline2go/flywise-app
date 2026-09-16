@@ -10,7 +10,7 @@
 // root already owns a [lang] dynamic segment.
 import { SITEMAP_BUILDERS, urlsetXml, chunkUrls } from '@/lib/sitemap-urls';
 
-export const revalidate = 3600;
+export const revalidate = 900;
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
@@ -37,7 +37,7 @@ export async function GET(_req, { params }) {
   return new Response(urlsetXml(chunk), {
     headers: {
       'content-type': 'application/xml; charset=utf-8',
-      'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',
+      'cache-control': 'public, max-age=900, stale-while-revalidate=86400',
     },
   });
 }

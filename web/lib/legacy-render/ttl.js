@@ -15,11 +15,11 @@ const ROUTE_DATA_TTL_MS = 30 * DAY;
 const ROUTE_PAGE_REVALIDATE_S = 15 * MINUTE / 1000;
 const ENTITY_PAGE_REVALIDATE_S = 24 * HOUR / 1000;
 
-// Actual production sitemap windows: the index and shard are hourly, while
-// the route-type child sitemap is refreshed every 15 minutes.
+// Actual production sitemap windows: the index is hourly, while the
+// route-type child sitemap and overflow shards are refreshed every 15 minutes.
 const SITEMAP_REVALIDATE_S = HOUR / 1000;
 const SITEMAP_ROUTE_REVALIDATE_S = 15 * MINUTE / 1000;
-const SITEMAP_SHARD_REVALIDATE_S = HOUR / 1000;
+const SITEMAP_SHARD_REVALIDATE_S = 15 * MINUTE / 1000;
 
 function isFresh(checkedAt, ttlMs, now = Date.now()) {
   if (!checkedAt) return false;
