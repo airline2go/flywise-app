@@ -34,16 +34,16 @@ const PRICE_TTL_MS = 7 * DAY;
 // deliberately long.
 const ROUTE_DATA_TTL_MS = 30 * DAY;
 
-// The ISR safety-net revalidation window for a route page, in SECONDS (Next's
-// `export const revalidate` unit). Admin edits refresh immediately via
-// /api/revalidate; this is only the daily fallback.
-const ROUTE_PAGE_REVALIDATE_S = 24 * 60 * 60;
+// The route page ISR safety-net intentionally revalidates every 15 minutes.
+// This matches app/[lang]/flights/[slug]/route.js and app/(de)/flights/[slug]/route.js:
+// a new/removed route should not remain a cached 404 for a full day. Persisted
+// content fetches remain separately cached by content-api at their own 24h
+// window, while admin publishes explicitly revalidate affected pages sooner.
+const ROUTE_PAGE_REVALIDATE_S = 15 * 60;
 
-// The ISR revalidation window for the sitemap routes (and the matching
-// `Cache-Control: max-age`), in SECONDS. Sitemaps are cheap to regenerate and
-// should reflect newly-added/removed pages sooner than entity pages, so this is
-// hourly rather than daily.
-const SITEMAP_REVALIDATE_S = 60 * 60;
+// Sitemaps use the same 15-minute safety window as route pages so newly
+// published/retired routes surface quickly without rebuilding on every request.
+const SITEMAP_REVALIDATE_S = 15 * 60;
 
 // True when `checkedAt` (anything Date can parse) is within `ttlMs` of `now`.
 // A missing/invalid/future timestamp is NOT fresh — we never label uncertain
