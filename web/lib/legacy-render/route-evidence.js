@@ -39,21 +39,18 @@ function hasRealStopDistribution(sd) {
 
 // [SEO-GSC-COMPOUND-EVIDENCE] GSC shows a long tail of route URLs receiving
 // impressions without meaningful ranking. A carrier count by itself is a
-// weak freshness/route-quality signal and can survive after the richer route
+// weak freshness/route-quality signal and can survive after richer route
 // evidence has gone stale. Keep duration, stops, verified price sampling and
-// observed itineraries independently sufficient, but require a second genuine
-// signal when airline_count is the only available flight evidence. This is a
-// fail-closed quality gate for thin route pages, not a ranking manipulation.
+// observed itineraries independently sufficient, but do not index a route
+// whose only flight signal is airline_count. This is a fail-closed quality gate
+// for thin route pages, not a ranking manipulation.
 function hasVerifiedFlightEvidence(r) {
   if (!r) return false;
-  const hasAirlines = validPositiveInteger(r.airline_count);
-  const hasDuration = validPositiveNumber(r.avg_duration_min);
-  const hasStops = hasRealStopDistribution(r.stop_distribution);
-  const hasPrices = validPositiveInteger(r.price_sample_count);
-  const hasItineraries = validPositiveInteger(r.itinerary_count);
-
-  if (hasDuration || hasStops || hasPrices || hasItineraries) return true;
-  return hasAirlines && false;
+  if (validPositiveNumber(r.avg_duration_min)) return true;
+  if (hasRealStopDistribution(r.stop_distribution)) return true;
+  if (validPositiveInteger(r.price_sample_count)) return true;
+  if (validPositiveInteger(r.itinerary_count)) return true;
+  return false;
 }
 
 function hasManualEditorialContent(r) {
