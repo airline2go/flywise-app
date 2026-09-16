@@ -11,7 +11,8 @@ test('exposes the documented windows', () => {
   assert.equal(ttl.ROUTE_PAGE_REVALIDATE_S, 15 * 60);
   assert.equal(ttl.ENTITY_PAGE_REVALIDATE_S, 24 * 60 * 60);
   assert.equal(ttl.SITEMAP_REVALIDATE_S, 60 * 60);
-  assert.equal(ttl.SITEMAP_CHILD_REVALIDATE_S, 15 * 60);
+  assert.equal(ttl.SITEMAP_ROUTE_REVALIDATE_S, 15 * 60);
+  assert.equal(ttl.SITEMAP_SHARD_REVALIDATE_S, 60 * 60);
   assert.ok(ttl.PRICE_TTL_MS > ttl.LIVE_PRICE_TTL_MS);
   assert.ok(ttl.ROUTE_DATA_TTL_MS > ttl.PRICE_TTL_MS);
 });
