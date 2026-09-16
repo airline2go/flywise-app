@@ -111,8 +111,13 @@ test('dataless route WITH an admin intro is indexed', () => {
   assert.equal(robotsFrom(html), 'index, follow');
 });
 
-test('route with observed airlines is indexed', () => {
+test('airline count alone is insufficient evidence for indexing', () => {
   const { html } = renderFlightRoutePage(routeRow({ airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] });
+  assert.equal(robotsFrom(html), 'noindex, follow');
+});
+
+test('route with observed airline count plus real duration is indexed', () => {
+  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3, min_duration_min: 90 }), 'de', [], { fromOrigin: [], toDestination: [] });
   assert.equal(robotsFrom(html), 'index, follow');
 });
 
