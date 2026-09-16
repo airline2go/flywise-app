@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // [MONOREPO] This project lives inside flywise-app/web, which sits next
-  // to flywise-app's own package-lock.json — without this, Next.js can't
-  // tell which lockfile is its actual workspace root.
+  // [MONOREPO] This project lives inside flywise-app/web. Keep both Turbopack
+  // and output tracing anchored to the same application root so Vercel does not
+  // mix the repository root with the Next.js workspace root.
   turbopack: {
     root: import.meta.dirname,
   },
+  outputFileTracingRoot: import.meta.dirname,
 
   // [CANONICAL-DOMAIN] https://airpiv.com (bare apex) is the ONE canonical
   // host — every other spelling must 301 onto it so search engines index a
@@ -64,8 +65,7 @@ const nextConfig = {
   // to the app-router SEO pages.
   // The bare search deep-links (/search/BER-CDG and /search/multi-city) are
   // served by the SAME original index.html on production — app.js reads the
-  // pathname and auto-runs the search. `:pair` matches both the IATA pair and
-  // the literal "multi-city" segment. Localized search (/en/search/…) does NOT
+  // pathname and auto-runs the search. Localized search (/en/search/…) does NOT
   // exist on production (it 404s), so only the root path is rewritten and the
   // React [lang]/search routes are removed.
   async rewrites() {
