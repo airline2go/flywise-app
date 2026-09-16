@@ -3,6 +3,7 @@
 // aren't wrapped by [lang]/layout.js, so the language prefix is validated here:
 // an unknown or default-language (/de/…) prefix 404s, matching production.
 import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
+import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-enhance';
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
@@ -34,5 +35,8 @@ export async function GET(_req, { params }) {
   const redirect = await resolveFlightRedirect(slug);
   if (redirect) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
 
-  return withRouteLocale(lang, async () => htmlResponse(await renderFlightRouteHtml(slug, lang)));
+  return withRouteLocale(lang, async () => {
+    const html = await renderFlightRouteHtml(slug, lang);
+    return htmlResponse(await renderCanonicalRoutePriceHtml(html, slug, lang));
+  });
 }
