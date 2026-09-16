@@ -12,9 +12,10 @@ const require = createRequire(import.meta.url);
 const { getRouteIndexabilityDecision, hasVerifiedFlightEvidence } = require('../lib/legacy-render/route-evidence.js');
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/route-evidence-cases.json', import.meta.url)));
 
-test('distance_km alone is NEVER evidence; airline_count=0 is NEVER evidence', () => {
+test('distance_km alone and airline_count alone are NEVER evidence', () => {
   assert.equal(hasVerifiedFlightEvidence({ distance_km: 9438 }), false);
-  assert.equal(hasVerifiedFlightEvidence({ airline_count: 0, distance_km: 500 }), false);
+  assert.equal(hasVerifiedFlightEvidence({ airline_count: 3 }), false);
+  assert.equal(hasVerifiedFlightEvidence({ airline_count: 3, avg_duration_min: 120 }), true);
 });
 
 test('malformed stop distribution is NEVER evidence', () => {
@@ -28,6 +29,7 @@ test('evidence policy is fail-closed when the environment flag is unset', () => 
   delete process.env.SEO_EVIDENCE_POLICY_ENFORCED;
   try {
     assert.equal(getRouteIndexabilityDecision({ distance_km: 500 }).indexable, false);
+    assert.equal(getRouteIndexabilityDecision({ airline_count: 3 }).indexable, false);
     assert.equal(getRouteIndexabilityDecision({ avg_duration_min: 120 }).indexable, true);
   } finally {
     if (old == null) delete process.env.SEO_EVIDENCE_POLICY_ENFORCED;

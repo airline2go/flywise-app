@@ -11,11 +11,6 @@
 // Only genuine flight-data signals — observed carriers, a real duration, a
 // real stop distribution, verified price sampling, or observed itineraries —
 // or approved manual editorial content makes a route indexable.
-//
-// IMPORTANT: the enforced evidence policy is fail-closed by default. An
-// unset SEO_EVIDENCE_POLICY_ENFORCED must never silently downgrade production
-// route pages to the legacy distance/metadata policy; that would let a weak
-// route become indexable merely because an environment variable was omitted.
 // ═══════════════════════════════════════════════════════════════════════
 
 function evidencePolicyEnforced() {
@@ -42,9 +37,15 @@ function hasRealStopDistribution(sd) {
     && entries.some(([, value]) => Number(value) > 0);
 }
 
+// [SEO-GSC-COMPOUND-EVIDENCE] GSC shows a long tail of route URLs receiving
+// impressions without meaningful ranking. A carrier count by itself is a
+// weak freshness/route-quality signal and can survive after richer route
+// evidence has gone stale. Keep duration, stops, verified price sampling and
+// observed itineraries independently sufficient, but do not index a route
+// whose only flight signal is airline_count. This is a fail-closed quality gate
+// for thin route pages, not a ranking manipulation.
 function hasVerifiedFlightEvidence(r) {
   if (!r) return false;
-  if (validPositiveInteger(r.airline_count)) return true;
   if (validPositiveNumber(r.avg_duration_min)) return true;
   if (hasRealStopDistribution(r.stop_distribution)) return true;
   if (validPositiveInteger(r.price_sample_count)) return true;
