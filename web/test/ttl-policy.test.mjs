@@ -1,9 +1,6 @@
-// [TTL-POLICY / F-3] Next.js requires `export const revalidate = <literal>` to
-// be a statically-analyzable literal, so the route files can't import the value
-// from ttl.js. This test keeps the "one policy" real anyway: it parses the
-// actual literals out of representative route files and asserts they match the
-// documented constants in ttl.js, so changing a route's window without updating
-// the policy (or vice versa) fails CI.
+// [TTL-POLICY / F-3] Next.js requires `export const revalidate = <literal>`
+// to be statically analyzable, so these tests compare real route literals
+// with the central policy constants and prevent silent drift.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -22,14 +19,18 @@ function revalidateOf(relPath) {
   return Number(m[1]);
 }
 
-test('entity page routes use the documented ROUTE_PAGE_REVALIDATE_S', () => {
-  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js', 'app/(de)/city/[slug]/route.js']) {
+test('flight-route handlers use ROUTE_PAGE_REVALIDATE_S; entity handlers use ENTITY_PAGE_REVALIDATE_S', () => {
+  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js']) {
     assert.equal(revalidateOf(p), ttl.ROUTE_PAGE_REVALIDATE_S, `${p} revalidate must equal ROUTE_PAGE_REVALIDATE_S`);
+  }
+  for (const p of ['app/(de)/city/[slug]/route.js', 'app/(de)/country/[code]/route.js', 'app/(de)/airport/[code]/route.js', 'app/(de)/airline/[code]/route.js']) {
+    assert.equal(revalidateOf(p), ttl.ENTITY_PAGE_REVALIDATE_S, `${p} revalidate must equal ENTITY_PAGE_REVALIDATE_S`);
   }
 });
 
-test('sitemap routes use the documented SITEMAP_REVALIDATE_S', () => {
-  for (const p of ['app/sitemap.xml/route.js', 'app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {
-    assert.equal(revalidateOf(p), ttl.SITEMAP_REVALIDATE_S, `${p} revalidate must equal SITEMAP_REVALIDATE_S`);
+test('sitemap index and child routes use their documented windows', () => {
+  assert.equal(revalidateOf('app/sitemap.xml/route.js'), ttl.SITEMAP_REVALIDATE_S);
+  for (const p of ['app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {
+    assert.equal(revalidateOf(p), ttl.SITEMAP_CHILD_REVALIDATE_S, `${p} revalidate must equal SITEMAP_CHILD_REVALIDATE_S`);
   }
 });
