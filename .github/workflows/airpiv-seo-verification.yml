@@ -10,6 +10,8 @@ jobs:
     defaults:
       run:
         working-directory: web
+    env:
+      API_BASE: https://flywise-server-eu.onrender.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
