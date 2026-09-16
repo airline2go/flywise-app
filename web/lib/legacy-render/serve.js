@@ -4,8 +4,6 @@ export function htmlResponse(html) {
   if (!html) return new Response('Not found', { status: 404 });
 
   // [SEO-TRUTHFULNESS] Final response-boundary guard for legacy entity pages.
-  // Unsupported global airline-count claims, unverified realtime wording, and
-  // generic advice/benefit blocks are removed rather than replaced with guesses.
   let safeHtml = String(html);
   const isCityPage = /<main[^>]+id=["']city-main["']/i.test(safeHtml);
   const isRoutePage = /<main[^>]+id=["']route-main["']/i.test(safeHtml);
@@ -33,15 +31,57 @@ export function htmlResponse(html) {
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']ItemList["'][\s\S]*?["']name["']\s*:\s*["'][^"']*(?:popular|beliebte|beliebtesten|populares|populaires|popolari|populairste|popüler)[^"']*["'][\s\S]*?<\/script>/gi, '');
   }
 
-  // Route pages must not publish generic booking-window, best-time, or
-  // cheapest-days advice unless route evidence explicitly supports it. Older
-  // templates can still emit those blocks, so remove them at the final HTML
-  // boundary and fail closed in FAQPage JSON-LD as well.
   if (isRoutePage) {
     const unsupportedRouteFaq = /(?:best\s+time(?:\s+to\s+fly)?|booking\s+window|cheapest\s+days?|cheapest\s+day|when\s+should\s+i\s+book|beste\s+reisezeit|beste\s+buchungszeit|günstigsten\s+tage|günstigster\s+tag|wann\s+soll(?:te)?\s+ich\s+buchen|mejor\s+momento(?:\s+para\s+volar)?|ventana\s+de\s+reserva|días\s+más\s+baratos|meilleur\s+moment(?:\s+pour\s+voler)?|fenêtre\s+de\s+réservation|jours\s+les\s+moins\s+chers|miglior\s+momento(?:\s+per\s+volare)?|finestra\s+di\s+prenotazione|giorni\s+più\s+economici|beste\s+moment(?:\s+om\s+te\s+vliegen)?|boekingsvenster|goedkoopste\s+dagen|en\s+iyi\s+zaman(?:\s+uçmak\s+için)?|rezervasyon\s+aralığı|en\s+ucuz\s+günler)/i;
     safeHtml = safeHtml
       .replace(/<section[^>]*class=["'][^"']*route-besttime-section[^"']*["'][^>]*>[\s\S]*?<\/section>/gi, '')
       .replace(/<(?:article|div|li)[^>]*class=["'][^"']*(?:route-)?faq-item[^"']*["'][^>]*>([\s\S]*?)<\/(?:article|div|li)>/gi, (full, inner) => unsupportedRouteFaq.test(inner) ? '' : full);
+
+    const fastestCopy = {
+      en: ['What is the fastest flight on this route?', 'The fastest listed flight takes {duration}.'],
+      de: ['Wie lange dauert der schnellste Flug auf dieser Strecke?', 'Der schnellste gelistete Flug dauert {duration}.'],
+      ar: ['ما مدة أسرع رحلة على هذا المسار؟', 'أسرع رحلة مدرجة تستغرق {duration}.'],
+      es: ['¿Cuánto dura el vuelo más rápido de esta ruta?', 'El vuelo más rápido listado dura {duration}.'],
+      fr: ['Combien de temps dure le vol le plus rapide sur cette route ?', 'Le vol le plus rapide indiqué dure {duration}.'],
+      it: ['Quanto dura il volo più veloce su questa rotta?', 'Il volo più veloce elencato dura {duration}.'],
+      nl: ['Hoe lang duurt de snelste vlucht op deze route?', 'De snelste vermelde vlucht duurt {duration}.'],
+      tr: ['Bu rotadaki en hızlı uçuş ne kadar sürer?', 'Listelenen en hızlı uçuş {duration} sürer.']
+    };
+    const lang = ((safeHtml.match(/<html[^>]+lang=["']([^"']+)["']/i) || [,'en'])[1] || 'en').slice(0,2).toLowerCase();
+    const copy = fastestCopy[lang] || fastestCopy.en;
+    const fastestLabel = {
+      en: 'Fastest flight', de: 'Schnellster Flug', ar: 'أسرع رحلة', es: 'Vuelo más rápido',
+      fr: 'Vol le plus rapide', it: 'Volo più veloce', nl: 'Snelste vlucht', tr: 'En hızlı uçuş'
+    }[lang] || 'Fastest flight';
+    const durationMatch = new RegExp('<div class=["\\\']route-insight-val["\\\']>([^<]+)<\\/div><div class=["\\\']route-insight-lbl["\\\']>\\s*' + fastestLabel.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\s*<\\/div>', 'i').exec(safeHtml);
+    if (durationMatch && !new RegExp(copy[0].replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&'), 'i').test(safeHtml)) {
+      const duration = durationMatch[1].trim();
+      const q = copy[0];
+      const a = copy[1].replace('{duration}', duration);
+      const faqItem = `<div class="route-faq-item"><div class="route-faq-q">${q}</div><div class="route-faq-a">${a}</div></div>`;
+      safeHtml = safeHtml.replace(/(<section class=["']route-faq["'][^>]*>[\s\S]*?)(<\/section>)/i, `$1${faqItem}$2`);
+      safeHtml = safeHtml.replace(/(<script type=["']application\/ld\+json["']>)([\s\S]*?)(<\/script>)/gi, (full, open, json, close) => {
+        try {
+          const data = JSON.parse(json.trim());
+          const addFastest = (node) => {
+            if (!node || typeof node !== 'object') return false;
+            if (node['@type'] === 'FAQPage' && Array.isArray(node.mainEntity)) {
+              if (!node.mainEntity.some(item => item && item.name === q)) {
+                node.mainEntity.push({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } });
+                return true;
+              }
+            }
+            let changed = false;
+            for (const value of Object.values(node)) {
+              if (value && typeof value === 'object') changed = addFastest(value) || changed;
+            }
+            return changed;
+          };
+          if (!addFastest(data)) return full;
+          return `${open}${JSON.stringify(data)}${close}`;
+        } catch { return full; }
+      });
+    }
 
     const sanitizeFaqSchema = (node) => {
       if (!node || typeof node !== 'object') return node;
@@ -56,26 +96,19 @@ export function htmlResponse(html) {
       }
       return node;
     };
-
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi, (full, json) => {
       try {
         const data = JSON.parse(json.trim());
         const sanitized = sanitizeFaqSchema(data);
         if (!sanitized) return '';
         return `<script type="application/ld+json">${JSON.stringify(sanitized)}</script>`;
-      } catch {
-        return full;
-      }
+      } catch { return full; }
     });
   }
 
-  // Some older route records still render the pre-hardening marketing FAQ
-  // template. Fail closed rather than serving unsupported booking/advice claims.
   if (isLegacyRoute) {
     safeHtml = safeHtml
       .replace(/<section class="route-faq">[\s\S]*?<\/section>/gi, '')
-      // The legacy FAQ is nested inside WebPage.mainEntity, so remove the whole
-      // WebPage JSON-LD block when it contains FAQPage rather than risking broken JSON.
       .replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']WebPage["'][\s\S]*?["']mainEntity["']\s*:\s*\{\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '')
       .replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '')
       .replace(/(?:Preisanalyse\s*(?:und|,)\s*Reisezeit-Tipps|price analysis\s*(?:and|,)\s*travel tips)/gi, '')
@@ -92,17 +125,10 @@ export function htmlResponse(html) {
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
-// [ROUTE-CANONICAL-REDIRECT] F1 — a permanent (301) redirect from a consolidated
-// duplicate URL to its canonical winner. Body-less, with an absolute-path
-// Location; cacheable by the platform like the rendered pages next to it.
 export function redirectResponse(location, status = 301) {
   return new Response(null, { status, headers: { location } });
 }
 
-// The six non-default languages that live under a /xx/ prefix. German is the
-// unprefixed root, so it is intentionally NOT here — /de/city/… must 404 like
-// production, as must any unknown prefix (/zz/…). Route Handlers aren't wrapped
-// by [lang]/layout.js, so each localized handler validates the prefix itself.
 export const PREFIXED_LANGS = new Set(['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr']);
 
 export function isPrefixedLang(lang) {
