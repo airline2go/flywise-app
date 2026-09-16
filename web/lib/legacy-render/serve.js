@@ -3,11 +3,23 @@
 export function htmlResponse(html) {
   if (!html) return new Response('Not found', { status: 404 });
 
-  // [SEO-TRUTHFULNESS] Footer tagline is shared across all localized pages.
-  // Older translation bundles contained a static "600+ airlines" claim that
-  // is not a route-specific or runtime-verified metric. Remove only the
-  // affected footer paragraph rather than inventing a replacement statistic.
-  const safeHtml = String(html).replace(/<p class="fdes">[^<]*(?:600\+?|600|hundreds|hunderte|centenas|centaines|centinaia|honderden|yüzlerce)[^<]*<\/p>/gi, '');
+  // [SEO-TRUTHFULNESS] Final response-boundary guard for legacy entity pages.
+  // Remove unsupported global airline-count claims, realtime wording that was
+  // not tied to a verified live snapshot, and generic planning/tips/benefit
+  // sections that asserted advice without evidence. We delete the unsupported
+  // claim rather than replacing it with another unverified statistic.
+  let safeHtml = String(html)
+    .replace(/<p class="fdes">[^<]*(?:600\+?|600|hundreds|hunderte|centenas|centaines|centinaia|honderden|yüzlerce)[^<]*<\/p>/gi, '')
+    .replace(/<section class="city-why">[\s\S]*?<\/section>/gi, '')
+    .replace(/<section class="city-tips">[\s\S]*?<\/section>/gi, '')
+    .replace(/<li[^>]*>\s*(?:600\+?|600)\s*(?:airlines|Airlines)[^<]*<\/li>/gi, '')
+    .replace(/\b(?:in Echtzeit|in real time|en tiempo real|en temps réel|in tempo reale|in realtime|gerçek zamanlı)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1');
+
+  // [SEO-TRUTHFULNESS] Keep meta/OG descriptions free of dangling filler when
+  // a removed realtime phrase was part of the sentence.
+  safeHtml = safeHtml.replace(/(name="description" content="[^"]*)\s+([.])?/gi, '$1$2');
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
