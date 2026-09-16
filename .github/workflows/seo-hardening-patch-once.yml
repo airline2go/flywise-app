@@ -16,7 +16,7 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: Patch route badges and regression coverage
+      - name: Apply final evidence hardening
         shell: bash
         run: |
           set -euo pipefail
@@ -24,22 +24,41 @@ jobs:
           from pathlib import Path
 
           shell_path = Path('web/lib/legacy-render/shell.js')
-          shell = shell_path.read_text()
-          old = '''  const sanitizedMainContent = String(mainContent || '')\n    .replace(/<section class=\\"route-besttime-section\\">[\\s\\S]*?<\\/section>/g, '')\n    .replace(/<div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"><\\/div><div class=\\"route-faq-a\\"><\\/div><\\/div>/g, '');'''
-          new = '''  const sanitizedMainContent = String(mainContent || '')\n    .replace(/<section class=\\"route-besttime-section\\">[\\s\\S]*?<\\/section>/g, '')\n    .replace(/<div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"><\\/div><div class=\\"route-faq-a\\"><\\/div><\\/div>/g, '')\n    .replace(/<div class=\\"route-hero-badges\\">[\\s\\S]*?<\\/div>/g, '');'''
-          if shell.count(old) != 1:
-              raise SystemExit(f'route badge sanitizer anchor count: {shell.count(old)}')
-          shell_path.write_text(shell.replace(old, new, 1))
+          lines = shell_path.read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if 'const sanitizedMainContent = String(mainContent ||' in line)
+          window = range(start, min(start + 8, len(lines)))
+          if not any('route-hero-badges' in lines[i] for i in window):
+              faq_line = next(i for i in window if 'route-faq-item' in lines[i])
+              lines.insert(faq_line + 1, '    .replace(/<div class="route-hero-badges">[\\s\\S]*?<\\/div>/g, \'\');')
+              shell_path.write_text('\n'.join(lines) + '\n')
+
+          ttl = Path('web/lib/legacy-render/ttl.js')
+          s = ttl.read_text()
+          old = 'const SITEMAP_SHARD_REVALIDATE_S = HOUR / 1000;'
+          if old in s:
+              ttl.write_text(s.replace(old, 'const SITEMAP_SHARD_REVALIDATE_S = 15 * MINUTE / 1000;', 1).replace(
+                  '// Actual production sitemap windows: the index and shard are hourly, while\n// the route-type child sitemap is refreshed every 15 minutes.',
+                  '// Actual production sitemap windows: the index is hourly, while the\n// route-type child sitemap and overflow shards are refreshed every 15 minutes.',
+                  1,
+              ))
+
+          guard = Path('web/test/render-seo-guards.test.mjs')
+          s = guard.read_text()
+          old = "test('route with observed airlines is indexed', () => {\n  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] });\n  assert.equal(robotsFrom(html), 'index, follow');\n});"
+          new = "test('airline count alone is insufficient evidence for indexing', () => {\n  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3 }), 'de', [], { fromOrigin: [], toDestination: [] });\n  assert.equal(robotsFrom(html), 'noindex, follow');\n});\n\ntest('route with observed airline count plus real duration is indexed', () => {\n  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3, min_duration_min: 90 }), 'de', [], { fromOrigin: [], toDestination: [] });\n  assert.equal(robotsFrom(html), 'index, follow');\n});"
+          if old in s:
+              guard.write_text(s.replace(old, new, 1))
 
           test_path = Path('web/test/seo-route-hardening.test.mjs')
           test = test_path.read_text()
           anchor = "const sitemapPath = path.resolve(process.cwd(), 'app/sitemap-shard/[file]/route.js');"
-          addition = '''const rendered = shell.renderShell({\n  lang: 'de',\n  title: 'Test',\n  description: 'Test',\n  canonicalUrl: 'https://airpiv.com/flights/test-test',\n  urls: { de: 'https://airpiv.com/flights/test-test', en: 'https://airpiv.com/en/flights/test-test' },\n  mainContent: '<div class=\\"route-hero-badges\\"><span>✓ 600+ Airlines</span></div><section class=\\"route-besttime-section\\"><p>Best time Tuesday</p></section><div class=\\"route-faq-item\\"><div class=\\"route-faq-q\\"></div><div class=\\"route-faq-a\\"></div></div>',\n});\nassert.doesNotMatch(rendered, /route-hero-badges/);\nassert.doesNotMatch(rendered, /600\\+ Airlines/);\nassert.doesNotMatch(rendered, /Best time Tuesday/);\n\nconst faqSchema = shell.jsonLdScript({\n  '@context': 'https://schema.org',\n  '@type': 'WebPage',\n  mainEntity: {\n    '@type': 'FAQPage',\n    mainEntity: [\n      { name: '', acceptedAnswer: { text: '' } },\n      { name: 'Valid', acceptedAnswer: { text: 'Valid answer' } },\n    ],\n  },\n});\nassert.ok(faqSchema.includes('\\"name\\":\\"Valid\\"'));\nassert.ok(!faqSchema.includes('\\"name\\":\\"\\"'));\n\n'''
-          if test.count(anchor) != 1:
-              raise SystemExit('test anchor count mismatch')
-          test_path.write_text(test.replace(anchor, addition + anchor, 1))
+          if 'assert.doesNotMatch(rendered, /route-hero-badges/);' not in test:
+              addition = '''const rendered = shell.renderShell({\n  lang: 'de',\n  title: 'Test',\n  description: 'Test',\n  canonicalUrl: 'https://airpiv.com/flights/test-test',\n  urls: { de: 'https://airpiv.com/flights/test-test', en: 'https://airpiv.com/en/flights/test-test' },\n  mainContent: '<div class="route-hero-badges"><span>✓ 600+ Airlines</span></div><section class="route-besttime-section"><p>Best time Tuesday</p></section><div class="route-faq-item"><div class="route-faq-q"></div><div class="route-faq-a"></div></div>',\n});\nassert.doesNotMatch(rendered, /route-hero-badges/);\nassert.doesNotMatch(rendered, /600\\+ Airlines/);\nassert.doesNotMatch(rendered, /Best time Tuesday/);\n\nconst faqSchema = shell.jsonLdScript({\n  '@context': 'https://schema.org',\n  '@type': 'WebPage',\n  mainEntity: {\n    '@type': 'FAQPage',\n    mainEntity: [\n      { name: '', acceptedAnswer: { text: '' } },\n      { name: 'Valid', acceptedAnswer: { text: 'Valid answer' } },\n    ],\n  },\n});\nassert.ok(faqSchema.includes('\\"name\\":\\"Valid\\"'));\nassert.ok(!faqSchema.includes('\\"name\\":\\"\\"'));\n\n'''
+              if test.count(anchor) != 1:
+                  raise SystemExit('seo hardening test marker mismatch')
+              test_path.write_text(test.replace(anchor, addition + anchor, 1))
           PY
-      - name: Verify production suite
+      - name: Verify full frontend suite
         working-directory: web
         run: |
           npm ci
@@ -48,13 +67,13 @@ jobs:
           npm run seo:flight-evidence
           npm run seo:route-integrity
           npm run build
-      - name: Commit patch and remove one-shot workflow
+      - name: Commit final fixes and remove one-shot workflows
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/seo-hardening-patch-once.yml
+          rm -f .github/workflows/seo-hardening-patch-once.yml .github/workflows/seo-hardening-finalize-once.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add web .github/workflows/seo-hardening-patch-once.yml
-          git commit -m 'fix(seo): remove unsupported route hero claims'
+          git add web .github/workflows/seo-hardening-patch-once.yml .github/workflows/seo-hardening-finalize-once.yml
+          git commit -m 'fix(seo): finalize route evidence hardening'
           git push origin HEAD:fix/airpiv-seo-hardening-final-2026-09-16
