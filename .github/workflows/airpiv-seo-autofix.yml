@@ -1,0 +1,85 @@
+name: Airpiv SEO autofix
+on:
+  push:
+    branches: [seo/audit-route-evidence-2026-09-16]
+permissions:
+  contents: write
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/audit-route-evidence-2026-09-16
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Apply final SEO hardening
+        working-directory: web
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def edit(path, fn):
+              p = Path(path)
+              s = p.read_text()
+              n = fn(s)
+              if n == s:
+                  raise SystemExit(f'No change made to {path}; refusing silent no-op')
+              p.write_text(n)
+
+          # TTL policy: route 15m, entity 24h, sitemap index 1h, route child 15m.
+          edit('test/ttl-policy.test.mjs', lambda s: s
+              .replace("test('entity page routes use the documented ROUTE_PAGE_REVALIDATE_S', () => {\n  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js', 'app/(de)/city/[slug]/route.js']) {\n    assert.equal(revalidateOf(p), ttl.ROUTE_PAGE_REVALIDATE_S, `${p} revalidate must equal ROUTE_PAGE_REVALIDATE_S`);\n  }\n});",
+                      "test('route page uses the documented ROUTE_PAGE_REVALIDATE_S', () => {\n  for (const p of ['app/[lang]/flights/[slug]/route.js', 'app/(de)/flights/[slug]/route.js']) {\n    assert.equal(revalidateOf(p), ttl.ROUTE_PAGE_REVALIDATE_S, `${p} revalidate must equal ROUTE_PAGE_REVALIDATE_S`);\n  }\n});\n\ntest('entity page uses the documented ENTITY_PAGE_REVALIDATE_S', () => {\n  assert.equal(revalidateOf('app/(de)/city/[slug]/route.js'), ttl.ENTITY_PAGE_REVALIDATE_S);\n});")
+              .replace("test('sitemap routes use the documented SITEMAP_REVALIDATE_S', () => {\n  for (const p of ['app/sitemap.xml/route.js', 'app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {\n    assert.equal(revalidateOf(p), ttl.SITEMAP_REVALIDATE_S, `${p} revalidate must equal SITEMAP_REVALIDATE_S`);\n  }\n});",
+                      "test('sitemap index uses the documented SITEMAP_REVALIDATE_S', () => {\n  assert.equal(revalidateOf('app/sitemap.xml/route.js'), ttl.SITEMAP_REVALIDATE_S);\n});\n\ntest('route sitemap child uses the documented SITEMAP_CHILD_REVALIDATE_S', () => {\n  for (const p of ['app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {\n    assert.equal(revalidateOf(p), ttl.SITEMAP_CHILD_REVALIDATE_S, `${p} revalidate must equal SITEMAP_CHILD_REVALIDATE_S`);\n  }\n});"))
+
+          edit('test/ttl.test.mjs', lambda s: s
+              .replace("assert.equal(ttl.ROUTE_PAGE_REVALIDATE_S, 24 * 60 * 60);", "assert.equal(ttl.ROUTE_PAGE_REVALIDATE_S, 15 * 60);\n  assert.equal(ttl.ENTITY_PAGE_REVALIDATE_S, 24 * 60 * 60);\n  assert.equal(ttl.SITEMAP_REVALIDATE_S, 60 * 60);\n  assert.equal(ttl.SITEMAP_CHILD_REVALIDATE_S, 15 * 60);"))
+
+          edit('app/sitemap-shard/[file]/route.js', lambda s: s
+              .replace('export const revalidate = 3600;', 'export const revalidate = 900;')
+              .replace("'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',", "'cache-control': 'public, max-age=900, stale-while-revalidate=86400',"))
+
+          # Make the fastest-flight FAQ descriptive only; it must never infer nonstop.
+          edit('lib/legacy-render/render-flight-route.js', lambda s: s
+              .replace("const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec } = require('./shell');",
+                       "const { escHtml, renderShell, jsonLdScript, homeHref, speakableSpec, routeCopyOverride } = require('./shell');")
+              .replace("if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {",
+                       "if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {")
+              .replace("answer: format(translate('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),",
+                       "answer: format(routeCopyOverride('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),")
+              # No unsupported booking-time claims: no historical pricing/schedule evidence is persisted in the route snapshot.
+              .replace("  const bestTimeFaqItem = route.distance_km != null\n    ? {\n      question: format(translate('routeFaqBestTimeQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),\n      answer: translate(`routeFaqBestTimeAnswer${haulSuffix(route)}`, lang),\n    }\n    : {\n      question: format(translate('routeFaqCheapestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),\n      answer: translate('routeFaqCheapestAnswer', lang),\n    };\n\n  const items = [bestTimeFaqItem, haulQuestion];",
+                       "  // Booking-timing advice requires explicit historical pricing or schedule evidence.\n  // The current route snapshot exposes neither, so no such FAQ is emitted.\n  const items = [haulQuestion];")
+              # The legacy best-time HTML section is also unsupported without evidence.
+              .replace("function buildBestTimeHtml(route, lang) {\n  if (route.distance_km == null) return '';",
+                       "function buildBestTimeHtml(route, lang) {\n  // Do not publish booking-window/\"best time\" claims without historical pricing or schedule evidence.\n  return '';")
+          )
+
+          # Add the requested localized fastest-answer overrides without replacing shell.js wholesale.
+          edit('lib/legacy-render/shell.js', lambda s: s
+              .replace("const { stringsFor } = require('./translate');",
+                       "const { stringsFor } = require('./translate');\n\n// Route-specific descriptive copy overrides. These deliberately avoid any\n// nonstop inference: the duration is observed, while itinerary type can vary.\nconst ROUTE_COPY_OVERRIDES = {\n  routeFaqFastestAnswer: {\n    en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',\n    de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',\n    ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',\n    es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',\n    fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',\n    it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',\n    nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',\n    tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',\n  },\n};\n\nfunction routeCopyOverride(key, lang) {\n  return (ROUTE_COPY_OVERRIDES[key] && ROUTE_COPY_OVERRIDES[key][lang]) || '';\n}")
+              .replace("module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec };",
+                       "module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec, ROUTE_COPY_OVERRIDES, routeCopyOverride };")
+          )
+          PY
+      - name: Verify hardening tests
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm test
+      - name: Remove one-shot workflow and commit
+        run: |
+          rm -f .github/workflows/airpiv-seo-autofix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web .github/workflows/airpiv-seo-autofix.yml
+          git commit -m "fix(seo): enforce route freshness and evidence-safe FAQ copy"
+          git push origin HEAD:seo/audit-route-evidence-2026-09-16
