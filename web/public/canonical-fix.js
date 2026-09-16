@@ -49,16 +49,18 @@
     }
   }
   if (document.documentElement) {
-    var logoObserver = new MutationObserver(function (mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        for (var j = 0; j < mutations[i].addedNodes.length; j++) {
-          var node = mutations[i].addedNodes[j];
-          if (node && node.nodeType === 1) proxyAirlineLogos(node);
-        }
-      }
-    });
-    logoObserver.observe(document.documentElement, { childList: true, subtree: true });
     proxyAirlineLogos(document);
+    if (typeof MutationObserver !== 'undefined') {
+      var logoObserver = new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+            var node = mutations[i].addedNodes[j];
+            if (node && node.nodeType === 1) proxyAirlineLogos(node);
+          }
+        }
+      });
+      logoObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
   }
 
   /* Shared autocomplete UI layers. */
