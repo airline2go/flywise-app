@@ -1,7 +1,5 @@
-// [ROUTE-SNAPSHOT] Phases 9–14: the canonical route snapshot is the single
-// object the whole page is built from. These tests pin its derivations and the
-// invariant checks that stop a route with contradictory data from rendering
-// numbers two different ways.
+// [ROUTE-SNAPSHOT] The canonical route snapshot is the single object every
+// route-page surface reads from. Tests pin derivations and contradiction guards.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -41,7 +39,7 @@ test('price prefers the observed aggregate min, then observed average, then cach
   assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 9, price_currency: 'EUR', cached_price: 83 })).price.amount, 60);
   assert.equal(buildRouteSnapshot(R({ price_avg: 70, price_sample_count: 1, price_currency: 'EUR', cached_price: 83 })).price.amount, 70);
   assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 1, price_currency: 'EUR', cached_price: 83 })).price.amount, 60);
-  assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 0, cached_price: 83 })).price.amount, 83);
+  assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 0, cached_price: 83, cached_currency: 'EUR' })).price.amount, 83);
   assert.equal(buildRouteSnapshot(R({})).price, null);
 });
 
