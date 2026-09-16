@@ -6,6 +6,7 @@ import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-rende
 import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-enhance';
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-render/serve';
+import { getAvailableRouteHreflang, stripUnavailableRouteHreflang } from '@/lib/route-hreflang';
 import { pathFor } from '@/lib/legacy-render/languages';
 import { withRouteLocale } from '@/lib/route-locale-context';
 
@@ -38,6 +39,14 @@ export async function GET(_req, { params }) {
 
   return withRouteLocale(lang, async () => {
     const html = await renderFlightRouteHtml(slug, lang);
-    return htmlResponse(await renderCanonicalRoutePriceHtml(html, slug, lang));
+    const rendered = await renderCanonicalRoutePriceHtml(html, slug, lang);
+    try {
+      const available = await getAvailableRouteHreflang(slug);
+      return htmlResponse(stripUnavailableRouteHreflang(rendered, available));
+    } catch {
+      // Hreflang filtering is a safety layer. A temporary availability-endpoint
+      // failure must never turn an otherwise healthy route page into a 5xx.
+      return htmlResponse(rendered);
+    }
   });
 }
