@@ -22,13 +22,39 @@ export function htmlResponse(html) {
   // airlines”, “book directly”, or “no hidden fees”. Remove only the affected
   // sentence from the visible city body; route/fact sentences remain intact.
   if (isCityPage) {
-    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees)[^.!?]*[.!?]?/gi;
+    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
       const detector = new RegExp(unsupportedSentence.source, 'i');
       if (!detector.test(inner)) return full;
       const cleaned = inner.replace(unsupportedSentence, ' ').replace(/\s{2,}/g, ' ').trim();
       return cleaned ? `<p>${cleaned}</p>` : '';
     });
+
+    // Popularity and price-comparison claims are not part of the permitted
+    // route-derived city evidence model. Remove their visible FAQ cards and
+    // corresponding FAQPage JSON-LD entries together, so structured data cannot
+    // retain a claim that was removed from the rendered page.
+    const unsupportedFaqNames = [
+      'Was ist die beliebteste Route ab',
+      'Was sind die beliebtesten Ziele ab',
+      'What is the most popular route from',
+      'What are the most popular destinations from',
+      '¿Cuál es la ruta más popular desde',
+      '¿Cuáles son los destinos más populares desde',
+      'Quelle est la route la plus populaire depuis',
+      'Quels sont les destinations les plus populaires depuis',
+      'Qual è la rotta più popolare da',
+      'Quali sono le destinazioni più popolari da',
+      'Wat is de populairste route vanaf',
+      'Wat zijn de populairste bestemmingen vanaf',
+      'En popüler rota',
+      'En popüler destinasyonlar'
+    ];
+    for (const name of unsupportedFaqNames) {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      safeHtml = safeHtml.replace(new RegExp(`<div class="city-faq-item">[\\s\\S]*?<div class="city-faq-q">${escaped}[^<]*<\\/div>[\\s\\S]*?<\\/div>`, 'gi'), '');
+    }
+    safeHtml = safeHtml.replace(/\{"@type":"Question","name":"(?:Was ist die beliebteste Route ab|Was sind die beliebtesten Ziele ab|What is the most popular route from|What are the most popular destinations from|¿Cuál es la ruta más popular desde|¿Cuáles son los destinos más populares desde|Quelle est la route la plus populaire depuis|Quels sont les destinations les plus populaires depuis|Qual è la rotta più popolare da|Quali sono le destinazioni più popolari da|Wat is de populairste route vanaf|Wat zijn de populairste bestemmingen vanaf|En popüler rota|En popüler destinasyonlar)[^"]*"[^}]*\},?/gi, '');
   }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
