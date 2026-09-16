@@ -8,9 +8,9 @@ import { listRoutePages } from '@/lib/content-api';
 
 // Route catalogue changes can happen outside a frontend deploy; keep the
 // on-demand safety-net short enough that a newly published route does not
-// remain a cached 404 for a full day. Admin publishes still revalidate
+// remain a cached 404 for more than 15 minutes. Admin publishes still revalidate
 // immediately through /api/revalidate.
-export const revalidate = 3600;
+export const revalidate = 900;
 export const dynamicParams = true;
 
 // [PRERENDER-TOP-ROUTES] Prerender only the highest-value German flight routes
