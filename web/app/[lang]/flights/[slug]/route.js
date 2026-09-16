@@ -14,6 +14,7 @@ import { withRouteLocale } from '@/lib/route-locale-context';
 // remain a cached 404 for more than 15 minutes. Admin publishes still
 // revalidate immediately through /api/revalidate.
 export const revalidate = 900;
+export const dynamic = 'force-static';
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
