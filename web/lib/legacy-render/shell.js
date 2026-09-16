@@ -119,6 +119,7 @@ function renderShell({
      no unconditional gtag/analytics load, so Consent Mode v2 is honoured here
      exactly as on the SPA pages and there is no duplicate Google tag. -->
 <script src="/consent.js" defer></script>
+<script src="/x-pixel.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escHtml(title)}</title>
