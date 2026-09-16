@@ -18,8 +18,6 @@
   var attempts = 0;
   var MAX_ATTEMPTS = 600;
 
-  // Keys are the actual Airpiv trackEvent() names. Values must be the exact
-  // X event IDs created in Events Manager; null means "do not send".
   var EVENT_IDS = {
     search_started: null,
     search: null,
@@ -49,9 +47,7 @@
   function getEventIds() {
     var configured = window.AIRPIV_X_EVENT_IDS;
     if (!configured || typeof configured !== 'object') return EVENT_IDS;
-
-    var merged = {};
-    var k;
+    var merged = {}, k;
     for (k in EVENT_IDS) {
       if (Object.prototype.hasOwnProperty.call(EVENT_IDS, k)) merged[k] = EVENT_IDS[k];
     }
@@ -64,34 +60,17 @@
     return merged;
   }
 
-  // X documents these event parameters: value, currency, conversion_id,
-  // search_string, description, contents and the related content fields.
-  // Do not forward Airpiv's internal route/order/booking fields verbatim.
   function cleanParams(name, params) {
     params = params && typeof params === 'object' ? params : {};
     var out = {};
 
-    if (typeof params.value === 'number' && isFinite(params.value)) {
-      out.value = params.value;
-    }
-    if (typeof params.currency === 'string' && params.currency.trim()) {
-      out.currency = params.currency.trim().toUpperCase();
-    }
-    if (typeof params.conversion_id === 'string' && params.conversion_id.trim()) {
-      out.conversion_id = params.conversion_id.trim();
-    }
-    if (typeof params.search_string === 'string' && params.search_string.trim()) {
-      out.search_string = params.search_string.trim().slice(0, 256);
-    }
-    if (typeof params.description === 'string' && params.description.trim()) {
-      out.description = params.description.trim().slice(0, 256);
-    }
-    if (typeof params.status === 'string' && params.status.trim()) {
-      out.status = params.status.trim().slice(0, 64);
-    }
+    if (typeof params.value === 'number' && isFinite(params.value)) out.value = params.value;
+    if (typeof params.currency === 'string' && params.currency.trim()) out.currency = params.currency.trim().toUpperCase();
+    if (typeof params.conversion_id === 'string' && params.conversion_id.trim()) out.conversion_id = params.conversion_id.trim();
+    if (typeof params.search_string === 'string' && params.search_string.trim()) out.search_string = params.search_string.trim().slice(0, 256);
+    if (typeof params.description === 'string' && params.description.trim()) out.description = params.description.trim().slice(0, 256);
+    if (typeof params.status === 'string' && params.status.trim()) out.status = params.status.trim().slice(0, 64);
 
-    // Purchase can safely carry catalog-style contents when the source event
-    // provides them. Never manufacture product IDs or passenger data.
     if (Array.isArray(params.contents)) {
       out.contents = params.contents.slice(0, 50).map(function (item) {
         if (!item || typeof item !== 'object') return null;
@@ -106,10 +85,8 @@
       if (!out.contents.length) delete out.contents;
     }
 
-    // Airpiv's confirmed purchase event already carries transaction_id. X
-    // documents conversion_id as the deduplication key, so reuse that real
-    // identifier instead of generating a synthetic one.
-    if (!out.conversion_id && name === 'purchase' && typeof params.transaction_id === 'string' && params.transaction_id.trim()) {
+    if (!out.conversion_id && name === 'purchase' &&
+        typeof params.transaction_id === 'string' && params.transaction_id.trim()) {
       out.conversion_id = params.transaction_id.trim();
     }
 
@@ -123,20 +100,15 @@
 
   function sendEvent(name, params) {
     if (!initialized || !hasAdConsent() || typeof window.twq !== 'function') return;
-
     var eventId = xEventIdFor(name);
     if (!eventId) return;
-
     try {
       window.twq('event', eventId, cleanParams(name, params));
-    } catch (e) {
-      // Tracking must never interrupt the booking/search flow.
-    }
+    } catch (e) {}
   }
 
   function installBridge() {
     if (bridgeInstalled || typeof window.trackEvent !== 'function') return;
-
     var original = window.trackEvent;
     if (original.__airpivXBridge) {
       bridgeInstalled = true;
@@ -159,7 +131,6 @@
 
   function init() {
     if (initialized || !hasAdConsent()) return;
-
     initialized = true;
 
     (function (e, t, n, s, u, a) {
@@ -167,7 +138,7 @@
         s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments);
       }, s.version = '1.1', s.queue = [], u = t.createElement(n), u.async = !0,
       u.src = 'https://static.ads-twitter.com/uwt.js',
-      a = t.getElementsByTagName(n)[0], a.parentNode.insertBefore(a, a));
+      a = t.getElementsByTagName(n)[0], a.parentNode.insertBefore(u, a));
     }(window, document, 'script'));
 
     window.twq('config', PIXEL_ID);
@@ -178,7 +149,6 @@
     if (!initialized && hasAdConsent()) init();
     if (!bridgeInstalled) installBridge();
     if (initialized && bridgeInstalled) return;
-
     attempts += 1;
     if (attempts < MAX_ATTEMPTS) window.setTimeout(waitForConsent, 500);
   }
