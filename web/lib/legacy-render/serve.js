@@ -8,6 +8,8 @@ export function htmlResponse(html) {
   // generic advice/benefit blocks are removed rather than replaced with guesses.
   let safeHtml = String(html);
   const isCityPage = /<main[^>]+id=["']city-main["']/i.test(safeHtml);
+  const isRoutePage = /<main[^>]+id=["']route-main["']/i.test(safeHtml);
+  const isLegacyRoute = isRoutePage && /(?:Preisanalyse|Reisezeit-Tipps|Wochenendtrip|weekend trip|price analysis|travel tips)/i.test(safeHtml);
 
   safeHtml = safeHtml
     .replace(/<p class="fdes">[^<]*(?:600\+?|600|hundreds|hunderte|centenas|centaines|centinaia|honderden|yüzlerce)[^<]*<\/p>/gi, '')
@@ -20,7 +22,6 @@ export function htmlResponse(html) {
 
   // City intro paragraphs can contain legacy admin copy or popularity/price
   // claims that are not part of the permitted route-derived evidence model.
-  // Remove only the affected sentence so supported route facts remain intact.
   if (isCityPage) {
     const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees|günstigsten\s+preis|cheapest\s+price|best\s+price|prix\s+le\s+moins\s+cher|prezzo\s+più\s+basso|goedkoopste\s+prijs|en\s+ucuz\s+fiyat|gefragtesten|beliebtesten|most popular|most demanded|más populares|plus populaires|più popolari|populairste|en popüler)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
@@ -29,20 +30,24 @@ export function htmlResponse(html) {
       const cleaned = inner.replace(unsupportedSentence, ' ').replace(/\s{2,}/g, ' ').trim();
       return cleaned ? `<p>${cleaned}</p>` : '';
     });
-
-    // The legacy city FAQ renderer can leave malformed wrapper markup when
-    // individual unsupported cards are removed. Remove the optional visible
-    // FAQ block rather than serving broken HTML; route facts remain available.
     safeHtml = safeHtml.replace(/<section class="city-faq">[\s\S]*?<\/section>/gi, '');
-
-    // Keep the remaining JSON-LD blocks valid. FAQPage is optional here and the
-    // legacy generator is not safe to edit with object-level regex surgery.
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '');
-
-    // Fail closed on popularity-labelled city ItemList schema. The destination
-    // links remain useful as ordinary navigation, but "popular" is an
-    // unsupported ranking claim unless backed by an explicit ranking source.
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']ItemList["'][\s\S]*?["']name["']\s*:\s*["'][^"']*(?:popular|beliebte|beliebtesten|populares|populaires|popolari|populairste|popüler)[^"']*["'][\s\S]*?<\/script>/gi, '');
+  }
+
+  // Some older route records still render the pre-hardening marketing FAQ
+  // template. Fail closed rather than serving unsupported booking/advice claims.
+  if (isLegacyRoute) {
+    safeHtml = safeHtml
+      .replace(/<section class="route-faq">[\s\S]*?<\/section>/gi, '')
+      .replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '')
+      .replace(/(?:Preisanalyse\s*(?:und|,)\s*Reisezeit-Tipps|price analysis\s*(?:and|,)\s*travel tips)/gi, '')
+      .replace(/\s*—\s*mehr Auswahl zum Vergleichen für dich\./gi, '.')
+      .replace(/\s*—\s*more choice for comparison\./gi, '.')
+      .replace(/\s*;\s*daneben gibt es meist günstigere Verbindungen mit Umstieg\./gi, '.')
+      .replace(/\s*;\s*there are usually cheaper connecting options as well\./gi, '.')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+([,.!?;:])/g, '$1');
   }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
