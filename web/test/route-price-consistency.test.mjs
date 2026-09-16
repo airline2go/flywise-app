@@ -20,31 +20,16 @@ const R = (over) => Object.assign(
 const links = { fromOrigin: [], toDestination: [] };
 const render = (over, lang = 'de') => renderFlightRoutePage(R(over), lang, [], links, []);
 
-// ─── The core invariant: one price, everywhere ─────────────────────────────
 test('when aggregate-min and cached price DISAGREE, every surface shows the aggregate min', () => {
-  // price_min (60, observed) is the correct "from" value; cached_price (83)
-  // is a different, timestamp-less figure. Before Phase 1 the title/meta would
-  // advertise 83 while the hero fallback and Offer showed 60 — the exact
-  // contradiction this guards against.
   const over = { price_min: 60, price_avg: 90, price_max: 120, price_currency: 'EUR', price_sample_count: 9, price_updated_at: '2026-07-20T00:00:00Z', cached_price: 83, cached_currency: 'EUR' };
   const { html, seo } = render(over);
-
   const cp = resolveCanonicalPrice(R(over));
   assert.equal(cp.amount, 60);
   assert.equal(cp.source, 'aggregate-min');
-
-  // Meta description "from" clause = 60, never 83.
   assert.match(seo.description, /ab 60 €/);
   assert.doesNotMatch(seo.description, /83/);
-
-  // Hero canonical fallback baked into the live script = 60.
   assert.match(html, /var CANON_PRICE = 60;/);
   assert.match(html, /var CANON_DATE = "2026-07-20";/);
-
-  // [P0.3 DATA-TRUTH] The aggregate min is a historically observed figure, not a
-  // live bookable quote, so NO InStock Offer is emitted for it (rule #8). The
-  // one-price invariant still holds for the honest surfaces (title/meta/hero all
-  // show 60, never 83) — we simply do not assert a false availability in JSON-LD.
   assert.doesNotMatch(html, /"@type":"Offer"/);
 });
 
@@ -55,17 +40,13 @@ test('with only a cached price (no persisted aggregate), title/meta/hero use it 
   assert.equal(cp.amount, 49);
   assert.equal(cp.source, 'cached');
   assert.equal(cp.checkedAt, null);
-
-  assert.match(seo.title, /Preise/);              // title gains the price facet
-  assert.match(seo.description, /ab 49 €/);        // meta "from" clause
-  assert.match(html, /var CANON_PRICE = 49;/);     // hero fallback
-  assert.match(html, /var CANON_DATE = null;/);    // no timestamp → never "live"
-  // No persisted aggregate → no structured-data Offer (quality bar unmet),
-  // rather than a fabricated-quality Offer from the timestamp-less cached value.
+  assert.match(seo.title, /Preise/);
+  assert.match(seo.description, /ab 49 €/);
+  assert.match(html, /var CANON_PRICE = 49;/);
+  assert.match(html, /var CANON_DATE = null;/);
   assert.doesNotMatch(html, /"@type":"Offer"/);
 });
 
-// ─── Edge cases (Phase 1.13 / 1.14) ────────────────────────────────────────
 test('no price anywhere → null resolver, no price surfaces, explicit unavailable state', () => {
   const over = {};
   assert.equal(resolveCanonicalPrice(R(over)), null);
@@ -84,7 +65,7 @@ test('zero, negative and malformed prices are rejected — never advertised, nev
 });
 
 test('an observed aggregate min with one sample is preferred over cached price', () => {
-  const cp = resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 1, cached_price: 83, cached_currency: 'EUR' }));
+  const cp = resolveCanonicalPrice(R({ price_min: 60, price_sample_count: 1, price_currency: 'EUR', cached_price: 83, cached_currency: 'EUR' }));
   assert.equal(cp.amount, 60);
   assert.equal(cp.source, 'aggregate-min');
 });
