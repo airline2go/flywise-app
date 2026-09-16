@@ -24,7 +24,12 @@ export const dynamicParams = true;
 // change. Only German (the default/root language) is prerendered here — the six
 // prefixed languages stay fully on-demand by design. Tune the count with the
 // PRERENDER_TOP_ROUTES env var (0 disables prerendering entirely).
-const PRERENDER_TOP_ROUTES = Number(process.env.PRERENDER_TOP_ROUTES ?? 300);
+//
+// [BUILD-SAFETY] The default is intentionally conservative while the content
+// backend catalogue is being migrated: a failed/slow detail render must not
+// consume the deployment's static-generation budget. The long tail remains
+// fully on-demand because dynamicParams stays true.
+const PRERENDER_TOP_ROUTES = Number(process.env.PRERENDER_TOP_ROUTES ?? 50);
 
 export async function generateStaticParams() {
   if (!Number.isFinite(PRERENDER_TOP_ROUTES) || PRERENDER_TOP_ROUTES <= 0) return [];

@@ -6,7 +6,11 @@
 import { renderPopularHtml } from '@/lib/legacy-render/render';
 import { htmlResponse, isPrefixedLang } from '@/lib/legacy-render/serve';
 
-export const revalidate = 86400; // 24h — daily safety-net revalidation; admin edits refresh affected entity pages immediately via /api/revalidate
+// [BUILD-SAFETY] The popular hub performs a catalogue-wide ranking. Keep
+// localized variants on-demand as well, so static generation cannot be blocked
+// by the same expensive upstream aggregation.
+export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
