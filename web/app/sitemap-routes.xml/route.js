@@ -3,6 +3,6 @@
 import { buildRouteUrls } from '@/lib/sitemap-urls';
 import { makeTypeSitemapRoute } from '@/lib/sitemap-route';
 
-export const revalidate = 3600;
+export const revalidate = 900;
 
 export const GET = makeTypeSitemapRoute(buildRouteUrls);
