@@ -1,0 +1,93 @@
+name: Airpiv SEO hardening (one-shot)
+on:
+  push:
+    branches: [fix/airpiv-seo-hardening-2026-09-16]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Apply exact evidence-gating patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new, label):
+              p = Path(path)
+              s = p.read_text()
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, found {count} in {path}')
+              p.write_text(s.replace(old, new, 1))
+
+          replace_exact(
+              'web/app/sitemap-shard/[file]/route.js',
+              'export const revalidate = 3600;',
+              'export const revalidate = 900;',
+              'sitemap revalidate',
+          )
+          replace_exact(
+              'web/app/sitemap-shard/[file]/route.js',
+              "'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',",
+              "'cache-control': 'public, max-age=900, stale-while-revalidate=86400',",
+              'sitemap cache header',
+          )
+
+          shell_path = 'web/lib/legacy-render/shell.js'
+          shell = Path(shell_path).read_text()
+          marker = 'const originalTranslate = translationModule.translate;'
+          fastest = """// [ROUTE-FAQ-FASTEST-TRUTH] Minimum observed duration is descriptive only; never infer nonstop/direct service.\nconst FASTEST_ROUTE_COPY = {\n  en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',\n  de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',\n  ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',\n  es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',\n  fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',\n  it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',\n  nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',\n  tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',\n};\nfor (const [lang, value] of Object.entries(FASTEST_ROUTE_COPY)) {\n  ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer = value;\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeQuestion = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerShortHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerMediumHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerLongHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestQuestion = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestAnswer = '';\n}\n\n"""
+          if shell.count(marker) != 1:
+              raise SystemExit('shell translate marker must occur exactly once')
+          shell = shell.replace(marker, fastest + marker, 1)
+          Path(shell_path).write_text(shell)
+
+          route_path = 'web/lib/legacy-render/render-flight-route.js'
+          replace_exact(
+              route_path,
+              'if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {',
+              'if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {',
+              'fastest duration gate',
+          )
+          replace_exact(
+              route_path,
+              'const items = [bestTimeFaqItem, haulQuestion];',
+              "// No historical pricing/schedule evidence: suppress unsupported booking timing advice.\n  const items = [haulQuestion];",
+              'FAQ booking advice gate',
+          )
+          replace_exact(
+              route_path,
+              "function buildBestTimeHtml(route, lang) {\n  if (route.distance_km == null) return '';",
+              "function buildBestTimeHtml(route, lang) {\n  // No historical pricing/schedule evidence: suppress unsupported booking advice.\n  return '';",
+              'best-time HTML gate',
+          )
+          PY
+      - name: Verify exact patch and test suite
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run seo:flight-evidence
+          npm run seo:route-integrity
+      - name: Commit and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/seo-hardening-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web .github/workflows/seo-hardening-once.yml
+          git commit -m 'fix(seo): harden route FAQ evidence and sitemap freshness'
+          git push origin HEAD:fix/airpiv-seo-hardening-2026-09-16
