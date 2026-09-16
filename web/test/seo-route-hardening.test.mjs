@@ -26,6 +26,10 @@ const renderer = fs.readFileSync(rendererPath, 'utf8');
 assert.ok(renderer.includes('const items = [bestTimeFaqItem, haulQuestion];'), 'renderer source unexpectedly changed; shell-level FAQ sanitization must remain active');
 assert.ok(renderer.includes('route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min'), 'fastest FAQ source gate must remain data-driven');
 
+const shellPath = path.resolve(process.cwd(), 'lib/legacy-render/shell.js');
+const shellSource = fs.readFileSync(shellPath, 'utf8');
+assert.ok(shellSource.includes('.replace(/<div class="route-hero-badges">[\\s\\S]*?<\\/div>/g, \'\')'), 'unsupported route hero badges must be stripped from SSR HTML');
+
 const sitemapPath = path.resolve(process.cwd(), 'app/sitemap-shard/[file]/route.js');
 const sitemap = fs.readFileSync(sitemapPath, 'utf8');
 assert.ok(sitemap.includes('export const revalidate = 900;'), 'route child sitemap revalidation must be 15m');
