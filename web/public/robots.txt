@@ -1,13 +1,27 @@
 # Airpiv robots policy.
-# NOTE: robots.txt is advisory only — enforcement of the blocks below happens
-# in the Next.js Proxy (see web/proxy.js), which returns 403 before any page
-# renders. This file just makes our intent explicit to well-behaved crawlers.
+# robots.txt is advisory; edge enforcement lives in web/proxy.js.
 
-# Search engines we want — full access to all SEO pages, no crawl-delay.
+# Trusted Google crawlers and inspection/indexing services.
 User-agent: Googlebot
+Allow: /
+User-agent: Google-InspectionTool
+Allow: /
+User-agent: Storebot-Google
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: APIs-Google
+Allow: /
+User-agent: Mediapartners-Google
+Allow: /
+User-agent: AdsBot-Google
 Allow: /
 User-agent: Googlebot-Image
 Allow: /
+User-agent: GSCWizard-Bot
+Allow: /
+
+# Other approved search engines.
 User-agent: Bingbot
 Allow: /
 User-agent: Applebot
@@ -15,8 +29,7 @@ Allow: /
 User-agent: DuckDuckBot
 Allow: /
 
-# Aggressive crawlers / scrapers with no SEO value for us — asked to stay out
-# (and hard-blocked at the edge regardless).
+# Aggressive crawlers / scrapers with no SEO value for us.
 User-agent: Bytespider
 Disallow: /
 User-agent: PetalBot
