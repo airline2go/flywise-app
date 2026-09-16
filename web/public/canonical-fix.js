@@ -32,6 +32,35 @@
   function setNamed(name, value) { var el = document.querySelector('meta[name="' + name + '"]'); if (el) el.setAttribute('content', value); }
   function setProp(prop, value) { var el = document.querySelector('meta[property="' + prop + '"]'); if (el) el.setAttribute('content', value); }
 
+  /* Airline logos are rendered by the shared flight UI as lazy images pointing
+     at Duffel's hosted SVGs. The document CSP intentionally allows only
+     same-origin images, so proxy these logo requests through Next.js before the
+     browser attempts the cross-origin request. The observer also covers cards
+     inserted later by search/filter pagination. */
+  function proxyAirlineLogos(root) {
+    if (!root || !root.querySelectorAll) return;
+    var imgs = root.querySelectorAll('img[src^="https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/"]');
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      var src = img.getAttribute('src') || '';
+      var match = src.match(/full-color-logo\/([A-Za-z0-9]{2,3})\.svg(?:$|\?)/);
+      var code = match ? match[1].toUpperCase() : (img.getAttribute('alt') || '').toUpperCase();
+      if (/^[A-Z0-9]{2,3}$/.test(code)) img.setAttribute('src', '/api/airline-logo?code=' + encodeURIComponent(code));
+    }
+  }
+  if (document.documentElement) {
+    var logoObserver = new MutationObserver(function (mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+          var node = mutations[i].addedNodes[j];
+          if (node && node.nodeType === 1) proxyAirlineLogos(node);
+        }
+      }
+    });
+    logoObserver.observe(document.documentElement, { childList: true, subtree: true });
+    proxyAirlineLogos(document);
+  }
+
   /* Shared autocomplete UI layers. */
   if (!document.querySelector('script[data-airpiv-autocomplete-v9]')) {
     var s = document.createElement('script');
