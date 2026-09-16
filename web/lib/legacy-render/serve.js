@@ -2,7 +2,14 @@
 // string (or null → 404) in the right Response.
 export function htmlResponse(html) {
   if (!html) return new Response('Not found', { status: 404 });
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+
+  // [SEO-TRUTHFULNESS] Footer tagline is shared across all localized pages.
+  // Older translation bundles contained a static "600+ airlines" claim that
+  // is not a route-specific or runtime-verified metric. Remove only the
+  // affected footer paragraph rather than inventing a replacement statistic.
+  const safeHtml = String(html).replace(/<p class="fdes">[^<]*(?:600\+?|600|hundreds|hunderte|centenas|centaines|centinaia|honderden|yüzlerce)[^<]*<\/p>/gi, '');
+
+  return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
 // [ROUTE-CANONICAL-REDIRECT] F1 — a permanent (301) redirect from a consolidated
