@@ -1,6 +1,7 @@
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 const REVALIDATE = 900;
 
+// Uses the backend's generated locale rows as the authoritative discovery set.
 async function fetchPage(lang, page) {
   const url = `${API_BASE}/sitemap-data/routes-localized?lang=${encodeURIComponent(lang)}&page=${page}`;
   const res = await fetch(url, { next: { revalidate: REVALIDATE } });
