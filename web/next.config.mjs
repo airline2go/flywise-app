@@ -27,11 +27,21 @@ const nextConfig = {
         destination: 'https://airpiv.com/:path*',
         statusCode: 301,
       },
+      // [P0-5 Option A] The blog listing moved from the static public/blog.html
+      // to a server-rendered /blog (crawlable article links in the raw HTML).
+      // Permanently redirect the old URL to the canonical one. 301 (not 308) to
+      // match the site's other canonical redirects. Internal links already point
+      // at /blog, so this only catches external/legacy inbound links.
       {
         source: '/blog.html',
         destination: '/blog',
         statusCode: 301,
       },
+      // German has ONE URL: the bare root /. The former distinct /de home is
+      // retired (it created a dual-canonical / vs /de duplicate that contradicted
+      // the sitemap and every SSR page, whose `de` alternate targets the
+      // unprefixed root). /de 301s to / so any already-discovered /de link
+      // consolidates onto the canonical root.
       {
         source: '/de',
         destination: '/',
@@ -40,11 +50,39 @@ const nextConfig = {
     ];
   },
 
+  // [VERBATIM-HOME] The customer-facing homepage + booking/search/checkout
+  // SPA is the original index.html + app.js + styles.css, served byte-for-byte
+  // from public/ so it is visually and behaviourally 1:1 with production (a
+  // React reimplementation drifted — proven by visual-parity/). '/' is
+  // rewritten to the static /index.html in beforeFiles so it wins over any
+  // app-router route. Verified 0px against the legacy home in visual-parity/.
+  // The legacy index.html localizes itself from window.location.pathname
+  // (app.js: '/en' -> English, '/ar' -> Arabic, …), so every language home is
+  // the SAME file served under its own URL. Rewrites mask the path, so the
+  // browser URL stays '/en' and app.js localizes exactly as in production.
+  // Only the bare language home is rewritten — '/en/city/…' etc. still route
+  // to the app-router SEO pages.
+  // The bare search deep-links (/search/BER-CDG and /search/multi-city) are
+  // served by the SAME original index.html on production — app.js reads the
+  // pathname and auto-runs the search. `:pair` matches both the IATA pair and
+  // the literal "multi-city" segment. Localized search (/en/search/…) does NOT
+  // exist on production (it 404s), so only the root path is rewritten and the
+  // React [lang]/search routes are removed.
   async rewrites() {
+    // The seven non-default languages each serve their own build-time localized
+    // home (public/<lang>.html). German is NOT here: it is the verbatim root /
+    // (see the /de → / 301 in redirects() above). Keep this list in sync with
+    // lib/home-i18n.mjs HOME_LANGS and public/canonical-fix.js.
     const LANG_HOMES = ['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
+        // [P2-4] Each language home serves its OWN build-time localized file
+        // (public/<lang>.html, emitted by scripts/prerender-localized-homes.mjs)
+        // instead of the verbatim German index.html — so the raw HTML has a self
+        // canonical + correct lang/title/body on first byte. The browser URL
+        // stays /<lang> (rewrite masks the path); the bare root / still serves
+        // index.html verbatim (canonical /).
         ...LANG_HOMES.map((l) => ({ source: `/${l}`, destination: `/${l}.html` })),
         { source: '/search/:pair', destination: '/index.html' },
       ],
@@ -53,8 +91,31 @@ const nextConfig = {
     };
   },
 
+  // [ASSET-CACHING] These rules target root-level static public/ assets only:
+  // `:file` matches a single path segment, so /_next/* (which Next already
+  // fingerprints + serves immutable) and the HTML pages are untouched.
+  //
+  // Images/fonts never change once shipped → 1 year immutable.
+  //
+  // CSS/JS live at FIXED, unhashed paths (/styles.css, /app.js, …) so a URL
+  // never changes when its content does. A positive max-age therefore risks
+  // serving a stale stylesheet/script alongside a freshly-updated (no-cache)
+  // index.html — the skew that repeatedly hid CSS fixes from users. We serve
+  // them `no-cache` (store, but always revalidate before use): every load
+  // sends a conditional request and Vercel answers 304 when unchanged (tiny,
+  // keeps repeat views fast) or 200 with the new file the instant it changes,
+  // so any deploy reaches users immediately with no stale window.
   async headers() {
     return [
+      // [SECURITY-HEADERS] Applied to every response. The customer SPA
+      // (public/index.html) already ships a detailed page-level CSP via a
+      // <meta http-equiv> tag; `frame-ancestors` is deliberately NOT set
+      // there because the directive is ignored inside a <meta> CSP and only
+      // takes effect as a real response header — so the clickjacking
+      // protection for the checkout/confirmation pages has to live here.
+      // These are all additive, non-breaking headers (no default-src that
+      // could block the SPA's own inline/vendor scripts — that stays owned
+      // by the page-level meta CSP).
       {
         source: '/:path*',
         headers: [
