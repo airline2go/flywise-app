@@ -30,32 +30,13 @@ export function htmlResponse(html) {
       return cleaned ? `<p>${cleaned}</p>` : '';
     });
 
-    // Remove unsupported popularity FAQ cards from the visible HTML as well.
-    // The FAQ questions are not backed by the route-derived evidence model.
-    const unsupportedFaqNames = [
-      'Was ist die beliebteste Route ab',
-      'Was sind die beliebtesten Ziele ab',
-      'What is the most popular route from',
-      'What are the most popular destinations from',
-      '¿Cuál es la ruta más popular desde',
-      '¿Cuáles son los destinos más populares desde',
-      'Quelle est la route la plus populaire depuis',
-      'Quels sont les destinations les plus populaires depuis',
-      'Qual è la rotta più popolare da',
-      'Quali sono le destinazioni più popolari da',
-      'Wat is de populairste route vanaf',
-      'Wat zijn de populairste bestemmingen vanaf',
-      'En popüler rota',
-      'En popüler destinasyonlar'
-    ];
-    for (const name of unsupportedFaqNames) {
-      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      safeHtml = safeHtml.replace(new RegExp(`<div class="city-faq-item">[\\s\\S]*?<div class="city-faq-q">${escaped}[^<]*<\\/div>[\\s\\S]*?<\\/div>`, 'gi'), '');
-    }
+    // The legacy city FAQ renderer can leave malformed wrapper markup when
+    // individual unsupported cards are removed. Remove the optional visible
+    // FAQ block rather than serving broken HTML; route facts remain available.
+    safeHtml = safeHtml.replace(/<section class="city-faq">[\s\S]*?<\/section>/gi, '');
 
-    // Keep visible FAQ content, but do not attempt regex surgery inside JSON.
-    // Removing the whole optional FAQPage JSON-LD block is fail-closed and
-    // leaves the remaining schema valid rather than risking malformed JSON.
+    // Keep the remaining JSON-LD blocks valid. FAQPage is optional here and the
+    // legacy generator is not safe to edit with object-level regex surgery.
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{\s*["']@context["']\s*:\s*["']https:\/\/schema\.org["']\s*,\s*["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?<\/script>/gi, '');
   }
 
