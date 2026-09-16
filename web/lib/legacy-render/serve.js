@@ -33,6 +33,42 @@ export function htmlResponse(html) {
     safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>\s*\{[\s\S]*?["']@type["']\s*:\s*["']ItemList["'][\s\S]*?["']name["']\s*:\s*["'][^"']*(?:popular|beliebte|beliebtesten|populares|populaires|popolari|populairste|popüler)[^"']*["'][\s\S]*?<\/script>/gi, '');
   }
 
+  // Route pages must not publish generic booking-window, best-time, or
+  // cheapest-days advice unless route evidence explicitly supports it. Older
+  // templates can still emit those blocks, so remove them at the final HTML
+  // boundary and fail closed in FAQPage JSON-LD as well.
+  if (isRoutePage) {
+    const unsupportedRouteFaq = /(?:best\s+time(?:\s+to\s+fly)?|booking\s+window|cheapest\s+days?|cheapest\s+day|when\s+should\s+i\s+book|beste\s+reisezeit|beste\s+buchungszeit|günstigsten\s+tage|günstigster\s+tag|wann\s+soll(?:te)?\s+ich\s+buchen|mejor\s+momento(?:\s+para\s+volar)?|ventana\s+de\s+reserva|días\s+más\s+baratos|meilleur\s+moment(?:\s+pour\s+voler)?|fenêtre\s+de\s+réservation|jours\s+les\s+moins\s+chers|miglior\s+momento(?:\s+per\s+volare)?|finestra\s+di\s+prenotazione|giorni\s+più\s+economici|beste\s+moment(?:\s+om\s+te\s+vliegen)?|boekingsvenster|goedkoopste\s+dagen|en\s+iyi\s+zaman(?:\s+uçmak\s+için)?|rezervasyon\s+aralığı|en\s+ucuz\s+günler)/i;
+    safeHtml = safeHtml
+      .replace(/<section[^>]*class=["'][^"']*route-besttime-section[^"']*["'][^>]*>[\s\S]*?<\/section>/gi, '')
+      .replace(/<(?:article|div|li)[^>]*class=["'][^"']*(?:route-)?faq-item[^"']*["'][^>]*>([\s\S]*?)<\/(?:article|div|li)>/gi, (full, inner) => unsupportedRouteFaq.test(inner) ? '' : full);
+
+    const sanitizeFaqSchema = (node) => {
+      if (!node || typeof node !== 'object') return node;
+      if (Array.isArray(node)) return node.map(sanitizeFaqSchema).filter(Boolean);
+      const type = node['@type'];
+      if (type === 'FAQPage' && Array.isArray(node.mainEntity)) {
+        node.mainEntity = node.mainEntity.filter((item) => !unsupportedRouteFaq.test(JSON.stringify(item)));
+        if (!node.mainEntity.length) return null;
+      }
+      for (const [key, value] of Object.entries(node)) {
+        if (key !== 'mainEntity') node[key] = sanitizeFaqSchema(value);
+      }
+      return node;
+    };
+
+    safeHtml = safeHtml.replace(/<script type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi, (full, json) => {
+      try {
+        const data = JSON.parse(json.trim());
+        const sanitized = sanitizeFaqSchema(data);
+        if (!sanitized) return '';
+        return `<script type="application/ld+json">${JSON.stringify(sanitized)}</script>`;
+      } catch {
+        return full;
+      }
+    });
+  }
+
   // Some older route records still render the pre-hardening marketing FAQ
   // template. Fail closed rather than serving unsupported booking/advice claims.
   if (isLegacyRoute) {
