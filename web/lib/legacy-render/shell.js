@@ -3,13 +3,6 @@ const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathPrefix, pathFor } = requir
 const { stringsFor } = translationModule;
 
 // [ROUTE-COPY-TRUTHFULNESS] Route pages are evidence-driven comparison pages.
-// Several legacy translation strings made site-wide marketing claims such as
-// "hundreds of airlines in real time" even when a specific route had only a
-// small persisted carrier set. Keep the route-specific copy useful without
-// implying unsupported live coverage, demand, or fare guarantees. This wrapper
-// is installed before render-flight-route.js destructures `translate`, so the
-// existing renderer contract stays unchanged and all other translation keys
-// retain their original localized values.
 const ROUTE_COPY_OVERRIDES = {
   en: {
     routeIntroClosingLongHaul: ' Airpiv compares the options currently available for this route so you can review prices and connections for your travel date.',
@@ -77,8 +70,7 @@ const ROUTE_COPY_OVERRIDES = {
   },
 };
 
-// [ROUTE-FAQ-FASTEST-TRUTH] The minimum observed duration is descriptive only;
-// it must never inherit a legacy answer that infers nonstop service.
+// [ROUTE-FAQ-FASTEST-TRUTH] The minimum observed duration is descriptive only.
 const FASTEST_ROUTE_COPY = {
   en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',
   de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',
@@ -91,10 +83,7 @@ const FASTEST_ROUTE_COPY = {
 };
 for (const [lang, value] of Object.entries(FASTEST_ROUTE_COPY)) ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer = value;
 
-// [ROUTE-FAQ-BOOKING-TRUTH] No historical pricing/schedule evidence exists in
-// the current persisted route snapshot. Empty these legacy booking-advice keys;
-// renderShell strips the resulting empty FAQ/section so neither HTML nor JSON-LD
-// carries a guessed booking window or "best time" claim.
+// [ROUTE-FAQ-BOOKING-TRUTH] Disable unsupported legacy booking advice.
 for (const lang of Object.keys(ROUTE_COPY_OVERRIDES)) {
   ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeQuestion = '';
   ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerShortHaul = '';
@@ -126,8 +115,6 @@ function escHtml(s) {
 }
 
 function jsonLdScript(schema) {
-  // Drop empty FAQ entries created by intentionally disabled evidence-gated
-  // legacy booking advice. This keeps structured data truthful as well as HTML.
   if (schema && schema.mainEntity && schema.mainEntity['@type'] === 'FAQPage' && Array.isArray(schema.mainEntity.mainEntity)) {
     schema = { ...schema, mainEntity: { ...schema.mainEntity, mainEntity: schema.mainEntity.mainEntity.filter((q) => q && String(q.name || '').trim() && q.acceptedAnswer && String(q.acceptedAnswer.text || '').trim()) } };
   }
@@ -163,10 +150,12 @@ function renderShell({
       + `\n<link rel="alternate" hreflang="x-default" href="${escHtml(defaultUrl)}">`
     : '';
 
-  // Remove unsupported legacy booking-advice sections/items at the shell edge.
-  // Only route-specific classes are touched; other page types are unchanged.
+  // Remove unsupported legacy route-only sections and marketing badges at the
+  // final SSR shell boundary. This is deliberately HTML-level, not CSS-only,
+  // so unsupported claims cannot remain crawlable in source/JSON-like text.
   const sanitizedMainContent = String(mainContent || '')
     .replace(/<section class="route-besttime-section">[\s\S]*?<\/section>/g, '')
+    .replace(/<div class="route-hero-badges">[\s\S]*?<\/div>/g, '')
     .replace(/<div class="route-faq-item"><div class="route-faq-q"><\/div><div class="route-faq-a"><\/div><\/div>/g, '');
 
   return `<!DOCTYPE html>
