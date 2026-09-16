@@ -12,19 +12,14 @@ const LIVE_PRICE_TTL_MS = 24 * HOUR;
 const PRICE_TTL_MS = 7 * DAY;
 const ROUTE_DATA_TTL_MS = 30 * DAY;
 
-// Flight-route pages are on-demand ISR and need a short safety-net because the
-// route catalogue can change outside a frontend deployment.
 const ROUTE_PAGE_REVALIDATE_S = 15 * MINUTE / 1000;
-
-// Entity pages (city/country/airport/airline) intentionally revalidate more
-// slowly because their catalogue content changes much less frequently.
 const ENTITY_PAGE_REVALIDATE_S = 24 * HOUR / 1000;
 
-// The sitemap index is a 1h safety-net. Route child sitemaps are separately
-// refreshed every 15m, so new/removed routes propagate without rebuilding the
-// whole index on every request.
+// Actual production sitemap windows: the index and shard are hourly, while
+// the route-type child sitemap is refreshed every 15 minutes.
 const SITEMAP_REVALIDATE_S = HOUR / 1000;
-const SITEMAP_CHILD_REVALIDATE_S = 15 * MINUTE / 1000;
+const SITEMAP_ROUTE_REVALIDATE_S = 15 * MINUTE / 1000;
+const SITEMAP_SHARD_REVALIDATE_S = HOUR / 1000;
 
 function isFresh(checkedAt, ttlMs, now = Date.now()) {
   if (!checkedAt) return false;
@@ -41,6 +36,7 @@ module.exports = {
   ROUTE_PAGE_REVALIDATE_S,
   ENTITY_PAGE_REVALIDATE_S,
   SITEMAP_REVALIDATE_S,
-  SITEMAP_CHILD_REVALIDATE_S,
+  SITEMAP_ROUTE_REVALIDATE_S,
+  SITEMAP_SHARD_REVALIDATE_S,
   isFresh,
 };

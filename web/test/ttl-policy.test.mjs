@@ -28,9 +28,8 @@ test('flight-route handlers use ROUTE_PAGE_REVALIDATE_S; entity handlers use ENT
   }
 });
 
-test('sitemap index and child routes use their documented windows', () => {
+test('sitemap index, route-type child and shard use their documented windows', () => {
   assert.equal(revalidateOf('app/sitemap.xml/route.js'), ttl.SITEMAP_REVALIDATE_S);
-  for (const p of ['app/sitemap-routes.xml/route.js', 'app/sitemap-shard/[file]/route.js']) {
-    assert.equal(revalidateOf(p), ttl.SITEMAP_CHILD_REVALIDATE_S, `${p} revalidate must equal SITEMAP_CHILD_REVALIDATE_S`);
-  }
+  assert.equal(revalidateOf('app/sitemap-routes.xml/route.js'), ttl.SITEMAP_ROUTE_REVALIDATE_S);
+  assert.equal(revalidateOf('app/sitemap-shard/[file]/route.js'), ttl.SITEMAP_SHARD_REVALIDATE_S);
 });
