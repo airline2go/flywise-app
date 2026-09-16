@@ -77,6 +77,32 @@ const ROUTE_COPY_OVERRIDES = {
   },
 };
 
+// [ROUTE-FAQ-FASTEST-TRUTH] Override the legacy fastest-flight answers in all
+// eight locales. Duration is observed; no nonstop inference is made.
+const FASTEST_ROUTE_COPY = {
+  en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',
+  de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',
+  ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',
+  es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',
+  fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',
+  it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',
+  nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',
+  tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',
+};
+for (const [lang, value] of Object.entries(FASTEST_ROUTE_COPY)) ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer = value;
+
+// Booking-window / cheapest-day advice is evidence-gated. The current route
+// snapshot has no historical pricing or booking-window evidence, so legacy
+// booking-advice keys are disabled rather than guessed.
+for (const lang of Object.keys(ROUTE_COPY_OVERRIDES)) {
+  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeQuestion = '';
+  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerShortHaul = '';
+  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerMediumHaul = '';
+  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerLongHaul = '';
+  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestQuestion = '';
+  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestAnswer = '';
+}
+
 const originalTranslate = translationModule.translate;
 translationModule.translate = function safeRouteTranslate(key, lang) {
   const override = ROUTE_COPY_OVERRIDES[lang]?.[key];
@@ -108,18 +134,10 @@ function escHtml(s) {
 // "<!--" or "<script" if any field feeding the schema (title, intro text,
 // FAQ question/answer, etc. — several of which are admin-editable, with no
 // tag-stripping on the admin side) happens to contain those substrings.
-// Since these are embedded as literal text inside a real <script> tag
-// (not through the DOM), the HTML parser itself would end the script
-// element early on a literal "</script" appearing anywhere in the JSON
-// string, letting an attacker who controls one of those fields inject
-// markup that runs as real HTML on the public page it appears on. The
-// standard fix (same one used for inline JSON on any server-rendered
-// page): replace every literal "<" character with its JSON unicode
-// escape sequence (backslash, u, 0, 0, 3, c). JSON.parse decodes that
-// escape back to the exact original "<" character, so the schema
-// round-trips byte-for-byte — but the raw "<" byte, and so "</script>"
-// or "<!--", can never appear in the document itself.
 function jsonLdScript(schema) {
+  if (schema && schema.mainEntity && schema.mainEntity['@type'] === 'FAQPage' && Array.isArray(schema.mainEntity.mainEntity)) {
+    schema = { ...schema, mainEntity: { ...schema.mainEntity, mainEntity: schema.mainEntity.mainEntity.filter((q) => q && String(q.name || '').trim() && q.acceptedAnswer && String(q.acceptedAnswer.text || '').trim()) } };
+  }
   const json = JSON.stringify(schema).replace(/</g, '\\u003c');
   return `<script type="application/ld+json">${json}</script>`;
 }
@@ -132,10 +150,6 @@ function jsonLdScript(schema) {
 const ORGANIZATION_SCHEMA = { '@context': 'https://schema.org', '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' };
 
 // [WEBSITE-SEARCHACTION] WebSite schema with the Google sitelinks-searchbox
-// SearchAction — previously only the static home (index.html) declared it, so
-// the entity pages (city/country/airport/airline/route/blog) had no WebSite
-// node. Injected once here into every shell-rendered page, using the exact same
-// query target the home already exposes (app.js handles /?q=...).
 const WEBSITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
@@ -148,36 +162,17 @@ const WEBSITE_SCHEMA = {
   },
 };
 
-// [OG-LOCALE] schema.org locale tags (BCP-47-ish og:locale values) per
-// language — og:locale was previously absent entirely, which link
-// previews/crawlers use to pick the right localized rendering.
 const OG_LOCALE = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR', es: 'es_ES', fr: 'fr_FR', it: 'it_IT', nl: 'nl_NL', tr: 'tr_TR' };
 
-// [SPEAKABLE] A SpeakableSpecification for voice assistants (Google Assistant
-// TTS): the page's <h1> plus its FAQ questions — short, self-contained, read-
-// aloud-friendly text. `speakable` is only valid on WebPage / Article (its
-// schema.org domain), so it is attached to those nodes on the route/city/
-// country/blog pages, never onto the airport/airline Place/Organization nodes
-// where it would not validate. Each caller passes its own FAQ-question CSS
-// selector since the class name differs per page type.
 function speakableSpec(...selectors) {
   return { '@type': 'SpeakableSpecification', cssSelector: ['h1', ...selectors.filter(Boolean)] };
 }
 
-// Root-relative home URL for a language, honoring the same
-// default-language-stays-unprefixed rule as every generated page URL.
 function homeHref(lang) {
   const prefix = pathPrefix(lang);
   return prefix ? `/${prefix}/` : '/';
 }
 
-// [PAGE-SHELL] The header/nav/footer boilerplate shared by every entity
-// page, parameterized by language — replaces 10 files' worth of duplicated
-// <head>/<nav>/<footer> markup with one function. `urls` is a
-// {en, de, ar, es, fr, it, nl} map of this page's URL in every language it
-// exists in (a page missing from `urls` for some language simply gets no
-// hreflang entry for that language, rather than crashing) — replacing the
-// old hardcoded `deUrl`/`enUrl` named params.
 function renderShell({
   lang, title, description, canonicalUrl, urls = {}, includeHreflang = true,
   ogType = 'website', ogImage = 'https://airpiv.com/og-image.png',
@@ -192,6 +187,11 @@ function renderShell({
     ? LANGUAGES.filter((l) => urls[l.code]).map((l) => `<link rel="alternate" hreflang="${l.code}" href="${escHtml(urls[l.code])}">`).join('\n')
       + `\n<link rel="alternate" hreflang="x-default" href="${escHtml(defaultUrl)}">`
     : '';
+  // Evidence-disabled route FAQ entries are stripped at the shell boundary so
+  // neither empty booking-advice cards nor a legacy best-time section survives.
+  const sanitizedMainContent = String(mainContent || '')
+    .replace(/<section class="route-besttime-section">[\s\S]*?<\/section>/g, '')
+    .replace(/<div class="route-faq-item"><div class="route-faq-q"><\/div><div class="route-faq-a"><\/div><\/div>/g, '');
   return `<!DOCTYPE html>
 <html lang="${lang}" dir="${direction}">
 <head>
@@ -240,7 +240,7 @@ ${bodyPrefix}
   </div>
 </nav>
 
-${mainContent}
+${sanitizedMainContent}
 
 ${bodySuffix}
 <footer><div class="fi2">
@@ -258,4 +258,4 @@ ${scripts}
 `;
 }
 
-module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec };
+module.exports = { renderShell, escHtml, jsonLdScript, homeHref, ORGANIZATION_SCHEMA, speakableSpec, ROUTE_COPY_OVERRIDES };
