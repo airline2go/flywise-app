@@ -5,7 +5,6 @@ import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-en
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { pathFor } from '@/lib/legacy-render/languages';
-import { listRoutePages } from '@/lib/content-api';
 
 // Route catalogue changes can happen outside a frontend deploy; keep the
 // on-demand safety-net short enough that a newly published route does not
@@ -13,40 +12,12 @@ import { listRoutePages } from '@/lib/content-api';
 // immediately through /api/revalidate.
 export const revalidate = 900;
 export const dynamic = 'force-static';
-export const dynamicParams = true;
 
-// [PRERENDER-TOP-ROUTES] Prerender only the highest-value German flight routes
-// at build time (ranked by route_score). Those pages are then baked into every
-// deployment — always present, instantly crawlable, and never regenerated on a
-// cold first hit after a deploy. dynamicParams=true keeps the entire long tail
-// on-demand (built + cached on first visit, then held per the revalidate window
-// above), so build time stays bounded and adding a new route needs no code
-// change. Only German (the default/root language) is prerendered here — the six
-// prefixed languages stay fully on-demand by design. Tune the count with the
-// PRERENDER_TOP_ROUTES env var (0 disables prerendering entirely).
-//
-// [BUILD-SAFETY] The default is intentionally conservative while the content
-// backend catalogue is being migrated: a failed/slow detail render must not
-// consume the deployment's static-generation budget. The long tail remains
-// fully on-demand because dynamicParams stays true.
-const PRERENDER_TOP_ROUTES = Number(process.env.PRERENDER_TOP_ROUTES ?? 50);
-
-export async function generateStaticParams() {
-  if (!Number.isFinite(PRERENDER_TOP_ROUTES) || PRERENDER_TOP_ROUTES <= 0) return [];
-  try {
-    const routes = await listRoutePages();
-    return [...routes]
-      .filter((r) => r && r.slug)
-      .sort((a, b) => (b.route_score || 0) - (a.route_score || 0))
-      .slice(0, PRERENDER_TOP_ROUTES)
-      .map((r) => ({ slug: r.slug }));
-  } catch (e) {
-    // A backend hiccup at build time must never fail the whole deploy — fall
-    // back to pure on-demand generation (empty list = prior behavior).
-    console.warn(`[generateStaticParams] flights prerender skipped: ${e.message}`);
-    return [];
-  }
-}
+// [BUILD-SAFETY] Flight-route pages must never be prerendered from the live
+// catalogue during `next build`. The catalogue/API is protected and may return
+// 403/429 to Vercel's build workers. Routes are generated and cached on demand
+// when requested, while the 15-minute revalidation window keeps the catalogue
+// reasonably fresh. This also removes build-time dependence on route-page data.
 
 export async function GET(_req, { params }) {
   const { slug } = await params;
