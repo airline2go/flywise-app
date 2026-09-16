@@ -1,5 +1,87 @@
+const translationModule = require('./translate');
 const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathPrefix, pathFor } = require('./languages');
-const { stringsFor } = require('./translate');
+const { stringsFor } = translationModule;
+
+// [ROUTE-COPY-TRUTHFULNESS] Route pages are evidence-driven comparison pages.
+// Several legacy translation strings made site-wide marketing claims such as
+// "hundreds of airlines in real time" even when a specific route had only a
+// small persisted carrier set. Keep the route-specific copy useful without
+// implying unsupported live coverage, demand, or fare guarantees. This wrapper
+// is installed before render-flight-route.js destructures `translate`, so the
+// existing renderer contract stays unchanged and all other translation keys
+// retain their original localized values.
+const ROUTE_COPY_OVERRIDES = {
+  en: {
+    routeIntroClosingLongHaul: ' Airpiv compares the options currently available for this route so you can review prices and connections for your travel date.',
+    routeIntroClosingShortHaul: ' Airpiv compares the options currently available for this route so you can review prices and connections for your travel date.',
+    routeIntroClosingLongHaulV2: ' Airpiv compares the options currently available for this route so you can review prices and connections for your travel date.',
+    routeIntroClosingShortHaulV2: ' Airpiv compares the options currently available for this route so you can review prices and connections for your travel date.',
+    routeFaqCheapestAnswer: 'Airpiv compares the options currently available for this route. Check the available fares for your intended travel date.',
+    routeIntroPopular: '',
+  },
+  de: {
+    routeIntroClosingLongHaul: ' Airpiv vergleicht die aktuell verfügbaren Optionen für diese Strecke, damit du Preise und Verbindungen für dein Reisedatum prüfen kannst.',
+    routeIntroClosingShortHaul: ' Airpiv vergleicht die aktuell verfügbaren Optionen für diese Strecke, damit du Preise und Verbindungen für dein Reisedatum prüfen kannst.',
+    routeIntroClosingLongHaulV2: ' Airpiv vergleicht die aktuell verfügbaren Optionen für diese Strecke, damit du Preise und Verbindungen für dein Reisedatum prüfen kannst.',
+    routeIntroClosingShortHaulV2: ' Airpiv vergleicht die aktuell verfügbaren Optionen für diese Strecke, damit du Preise und Verbindungen für dein Reisedatum prüfen kannst.',
+    routeFaqCheapestAnswer: 'Airpiv vergleicht die aktuell verfügbaren Optionen für diese Strecke. Prüfe die verfügbaren Preise für dein Reisedatum.',
+    routeIntroPopular: '',
+  },
+  ar: {
+    routeIntroClosingLongHaul: ' تقارن Airpiv الخيارات المتاحة حاليًا لهذا المسار، حتى تتمكن من مراجعة الأسعار والرحلات المناسبة لتاريخ سفرك.',
+    routeIntroClosingShortHaul: ' تقارن Airpiv الخيارات المتاحة حاليًا لهذا المسار، حتى تتمكن من مراجعة الأسعار والرحلات المناسبة لتاريخ سفرك.',
+    routeIntroClosingLongHaulV2: ' تقارن Airpiv الخيارات المتاحة حاليًا لهذا المسار، حتى تتمكن من مراجعة الأسعار والرحلات المناسبة لتاريخ سفرك.',
+    routeIntroClosingShortHaulV2: ' تقارن Airpiv الخيارات المتاحة حاليًا لهذا المسار، حتى تتمكن من مراجعة الأسعار والرحلات المناسبة لتاريخ سفرك.',
+    routeFaqCheapestAnswer: 'تقارن Airpiv الخيارات المتاحة حاليًا لهذا المسار. تحقق من الأسعار المتاحة لتاريخ سفرك.',
+    routeIntroPopular: '',
+  },
+  es: {
+    routeIntroClosingLongHaul: ' Airpiv compara las opciones disponibles actualmente para esta ruta para que puedas revisar precios y conexiones para tu fecha de viaje.',
+    routeIntroClosingShortHaul: ' Airpiv compara las opciones disponibles actualmente para esta ruta para que puedas revisar precios y conexiones para tu fecha de viaje.',
+    routeIntroClosingLongHaulV2: ' Airpiv compara las opciones disponibles actualmente para esta ruta para que puedas revisar precios y conexiones para tu fecha de viaje.',
+    routeIntroClosingShortHaulV2: ' Airpiv compara las opciones disponibles actualmente para esta ruta para que puedas revisar precios y conexiones para tu fecha de viaje.',
+    routeFaqCheapestAnswer: 'Airpiv compara las opciones disponibles actualmente para esta ruta. Consulta las tarifas disponibles para tus fechas.',
+    routeIntroPopular: '',
+  },
+  fr: {
+    routeIntroClosingLongHaul: ' Airpiv compare les options actuellement disponibles sur cette route afin que vous puissiez consulter les prix et les correspondances pour vos dates.',
+    routeIntroClosingShortHaul: ' Airpiv compare les options actuellement disponibles sur cette route afin que vous puissiez consulter les prix et les correspondances pour vos dates.',
+    routeIntroClosingLongHaulV2: ' Airpiv compare les options actuellement disponibles sur cette route afin que vous puissiez consulter les prix et les correspondances pour vos dates.',
+    routeIntroClosingShortHaulV2: ' Airpiv compare les options actuellement disponibles sur cette route afin que vous puissiez consulter les prix et les correspondances pour vos dates.',
+    routeFaqCheapestAnswer: 'Airpiv compare les options actuellement disponibles sur cette route. Consultez les tarifs disponibles pour vos dates.',
+    routeIntroPopular: '',
+  },
+  it: {
+    routeIntroClosingLongHaul: ' Airpiv confronta le opzioni attualmente disponibili per questa rotta, così puoi verificare prezzi e collegamenti per le tue date.',
+    routeIntroClosingShortHaul: ' Airpiv confronta le opzioni attualmente disponibili per questa rotta, così puoi verificare prezzi e collegamenti per le tue date.',
+    routeIntroClosingLongHaulV2: ' Airpiv confronta le opzioni attualmente disponibili per questa rotta, così puoi verificare prezzi e collegamenti per le tue date.',
+    routeIntroClosingShortHaulV2: ' Airpiv confronta le opzioni attualmente disponibili per questa rotta, così puoi verificare prezzi e collegamenti per le tue date.',
+    routeFaqCheapestAnswer: 'Airpiv confronta le opzioni attualmente disponibili per questa rotta. Controlla le tariffe disponibili per le tue date.',
+    routeIntroPopular: '',
+  },
+  nl: {
+    routeIntroClosingLongHaul: ' Airpiv vergelijkt de opties die momenteel voor deze route beschikbaar zijn, zodat je prijzen en verbindingen voor je reisdatum kunt bekijken.',
+    routeIntroClosingShortHaul: ' Airpiv vergelijkt de opties die momenteel voor deze route beschikbaar zijn, zodat je prijzen en verbindingen voor je reisdatum kunt bekijken.',
+    routeIntroClosingLongHaulV2: ' Airpiv vergelijkt de opties die momenteel voor deze route beschikbaar zijn, zodat je prijzen en verbindingen voor je reisdatum kunt bekijken.',
+    routeIntroClosingShortHaulV2: ' Airpiv vergelijkt de opties die momenteel voor deze route beschikbaar zijn, zodat je prijzen en verbindingen voor je reisdatum kunt bekijken.',
+    routeFaqCheapestAnswer: 'Airpiv vergelijkt de opties die momenteel voor deze route beschikbaar zijn. Bekijk de beschikbare prijzen voor je reisdatum.',
+    routeIntroPopular: '',
+  },
+  tr: {
+    routeIntroClosingLongHaul: ' Airpiv bu rota için şu anda mevcut seçenekleri karşılaştırır; seyahat tarihiniz için fiyatları ve bağlantıları inceleyebilirsiniz.',
+    routeIntroClosingShortHaul: ' Airpiv bu rota için şu anda mevcut seçenekleri karşılaştırır; seyahat tarihiniz için fiyatları ve bağlantıları inceleyebilirsiniz.',
+    routeIntroClosingLongHaulV2: ' Airpiv bu rota için şu anda mevcut seçenekleri karşılaştırır; seyahat tarihiniz için fiyatları ve bağlantıları inceleyebilirsiniz.',
+    routeIntroClosingShortHaulV2: ' Airpiv bu rota için şu anda mevcut seçenekleri karşılaştırır; seyahat tarihiniz için fiyatları ve bağlantıları inceleyebilirsiniz.',
+    routeFaqCheapestAnswer: 'Airpiv bu rota için şu anda mevcut seçenekleri karşılaştırır. Seyahat tarihiniz için mevcut fiyatları kontrol edin.',
+    routeIntroPopular: '',
+  },
+};
+
+const originalTranslate = translationModule.translate;
+translationModule.translate = function safeRouteTranslate(key, lang) {
+  const override = ROUTE_COPY_OVERRIDES[lang]?.[key];
+  return override !== undefined ? override : originalTranslate(key, lang);
+};
 
 // Fixed, identical-across-every-language site paths — never real
 // "translated" content, so these live here as constants rather than in
