@@ -1,6 +1,13 @@
 const API_BASE = (process.env.API_BASE || 'https://api.airpiv.com').replace(/\/$/, '');
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 10000;
+const DETAIL_CONCURRENCY = 4;
+const DETAIL_BATCH_DELAY_MS = 250;
+const MAX_429_RETRIES = 4;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function getJSON(path) {
   const res = await fetch(`${API_BASE}${path}`);
@@ -21,19 +28,29 @@ async function listRoutes() {
 
 async function checkRoute(route) {
   const slug = encodeURIComponent(route.slug);
-  const res = await fetch(`${API_BASE}/route-pages/${slug}`);
-  return { slug: route.slug, status: res.status };
+  for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt += 1) {
+    const res = await fetch(`${API_BASE}/route-pages/${slug}`);
+    if (res.status !== 429 || attempt === MAX_429_RETRIES) {
+      return { slug: route.slug, status: res.status };
+    }
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const backoff = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 1000 * (attempt + 1);
+    await sleep(backoff);
+  }
+  return { slug: route.slug, status: 429 };
 }
 
 const routes = await listRoutes();
 if (!routes.length) throw new Error('Route integrity gate found zero routes; refusing to pass.');
 
 const failures = [];
-const concurrency = 20;
-for (let i = 0; i < routes.length; i += concurrency) {
-  const batch = routes.slice(i, i + concurrency);
+for (let i = 0; i < routes.length; i += DETAIL_CONCURRENCY) {
+  const batch = routes.slice(i, i + DETAIL_CONCURRENCY);
   const results = await Promise.all(batch.map(checkRoute));
   failures.push(...results.filter((r) => r.status !== 200));
+  if (i + DETAIL_CONCURRENCY < routes.length) await sleep(DETAIL_BATCH_DELAY_MS);
 }
 
 const duplicateSlugs = [...new Set(
@@ -49,6 +66,8 @@ console.log(JSON.stringify({
   detailFailures: failures.length,
   duplicateSlugs: duplicateSlugs.length,
   missingIata: missingIata.length,
+  detailConcurrency: DETAIL_CONCURRENCY,
+  detailBatchDelayMs: DETAIL_BATCH_DELAY_MS,
   sampleFailures: failures.slice(0, 25),
 }, null, 2));
 
