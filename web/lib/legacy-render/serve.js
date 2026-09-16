@@ -24,11 +24,11 @@ export function htmlResponse(html) {
   if (isCityPage) {
     const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees)[^.!?]*[.!?]?/gi;
     safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
-      if (!unsupportedSentence.test(inner)) return full;
+      const detector = new RegExp(unsupportedSentence.source, 'i');
+      if (!detector.test(inner)) return full;
       const cleaned = inner.replace(unsupportedSentence, ' ').replace(/\s{2,}/g, ' ').trim();
       return cleaned ? `<p>${cleaned}</p>` : '';
     });
-    unsupportedSentence.lastIndex = 0;
   }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
