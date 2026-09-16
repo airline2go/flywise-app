@@ -4,11 +4,12 @@ export function htmlResponse(html) {
   if (!html) return new Response('Not found', { status: 404 });
 
   // [SEO-TRUTHFULNESS] Final response-boundary guard for legacy entity pages.
-  // Remove unsupported global airline-count claims, realtime wording that was
-  // not tied to a verified live snapshot, and generic planning/tips/benefit
-  // sections that asserted advice without evidence. We delete the unsupported
-  // claim rather than replacing it with another unverified statistic.
-  let safeHtml = String(html)
+  // Unsupported global airline-count claims, unverified realtime wording, and
+  // generic advice/benefit blocks are removed rather than replaced with guesses.
+  let safeHtml = String(html);
+  const isCityPage = /<main[^>]+id=["']city-main["']/i.test(safeHtml);
+
+  safeHtml = safeHtml
     .replace(/<p class="fdes">[^<]*(?:600\+?|600|hundreds|hunderte|centenas|centaines|centinaia|honderden|yüzlerce)[^<]*<\/p>/gi, '')
     .replace(/<section class="city-why">[\s\S]*?<\/section>/gi, '')
     .replace(/<section class="city-tips">[\s\S]*?<\/section>/gi, '')
@@ -17,9 +18,18 @@ export function htmlResponse(html) {
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?;:])/g, '$1');
 
-  // [SEO-TRUTHFULNESS] Keep meta/OG descriptions free of dangling filler when
-  // a removed realtime phrase was part of the sentence.
-  safeHtml = safeHtml.replace(/(name="description" content="[^"]*)\s+([.])?/gi, '$1$2');
+  // City intro paragraphs can contain legacy admin copy such as “over 600
+  // airlines”, “book directly”, or “no hidden fees”. Remove only the affected
+  // sentence from the visible city body; route/fact sentences remain intact.
+  if (isCityPage) {
+    const unsupportedSentence = /[^.!?]*(?:600\+?\s*airlines|600\+?\s*fluggesellschaften|over\s+600\s+airlines|über\s+600\s+airlines|mehr als\s+600\s+airlines|book directly|buche direkt|no hidden fees|ohne versteckte kosten|ohne versteckte gebühren|without hidden fees)[^.!?]*[.!?]?/gi;
+    safeHtml = safeHtml.replace(/<p>([\s\S]*?)<\/p>/gi, (full, inner) => {
+      if (!unsupportedSentence.test(inner)) return full;
+      const cleaned = inner.replace(unsupportedSentence, ' ').replace(/\s{2,}/g, ' ').trim();
+      return cleaned ? `<p>${cleaned}</p>` : '';
+    });
+    unsupportedSentence.lastIndex = 0;
+  }
 
   return new Response(safeHtml, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
