@@ -1,12 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// Keep this contract test intentionally pure: the production data adapter must
-// expose the backend's effective SEO object to the legacy renderer for German
-// routes just as it already does for translated routes. The actual adapter is
-// integration-tested through the route page smoke suite; this test locks the
-// flattening contract so a future refactor cannot silently reintroduce the
-// production bypass.
 function flattenRouteSeo(route, lang) {
   const seo = route?.seo || {};
   return {
@@ -28,6 +22,7 @@ test('German route SEO is flattened from backend effective SEO', () => {
       metaDescription: 'Observed route information for Madrid to Alicante.',
       introHtml: '<p>Route-specific evidence.</p>',
       faq: [{ question: 'Are flights direct?', answer: 'Data-backed answer.' }],
+    },
   };
 
   const out = flattenRouteSeo(route, 'de');
