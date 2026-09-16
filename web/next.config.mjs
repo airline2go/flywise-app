@@ -1,12 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // [MONOREPO] This project lives inside flywise-app/web, which sits next
-  // to flywise-app's own package-lock.json — without this, Next.js can't
-  // tell which lockfile is its actual workspace root.
-  turbopack: {
-    root: import.meta.dirname,
-  },
-
   // [CANONICAL-DOMAIN] https://airpiv.com (bare apex) is the ONE canonical
   // host — every other spelling must 301 onto it so search engines index a
   // single origin. Vercel already force-redirects http -> https at the edge
