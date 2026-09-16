@@ -41,7 +41,7 @@ const BLOCKED_BOTS = [
   'meta-externalagent',
 ];
 
-// Search engines and inspection bots that Airpiv explicitly wants to crawl.
+// Search engines and trusted SEO/inspection bots that Airpiv explicitly wants to crawl.
 const ALLOWED_BOTS = [
   'googlebot',
   'google-inspectiontool',
@@ -57,6 +57,9 @@ const ALLOWED_BOTS = [
   'duckduckbot',
   'yandexbot',
   'baiduspider',
+  // Used only by our trusted technical SEO audit service; it does not trigger
+  // flight search/API calls and is needed to verify the same HTML Google sees.
+  'gscwizard-bot',
 ];
 
 function classify(ua) {
