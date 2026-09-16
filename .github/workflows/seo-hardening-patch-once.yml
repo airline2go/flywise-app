@@ -1,7 +1,7 @@
 name: Airpiv SEO route hardening (one-shot)
 on:
-  push:
-    branches: [fix/airpiv-seo-hardening-final-2026-09-16]
+  pull_request:
+    types: [opened, reopened, synchronize]
 permissions:
   contents: write
 jobs:
@@ -73,9 +73,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git add web
+          if git diff --cached --quiet; then
+            echo 'No code changes were produced; workflow files will still be removed.'
+          fi
           rm -f .github/workflows/seo-hardening-patch-once.yml .github/workflows/seo-hardening-finalize-once.yml
+          git add .github/workflows/seo-hardening-patch-once.yml .github/workflows/seo-hardening-finalize-once.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add web .github/workflows/seo-hardening-patch-once.yml .github/workflows/seo-hardening-finalize-once.yml
           git commit -m 'fix(seo): finalize route evidence hardening'
           git push origin HEAD:fix/airpiv-seo-hardening-final-2026-09-16
