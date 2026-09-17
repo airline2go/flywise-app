@@ -1,6 +1,8 @@
 name: _tmp_meta_length_cap
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches:
       - fix/seo-meta-description-length-cap
@@ -23,9 +25,6 @@ jobs:
 
           source = Path('web/lib/legacy-render/render-flight-route.js')
           text = source.read_text(encoding='utf-8')
-
-          marker = "function buildRouteMetaDescription(route, lang, snapshot, names) {"
-          assert marker in text, "meta function marker missing"
 
           old = """  // [CANONICAL-PRICE-SOURCE] The \\\"ab/from …\\\" clause uses the ONE canonical
   // price (same value the title facet, hero fallback and Offer use), so the
