@@ -33,6 +33,25 @@ function routeMinScore() {
   return Number.isFinite(n) && n >= 0 ? n : 0.2;
 }
 
+// Keep route-data freshness separate from price freshness. A current price
+// does not make a stale duration/stops/itinerary snapshot current.
+function routeDataMaxAgeMs() {
+  const days = Number(process.env.SEO_ROUTE_DATA_MAX_AGE_DAYS);
+  const effectiveDays = Number.isFinite(days) && days > 0 ? days : 30;
+  return effectiveDays * 24 * 60 * 60 * 1000;
+}
+
+function hasFreshRouteData(r, now = Date.now()) {
+  if (!r) return false;
+  const raw = r.insights_updated_at
+    || (r.intelligence && r.intelligence.operational && r.intelligence.operational.updatedAt);
+  if (!raw) return false;
+  const t = new Date(raw).getTime();
+  if (!Number.isFinite(t)) return false;
+  const age = now - t;
+  return age >= 0 && age <= routeDataMaxAgeMs();
+}
+
 function hasRouteDemandSignal(r) {
   if (!r) return false;
   if (validPositiveNumber(r.route_score) && Number(r.route_score) >= routeMinScore()) return true;
@@ -91,8 +110,10 @@ function getRouteIndexabilityDecision(r, opts = {}) {
   const evidence = hasVerifiedFlightEvidence(r);
   const manual = hasManualEditorialContent(r);
   const demand = hasRouteDemandSignal(r);
+  const fresh = hasFreshRouteData(r, opts.now);
+  const freshnessOk = !demandGate || manual || fresh;
   const demandOk = !demandGate || manual || demand;
-  const policyIndexable = enforce ? ((evidence || manual) && demandOk) : (hasLegacyRouteData(r) || manual);
+  const policyIndexable = enforce ? ((evidence || manual) && demandOk && freshnessOk) : (hasLegacyRouteData(r) || manual);
 
   // [P0.7 FAIL-CLOSED] Once the backend has emitted an explicit `indexable`
   // verdict, it owns the production decision. In particular, `indexable:false`
@@ -108,7 +129,9 @@ function getRouteIndexabilityDecision(r, opts = {}) {
     : (enforce
       ? ((evidence || manual)
         ? (demandOk
-          ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
+          ? (freshnessOk
+            ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
+            : 'STALE ROUTE DATA (pruned)')
           : 'NO DEMAND SIGNAL (pruned)')
         : 'NO VERIFIED FLIGHT EVIDENCE')
       : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)'));
@@ -118,6 +141,7 @@ function getRouteIndexabilityDecision(r, opts = {}) {
     verifiedEvidence: effectiveEvidence,
     manualContent: effectiveManual,
     demandSignal: demand,
+    routeDataFresh: fresh,
     demandGate,
     enforce,
     reason,
@@ -130,6 +154,7 @@ function getRouteIndexabilityDecision(r, opts = {}) {
       distance_km: r ? r.distance_km : null,
       route_score: r ? r.route_score : null,
       weekly_flights: r ? r.weekly_flights : null,
+      insights_updated_at: r ? r.insights_updated_at : null,
     },
   };
 }
@@ -138,6 +163,8 @@ module.exports = {
   evidencePolicyEnforced,
   routeDemandGateEnabled,
   routeMinScore,
+  routeDataMaxAgeMs,
+  hasFreshRouteData,
   hasRouteDemandSignal,
   hasVerifiedFlightEvidence,
   hasManualEditorialContent,
