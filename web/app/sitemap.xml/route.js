@@ -1,21 +1,46 @@
 // Dynamic sitemap INDEX (/sitemap.xml) — the only sitemap robots.txt points at.
-// It references one child sitemap per type. During the controlled recovery
-// phase, the route sitemap is mandatory even when a backend sitemap-data feed
-// is temporarily empty, because the dedicated route handler has a core-only
-// fallback and can safely serve the 70-route recovery cohort.
+// It references the crawlable child sitemaps. The index is deliberately
+// fail-safe: a transient backend 429 must not make deployments or crawler
+// requests return a broken sitemap index.
 import { buildSitemapIndex } from '@/lib/sitemap-urls';
 
-const ROUTE_SITEMAP_URL = 'https://airpiv.com/sitemap-routes.xml';
+const CHILD_SITEMAPS = [
+  'https://airpiv.com/sitemap-pages.xml',
+  'https://airpiv.com/sitemap-routes.xml',
+  'https://airpiv.com/sitemap-airlines.xml',
+  'https://airpiv.com/sitemap-blog.xml',
+  'https://airpiv.com/sitemap-popular.xml',
+  'https://airpiv.com/sitemap-reviews.xml',
+  'https://airpiv.com/sitemap-authority.xml',
+];
 
-export const revalidate = 3600;
+const ROUTE_SITEMAP_URL = 'https://airpiv.com/sitemap-routes.xml';
+const AUTHORITY_SITEMAP_URL = 'https://airpiv.com/sitemap-authority.xml';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+function staticFallbackIndex() {
+  const body = CHILD_SITEMAPS.map((loc) => `  <sitemap><loc>${loc}</loc></sitemap>`).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</sitemapindex>\n`;
+}
 
 export async function GET() {
-  let xml = await buildSitemapIndex();
-  if (!xml.includes(`<loc>${ROUTE_SITEMAP_URL}</loc>`)) {
-    xml = xml.replace(
-      '</sitemapindex>',
-      `  <sitemap><loc>${ROUTE_SITEMAP_URL}</loc></sitemap>\n</sitemapindex>`,
-    );
+  let xml;
+  try {
+    xml = await buildSitemapIndex();
+  } catch (error) {
+    console.warn('[sitemap-index] build failed; serving static fallback', error);
+    xml = staticFallbackIndex();
+  }
+
+  for (const sitemapUrl of [ROUTE_SITEMAP_URL, AUTHORITY_SITEMAP_URL]) {
+    if (!xml.includes(`<loc>${sitemapUrl}</loc>`)) {
+      xml = xml.replace(
+        '</sitemapindex>',
+        `  <sitemap><loc>${sitemapUrl}</loc></sitemap>\n</sitemapindex>`,
+      );
+    }
   }
 
   return new Response(xml, {
