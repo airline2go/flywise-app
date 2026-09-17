@@ -29,6 +29,8 @@ try {
   const route = await getRoutePage('alicante-barcelona', 'de');
 
   assert.ok(route);
+  assert.equal(route.seo_title, null);
+  assert.equal(route.seo_meta_description, null);
   assert.equal(route.seo_intro_html, null);
   assert.equal(route.seo_faq, null);
   assert.equal(route.seo_generated_at, '2026-09-17T12:46:58.163Z');
