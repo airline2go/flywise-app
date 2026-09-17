@@ -48,6 +48,15 @@ const nextConfig = {
         { source: `/${lang}/cities/:slug`, destination: `/${lang}/city/:slug`, statusCode: 301 },
         { source: `/${lang}/route-pages/:slug`, destination: `/${lang}/flights/:slug`, statusCode: 301 },
       ]),
+      // [LEGACY-SEO-ROUTE-404S] Historical route slugs still requested by Google.
+      // The exact flight search remains available through the canonical search URL.
+      { source: '/flights/brussels-erfurt', destination: '/search/BRU-ERF', statusCode: 301 },
+      { source: '/flights/dwc-bru', destination: '/search/DWC-BRU', statusCode: 301 },
+      { source: '/flights/pmi-dwc', destination: '/search/PMI-DWC', statusCode: 301 },
+      ...['en', 'ar', 'es', 'fr', 'it', 'nl', 'tr'].flatMap((lang) => [
+        { source: `/${lang}/flights/dwc-bru`, destination: '/search/DWC-BRU', statusCode: 301 },
+        { source: `/${lang}/flights/pmi-dwc`, destination: '/search/PMI-DWC', statusCode: 301 },
+      ]),
       // [P0-5 Option A] The blog listing moved from the static public/blog.html
       // to a server-rendered /blog (crawlable article links in the raw HTML).
       {
