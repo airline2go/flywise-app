@@ -31,20 +31,6 @@ jobs:
                   raise SystemExit(f'{label}: expected exactly 1 match, found {count} in {path}')
               p.write_text(s.replace(old, new, 1))
 
-          sitemap = Path('web/app/sitemap-shard/[file]/route.js').read_text()
-          replace_exact(
-              'web/app/sitemap-shard/[file]/route.js',
-              'export const revalidate = 3600;',
-              'export const revalidate = 900;',
-              'sitemap revalidate',
-          )
-          replace_exact(
-              'web/app/sitemap-shard/[file]/route.js',
-              "'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',",
-              "'cache-control': 'public, max-age=900, stale-while-revalidate=86400',",
-              'sitemap cache header',
-          )
-
           shell_path = 'web/lib/legacy-render/shell.js'
           shell = Path(shell_path).read_text()
           marker = 'const originalTranslate = translationModule.translate;'
