@@ -1,5 +1,6 @@
 import { listCities, listCountries, listRoutePages } from '../content-api';
 import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
+import { getRouteIndexabilityDecision, isSeoCoreRoute } from './route-evidence';
 import dataMod from './data.js';
 import rendererMod from './render-route-sitemap.js';
 
@@ -19,6 +20,12 @@ function ensureGeo() {
   return geoPromise;
 }
 
+function isRouteSitemapEligible(route) {
+  if (!route || !route.slug || !isSeoCoreRoute(route.slug)) return false;
+  if (route.indexable === false) return false;
+  return getRouteIndexabilityDecision(route).indexable;
+}
+
 export async function getRouteSitemapPage(page) {
   const requestedPage = Number(page);
   if (!Number.isInteger(requestedPage) || requestedPage < 1) return null;
@@ -26,7 +33,7 @@ export async function getRouteSitemapPage(page) {
   const routes = await listRoutePages();
   const loserMap = buildCanonicalSlugMap(routes);
   const canonicalRoutes = routes
-    .filter((route) => route && route.slug && route.indexable !== false && !loserMap.has(route.slug))
+    .filter((route) => isRouteSitemapEligible(route) && !loserMap.has(route.slug))
     .sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
 
   const totalPages = Math.max(1, Math.ceil(canonicalRoutes.length / ROUTES_PER_PAGE));
@@ -41,4 +48,4 @@ export async function getRouteSitemapPage(page) {
   };
 }
 
-export { ROUTES_PER_PAGE };
+export { isRouteSitemapEligible, ROUTES_PER_PAGE };
