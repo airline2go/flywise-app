@@ -3,105 +3,18 @@ const { localizeCity } = require('./data');
 const { getLanguage } = require('./languages');
 const { buildRouteSnapshot } = require('./route-snapshot');
 
-// The route page is the search-entry point for a known city pair. Keep this
-// panel deliberately server-rendered: the existing /search/{PAIR}?depart=DATE
-// contract already boots the production search SPA, so the route page does not
-// need a second client-side search implementation.
 const COPY = {
-  en: {
-    title: 'Search this exact route', subtitle: 'Compare available fares for your travel date', from: 'From', to: 'To', date: 'Departure date',
-    choose: 'Choose your date to see the current options', submit: 'Search flights →',
-    price: 'Reference fare', time: 'Avg. total time', distance: 'Distance', direct: 'Direct flights', airlines: 'Airlines', nonstop: 'Nonstop share',
-    directYes: 'Available', directAll: 'All nonstop', directNo: 'Connections only',
-    fareNote: 'Reference fare is indicative; exact prices are checked in search.',
-    snapshotTitle: 'Route snapshot',
-    snapshotLead: 'This page summarizes the route using the latest stored route evidence. Values shown here describe the route; exact fares are checked after you choose a travel date.',
-    factFare: 'a reference fare of', factDuration: 'an average total time of', factDistance: 'a distance of', factDirect: 'direct-flight availability', factAirlines: 'airline coverage', factNonstop: 'a nonstop share of',
-    limited: 'The route has limited stored evidence right now. Use the date selector above to check the current search options for this city pair.',
-  },
-  de: {
-    title: 'Diese genaue Strecke suchen', subtitle: 'Vergleiche verfügbare Preise für dein Reisedatum', from: 'Von', to: 'Nach', date: 'Abflugdatum',
-    choose: 'Wähle dein Datum für die aktuellen Optionen', submit: 'Flüge suchen →',
-    price: 'Richtpreis', time: 'Ø Gesamtdauer', distance: 'Entfernung', direct: 'Direktflüge', airlines: 'Airlines', nonstop: 'Nonstop-Anteil',
-    directYes: 'Verfügbar', directAll: 'Nur nonstop', directNo: 'Nur mit Umstieg',
-    fareNote: 'Der Richtpreis ist indikativ; exakte Preise werden in der Suche geprüft.',
-    snapshotTitle: 'Streckenüberblick',
-    snapshotLead: 'Diese Seite fasst die Strecke anhand der aktuell gespeicherten Routendaten zusammen. Die Werte beschreiben die Strecke; exakte Preise werden nach Auswahl des Reisedatums in der Suche geprüft.',
-    factFare: 'einen Richtpreis von', factDuration: 'eine durchschnittliche Gesamtdauer von', factDistance: 'eine Entfernung von', factDirect: 'die Verfügbarkeit von Direktflügen', factAirlines: 'Airline-Abdeckung', factNonstop: 'einen Nonstop-Anteil von',
-    limited: 'Für diese Strecke sind derzeit nur begrenzte Routendaten gespeichert. Nutze die Datumsauswahl oben, um die aktuellen Suchoptionen für dieses Städtepaar zu prüfen.',
-  },
-  ar: {
-    title: 'ابحث عن هذا المسار بالتحديد', subtitle: 'قارن الأسعار المتاحة لتاريخ سفرك', from: 'من', to: 'إلى', date: 'تاريخ المغادرة',
-    choose: 'اختر التاريخ لرؤية الخيارات الحالية', submit: 'ابحث عن الرحلات ←',
-    price: 'السعر المرجعي', time: 'متوسط المدة الكاملة', distance: 'المسافة', direct: 'الرحلات المباشرة', airlines: 'شركات الطيران', nonstop: 'نسبة المباشر',
-    directYes: 'متاحة', directAll: 'كلها مباشرة', directNo: 'مع توقف فقط',
-    fareNote: 'السعر المرجعي تقريبي؛ يتم التحقق من السعر الدقيق داخل البحث.',
-    snapshotTitle: 'ملخص المسار',
-    snapshotLead: 'تلخص هذه الصفحة المسار اعتمادًا على أحدث بيانات المسار المخزنة. القيم المعروضة تصف المسار، بينما يتم التحقق من الأسعار الدقيقة بعد اختيار تاريخ السفر.',
-    factFare: 'سعر مرجعي قدره', factDuration: 'متوسط مدة كاملة قدرها', factDistance: 'مسافة قدرها', factDirect: 'توفر الرحلات المباشرة', factAirlines: 'تغطية شركات الطيران', factNonstop: 'نسبة رحلات بدون توقف قدرها',
-    limited: 'البيانات المخزنة لهذا المسار محدودة حاليًا. استخدم اختيار التاريخ أعلاه للتحقق من خيارات البحث الحالية لهذا الزوج من المدن.',
-  },
-  es: {
-    title: 'Buscar esta ruta exacta', subtitle: 'Compara las tarifas disponibles para tu fecha', from: 'Desde', to: 'Hasta', date: 'Fecha de salida',
-    choose: 'Elige una fecha para ver las opciones actuales', submit: 'Buscar vuelos →',
-    price: 'Precio de referencia', time: 'Duración total media', distance: 'Distancia', direct: 'Vuelos directos', airlines: 'Aerolíneas', nonstop: 'Cuota sin escalas',
-    directYes: 'Disponibles', directAll: 'Todos sin escalas', directNo: 'Solo con escalas',
-    fareNote: 'El precio de referencia es indicativo; el precio exacto se comprueba en la búsqueda.',
-    snapshotTitle: 'Resumen de la ruta',
-    snapshotLead: 'Esta página resume la ruta con los datos almacenados más recientes. Los valores describen la ruta; el precio exacto se comprueba al seleccionar la fecha de viaje.',
-    factFare: 'un precio de referencia de', factDuration: 'una duración total media de', factDistance: 'una distancia de', factDirect: 'disponibilidad de vuelos directos', factAirlines: 'cobertura de aerolíneas', factNonstop: 'una cuota sin escalas de',
-    limited: 'Los datos almacenados de esta ruta son actualmente limitados. Usa el selector de fecha para comprobar las opciones actuales de búsqueda para este par de ciudades.',
-  },
-  fr: {
-    title: 'Rechercher cet itinéraire exact', subtitle: 'Comparez les tarifs disponibles pour votre date', from: 'Départ', to: 'Arrivée', date: 'Date de départ',
-    choose: 'Choisissez une date pour voir les options actuelles', submit: 'Rechercher des vols →',
-    price: 'Tarif de référence', time: 'Durée totale moyenne', distance: 'Distance', direct: 'Vols directs', airlines: 'Compagnies', nonstop: 'Part sans escale',
-    directYes: 'Disponibles', directAll: 'Tous sans escale', directNo: 'Avec escale uniquement',
-    fareNote: 'Le tarif de référence est indicatif ; le prix exact est vérifié dans la recherche.',
-    snapshotTitle: 'Aperçu de l’itinéraire',
-    snapshotLead: 'Cette page résume l’itinéraire à partir des dernières données enregistrées. Les valeurs décrivent la route ; le prix exact est vérifié après le choix de votre date.',
-    factFare: 'un tarif de référence de', factDuration: 'une durée totale moyenne de', factDistance: 'une distance de', factDirect: 'la disponibilité de vols directs', factAirlines: 'la couverture des compagnies', factNonstop: 'une part sans escale de',
-    limited: 'Les données enregistrées pour cet itinéraire sont actuellement limitées. Utilisez le sélecteur de date pour vérifier les options actuelles de recherche pour cette paire de villes.',
-  },
-  it: {
-    title: 'Cerca questa rotta esatta', subtitle: 'Confronta le tariffe disponibili per la tua data', from: 'Da', to: 'A', date: 'Data di partenza',
-    choose: 'Scegli una data per vedere le opzioni attuali', submit: 'Cerca voli →',
-    price: 'Tariffa indicativa', time: 'Durata totale media', distance: 'Distanza', direct: 'Voli diretti', airlines: 'Compagnie', nonstop: 'Quota nonstop',
-    directYes: 'Disponibili', directAll: 'Tutti nonstop', directNo: 'Solo con scalo',
-    fareNote: 'La tariffa indicativa è approssimativa; il prezzo esatto viene verificato nella ricerca.',
-    snapshotTitle: 'Riepilogo della rotta',
-    snapshotLead: 'Questa pagina riassume la rotta usando i dati più recenti memorizzati. I valori descrivono la rotta; il prezzo esatto viene verificato dopo aver scelto la data di viaggio.',
-    factFare: 'una tariffa indicativa di', factDuration: 'una durata totale media di', factDistance: 'una distanza di', factDirect: 'la disponibilità di voli diretti', factAirlines: 'la copertura delle compagnie', factNonstop: 'una quota nonstop del',
-    limited: 'I dati memorizzati per questa rotta sono attualmente limitati. Usa il selettore di data per verificare le opzioni di ricerca attuali per questa coppia di città.',
-  },
-  nl: {
-    title: 'Deze exacte route zoeken', subtitle: 'Vergelijk beschikbare tarieven voor je reisdatum', from: 'Van', to: 'Naar', date: 'Vertrekdatum',
-    choose: 'Kies een datum voor de huidige opties', submit: 'Vluchten zoeken →',
-    price: 'Richttarief', time: 'Gemiddelde totale reistijd', distance: 'Afstand', direct: 'Directe vluchten', airlines: 'Airlines', nonstop: 'Nonstop-aandeel',
-    directYes: 'Beschikbaar', directAll: 'Allemaal nonstop', directNo: 'Alleen met overstap',
-    fareNote: 'Het richttarief is indicatief; de exacte prijs wordt in de zoekresultaten gecontroleerd.',
-    snapshotTitle: 'Routeoverzicht',
-    snapshotLead: 'Deze pagina vat de route samen op basis van de meest recente opgeslagen routegegevens. De waarden beschrijven de route; exacte tarieven worden na je reisdatumkeuze in de zoekresultaten gecontroleerd.',
-    factFare: 'een richttarief van', factDuration: 'een gemiddelde totale reistijd van', factDistance: 'een afstand van', factDirect: 'beschikbaarheid van directe vluchten', factAirlines: 'dekking van airlines', factNonstop: 'een nonstop-aandeel van',
-    limited: 'De opgeslagen gegevens voor deze route zijn momenteel beperkt. Gebruik de datumkeuze om de actuele zoekopties voor dit stads-paar te controleren.',
-  },
-  tr: {
-    title: 'Bu rotayı tam olarak ara', subtitle: 'Seyahat tarihin için mevcut fiyatları karşılaştır', from: 'Nereden', to: 'Nereye', date: 'Kalkış tarihi',
-    choose: 'Güncel seçenekleri görmek için tarih seç', submit: 'Uçuşları ara →',
-    price: 'Referans fiyat', time: 'Ortalama toplam süre', distance: 'Mesafe', direct: 'Direkt uçuşlar', airlines: 'Havayolları', nonstop: 'Aktarmasız oranı',
-    directYes: 'Mevcut', directAll: 'Hepsi aktarmasız', directNo: 'Sadece aktarmalı',
-    fareNote: 'Referans fiyat gösterge niteliğindedir; kesin fiyat aramada kontrol edilir.',
-    snapshotTitle: 'Rota özeti',
-    snapshotLead: 'Bu sayfa, kaydedilmiş en güncel rota verilerine göre bu rotayı özetler. Gösterilen değerler rotayı açıklar; kesin fiyatlar seyahat tarihin seçildikten sonra aramada kontrol edilir.',
-    factFare: 'referans fiyat', factDuration: 'ortalama toplam süre', factDistance: 'mesafe', factDirect: 'direkt uçuş durumu', factAirlines: 'havayolu kapsamı', factNonstop: 'aktarmasız oranı',
-    limited: 'Bu rota için kaydedilmiş veriler şu anda sınırlı. Bu şehir çifti için güncel arama seçeneklerini kontrol etmek üzere yukarıdaki tarih seçiciyi kullan.',
-  },
+  en: { title: 'Search this exact route', subtitle: 'Change airports, dates and trip options', from: 'From', to: 'To', depart: 'Departure', ret: 'Return', trip: 'Trip', round: 'Round trip', oneWay: 'One way', passengers: 'Passengers', adult: 'Adult', adults: 'Adults', child: 'Child', children: 'Children', infant: 'Infant', infants: 'Infants', cabin: 'Cabin', economy: 'Economy', business: 'Business', bags: 'Bags', direct: 'Direct flights', search: 'Search flights', swap: 'Swap origin and destination', choose: 'Choose your dates and search the current options', price: 'Reference fare', time: 'Avg. total time', distance: 'Distance', directStat: 'Direct flights', snapshot: 'Route snapshot', snapshotLead: 'This route page keeps the route context while letting you change the search like the main flight search.', exact: 'Exact route context', selectAirport: 'Search city or airport', fareNote: 'Reference data is indicative; exact fares are checked in search.' },
+  de: { title: 'Diese genaue Strecke suchen', subtitle: 'Flughäfen, Daten und Suchoptionen ändern', from: 'Von', to: 'Nach', depart: 'Hinflug', ret: 'Rückflug', trip: 'Reise', round: 'Hin & Rück', oneWay: 'Nur Hinflug', passengers: 'Reisende', adult: 'Erwachsener', adults: 'Erwachsene', child: 'Kind', children: 'Kinder', infant: 'Kleinkind', infants: 'Kleinkinder', cabin: 'Klasse', economy: 'Economy', business: 'Business', bags: 'Gepäck', direct: 'Direktflüge', search: 'Flüge suchen', swap: 'Abflug und Ziel tauschen', choose: 'Daten wählen und aktuelle Optionen suchen', price: 'Richtpreis', time: 'Ø Gesamtdauer', distance: 'Entfernung', directStat: 'Direktflüge', snapshot: 'Streckenüberblick', snapshotLead: 'Die Route bleibt sichtbar, während du Flughäfen, Daten und Suchoptionen wie in der Hauptsuche ändern kannst.', exact: 'Routen-Kontext', selectAirport: 'Stadt oder Flughafen suchen', fareNote: 'Der Richtpreis ist indikativ; exakte Preise werden in der Suche geprüft.' },
+  ar: { title: 'ابحث عن هذا المسار', subtitle: 'غيّر المطارات والتواريخ وخيارات الرحلة', from: 'من', to: 'إلى', depart: 'الذهاب', ret: 'العودة', trip: 'الرحلة', round: 'ذهاب وعودة', oneWay: 'ذهاب فقط', passengers: 'المسافرون', adult: 'بالغ', adults: 'بالغون', child: 'طفل', children: 'أطفال', infant: 'رضيع', infants: 'رُضّع', cabin: 'الدرجة', economy: 'اقتصادية', business: 'أعمال', bags: 'الأمتعة', direct: 'رحلات مباشرة', search: 'ابحث عن الرحلات', swap: 'تبديل نقطة الانطلاق والوجهة', choose: 'اختر التواريخ وابحث عن الخيارات الحالية', price: 'السعر المرجعي', time: 'متوسط المدة الكاملة', distance: 'المسافة', directStat: 'الرحلات المباشرة', snapshot: 'ملخص المسار', snapshotLead: 'يبقى سياق المسار ظاهرًا مع إمكانية تغيير المطارات والتواريخ وخيارات البحث مثل البحث الرئيسي.', exact: 'سياق المسار', selectAirport: 'ابحث عن مدينة أو مطار', fareNote: 'السعر المرجعي تقريبي؛ يتم التحقق من الأسعار الدقيقة في البحث.' },
+  es: { title: 'Buscar esta ruta exacta', subtitle: 'Cambia aeropuertos, fechas y opciones', from: 'Desde', to: 'Hasta', depart: 'Ida', ret: 'Vuelta', trip: 'Viaje', round: 'Ida y vuelta', oneWay: 'Solo ida', passengers: 'Pasajeros', adult: 'Adulto', adults: 'Adultos', child: 'Niño', children: 'Niños', infant: 'Bebé', infants: 'Bebés', cabin: 'Clase', economy: 'Economy', business: 'Business', bags: 'Equipaje', direct: 'Vuelos directos', search: 'Buscar vuelos', swap: 'Intercambiar origen y destino', choose: 'Elige fechas y busca las opciones actuales', price: 'Precio de referencia', time: 'Duración total media', distance: 'Distancia', directStat: 'Vuelos directos', snapshot: 'Resumen de la ruta', snapshotLead: 'La ruta sigue visible mientras puedes cambiar aeropuertos, fechas y opciones como en la búsqueda principal.', exact: 'Contexto de ruta', selectAirport: 'Busca ciudad o aeropuerto', fareNote: 'El precio de referencia es indicativo; el precio exacto se comprueba en la búsqueda.' },
+  fr: { title: 'Rechercher cet itinéraire exact', subtitle: 'Modifiez aéroports, dates et options', from: 'Départ', to: 'Arrivée', depart: 'Aller', ret: 'Retour', trip: 'Voyage', round: 'Aller-retour', oneWay: 'Aller simple', passengers: 'Voyageurs', adult: 'Adulte', adults: 'Adultes', child: 'Enfant', children: 'Enfants', infant: 'Bébé', infants: 'Bébés', cabin: 'Classe', economy: 'Économique', business: 'Affaires', bags: 'Bagages', direct: 'Vols directs', search: 'Rechercher des vols', swap: 'Inverser départ et arrivée', choose: 'Choisissez vos dates et recherchez les options actuelles', price: 'Tarif de référence', time: 'Durée totale moyenne', distance: 'Distance', directStat: 'Vols directs', snapshot: 'Aperçu de l’itinéraire', snapshotLead: 'Le contexte de l’itinéraire reste visible tout en permettant de modifier les aéroports, dates et options comme dans la recherche principale.', exact: 'Contexte de l’itinéraire', selectAirport: 'Rechercher une ville ou un aéroport', fareNote: 'Le tarif de référence est indicatif ; le prix exact est vérifié dans la recherche.' },
+  it: { title: 'Cerca questa rotta esatta', subtitle: 'Cambia aeroporti, date e opzioni', from: 'Da', to: 'A', depart: 'Andata', ret: 'Ritorno', trip: 'Viaggio', round: 'Andata e ritorno', oneWay: 'Solo andata', passengers: 'Passeggeri', adult: 'Adulto', adults: 'Adulti', child: 'Bambino', children: 'Bambini', infant: 'Neonato', infants: 'Neonati', cabin: 'Classe', economy: 'Economy', business: 'Business', bags: 'Bagagli', direct: 'Voli diretti', search: 'Cerca voli', swap: 'Inverti partenza e destinazione', choose: 'Scegli le date e cerca le opzioni attuali', price: 'Tariffa indicativa', time: 'Durata totale media', distance: 'Distanza', directStat: 'Voli diretti', snapshot: 'Riepilogo della rotta', snapshotLead: 'Il contesto della rotta resta visibile mentre puoi cambiare aeroporti, date e opzioni come nella ricerca principale.', exact: 'Contesto rotta', selectAirport: 'Cerca città o aeroporto', fareNote: 'La tariffa indicativa è approssimativa; il prezzo esatto viene verificato nella ricerca.' },
+  nl: { title: 'Deze exacte route zoeken', subtitle: 'Wijzig luchthavens, data en opties', from: 'Van', to: 'Naar', depart: 'Heenreis', ret: 'Terugreis', trip: 'Reis', round: 'Retour', oneWay: 'Enkele reis', passengers: 'Reizigers', adult: 'Volwassene', adults: 'Volwassenen', child: 'Kind', children: 'Kinderen', infant: 'Baby', infants: 'Baby’s', cabin: 'Klasse', economy: 'Economy', business: 'Business', bags: 'Bagage', direct: 'Directe vluchten', search: 'Vluchten zoeken', swap: 'Vertrek en bestemming omwisselen', choose: 'Kies data en zoek de actuele opties', price: 'Richttarief', time: 'Gemiddelde totale reistijd', distance: 'Afstand', directStat: 'Directe vluchten', snapshot: 'Routeoverzicht', snapshotLead: 'De routecontext blijft zichtbaar terwijl je luchthavens, data en opties kunt wijzigen zoals in de hoofdzoekopdracht.', exact: 'Routecontext', selectAirport: 'Zoek stad of luchthaven', fareNote: 'Het richttarief is indicatief; de exacte prijs wordt in de zoekresultaten gecontroleerd.' },
+  tr: { title: 'Bu rotayı tam olarak ara', subtitle: 'Havalimanlarını, tarihleri ve seçenekleri değiştir', from: 'Nereden', to: 'Nereye', depart: 'Gidiş', ret: 'Dönüş', trip: 'Seyahat', round: 'Gidiş-dönüş', oneWay: 'Tek yön', passengers: 'Yolcular', adult: 'Yetişkin', adults: 'Yetişkin', child: 'Çocuk', children: 'Çocuklar', infant: 'Bebek', infants: 'Bebekler', cabin: 'Kabin', economy: 'Ekonomi', business: 'Business', bags: 'Bagaj', direct: 'Direkt uçuşlar', search: 'Uçuşları ara', swap: 'Kalkış ve varışı değiştir', choose: 'Tarihleri seç ve güncel seçenekleri ara', price: 'Referans fiyat', time: 'Ortalama toplam süre', distance: 'Mesafe', directStat: 'Direkt uçuşlar', snapshot: 'Rota özeti', snapshotLead: 'Rota bağlamı görünür kalırken havalimanlarını, tarihleri ve seçenekleri ana aramadaki gibi değiştirebilirsin.', exact: 'Rota bağlamı', selectAirport: 'Şehir veya havalimanı ara', fareNote: 'Referans fiyat gösterge niteliğindedir; kesin fiyat aramada kontrol edilir.' },
 };
 
-function copyFor(lang) {
-  return COPY[lang] || COPY.en;
-}
-
+function copyFor(lang) { return COPY[lang] || COPY.en; }
 function formatPrice(price, lang) {
   if (!price || !Number.isFinite(Number(price.amount)) || Number(price.amount) <= 0) return null;
   const value = Math.round(Number(price.amount)).toLocaleString(getLanguage(lang).locale);
@@ -110,173 +23,75 @@ function formatPrice(price, lang) {
   if (price.currency === 'GBP') return `£${value}`;
   return `${value} ${price.currency || 'EUR'}`;
 }
-
 function formatDuration(minutes) {
   if (!Number.isFinite(Number(minutes)) || Number(minutes) <= 0) return null;
-  const min = Math.round(Number(minutes));
-  const hours = Math.floor(min / 60);
-  const remainder = min % 60;
+  const min = Math.round(Number(minutes)); const hours = Math.floor(min / 60); const remainder = min % 60;
   return hours ? `${hours}h${remainder ? ` ${remainder}m` : ''}` : `${remainder}m`;
 }
-
 function formatDistance(distanceKm, lang) {
   if (!Number.isFinite(Number(distanceKm)) || Number(distanceKm) <= 0) return null;
   return `${Math.round(Number(distanceKm)).toLocaleString(getLanguage(lang).locale)} km`;
 }
-
+function valueOrNull(primary, fallback) { return primary != null ? primary : fallback; }
 function directLabel(route, copy) {
-  if (route.all_direct === true) return copy.directAll;
-  if (route.direct_flight_available === true) return copy.directYes;
-  if (route.direct_flight_available === false) return copy.directNo;
+  if (route.all_direct === true) return copy.direct;
+  if (route.direct_flight_available === true) return copy.direct;
+  if (route.direct_flight_available === false) return '—';
   return null;
 }
-
-function valueOrNull(primary, fallback) {
-  return primary != null ? primary : fallback;
-}
-
 function stat(label, value) {
-  if (!value) return '';
-  return `<div class="route-search-stat"><span class="route-search-stat-value">${escHtml(value)}</span><span class="route-search-stat-label">${escHtml(label)}</span></div>`;
+  return value ? `<div class="route-search-stat"><strong>${escHtml(value)}</strong><span>${escHtml(label)}</span></div>` : '';
 }
-
-function statsHtml(route, snapshot, copy) {
-  const stats = [];
-  const price = formatPrice(valueOrNull(snapshot && snapshot.price, route.price_min ? { amount: route.price_min, currency: route.price_currency || 'EUR' } : null), route._lang);
-  const duration = formatDuration(valueOrNull(snapshot && snapshot.avgDurationMin, route.avg_duration_min));
-  const distance = formatDistance(valueOrNull(snapshot && snapshot.distanceKm, route.distance_km), route._lang);
-  const direct = directLabel(route, copy);
-  const airlineCount = valueOrNull(snapshot && snapshot.airlineCount, route.airline_count);
-
-  if (price) stats.push(stat(copy.price, price));
-  if (duration) stats.push(stat(copy.time, duration));
-  if (distance) stats.push(stat(copy.distance, distance));
-  if (direct) stats.push(stat(copy.direct, direct));
-  if (snapshot && snapshot.stops && snapshot.stops.total > 0) {
-    stats.push(stat(copy.nonstop, `${snapshot.stops.nonstopShare}%`));
-  } else if (airlineCount != null && Number(airlineCount) > 0) {
-    stats.push(stat(copy.airlines, Number(airlineCount).toLocaleString(getLanguage(route._lang).locale)));
-  }
-
-  return stats.length ? `<div class="route-search-stats" aria-label="Route summary">${stats.join('')}</div>` : '';
-}
-
-function snapshotHtml(route, snapshot, copy, lang) {
+function statsHtml(route, snapshot, copy, lang) {
   const price = formatPrice(valueOrNull(snapshot && snapshot.price, route.price_min ? { amount: route.price_min, currency: route.price_currency || 'EUR' } : null), lang);
   const duration = formatDuration(valueOrNull(snapshot && snapshot.avgDurationMin, route.avg_duration_min));
   const distance = formatDistance(valueOrNull(snapshot && snapshot.distanceKm, route.distance_km), lang);
   const direct = directLabel(route, copy);
-  const airlineCount = valueOrNull(snapshot && snapshot.airlineCount, route.airline_count);
-  const nonstop = snapshot && snapshot.stops && snapshot.stops.total > 0 ? `${snapshot.stops.nonstopShare}%` : null;
-  const facts = [
-    price ? `${copy.factFare} ${price}` : null,
-    duration ? `${copy.factDuration} ${duration}` : null,
-    distance ? `${copy.factDistance} ${distance}` : null,
-    direct ? `${copy.factDirect}: ${direct}` : null,
-    airlineCount != null && Number(airlineCount) > 0 ? `${copy.factAirlines}: ${Number(airlineCount).toLocaleString(getLanguage(lang).locale)}` : null,
-    nonstop ? `${copy.factNonstop} ${nonstop}` : null,
-  ].filter(Boolean);
-  const localizedOrigin = localizeCity(route.origin_city, route.origin_iata, lang);
-  const localizedDestination = localizeCity(route.destination_city, route.destination_iata, lang);
-  const summary = facts.length
-    ? `${localizedOrigin} → ${localizedDestination}: ${facts.join('; ')}.`
-    : copy.limited;
-
-  return `<section class="route-search-snapshot" aria-labelledby="route-search-snapshot-title">
-    <div class="route-search-snapshot-head"><span class="route-search-kicker">${escHtml(copy.snapshotTitle)}</span><span class="route-search-snapshot-route">${escHtml(route.origin_iata)} → ${escHtml(route.destination_iata)}</span></div>
-    <p class="route-search-snapshot-lead">${escHtml(copy.snapshotLead)}</p>
-    <p id="route-search-snapshot-title" class="route-search-snapshot-copy">${escHtml(summary)}</p>
-  </section>`;
+  return `<div class="route-search-stats">${stat(copy.price, price)}${stat(copy.time, duration)}${stat(copy.distance, distance)}${stat(copy.directStat, direct)}</div>`;
 }
-
+function snapshotHtml(route, snapshot, copy, lang) {
+  const origin = localizeCity(route.origin_city, route.origin_iata, lang);
+  const destination = localizeCity(route.destination_city, route.destination_iata, lang);
+  const price = formatPrice(valueOrNull(snapshot && snapshot.price, route.price_min ? { amount: route.price_min, currency: route.price_currency || 'EUR' } : null), lang);
+  const duration = formatDuration(valueOrNull(snapshot && snapshot.avgDurationMin, route.avg_duration_min));
+  const distance = formatDistance(valueOrNull(snapshot && snapshot.distanceKm, route.distance_km), lang);
+  const facts = [price, duration, distance].filter(Boolean).join(' · ');
+  return `<section class="route-search-snapshot"><div class="route-search-snapshot-head"><strong>${escHtml(copy.snapshot)}</strong><span>${escHtml(route.origin_iata)} → ${escHtml(route.destination_iata)}</span></div><p>${escHtml(copy.snapshotLead)}</p><div class="route-search-route-context">${escHtml(origin)} → ${escHtml(destination)}${facts ? ` · ${escHtml(facts)}` : ''}</div></section>`;
+}
 function styles() {
   return `
-.route-search-panel{margin:20px auto 8px;max-width:980px;text-align:left;background:linear-gradient(180deg,#fff 0%,#f8fbfd 100%);border:1px solid #dce5ec;border-radius:18px;padding:18px;box-shadow:0 18px 38px rgba(9,31,52,.18);color:#132338}
-.route-search-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
-.route-search-title{font-size:15px;font-weight:800;letter-spacing:-.01em;margin:0;color:#10253b}
-.route-search-subtitle{margin:3px 0 0;font-size:11.5px;color:#6b7988;line-height:1.45}
-.route-search-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#e7f8f5;color:#087d6d;border:1px solid #cbeee8;font-size:10.5px;font-weight:800;white-space:nowrap}
-.route-search-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) auto;gap:10px;align-items:end}
-.route-search-field{display:flex;flex-direction:column;gap:6px;min-width:0}
-.route-search-field label{font-size:10.5px;font-weight:800;color:#617084;letter-spacing:.01em}
-.route-search-input{width:100%;height:48px;box-sizing:border-box;border:1px solid #d2dce5;border-radius:11px;background:#fff;color:#132338;padding:0 13px;font:inherit;font-size:14px;font-weight:700;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
-.route-search-input:focus{border-color:#00a991;box-shadow:0 0 0 3px rgba(0,169,145,.12)}
-.route-search-route{display:flex;align-items:center;gap:8px}
-.route-search-route-code{font-size:11px;font-weight:900;color:#008f7c;letter-spacing:.05em;white-space:nowrap}
-.route-search-route-city{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.route-search-submit{height:48px;border:0;border-radius:11px;padding:0 20px;background:#00a991;color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 9px 18px rgba(0,169,145,.24);transition:transform .15s ease,filter .15s ease}
-.route-search-submit:hover{filter:brightness(.96);transform:translateY(-1px)}
-.route-search-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0 0}
-.route-search-stat{padding:10px 11px;border-radius:11px;background:#fff;border:1px solid #e1e8ee;min-width:0}
-.route-search-stat-value{display:block;font-size:14px;font-weight:900;color:#12304b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.route-search-stat-label{display:block;margin-top:3px;font-size:10.5px;color:#738092;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.route-search-snapshot{margin-top:12px;padding:14px 15px;border-radius:13px;border:1px solid #dfe8ee;background:#f5fafc}
-.route-search-snapshot-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.route-search-kicker{font-size:12px;font-weight:900;color:#12304b}
-.route-search-snapshot-route{font-size:10.5px;font-weight:900;color:#008f7c;letter-spacing:.06em;white-space:nowrap}
-.route-search-snapshot-lead{margin:5px 0 0;font-size:11px;line-height:1.55;color:#667587}
-.route-search-snapshot-copy{margin:8px 0 0;font-size:12px;line-height:1.62;color:#25384d}
-.route-search-foot{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:11px}
-.route-search-hint{font-size:11.5px;color:#6d7b8c;line-height:1.45}
-.route-search-note{font-size:10.5px;color:#7a8794;line-height:1.45;text-align:right;max-width:48%}
-@media (max-width:900px){.route-search-form{grid-template-columns:1fr 1fr}.route-search-submit{grid-column:1/-1;width:100%}.route-search-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:560px){.route-search-panel{margin-left:0;margin-right:0;padding:14px;border-radius:15px}.route-search-heading{gap:8px}.route-search-badge{display:none}.route-search-form{grid-template-columns:1fr}.route-search-submit{grid-column:auto}.route-search-input{height:46px}.route-search-stats{grid-template-columns:1fr 1fr}.route-search-foot{flex-direction:column}.route-search-note{max-width:none;text-align:left}.route-search-subtitle{font-size:11px}.route-search-snapshot-head{align-items:flex-start;flex-direction:column;gap:4px}}
+.route-search-panel{max-width:980px;margin:20px auto 18px;padding:0;background:#0b1d2a;border-radius:24px;box-shadow:0 20px 45px rgba(9,31,52,.2);overflow:visible;color:#132338}
+.route-search-panel *{box-sizing:border-box}.route-search-inner{padding:24px}.route-search-top{color:#fff;margin-bottom:18px}.route-search-kicker{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:#73e0d1;font-size:11px;font-weight:800}.route-search-title{margin:10px 0 4px;font-size:24px;line-height:1.15;font-weight:900;letter-spacing:-.02em}.route-search-subtitle{margin:0;color:#9eb0bd;font-size:13px;line-height:1.5}.route-search-form{position:relative;background:#fff;border-radius:18px;padding:14px;display:grid;grid-template-columns:1fr 42px 1fr;gap:10px}.route-search-field{position:relative;min-width:0}.route-search-label{display:block;margin:0 0 6px;padding:0 4px;color:#687787;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.route-search-input{width:100%;height:54px;border:1px solid #d6e0e7;border-radius:12px;background:#fff;color:#14283b;padding:0 13px;font:inherit;font-size:15px;font-weight:700;outline:0}.route-search-input:focus{border-color:#00a991;box-shadow:0 0 0 3px rgba(0,169,145,.12)}.route-search-input::placeholder{color:#98a6b2;font-weight:600}.route-search-swap{align-self:end;width:42px;height:42px;border:1px solid #d6e0e7;background:#fff;border-radius:50%;color:#315066;font-size:18px;font-weight:900;cursor:pointer}.route-search-swap:hover{border-color:#00a991;color:#008f7c}.route-search-ac{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:1000;background:#fff;border:1px solid #dbe4ea;border-radius:13px;box-shadow:0 16px 34px rgba(8,30,48,.2);padding:6px;display:none;max-height:280px;overflow:auto}.route-search-ac.open{display:block}.route-search-ac-item{width:100%;border:0;background:#fff;border-radius:9px;padding:10px;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer}.route-search-ac-item:hover,.route-search-ac-item:focus{background:#f1faf8;outline:0}.route-search-ac-code{flex:0 0 42px;color:#008f7c;font-weight:900;font-size:11px}.route-search-ac-name{display:block;color:#152a3e;font-weight:800;font-size:13px}.route-search-ac-meta{display:block;color:#82909d;font-size:10px;margin-top:2px}.route-search-options{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.route-search-select,.route-search-option{height:42px;border:1px solid #d6e0e7;border-radius:11px;background:#fff;color:#21364a;font:inherit;font-size:12px;font-weight:800;padding:0 12px}.route-search-option{display:inline-flex;align-items:center;gap:7px;cursor:pointer}.route-search-option input{accent-color:#00a991;width:16px;height:16px}.route-search-date{position:relative}.route-search-dates{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.route-search-date input{width:100%;height:54px;border:1px solid #d6e0e7;border-radius:12px;background:#fff;color:#14283b;padding:0 13px;font:inherit;font-size:14px;font-weight:700}.route-search-date input:focus{border-color:#00a991;outline:0;box-shadow:0 0 0 3px rgba(0,169,145,.12)}.route-search-date.disabled{opacity:.45}.route-search-pax{position:relative}.route-search-pax-btn{height:42px;border:1px solid #d6e0e7;border-radius:11px;background:#fff;color:#21364a;font:inherit;font-size:12px;font-weight:800;padding:0 12px;cursor:pointer}.route-search-pax-menu{position:absolute;top:48px;right:0;z-index:1100;width:290px;background:#fff;border:1px solid #dbe4ea;border-radius:14px;box-shadow:0 18px 40px rgba(8,30,48,.2);padding:12px;display:none}.route-search-pax-menu.open{display:block}.route-search-pax-row{display:flex;align-items:center;justify-content:space-between;padding:9px 2px}.route-search-pax-row strong{font-size:13px;color:#1b3044}.route-search-pax-row span{display:block;color:#82909d;font-size:10px;margin-top:2px}.route-search-counter{display:flex;align-items:center;gap:9px}.route-search-counter button{width:30px;height:30px;border:1px solid #d6e0e7;border-radius:50%;background:#fff;color:#163149;font-size:17px;cursor:pointer}.route-search-counter b{min-width:18px;text-align:center}.route-search-submit{grid-column:1/-1;height:54px;border:0;border-radius:13px;background:#00b39f;color:#fff;font:inherit;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 10px 20px rgba(0,179,159,.22)}.route-search-submit:hover{filter:brightness(.97);transform:translateY(-1px)}.route-search-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}.route-search-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.route-search-stat{min-width:0;padding:12px;border-radius:12px;background:#fff;border:1px solid #dfe7ec}.route-search-stat strong{display:block;color:#12304b;font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.route-search-stat span{display:block;margin-top:3px;color:#748290;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.route-search-snapshot{margin-top:12px;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.06);color:#fff}.route-search-snapshot-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.route-search-snapshot-head strong{font-size:12px}.route-search-snapshot-head span{color:#65d8ca;font-size:10px;font-weight:900;letter-spacing:.05em}.route-search-snapshot p{margin:6px 0;color:#9eb0bd;font-size:11px;line-height:1.5}.route-search-route-context{color:#fff;font-size:12px;font-weight:800;line-height:1.5}.route-search-foot{display:flex;justify-content:space-between;gap:12px;padding:12px 2px 0;color:#8fa3b1;font-size:10.5px;line-height:1.45}.route-search-error{grid-column:1/-1;color:#b42318;background:#fff1f0;border:1px solid #ffd3cf;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;display:none}.route-search-error.show{display:block}
+@media(max-width:700px){.route-search-panel{margin:16px 0;border-radius:20px}.route-search-inner{padding:16px}.route-search-title{font-size:21px}.route-search-form{grid-template-columns:1fr 42px 1fr;padding:10px}.route-search-input{height:50px;font-size:14px}.route-search-dates{grid-template-columns:1fr}.route-search-options{gap:6px}.route-search-select,.route-search-option,.route-search-pax-btn{height:40px}.route-search-stats{grid-template-columns:1fr 1fr}.route-search-foot{flex-direction:column}.route-search-pax-menu{position:fixed;left:14px;right:14px;bottom:14px;top:auto;width:auto;z-index:2000}.route-search-submit{height:52px}}
+@media(max-width:440px){.route-search-form{grid-template-columns:1fr}.route-search-swap{justify-self:center;transform:rotate(90deg);margin:-4px 0}.route-search-swap:hover{transform:rotate(90deg) translateY(-1px)}.route-search-stats{grid-template-columns:1fr 1fr}.route-search-snapshot-head{align-items:flex-start;flex-direction:column;gap:4px}}
 `;
 }
-
 function renderPanel(route, lang) {
-  const copy = copyFor(lang);
-  const snapshot = buildRouteSnapshot(route);
-  const localizedOrigin = localizeCity(route.origin_city, route.origin_iata, lang);
-  const localizedDestination = localizeCity(route.destination_city, route.destination_iata, lang);
-  const pair = `${route.origin_iata}-${route.destination_iata}`;
-  const dir = lang === 'ar' ? 'rtl' : 'ltr';
-  const today = new Date().toISOString().slice(0, 10);
-
-  const enrichedRoute = Object.assign({}, route, { _lang: lang });
-  return `<div class="route-search-panel" dir="${dir}">
-  <div class="route-search-heading">
-    <div><div class="route-search-title">${escHtml(copy.title)}</div><div class="route-search-subtitle">${escHtml(copy.subtitle)}</div></div>
-    <span class="route-search-badge">✓ ${escHtml(copy.from)} ${escHtml(route.origin_iata)} · ${escHtml(route.destination_iata)}</span>
-  </div>
-  <form class="route-search-form" method="get" action="/search/${encodeURIComponent(pair)}">
-    <div class="route-search-field">
-      <label>${escHtml(copy.from)}</label>
-      <div class="route-search-input route-search-route" aria-label="${escHtml(copy.from)}: ${escHtml(localizedOrigin)} (${escHtml(route.origin_iata)})">
-        <span class="route-search-route-code">${escHtml(route.origin_iata)}</span>
-        <span class="route-search-route-city">${escHtml(localizedOrigin)}</span>
-      </div>
-    </div>
-    <div class="route-search-field">
-      <label>${escHtml(copy.to)}</label>
-      <div class="route-search-input route-search-route" aria-label="${escHtml(copy.to)}: ${escHtml(localizedDestination)} (${escHtml(route.destination_iata)})">
-        <span class="route-search-route-code">${escHtml(route.destination_iata)}</span>
-        <span class="route-search-route-city">${escHtml(localizedDestination)}</span>
-      </div>
-    </div>
-    <div class="route-search-field">
-      <label for="route-search-depart">${escHtml(copy.date)}</label>
-      <input class="route-search-input" id="route-search-depart" name="depart" type="date" min="${today}" aria-label="${escHtml(copy.date)}">
-    </div>
-    <button class="route-search-submit" type="submit">${escHtml(copy.submit)}</button>
-  </form>
-  ${statsHtml(enrichedRoute, snapshot, copy)}
-  ${snapshotHtml(enrichedRoute, snapshot, copy, lang)}
-  <div class="route-search-foot">
-    <div class="route-search-hint">${escHtml(copy.choose)}</div>
-    <div class="route-search-note">${escHtml(copy.fareNote)}</div>
-  </div>
-</div>`;
+  const copy = copyFor(lang); const snapshot = buildRouteSnapshot(route); const origin = localizeCity(route.origin_city, route.origin_iata, lang); const destination = localizeCity(route.destination_city, route.destination_iata, lang); const pair = `${route.origin_iata}-${route.destination_iata}`; const dir = lang === 'ar' ? 'rtl' : 'ltr'; const today = new Date().toISOString().slice(0, 10); const id = `route-search-${String(pair).toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+  const config = JSON.stringify({ pair, from: route.origin_iata, to: route.destination_iata, fromCity: origin, toCity: destination, lang }).replace(/</g, '\\u003c');
+  return `<div class="route-search-panel" id="${escHtml(id)}" dir="${dir}"><div class="route-search-inner">
+    <div class="route-search-top"><span class="route-search-kicker">✈ ${escHtml(copy.exact)} · ${escHtml(route.origin_iata)} → ${escHtml(route.destination_iata)}</span><h2 class="route-search-title">${escHtml(copy.title)}</h2><p class="route-search-subtitle">${escHtml(copy.subtitle)}</p></div>
+    <form class="route-search-form" data-route-search data-config='${escHtml(config)}' action="/search/${encodeURIComponent(pair)}" method="get" novalidate>
+      <div class="route-search-field"><label class="route-search-label" for="route-search-from">${escHtml(copy.from)}</label><input id="route-search-from" class="route-search-input" name="from_city" type="text" value="${escHtml(origin)}" placeholder="${escHtml(copy.selectAirport)}" autocomplete="off" data-route-side="from" data-route-code="${escHtml(route.origin_iata)}" required><div class="route-search-ac" data-route-ac="from" role="listbox"></div></div>
+      <button type="button" class="route-search-swap" data-route-action="swap" aria-label="${escHtml(copy.swap)}" title="${escHtml(copy.swap)}">⇄</button>
+      <div class="route-search-field"><label class="route-search-label" for="route-search-to">${escHtml(copy.to)}</label><input id="route-search-to" class="route-search-input" name="to_city" type="text" value="${escHtml(destination)}" placeholder="${escHtml(copy.selectAirport)}" autocomplete="off" data-route-side="to" data-route-code="${escHtml(route.destination_iata)}" required><div class="route-search-ac" data-route-ac="to" role="listbox"></div></div>
+      <div class="route-search-dates"><div class="route-search-field route-search-date"><label class="route-search-label" for="route-search-depart">${escHtml(copy.depart)}</label><input id="route-search-depart" name="depart" type="date" min="${today}" required></div><div class="route-search-field route-search-date" data-route-return-wrap><label class="route-search-label" for="route-search-return">${escHtml(copy.ret)}</label><input id="route-search-return" name="ret" type="date" min="${today}"></div></div>
+      <div class="route-search-options"><select class="route-search-select" name="trip" data-route-trip aria-label="${escHtml(copy.trip)}"><option value="rr">${escHtml(copy.round)}</option><option value="ow">${escHtml(copy.oneWay)}</option></select><div class="route-search-pax"><button type="button" class="route-search-pax-btn" data-route-action="pax" aria-expanded="false">1 ${escHtml(copy.adults)}</button><div class="route-search-pax-menu" data-route-pax-menu>${paxRow('adult', copy.adults, copy.adult, 1)}${paxRow('child', copy.children, copy.child, 0)}${paxRow('infant', copy.infants, copy.infant, 0)}<div style="border-top:1px solid #e5eaee;margin-top:5px;padding-top:10px"><label class="route-search-label" style="padding:0">${escHtml(copy.cabin)}</label><select class="route-search-select" style="width:100%" name="cabin" data-route-cabin><option value="economy">${escHtml(copy.economy)}</option><option value="business">${escHtml(copy.business)}</option></select></div></div></div><label class="route-search-option"><input type="checkbox" name="bags" value="1"> ${escHtml(copy.bags)}</label><label class="route-search-option"><input type="checkbox" name="direct" value="1"> ${escHtml(copy.direct)}</label></div>
+      <div class="route-search-error" data-route-error></div>
+      <button class="route-search-submit" type="submit">${escHtml(copy.search)} →</button>
+    </form>
+    ${statsHtml(route, snapshot, copy, lang)}
+    ${snapshotHtml(route, snapshot, copy, lang)}
+    <div class="route-search-foot"><span>${escHtml(copy.choose)}</span><span>${escHtml(copy.fareNote)}</span></div>
+  </div></div><script src="/route-search-ui.js" defer></script>`;
 }
-
+function paxRow(key, title, sub, count) {
+  return `<div class="route-search-pax-row" data-route-pax-row="${key}"><div><strong>${escHtml(title)}</strong><span>${escHtml(sub)}</span></div><div class="route-search-counter"><button type="button" data-route-pax="${key}" data-route-delta="-1" aria-label="-">−</button><b data-route-pax-count="${key}">${count}</b><button type="button" data-route-pax="${key}" data-route-delta="1" aria-label="+">+</button></div></div>`;
+}
 function renderRouteSearchPanelHtml(source, route, lang) {
   if (!source || !route || !source.includes('route-price-box') || !source.includes('id="route-price-box"')) return source;
-  const panel = renderPanel(route, lang);
-  const styleTag = `<style id="route-search-panel-styles">${styles()}</style>`;
-  const withStyles = source.includes('</head>') ? source.replace('</head>', `${styleTag}</head>`) : source;
-  const marker = '<div class="route-price-box" id="route-price-box">';
+  const panel = renderPanel(route, lang); const styleTag = `<style id="route-search-panel-styles">${styles()}</style>`; const withStyles = source.includes('</head>') ? source.replace('</head>', `${styleTag}</head>`) : source; const marker = '<div class="route-price-box" id="route-price-box">';
   if (!withStyles.includes(marker)) return source;
-  return withStyles.replace(marker, `${panel}${marker}`);
+  return withStyles.replace(marker, `${panel}`).replace(/<div class="route-price-box" id="route-price-box">[\\s\\S]*?<\\/div>/, '');
 }
-
 module.exports = { renderRouteSearchPanelHtml, renderPanel, styles };
