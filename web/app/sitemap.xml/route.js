@@ -6,16 +6,19 @@
 import { buildSitemapIndex } from '@/lib/sitemap-urls';
 
 const ROUTE_SITEMAP_URL = 'https://airpiv.com/sitemap-routes.xml';
+const AUTHORITY_SITEMAP_URL = 'https://airpiv.com/sitemap-authority.xml';
 
 export const revalidate = 3600;
 
 export async function GET() {
   let xml = await buildSitemapIndex();
-  if (!xml.includes(`<loc>${ROUTE_SITEMAP_URL}</loc>`)) {
-    xml = xml.replace(
-      '</sitemapindex>',
-      `  <sitemap><loc>${ROUTE_SITEMAP_URL}</loc></sitemap>\n</sitemapindex>`,
-    );
+  for (const sitemapUrl of [ROUTE_SITEMAP_URL, AUTHORITY_SITEMAP_URL]) {
+    if (!xml.includes(`<loc>${sitemapUrl}</loc>`)) {
+      xml = xml.replace(
+        '</sitemapindex>',
+        `  <sitemap><loc>${sitemapUrl}</loc></sitemap>\n</sitemapindex>`,
+      );
+    }
   }
 
   return new Response(xml, {
