@@ -68,9 +68,20 @@ For every verified placement, record:
 
 ## Current campaign baseline
 
-The current GSC route-opportunity snapshot is based on 2026-08-18 through 2026-09-14 data. It is the baseline for later measurement; it must not be treated as proof that an external link caused a ranking change.
+The refreshed GSC baseline uses Search Console web data for 2026-08-20 through 2026-09-15; data is settled through 2026-09-15. This baseline is for later measurement and must not be treated as proof that an external link caused a ranking change.
 
-Priority route examples from the current snapshot include `/en/flights/lgw-pmi`, `/flights/stuttgart-malaga`, `/flights/frankfurt-ibiza`, `/flights/ibiza-duesseldorf`, `/flights/duesseldorf-barcelona`, and `/flights/zrh-pmi`. New route targets should be added only from a refreshed GSC export or another documented evidence source.
+Current route opportunities in the baseline include:
+
+| Airpiv page | Impressions | Clicks | Avg. position |
+|---|---:|---:|---:|
+| `/en/flights/lgw-pmi` | 50 | 0 | 66.68 |
+| `/flights/stuttgart-malaga` | 45 | 0 | 70.27 |
+| `/flights/frankfurt-ibiza` | 46 | 0 | 74.85 |
+| `/flights/ibiza-duesseldorf` | 34 | 0 | 73.24 |
+| `/flights/duesseldorf-barcelona` | 28 | 0 | 75.75 |
+| `/flights/zrh-pmi` | 1 | 0 | 60.00 |
+
+New route targets should be added only from a refreshed GSC export or another documented evidence source. The six rows above are a measurement baseline, not a claim that every route needs an external link.
 
 ## Campaign completion gate
 
