@@ -76,7 +76,7 @@ test('renderer sets noindex on a broken route, indexes a healthy evidence-backed
   const links = { fromOrigin: [], toDestination: [] };
   const broken = renderFlightRoutePage(R({ origin_iata: 'AMS', destination_iata: 'AMS', distance_km: 1000 }), 'de', [], links, []);
   assert.match(broken.html, /<meta name="robots" content="noindex, follow">/);
-  const healthy = renderFlightRoutePage(R({ distance_km: 1297, avg_duration_min: 170 }), 'de', [], links, []);
+  const healthy = renderFlightRoutePage(R({ slug: 'lgw-pmi', distance_km: 1297, avg_duration_min: 170 }), 'de', [], links, []);
   assert.match(healthy.html, /<meta name="robots" content="index, follow">/);
 });
 
