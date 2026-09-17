@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, deriveStops, deriveAirlineCount } = require('../lib/legacy-render/route-snapshot.js');
+const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, deriveStops, deriveAirlineCount, invalidateStaleGeneratedSeo } = require('../lib/legacy-render/route-snapshot.js');
 const { renderFlightRoutePage } = require('../lib/legacy-render/render-flight-route.js');
 const { setGeoData } = require('../lib/legacy-render/data.js');
 setGeoData([], []);
@@ -104,4 +104,41 @@ test('priceIsFresh always carries a checkedAt (no stale-as-live)', () => {
   const s = buildRouteSnapshot(fresh);
   assert.equal(s.priceIsFresh, true);
   assert.ok(!validateSnapshot(fresh, s).some((e) => e.startsWith('stale-as-live')));
+});
+
+test('stale generated route copy is discarded when operational data is refreshed later', () => {
+  const input = R({
+    insights_updated_at: '2026-09-17T16:58:20.613Z',
+    price_updated_at: '2026-09-17T17:21:09.278Z',
+    seo_generated_at: '2026-09-17T12:46:58.163Z',
+    seo_intro_html: '<p>stale generated copy</p>',
+    seo_faq: [{ question: 'price', answer: '30–49 EUR' }],
+  });
+
+  buildRouteSnapshot(input, Date.parse('2026-09-17T17:27:00Z'));
+
+  assert.equal(input.seo_intro_html, null);
+  assert.equal(input.seo_faq, null);
+});
+
+test('fresh generated route copy is preserved', () => {
+  const input = R({
+    seo_generated_at: '2026-09-17T17:22:00.000Z',
+  });
+
+  const invalidated = invalidateStaleGeneratedSeo(input);
+
+  assert.equal(invalidated, false);
+  assert.equal(input.seo_intro_html, '<p>stale generated copy</p>');
+  assert.deepEqual(input.seo_faq, [{ question: 'price', answer: '30–49 EUR' }]);
+});
+
+test('generated route copy fails closed when generation timestamp is missing', () => {
+  const input = R({ seo_generated_at: null });
+
+  const invalidated = invalidateStaleGeneratedSeo(input);
+
+  assert.equal(invalidated, true);
+  assert.equal(input.seo_intro_html, null);
+  assert.equal(input.seo_faq, null);
 });
