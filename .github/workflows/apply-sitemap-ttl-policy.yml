@@ -1,0 +1,53 @@
+name: Align sitemap ISR policy constant
+
+on:
+  push:
+    branches:
+      - fix/seo-hub-evidence-cache-parity
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Align central sitemap ISR constant with dynamic route
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('web/lib/legacy-render/ttl.js')
+          text = path.read_text(encoding='utf-8')
+          old_comment = "// Actual production sitemap windows: the index is hourly, while the\n// route-type child sitemap and overflow shards are refreshed every 15 minutes."
+          new_comment = "// Next ISR windows: the sitemap index is intentionally force-dynamic (0s) so\n// backend throttling cannot poison a prerendered index; its HTTP response still\n// advertises a 1-hour cache window. Route children/shards revalidate every 15m."
+          old_const = "const SITEMAP_REVALIDATE_S = HOUR / 1000;"
+          new_const = "const SITEMAP_REVALIDATE_S = 0;"
+          assert text.count(old_comment) == 1
+          assert text.count(old_const) == 1
+          text = text.replace(old_comment, new_comment, 1)
+          text = text.replace(old_const, new_const, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify only policy lines changed
+        shell: bash
+        run: |
+          git diff --check
+          git diff --unified=0 -- web/lib/legacy-render/ttl.js
+          test "$(git diff --numstat -- web/lib/legacy-render/ttl.js | awk '{print $1}')" = "2"
+          test "$(git diff --numstat -- web/lib/legacy-render/ttl.js | awk '{print $2}')" = "2"
+
+      - name: Commit policy fix and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/lib/legacy-render/ttl.js
+          git rm .github/workflows/apply-sitemap-ttl-policy.yml
+          git commit -m "fix(seo): align sitemap ISR policy with dynamic index"
+          git push origin HEAD:fix/seo-hub-evidence-cache-parity
