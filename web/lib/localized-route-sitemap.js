@@ -9,6 +9,7 @@ const FEED_VERSION = '2';
 // Backend pagination is intentionally bounded to keep sitemap builds reliable.
 async function fetchPage(lang, page) {
   const url = `${SITEMAP_API_BASE}/sitemap-data/routes-localized?lang=${encodeURIComponent(lang)}&page=${page}&v=${FEED_VERSION}`;
+  console.log(`[localized-route-sitemap] fetch ${lang} page=${page}`);
   const res = await fetch(url, { next: { revalidate: REVALIDATE } });
   if (!res.ok) throw new Error(`HTTP ${res.status} for localized route sitemap ${lang} page ${page}`);
   return res.json();
@@ -23,7 +24,11 @@ export async function listLocalizedRouteSitemap(lang) {
       items.push(...rows);
       if (!data?.hasMore || rows.length === 0) break;
     }
-  } catch {
+  } catch (error) {
+    console.error('[localized-route-sitemap] fail-closed', {
+      lang,
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Discovery must fail closed: a backend outage must never make the entire
     // sitemap build fail, and must never cause fabricated localized URLs.
     return [];
