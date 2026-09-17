@@ -3,6 +3,8 @@
 const URLS = [
   'https://airpiv.com/research/flight-data',
   'https://airpiv.com/en/research/flight-data',
+  'https://airpiv.com/research/route-network',
+  'https://airpiv.com/en/research/route-network',
 ];
 
 export const revalidate = 3600;
