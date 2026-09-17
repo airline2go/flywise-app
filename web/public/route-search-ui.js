@@ -94,11 +94,17 @@
     f.querySelectorAll('input[type="checkbox"]:checked').forEach(function (x) { if (x.name) p.set(x.name, '1'); });
     window.location.href = '/search/' + encodeURIComponent(fc) + '-' + encodeURIComponent(tc) + '?' + p.toString();
   }
+  function localDateString(date) {
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, '0');
+    var d = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
   function init() {
     if (ready) return; ready = true; injectLegacyPriceGuard();
     var f = form(); if (!f) return; var c = cfg(f); var from = input('from'), to = input('to');
     if (from) from.setAttribute('data-route-code', c.from || ''); if (to) to.setAttribute('data-route-code', c.to || '');
-    var dep = f.querySelector('[name="depart"]'), ret = f.querySelector('[name="ret"]'), today = new Date().toISOString().slice(0, 10);
+    var dep = f.querySelector('[name="depart"]'), ret = f.querySelector('[name="ret"]'), today = localDateString(new Date());
     if (dep) dep.min = today; if (ret) ret.min = today;
     f.addEventListener('submit', submit);
     f.addEventListener('input', function (ev) { var el = ev.target; if (el && el.getAttribute('data-route-side')) { clearRouteCodeWhileTyping(el); searchAirports(el.getAttribute('data-route-side'), el.value.trim()); } });
