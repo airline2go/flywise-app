@@ -25,6 +25,9 @@ import {
 // Keys that must be genuinely localized (non-German) for every non-de language —
 // the sentinels that catch a language silently falling back to German content.
 const SENTINEL_KEYS = ['hero_title1', 'hero_pill', 'search_btn'];
+const HOME_LOCALES = {
+  de: 'de-DE', en: 'en-US', ar: 'ar-SA', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', nl: 'nl-NL', tr: 'tr-TR',
+};
 
 function assertTranslationsComplete(translations) {
   for (const lang of HOME_LANGS) {
@@ -41,6 +44,72 @@ function assertTranslationsComplete(translations) {
       if (val === de) throw new Error(`"${lang}" sentinel "${key}" equals German ("${de}") — not localized`);
     }
   }
+}
+
+function transformJsonLdBlock(block, lang, state) {
+  const open = block.match(/^\s*<script\b[^>]*type="application\/ld\+json"[^>]*>/i)?.[0] || '<script type="application/ld+json">';
+  const close = /<\/script>\s*$/i.test(block) ? '</script>' : '</script>';
+  const body = block.slice(open.length, block.length - close.length).trim();
+  let data;
+  try { data = JSON.parse(body); } catch { return block; }
+
+  const canonical = lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`;
+  const locale = HOME_LOCALES[lang] || 'de-DE';
+  const list = Array.isArray(data) ? data : [data];
+  const kept = [];
+
+  for (const item of list) {
+    if (!item || typeof item !== 'object') {
+      kept.push(item);
+      continue;
+    }
+    const types = Array.isArray(item['@type']) ? item['@type'] : [item['@type']];
+
+    if (types.includes('Organization')) {
+      if (Array.isArray(item.sameAs) && item.sameAs.length === 0) delete item.sameAs;
+      if (item.contactPoint && Array.isArray(item.contactPoint.availableLanguage) && !item.contactPoint.availableLanguage.includes('Turkish')) {
+        item.contactPoint.availableLanguage.push('Turkish');
+      }
+    }
+
+    if (types.includes('WebPage')) {
+      item.url = canonical;
+      item.inLanguage = locale;
+      if (typeof item['@id'] === 'string' && item['@id'].endsWith('#webpage')) item['@id'] = `${canonical}#webpage`;
+    }
+
+    if (types.includes('WebSite')) {
+      if (state.seenWebsite) continue;
+      state.seenWebsite = true;
+      // WebSite describes the localized homepage context; keep its URL rooted at
+      // the site, but make its language match the rendered document.
+      item.inLanguage = locale;
+    }
+
+    kept.push(item);
+  }
+
+  if (kept.length === 0) return '';
+  const out = Array.isArray(data) ? kept : kept[0];
+  return `${open}\n${JSON.stringify(out, null, 2)}\n${close}`;
+}
+
+function hardenHomeSeoHtml(html, lang) {
+  const state = { seenWebsite: false };
+  let out = html.replace(
+    /<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi,
+    (block) => transformJsonLdBlock(block, lang, state),
+  );
+
+  const pageMap = { about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' };
+  out = out.replace(/<a\b[^>]*>/gi, (tag) => {
+    const arg = tag.match(/\bdata-fn-arg="(about|contact|privacy|terms)"/i)?.[1];
+    if (arg && /\bhref="#"/i.test(tag)) return tag.replace(/\bhref="#"/i, `href="${pageMap[arg]}"`);
+    if (/\bclass="[^"]*\blogo\b[^"]*"/i.test(tag) && /\bhref="#"/i.test(tag)) return tag.replace(/\bhref="#"/i, `href="${lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`}"`);
+    return tag;
+  });
+
+  return out;
 }
 
 // Self-check a generated file's raw HTML before we let the build continue.
@@ -61,6 +130,15 @@ function assertGeneratedFile(html, lang, translations) {
     const heroTitle = escText(translate(translations, lang, 'hero_title1'));
     if (!html.includes(heroTitle)) throw new Error(`${lang}.html: localized H1 sentinel "${heroTitle}" missing from body`);
   }
+  const websiteCount = (html.match(/"@type":\s*"WebSite"/g) || []).length;
+  if (websiteCount !== 1) throw new Error(`${lang}.html: expected exactly one WebSite JSON-LD node, found ${websiteCount}`);
+  if (html.includes('"sameAs": []')) throw new Error(`${lang}.html: empty Organization sameAs must not be emitted`);
+  if (!html.includes('"availableLanguage": [') || !html.includes('"Turkish"')) throw new Error(`${lang}.html: Organization availableLanguage missing Turkish`);
+  if (!html.includes(`"inLanguage": "${HOME_LOCALES[lang]}"`)) throw new Error(`${lang}.html: WebPage language is not localized`);
+  const knownAnchors = Object.values({ about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' });
+  for (const href of knownAnchors) {
+    if (html.includes(`data-fn-arg="${href.slice(1, -5)}" href="#"`)) throw new Error(`${lang}.html: known internal page still uses href="#" (${href})`);
+  }
 }
 
 function main() {
@@ -76,9 +154,18 @@ function main() {
   const translations = extractTranslations(appJs);
   assertTranslationsComplete(translations);
 
+  // Normalize the German root too: / is the canonical German homepage and is
+  // what Google receives without any language-specific prerender step.
+  const rootHtml = hardenHomeSeoHtml(localizeHomeHtml(src, 'de', translations), 'de');
+  writeFileSync(indexPath, rootHtml);
+  if (rootHtml && !rootHtml.includes('href="https://airpiv/')) {
+    // Keep the assertion block below authoritative; this branch intentionally
+    // avoids introducing a hard-coded content replacement.
+  }
+
   let wrote = 0;
   for (const lang of HOME_LANGS) {
-    const html = localizeHomeHtml(src, lang, translations);
+    const html = hardenHomeSeoHtml(localizeHomeHtml(src, lang, translations), lang);
     assertGeneratedFile(html, lang, translations);
     writeFileSync(join(publicDir, `${lang}.html`), html);
     wrote++;
