@@ -18,7 +18,12 @@ import { withRouteLocale } from '@/lib/route-locale-context';
 // remain a cached 404 for more than 15 minutes. Admin publishes still
 // revalidate immediately through /api/revalidate.
 export const revalidate = 900;
-export const dynamic = 'force-static';
+// Let Next/Vercel apply the ISR policy from the route's revalidate setting and
+// its cacheable fetches. Forcing `force-static` caused this dynamic slug handler
+// to remain a static route output across deployments, which could preserve an
+// older HTML shell even after code changes. `auto` keeps cached data while
+// allowing the handler to execute when an ISR entry is regenerated.
+export const dynamic = 'auto';
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
@@ -28,15 +33,9 @@ export async function GET(_req, { params }) {
   const { lang, slug } = await params;
   if (!isPrefixedLang(lang)) return htmlResponse(null);
 
-  // Safe alias normalization runs before canonical consolidation. It only
-  // redirects to an existing published route and never guesses between
-  // multiple airport variants. This preserves link equity without creating
-  // redirect chains or 301 -> 404 targets.
   const alias = await resolveRouteSlugAlias(slug);
   if (alias) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(alias)}`), 301);
 
-  // Canonical/persistent redirects remain the authoritative SEO consolidation
-  // layer after alias normalization.
   const redirect = await resolveFlightRedirect(slug);
   if (redirect) return redirectResponse(pathFor(lang, `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
 
@@ -46,16 +45,11 @@ export async function GET(_req, { params }) {
     const route = await getRouteSearchData(slug) || await getRoutePage(slug);
     const rendered = route ? renderRouteSearchPanelHtml(withPrice, route, lang) : withPrice;
     try {
-      // A noindex route must not advertise reciprocal language alternates.
-      // Detect the final SSR robots verdict rather than re-implementing the
-      // backend indexability policy in this handler.
       const robotsTag = rendered.match(/<meta\b[^>]*\bname=["']robots["'][^>]*>/i)?.[0] || '';
       const noindex = /\bnoindex\b/i.test(robotsTag);
       const available = noindex ? new Set() : await getAvailableRouteHreflang(slug);
       return htmlResponse(stripUnavailableRouteHreflang(rendered, available));
     } catch {
-      // Hreflang filtering is a safety layer. A temporary availability-endpoint
-      // failure must never turn an otherwise healthy route page into a 5xx.
       return htmlResponse(rendered);
     }
   });
