@@ -9,7 +9,12 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 
 const require = createRequire(import.meta.url);
-const { getRouteIndexabilityDecision, hasVerifiedFlightEvidence } = require('../lib/legacy-render/route-evidence.js');
+const {
+  getRouteIndexabilityDecision,
+  hasVerifiedFlightEvidence,
+  isRouteSitemapEligible,
+  SEO_ROUTE_SITEMAP_PAGE_SIZE,
+} = require('../lib/legacy-render/route-evidence.js');
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/route-evidence-cases.json', import.meta.url)));
 
 test('distance_km alone and airline_count alone are NEVER evidence', () => {
@@ -35,6 +40,14 @@ test('evidence policy is fail-closed when the environment flag is unset', () => 
     if (old == null) delete process.env.SEO_EVIDENCE_POLICY_ENFORCED;
     else process.env.SEO_EVIDENCE_POLICY_ENFORCED = old;
   }
+});
+
+test('route sitemap policy is locked to the active 50-route core', () => {
+  assert.equal(SEO_ROUTE_SITEMAP_PAGE_SIZE, 50);
+  assert.equal(isRouteSitemapEligible({ slug: 'lgw-pmi', indexable: true }), true);
+  assert.equal(isRouteSitemapEligible({ slug: 'london-amsterdam', indexable: true }), true);
+  assert.equal(isRouteSitemapEligible({ slug: 'lgw-ams', indexable: true }), false);
+  assert.equal(isRouteSitemapEligible({ slug: 'lgw-pmi', indexable: false }), false);
 });
 
 for (const c of fixture.cases) {
