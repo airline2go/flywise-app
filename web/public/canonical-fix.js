@@ -32,6 +32,70 @@
   function setNamed(name, value) { var el = document.querySelector('meta[name="' + name + '"]'); if (el) el.setAttribute('content', value); }
   function setProp(prop, value) { var el = document.querySelector('meta[property="' + prop + '"]'); if (el) el.setAttribute('content', value); }
 
+  /* [SEO-HARDENING] Keep rendered JSON-LD consistent with the localized page.
+     The localized home files are already built with localized title/description,
+     but the shared source contains a legacy duplicate WebSite node and an
+     Organization language list that predates Turkish. Normalize these nodes at
+     render time without inventing new claims. */
+  function hardenStructuredData() {
+    var locale = ({ de:'de-DE', en:'en-US', ar:'ar-SA', es:'es-ES', fr:'fr-FR', it:'it-IT', nl:'nl-NL', tr:'tr-TR' })[lang] || 'de-DE';
+    var scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    var seenWebsite = false;
+    for (var i = 0; i < scripts.length; i++) {
+      var node = scripts[i];
+      var raw = node.textContent || '';
+      var data;
+      try { data = JSON.parse(raw); } catch (e) { continue; }
+      var list = Array.isArray(data) ? data : [data];
+      var kept = [];
+      for (var j = 0; j < list.length; j++) {
+        var item = list[j];
+        if (!item || typeof item !== 'object') { kept.push(item); continue; }
+        var types = Array.isArray(item['@type']) ? item['@type'] : [item['@type']];
+        if (types.indexOf('Organization') !== -1) {
+          if (Array.isArray(item.sameAs) && item.sameAs.length === 0) delete item.sameAs;
+          if (Array.isArray(item.availableLanguage) && item.availableLanguage.indexOf('Turkish') === -1) item.availableLanguage.push('Turkish');
+        }
+        if (types.indexOf('WebPage') !== -1) {
+          item.url = canonical;
+          item['inLanguage'] = locale;
+          if (item['@id'] && /#webpage$/i.test(item['@id'])) item['@id'] = canonical + '#webpage';
+        }
+        if (types.indexOf('WebSite') !== -1) {
+          if (seenWebsite) continue;
+          seenWebsite = true;
+          item['inLanguage'] = locale;
+        }
+        kept.push(item);
+      }
+      if (!Array.isArray(data) && kept.length === 0) {
+        node.remove();
+      } else {
+        var out = Array.isArray(data) ? kept : kept[0];
+        node.textContent = JSON.stringify(out);
+      }
+    }
+  }
+
+  /* [SEO-INTERNAL-LINKS] Convert known JS-only informational links into real
+     crawlable URLs. The corresponding pages are live and indexable (or
+     intentionally noindex for legal pages), so this improves discoverability
+     without fabricating destinations. */
+  function hardenInternalLinks() {
+    var pageMap = { about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' };
+    var links = document.querySelectorAll('a[data-fn="openPg"][data-fn-arg]');
+    for (var i = 0; i < links.length; i++) {
+      var el = links[i];
+      var target = pageMap[el.getAttribute('data-fn-arg') || ''];
+      if (target) el.setAttribute('href', target);
+    }
+    var logo = document.querySelector('a.logo');
+    if (logo && logo.getAttribute('href') === '#') logo.setAttribute('href', canonical);
+  }
+
+  hardenStructuredData();
+  hardenInternalLinks();
+
   /* Airline logos are rendered by the shared flight UI as lazy images pointing
      at Duffel's hosted SVGs. The document CSP intentionally allows only
      same-origin images, so proxy these logo requests through Next.js before the
