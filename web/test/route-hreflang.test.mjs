@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { renderFlightRoutePage } = require('../lib/legacy-render/render-flight-route.js');
 const { setGeoData } = require('../lib/legacy-render/data.js');
+const { stripUnavailableRouteHreflang } = await import('../lib/route-hreflang.js');
 setGeoData([], []);
 
 const SITE = 'https://airpiv.com';
@@ -46,3 +47,19 @@ for (const lang of LANGS) {
     assert.equal(canonicalOf(html), urlFor(lang, R.slug), `${lang} page: self canonical`);
   });
 }
+
+test('explicit backend noindex remains noindex even with manual editorial content', () => {
+  const route = { ...R, indexable: false, intro_text: 'Editorial guide.' };
+  const { html } = renderFlightRoutePage(route, 'en', [], links, []);
+  const robots = (html.match(/<meta name="robots" content="([^"]+)"/) || [])[1];
+  assert.equal(robots, 'noindex, follow');
+});
+
+test('empty hreflang allow-list strips every alternate link from a noindex page', () => {
+  const html = '<link rel="alternate" hreflang="en" href="https://airpiv.com/en/flights/ams-fra">\n'
+    + '<link rel="alternate" hreflang="x-default" href="https://airpiv.com/flights/ams-fra">\n'
+    + '<link rel="canonical" href="https://airpiv.com/en/flights/ams-fra">';
+  const stripped = stripUnavailableRouteHreflang(html, new Set());
+  assert.doesNotMatch(stripped, /rel="alternate"/);
+  assert.match(stripped, /rel="canonical"/);
+});
