@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isRouteSitemapEligible, ROUTES_PER_PAGE } from '../lib/legacy-render/route-sitemap.js';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { isRouteSitemapEligible } = require('../lib/legacy-render/route-evidence.js');
+const { ROUTES_PER_PAGE } = require('../lib/legacy-render/render-route-sitemap.js');
 
 test('route sitemap page size matches the active 50-route recovery core', () => {
   assert.equal(ROUTES_PER_PAGE, 50);
