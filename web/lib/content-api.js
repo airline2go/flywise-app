@@ -206,22 +206,22 @@ async function fetchDetailOrNull(path, options = {}) {
 }
 
 async function getCity(slug) {
-  const data = await fetchDetailOrNull(`/cities/${encodeURIComponent(slug)}`);
+  const data = await fetchDetailOrNull(`/cities/${encodeURIComponent(slug)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   return data && data.city ? { city: data.city, routes: data.routes || [] } : null;
 }
 
 async function getCountry(code) {
-  const data = await fetchDetailOrNull(`/countries/${encodeURIComponent(code)}`);
+  const data = await fetchDetailOrNull(`/countries/${encodeURIComponent(code)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   return data && data.country ? { country: data.country, routes: data.routes || [] } : null;
 }
 
 async function getAirport(code) {
-  const data = await fetchDetailOrNull(`/airports/${encodeURIComponent(code)}`);
+  const data = await fetchDetailOrNull(`/airports/${encodeURIComponent(code)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   return data && data.airport ? { airport: data.airport, routes: data.routes || [] } : null;
 }
 
 async function getAirline(code) {
-  const data = await fetchDetailOrNull(`/airlines/${encodeURIComponent(code)}`);
+  const data = await fetchDetailOrNull(`/airlines/${encodeURIComponent(code)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   return data && data.airline ? { airline: data.airline, routes: data.routes || [], mostUsedRoutes: data.mostUsedRoutes || [] } : null;
 }
 
