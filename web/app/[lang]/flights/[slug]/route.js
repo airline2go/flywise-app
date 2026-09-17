@@ -5,6 +5,7 @@
 import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
 import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-enhance';
 import { renderRouteSearchPanelHtml } from '@/lib/legacy-render/route-search-panel';
+import { getRoutePage } from '@/lib/content-api';
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, isPrefixedLang, redirectResponse } from '@/lib/legacy-render/serve';
 import { getAvailableRouteHreflang, stripUnavailableRouteHreflang } from '@/lib/route-hreflang';
@@ -41,10 +42,7 @@ export async function GET(_req, { params }) {
   return withRouteLocale(lang, async () => {
     const html = await renderFlightRouteHtml(slug, lang);
     const withPrice = await renderCanonicalRoutePriceHtml(html, slug, lang);
-    const route = await (async () => {
-      const mod = await import('@/lib/content-api');
-      return mod.getRoutePage(slug);
-    })();
+    const route = await getRoutePage(slug);
     const rendered = route ? renderRouteSearchPanelHtml(withPrice, route, lang) : withPrice;
     try {
       // A noindex route must not advertise reciprocal language alternates.
