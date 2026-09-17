@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
 test('localized route sitemap uses the dedicated backend origin by default', async () => {
   const previousBase = process.env.SITEMAP_API_BASE;
@@ -50,7 +51,7 @@ test('localized route sitemap sends bounded core slugs to the backend', async ()
       ok: true,
       page: 0,
       hasMore: false,
-      language: 'de',
+      language: 'en',
       items: [{ id: 'alicante-barcelona', language: 'en', lastmod: '2026-09-17' }],
     }), {
       status: 200,
