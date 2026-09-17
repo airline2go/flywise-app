@@ -41,7 +41,12 @@ export async function GET(_req, { params }) {
     const html = await renderFlightRouteHtml(slug, lang);
     const rendered = await renderCanonicalRoutePriceHtml(html, slug, lang);
     try {
-      const available = await getAvailableRouteHreflang(slug);
+      // A noindex route must not advertise reciprocal language alternates.
+      // Detect the final SSR robots verdict rather than re-implementing the
+      // backend indexability policy in this handler.
+      const robotsTag = rendered.match(/<meta\b[^>]*\bname=["']robots["'][^>]*>/i)?.[0] || '';
+      const noindex = /\bnoindex\b/i.test(robotsTag);
+      const available = noindex ? new Set() : await getAvailableRouteHreflang(slug);
       return htmlResponse(stripUnavailableRouteHreflang(rendered, available));
     } catch {
       // Hreflang filtering is a safety layer. A temporary availability-endpoint
