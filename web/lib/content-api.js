@@ -86,12 +86,17 @@ async function listAirlines() {
 // says hasMore is false — exactly like fetchAllSitemapData — to get the COMPLETE
 // set. Wrapped in cache() so the many renders in one request share one walk.
 //
+// [ROUTE-CATALOGUE-FRESHNESS] This catalogue feeds canonical maps, related-route
+// links and city-link candidates. Keep its fetch cache aligned with the 15-minute
+// route-detail cache; otherwise a deleted/unpublished slug can remain in internal
+// links for up to a day even though its detail endpoint already returns 404.
+//
 // Backward-safe: an older backend that doesn't send `hasMore` returns undefined
 // → we stop after page 0 (the previous single-fetch behaviour), never looping.
 const listRoutePages = cache(async () => {
   const all = [];
   for (let page = 0; page < 10000; page++) {
-    const data = await fetchJSON(`/route-pages?page=${page}`);
+    const data = await fetchJSON(`/route-pages?page=${page}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
     const rows = (data && data.routes) || [];
     all.push(...rows);
     if (!data || !data.hasMore || rows.length === 0) break;
