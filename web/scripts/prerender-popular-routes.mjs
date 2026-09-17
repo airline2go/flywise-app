@@ -18,7 +18,6 @@ const PILL_STYLE =
 // validation below is mandatory: stale entries that are no longer indexable or
 // are redirect sources are dropped before anything is stamped into HTML.
 export const GSC_ROUTES = [
-  // Current high-impression opportunities.
   { slug: 'lgw-pmi', origin_city: 'London Gatwick', destination_city: 'Palma de Mallorca' },
   { slug: 'stuttgart-malaga', origin_city: 'Stuttgart', destination_city: 'Málaga' },
   { slug: 'frankfurt-ibiza', origin_city: 'Frankfurt', destination_city: 'Ibiza' },
@@ -44,15 +43,11 @@ export const GSC_ROUTES = [
   { slug: 'xfw-mad', origin_city: 'Hamburg', destination_city: 'Madrid' },
   { slug: 'zuerich-dublin', origin_city: 'Zürich', destination_city: 'Dublin' },
   { slug: 'paris-madrid', origin_city: 'Paris', destination_city: 'Madrid' },
-
-  // Previously validated high-value routes retained for breadth.
   { slug: 'hamburg-barcelona-2', origin_city: 'Hamburg', destination_city: 'Barcelona' },
   { slug: 'hannover-leipzig', origin_city: 'Hannover', destination_city: 'Leipzig' },
   { slug: 'hamburg-berlin', origin_city: 'Hamburg', destination_city: 'Berlin' },
   { slug: 'frankfurt-zuerich', origin_city: 'Frankfurt', destination_city: 'Zürich' },
   { slug: 'barcelona-amsterdam', origin_city: 'Barcelona', destination_city: 'Amsterdam' },
-
-  // Secondary breadth set.
   { slug: 'copenhagen-berlin', origin_city: 'Copenhagen', destination_city: 'Berlin' },
   { slug: 'berlin-copenhagen', origin_city: 'Berlin', destination_city: 'Copenhagen' },
   { slug: 'tenerife-berlin', origin_city: 'Tenerife', destination_city: 'Berlin' },
@@ -75,8 +70,6 @@ export const GSC_ROUTES = [
   { slug: 'alicante-fuerteventura', origin_city: 'Alicante', destination_city: 'Fuerteventura' },
 ];
 
-// [P1-8] Link only to published/indexable pages and never to persistent
-// redirect sources. A stale GSC snapshot must not create bad homepage links.
 export function filterValidRoutes(routes, validation) {
   const indexable = (validation && validation.indexableSlugs) || null;
   const redirects = (validation && validation.redirectSources) || new Set();
@@ -97,7 +90,7 @@ export function escHtml(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\"/g, '&quot;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
@@ -150,8 +143,6 @@ export function injectIntoHtml(html, routes = GSC_ROUTES) {
   return out;
 }
 
-// [P1-8] Build-time validation against production. If unavailable, fail closed
-// and let the client-side fallback remain responsible for the route list.
 async function fetchValidation() {
   const base = process.env.API_BASE || 'https://api.airpiv.com';
   try {
@@ -165,7 +156,6 @@ async function fetchValidation() {
       }
       if (!data || !data.hasMore) break;
     }
-
     const redirectSources = new Set();
     try {
       const rr = await fetch(`${base}/route-redirects`);
@@ -175,9 +165,7 @@ async function fetchValidation() {
           if (r && r.source_slug) redirectSources.add(r.source_slug);
         }
       }
-    } catch {
-      // Redirect feed is optional; the indexability check remains mandatory.
-    }
+    } catch {}
     return { indexableSlugs, redirectSources };
   } catch (e) {
     console.warn(`[prerender-popular-routes] validation fetch failed: ${e.message}`);
@@ -188,30 +176,25 @@ async function fetchValidation() {
 async function main() {
   const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
   const indexPath = join(publicDir, 'index.html');
-
   if (!existsSync(indexPath)) {
     console.warn('[prerender-popular-routes] public/index.html not found — skipping');
     return;
   }
-
   if (!GSC_ROUTES.length) {
     console.warn('[prerender-popular-routes] no routes configured — leaving client-side fallback in place');
     return;
   }
-
   const validation = await fetchValidation();
   if (!validation) {
     console.warn('[prerender-popular-routes] no validation data — leaving client-side fallback in place (no unvalidated links injected)');
     return;
   }
-
   const validRoutes = filterValidRoutes(GSC_ROUTES, validation);
   const dropped = GSC_ROUTES.length - validRoutes.length;
   if (!validRoutes.length) {
     console.warn('[prerender-popular-routes] no valid routes after validation — leaving client-side fallback in place');
     return;
   }
-
   const html = readFileSync(indexPath, 'utf8');
   const next = injectIntoHtml(html, validRoutes);
   writeFileSync(indexPath, next);
