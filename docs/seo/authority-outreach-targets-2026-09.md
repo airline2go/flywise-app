@@ -24,6 +24,14 @@ Earn editorial, research, data-citation, and resource links to Airpiv's public f
 | P2 | GENESIS monthly airport table | https://genesis.destatis.de/datenbank/online/statistic/46421/table/46421-0009/search/s/NDY0MjE%3D | Current 2026 airport movement table gives a precise data context for German airport pages. | Germany-connectivity asset |
 | P2 | DFS flight tracks / procedures | https://www.dfs.de/homepage/de/umwelt/fluglaerm/flugverlaeufe-und-flugverfahren/ | Relevant aviation-data audience; outreach should focus on useful data-methodology context, never request an endorsement. | Route-network asset |
 
+## Source evidence checked 18 September 2026
+
+- Statistikportal currently provides annual CSV standard datasets for German aviation statistics, including Flight-Stage and OFOD data, with coverage through 2025. The official page distinguishes aircraft-oriented and passenger-oriented aviation statistics. 
+- Destatis GENESIS currently exposes aviation tables including starts/landings by airport and country-of-following/preceding airport; the monthly airport table shows available 2026 data.
+- GovData currently exposes the airport starts/landings dataset with CSV/XML resources and German Open Data licensing metadata.
+- DFS states that it publishes air-transport-network geodata under INSPIRE, including routes, airports/heliports, runways and airspace, with WMS/WFS access and twice-yearly updates.
+- EUROCONTROL's ADRR currently provides research access to detailed flight, trajectory, airspace and route-network data; the EUROCONTROL route-network pages maintain current ERN/RAD documentation.
+
 ## Outreach sequencing
 
 ### Wave 1 — data institutions
