@@ -25,9 +25,10 @@ const COPY = {
     pairNote: 'Gezählt werden gerichtete Länderpaare Ursprung → Ziel. Gegenrichtungen werden separat betrachtet.',
     methodology: 'Methodik & Grenzen',
     methodologyText: 'Die Seite verwendet ausschließlich vorhandene veröffentlichte Route-Records. Eine Strecke wird als grenzüberschreitend gezählt, wenn für Ursprung und Ziel Länderangaben vorhanden und unterschiedlich sind. Länder werden so angezeigt, wie sie im Airpiv-Routenkatalog gespeichert sind. Fehlende Länderangaben werden nicht künstlich ergänzt.',
-    linkedAsset: 'Verwandter Datenindex',
-    linkedAssetText: 'Für die Flughafen- und Konnektivitätsebene siehe den Airpiv-Flugdaten- und Streckenindex.',
+    linkedAsset: 'Verwandte Datenindizes',
+    linkedAssetText: 'Für die Flughafen- und Konnektivitätsebene siehe den Airpiv-Flugdaten- und Streckenindex sowie den Deutschland-Konnektivitätsbericht.',
     openAsset: 'Flugdaten-Index öffnen',
+    openGermanyAsset: 'Deutschland-Konnektivität öffnen',
     records: 'Records',
     pair: 'Länderpaar',
   },
@@ -50,9 +51,10 @@ const COPY = {
     pairNote: 'Directional country pairs Origin → Destination are counted separately from the reverse direction.',
     methodology: 'Methodology & limitations',
     methodologyText: 'This page uses published route records only. A route is counted as cross-border when both country fields exist and differ. Countries are displayed as stored in the Airpiv route catalogue. Missing country values are not filled with inferred data.',
-    linkedAsset: 'Related data index',
-    linkedAssetText: 'For the airport and connectivity layer, see Airpiv’s flight-data and route index.',
+    linkedAsset: 'Related data indexes',
+    linkedAssetText: 'For the airport and connectivity layer, see Airpiv’s flight-data and route index and the Germany connectivity report.',
     openAsset: 'Open flight-data index',
+    openGermanyAsset: 'Open Germany connectivity report',
     records: 'records',
     pair: 'country pair',
   },
@@ -75,8 +77,7 @@ const CSS = `<style>
 .network-rank{color:var(--tx3);font-size:12px;margin-right:8px}.network-name{font-weight:700;color:var(--tx)}
 .network-stat{white-space:nowrap;font-size:12px;font-weight:700;color:var(--tx3)}.network-stat strong{color:var(--teal)}
 .network-method{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px;line-height:1.7;color:var(--tx2);font-size:13px}
-.network-link{display:inline-flex;margin-top:12px;padding:9px 12px;border-radius:9px;border:1px solid var(--bd);text-decoration:none;color:var(--teal);font-size:12.5px;font-weight:700}
-.network-link:hover{border-color:var(--teal)}
+.network-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.network-link{display:inline-flex;padding:9px 12px;border-radius:9px;border:1px solid var(--bd);text-decoration:none;color:var(--teal);font-size:12.5px;font-weight:700}.network-link:hover{border-color:var(--teal)}
 @media (max-width:840px){.network-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.network-grid{grid-template-columns:1fr}}
 @media (max-width:480px){.network-kpis{grid-template-columns:1fr 1fr}.network-kpi .num{font-size:19px}.network-list li{padding:10px 11px;gap:10px}}
 </style>`;
@@ -161,7 +162,7 @@ export async function renderRouteNetworkHtml(lang = 'de') {
     [data.countryPairs, copy.countryPairs],
   ].map(([value, label]) => `<div class="network-kpi"><div class="num">${nf(value, activeLang)}</div><div class="label">${label}</div></div>`).join('');
 
-  const content = `<main id="network-main"><div class="network-wrap">${breadcrumb}<h1>${copy.h1}</h1><p class="network-intro">${copy.intro}</p><div class="network-snapshot">${copy.snapshot} · ${copy.generated}: ${generatedAt}</div><div class="network-kpis">${stats}</div><div class="network-grid"><section class="network-section"><h2>${copy.topOrigins}</h2><p class="network-note">${copy.note}</p><ol class="network-list">${listMarkup(data.topOrigins, copy.records, activeLang)}</ol></section><section class="network-section"><h2>${copy.topDestinations}</h2><p class="network-note">${copy.note}</p><ol class="network-list">${listMarkup(data.topDestinations, copy.records, activeLang)}</ol></section></div><section class="network-section"><h2>${copy.topPairs}</h2><p class="network-note">${copy.pairNote}</p><ol class="network-list">${listMarkup(data.topPairs, copy.records, activeLang)}</ol></section><section class="network-section"><h2>${copy.methodology}</h2><div class="network-method">${copy.methodologyText}<br><a class="network-link" href="${urlFor(activeLang, 'research/flight-data')}">${copy.openAsset}</a></div></section><section class="network-section"><h2>${copy.linkedAsset}</h2><div class="network-method">${copy.linkedAssetText}</div></section></div></main>`;
+  const content = `<main id="network-main"><div class="network-wrap">${breadcrumb}<h1>${copy.h1}</h1><p class="network-intro">${copy.intro}</p><div class="network-snapshot">${copy.snapshot} · ${copy.generated}: ${generatedAt}</div><div class="network-kpis">${stats}</div><div class="network-grid"><section class="network-section"><h2>${copy.topOrigins}</h2><p class="network-note">${copy.note}</p><ol class="network-list">${listMarkup(data.topOrigins, copy.records, activeLang)}</ol></section><section class="network-section"><h2>${copy.topDestinations}</h2><p class="network-note">${copy.note}</p><ol class="network-list">${listMarkup(data.topDestinations, copy.records, activeLang)}</ol></section></div><section class="network-section"><h2>${copy.topPairs}</h2><p class="network-note">${copy.pairNote}</p><ol class="network-list">${listMarkup(data.topPairs, copy.records, activeLang)}</ol></section><section class="network-section"><h2>${copy.methodology}</h2><div class="network-method">${copy.methodologyText}<div class="network-links"><a class="network-link" href="${urlFor(activeLang, 'research/flight-data')}">${copy.openAsset}</a><a class="network-link" href="${urlFor(activeLang, 'research/germany-airport-connectivity')}">${copy.openGermanyAsset}</a></div></div></section><section class="network-section"><h2>${copy.linkedAsset}</h2><div class="network-method">${copy.linkedAssetText}</div></section></div></main>`;
 
   const datasetSchema = {
     '@context': 'https://schema.org',
