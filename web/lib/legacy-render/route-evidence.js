@@ -92,18 +92,31 @@ function getRouteIndexabilityDecision(r, opts = {}) {
   const manual = hasManualEditorialContent(r);
   const demand = hasRouteDemandSignal(r);
   const demandOk = !demandGate || manual || demand;
-  const indexable = enforce ? ((evidence || manual) && demandOk) : (hasLegacyRouteData(r) || manual);
-  const reason = enforce
-    ? ((evidence || manual)
-      ? (demandOk
-        ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
-        : 'NO DEMAND SIGNAL (pruned)')
-      : 'NO VERIFIED FLIGHT EVIDENCE')
-    : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)');
+  const policyIndexable = enforce ? ((evidence || manual) && demandOk) : (hasLegacyRouteData(r) || manual);
+
+  // [P0.7 FAIL-CLOSED] Once the backend has emitted an explicit `indexable`
+  // verdict, it owns the production decision. In particular, `indexable:false`
+  // must not be resurrected to `index` merely because stale/local fixture data
+  // still contains intro_text or custom_faq. Missing verdict keeps the local
+  // mirror as the compatibility fallback for older backends/offline fixtures.
+  const explicitIndexable = typeof r?.indexable === 'boolean' ? r.indexable : null;
+  const indexable = explicitIndexable != null ? explicitIndexable : policyIndexable;
+  const effectiveManual = explicitIndexable === false ? false : manual;
+  const effectiveEvidence = explicitIndexable === false ? false : evidence;
+  const reason = explicitIndexable != null
+    ? (explicitIndexable ? 'EXPLICIT BACKEND INDEXABLE VERDICT' : 'EXPLICIT BACKEND NOINDEX VERDICT')
+    : (enforce
+      ? ((evidence || manual)
+        ? (demandOk
+          ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
+          : 'NO DEMAND SIGNAL (pruned)')
+        : 'NO VERIFIED FLIGHT EVIDENCE')
+      : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)'));
+
   return {
     indexable,
-    verifiedEvidence: evidence,
-    manualContent: manual,
+    verifiedEvidence: effectiveEvidence,
+    manualContent: effectiveManual,
     demandSignal: demand,
     demandGate,
     enforce,
@@ -115,6 +128,8 @@ function getRouteIndexabilityDecision(r, opts = {}) {
       price_sample_count: r ? r.price_sample_count : null,
       itinerary_count: r ? r.itinerary_count : null,
       distance_km: r ? r.distance_km : null,
+      route_score: r ? r.route_score : null,
+      weekly_flights: r ? r.weekly_flights : null,
     },
   };
 }
