@@ -52,4 +52,5 @@ export async function renderCanonicalRoutePriceHtml(html, slug, lang) {
   );
 }
 
-export default { renderCanonicalRoutePriceHtml };
+const routeHtmlEnhance = { renderCanonicalRoutePriceHtml };
+export default routeHtmlEnhance;
