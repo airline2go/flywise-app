@@ -7,8 +7,8 @@ const { urlFor } = languagesMod;
 
 const COPY = {
   de: {
-    title: 'Deutschland: Flughafen-Konnektivität & internationale Strecken',
-    description: 'Öffentlicher Airpiv-Datenindex zur veröffentlichten Streckenabdeckung deutscher Abflughäfen, ihrer Ziele und internationalen Länderverbindungen.',
+    title: 'Deutschland: Flughafennetz & Flugrouten',
+    description: 'Airpiv-Datenindex zu deutschen Abflughäfen, Zielabdeckung und internationalen Flugrouten.',
     h1: 'Deutschland: Flughafen-Konnektivität & internationale Strecken',
     intro: 'Dieser Datenindex betrachtet ausschließlich veröffentlichte Airpiv-Routen mit deutschem Abflugsland. Er zeigt die im Katalog erfassten deutschen Abflughäfen, deren Zielabdeckung und internationale Airport→Country-Korridore.',
     snapshot: 'Aktueller Katalog-Snapshot', generated: 'Seite generiert',
@@ -21,8 +21,8 @@ const COPY = {
     records: 'Records', destinations: 'Ziele', destinationRecords: 'Records', countries: 'Länder',
   },
   en: {
-    title: 'Germany: Airport Connectivity & International Routes',
-    description: 'A public Airpiv data index of published route coverage from German-origin airports, including destinations and international country connections.',
+    title: 'Germany: Airport Network & Flight Routes',
+    description: 'Airpiv data index of German-origin airports, destination coverage and international flight routes.',
     h1: 'Germany: Airport Connectivity & International Routes',
     intro: 'This data index uses only published Airpiv routes with Germany as the origin country. It shows the German departure airports represented in the catalogue, their recorded destination coverage, and international airport-to-country corridors.',
     snapshot: 'Current catalogue snapshot', generated: 'Page generated',
@@ -106,7 +106,7 @@ export async function renderGermanyAirportConnectivityHtml(lang = 'de') {
   const breadcrumb = `<nav class="de-air-breadcrumb" aria-label="Breadcrumb"><a href="${activeLang === 'de' ? '/' : '/en/'}">Airpiv</a><span>›</span><span>${copy.h1}</span></nav>`;
   const mainContent = `<main id="de-air-main"><div class="de-air-wrap">${breadcrumb}<h1>${copy.h1}</h1><p class="de-air-intro">${copy.intro}</p><div class="de-air-snapshot">${copy.snapshot} · ${copy.generated}: ${generatedAt}</div><div class="de-air-kpis">${stats}</div><div class="de-air-grid"><section class="de-air-section"><h2>${copy.topAirports}</h2><p class="de-air-note">${copy.note}</p><ol class="de-air-list">${airportRows}</ol></section><section class="de-air-section"><h2>${copy.topCountries}</h2><p class="de-air-note">${copy.note}</p><ol class="de-air-list">${countryRows}</ol></section></div><section class="de-air-section"><h2>${copy.topCorridors}</h2><p class="de-air-note">${copy.note}</p><ol class="de-air-list">${corridorRows}</ol></section><section class="de-air-section"><h2>${copy.methodology}</h2><div class="de-air-method">${copy.methodologyText}<div class="de-air-links"><a class="de-air-link" href="${networkHref}">${copy.openAsset}</a><a class="de-air-link" href="${csvHref}">${copy.download}</a></div></div></section><section class="de-air-section"><h2>${copy.linkedAsset}</h2><div class="de-air-method">${copy.linkedAssetText}</div></section></div></main>`;
   const csvDistribution = { '@type': 'DataDownload', contentUrl: `https://airpiv.com${csvHref}`, encodingFormat: 'text/csv', name: `${copy.title} CSV` };
-  const datasetSchema = { '@context': 'https://schema.org', '@type': 'Dataset', name: copy.title, description: copy.description, url: canonical, inLanguage: activeLang === 'de' ? 'de-DE' : 'en-GB', dateModified: generatedAt, creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' }, publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' }, distribution: [csvDistribution], variableMeasured: ['Published Germany-origin route records', 'International Germany-origin route records', 'German origin airports', 'Recorded destination airports', 'International destination countries', 'Directional airport-to-country corridors'] };
+  const datasetSchema = { '@context': 'https://schema.org', '@type': 'Dataset', name: copy.title, description: copy.description, url: canonical, inLanguage: activeLang === 'de' ? 'de-DE' : 'en-GB', dateModified: generatedAt, creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' }, publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' }, distribution: [csvDistribution], variableMeasured: ['Published Germany-origin route records', 'International Germany-origin route records', 'German origin airports', 'Recorded destination airports', 'International destination countries', 'Directional airport-to-country corridors'] };
   const pageSchema = { '@context': 'https://schema.org', '@type': 'WebPage', name: copy.title, description: copy.description, url: canonical, inLanguage: activeLang === 'de' ? 'de-DE' : 'en-GB', isPartOf: { '@type': 'WebSite', name: 'Airpiv', url: 'https://airpiv.com' } };
   return renderShell({ lang: activeLang, title: `${copy.title} | Airpiv`, description: copy.description, canonicalUrl: canonical, urls, headExtra: `${jsonLdScript(pageSchema)}${jsonLdScript(datasetSchema)}${CSS}`, mainContent, robotsContent: data.routeRecords > 0 ? 'index, follow' : 'noindex, follow' });
 }
