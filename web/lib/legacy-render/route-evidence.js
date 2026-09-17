@@ -12,6 +12,8 @@
 // fallback fail-closed during partial deploys and offline/fixture renders.
 // ═══════════════════════════════════════════════════════════════════════
 
+const SEO_ROUTE_SITEMAP_PAGE_SIZE = 50;
+
 const SEO_CORE_ROUTES = new Set([
   'london-athens', 'madrid-zuerich', 'hamburg-barcelona-2', 'duesseldorf-palma-de-mallorca',
   'ber-bud', 'lgw-pmi', 'ibiza-frankfurt', 'las-palmas-hamburg', 'paris-zuerich',
@@ -195,4 +197,5 @@ module.exports = {
   seoCoreOnlyEnabled,
   isSeoCoreRoute,
   SEO_CORE_ROUTES,
+  SEO_ROUTE_SITEMAP_PAGE_SIZE,
 };
