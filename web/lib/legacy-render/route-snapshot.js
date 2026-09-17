@@ -120,6 +120,8 @@ function invalidateStaleGeneratedSeo(route) {
   const stale = sourceUpdatedAt.some((updatedAt) => updatedAt > generatedAt);
   if (!stale) return false;
 
+  route.seo_title = null;
+  route.seo_meta_description = null;
   route.seo_intro_html = null;
   route.seo_faq = null;
   return true;
