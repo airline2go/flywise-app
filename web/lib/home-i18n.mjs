@@ -89,7 +89,7 @@ export function escText(s) {
 // Escape for a double-quoted HTML attribute value.
 export function escAttr(s) {
   return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');
 }
 
 // ── TRANSLATIONS extraction ────────────────────────────────────────────────
@@ -121,7 +121,6 @@ export function extractTranslations(appJsSource) {
   const literal = appJsSource.slice(start, i);
   // Pure data literal (strings only) — Function-eval is safe and tolerates JS
   // object syntax that strict JSON.parse would reject.
-  // eslint-disable-next-line no-new-func
   const obj = Function(`"use strict";return (${literal});`)();
   if (!obj || typeof obj !== 'object') throw new Error('TRANSLATIONS did not evaluate to an object');
   return obj;
@@ -199,9 +198,9 @@ export function localizeBody(html, lang, translations) {
     if (!key) continue;
     const [s, e] = el.range;
     const outer = html.slice(s, e);
-    const openEnd = outer.indexOf('>') + 1;          // end of the opening tag
+    const openEnd = outer.indexOf('>') + 1;
     const closeTag = `</${el.rawTagName}>`;
-    if (openEnd <= 0 || !outer.endsWith(closeTag)) continue; // void/odd — skip
+    if (openEnd <= 0 || !outer.endsWith(closeTag)) continue;
     const innerStart = s + openEnd;
     const innerEnd = e - closeTag.length;
     edits.push({ start: innerStart, end: innerEnd, replacement: escText(translate(translations, lang, key)) });

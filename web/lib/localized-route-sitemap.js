@@ -1,0 +1,28 @@
+const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
+const REVALIDATE = 900;
+
+// Uses the backend's generated locale rows as the authoritative discovery set.
+// Backend pagination is intentionally bounded to keep sitemap builds reliable.
+async function fetchPage(lang, page) {
+  const url = `${API_BASE}/sitemap-data/routes-localized?lang=${encodeURIComponent(lang)}&page=${page}`;
+  const res = await fetch(url, { next: { revalidate: REVALIDATE } });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for localized route sitemap ${lang} page ${page}`);
+  return res.json();
+}
+
+export async function listLocalizedRouteSitemap(lang) {
+  const items = [];
+  try {
+    for (let page = 0; page < 10000; page++) {
+      const data = await fetchPage(lang, page);
+      const rows = Array.isArray(data?.items) ? data.items : [];
+      items.push(...rows);
+      if (!data?.hasMore || rows.length === 0) break;
+    }
+  } catch {
+    // Discovery must fail closed: a backend outage must never make the entire
+    // sitemap build fail, and must never cause fabricated localized URLs.
+    return [];
+  }
+  return items;
+}
