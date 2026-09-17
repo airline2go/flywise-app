@@ -76,6 +76,7 @@ export const GSC_ROUTES = [
   { slug: 'valencia-fuerteventura', origin_city: 'Valencia', destination_city: 'Fuerteventura' },// HIGH · 22
   { slug: 'london-amsterdam', origin_city: 'London', destination_city: 'Amsterdam' },            // HIGH · 21
   { slug: 'madrid-ibiza', origin_city: 'Madrid', destination_city: 'Ibiza' },                    // HIGH · 20
+  { slug: 'lgw-pmi', origin_city: 'London', destination_city: 'Palma de Mallorca' },             // HIGH · 16 (route_score 96)
   { slug: 'amsterdam-zuerich', origin_city: 'Amsterdam', destination_city: 'Zürich' },           // NORMAL · 184
   { slug: 'frankfurt-berlin', origin_city: 'Frankfurt', destination_city: 'Berlin' },            // NORMAL · 182
   { slug: 'palma-de-mallorca-duesseldorf', origin_city: 'Palma de Mallorca', destination_city: 'Düsseldorf' }, // NORMAL · 148
