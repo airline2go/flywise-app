@@ -11,7 +11,12 @@ const { setGeoData } = require('../lib/legacy-render/data.js');
 setGeoData([], []);
 
 const R = (over) => Object.assign(
-  { slug: 'ams-fco', origin_iata: 'AMS', destination_iata: 'FCO', origin_city: 'Amsterdam', destination_city: 'Rom' },
+  {
+    slug: 'ams-fco', origin_iata: 'AMS', destination_iata: 'FCO', origin_city: 'Amsterdam', destination_city: 'Rom',
+    seo_intro_html: '<p>stale generated copy</p>',
+    seo_faq: [{ question: 'price', answer: '30–49 EUR' }],
+    seo_lang: 'de',
+  },
   over || {},
 );
 
@@ -21,7 +26,7 @@ test('airlineCount is the unique airline-list length when a list exists', () => 
 });
 test('airlineCount falls back to the scalar only when there is no list', () => {
   assert.equal(buildRouteSnapshot(R({ airline_count: 5 })).airlineCount, 5);
-  assert.equal(buildRouteSnapshot(R({})).airlineCount, null);
+  assert.equal(buildRouteSnapshot(R({ seo_intro_html: null, seo_faq: [] })).airlineCount, null);
 });
 
 test('stops derive nonstop/oneStop/twoPlus, total is their sum, share rounds', () => {
@@ -40,7 +45,7 @@ test('price prefers the observed aggregate min, then observed average, then cach
   assert.equal(buildRouteSnapshot(R({ price_avg: 70, price_sample_count: 1, price_currency: 'EUR', cached_price: 83 })).price.amount, 70);
   assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 1, price_currency: 'EUR', cached_price: 83 })).price.amount, 60);
   assert.equal(buildRouteSnapshot(R({ price_min: 60, price_sample_count: 0, cached_price: 83, cached_currency: 'EUR' })).price.amount, 83);
-  assert.equal(buildRouteSnapshot(R({})).price, null);
+  assert.equal(buildRouteSnapshot(R({ seo_intro_html: null, seo_faq: [] })).price, null);
 });
 
 test('priceIsFresh / routeDataIsFresh respect the central TTL windows', () => {
@@ -111,8 +116,6 @@ test('stale generated route copy is discarded when operational data is refreshed
     insights_updated_at: '2026-09-17T16:58:20.613Z',
     price_updated_at: '2026-09-17T17:21:09.278Z',
     seo_generated_at: '2026-09-17T12:46:58.163Z',
-    seo_intro_html: '<p>stale generated copy</p>',
-    seo_faq: [{ question: 'price', answer: '30–49 EUR' }],
   });
 
   buildRouteSnapshot(input, Date.parse('2026-09-17T17:27:00Z'));
@@ -124,6 +127,8 @@ test('stale generated route copy is discarded when operational data is refreshed
 test('fresh generated route copy is preserved', () => {
   const input = R({
     seo_generated_at: '2026-09-17T17:22:00.000Z',
+    insights_updated_at: '2026-09-17T16:58:20.613Z',
+    price_updated_at: '2026-09-17T17:21:09.278Z',
   });
 
   const invalidated = invalidateStaleGeneratedSeo(input);
