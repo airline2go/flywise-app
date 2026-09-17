@@ -1,6 +1,6 @@
 import { listCities, listCountries, listRoutePages } from '../content-api';
 import { buildCanonicalSlugMap } from '../seo/route-canonical.mjs';
-import { getRouteIndexabilityDecision, isSeoCoreRoute } from './route-evidence';
+import { isRouteSitemapEligible } from './route-evidence';
 import dataMod from './data.js';
 import rendererMod from './render-route-sitemap.js';
 
@@ -18,12 +18,6 @@ function ensureGeo() {
       });
   }
   return geoPromise;
-}
-
-function isRouteSitemapEligible(route) {
-  if (!route || !route.slug || !isSeoCoreRoute(route.slug)) return false;
-  if (route.indexable === false) return false;
-  return getRouteIndexabilityDecision(route).indexable;
 }
 
 export async function getRouteSitemapPage(page) {
