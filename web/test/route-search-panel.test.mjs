@@ -15,6 +15,7 @@ const route = {
   price_currency: 'EUR',
   price_sample_count: 1,
   avg_duration_min: 94,
+  distance_km: 406,
   direct_flight_available: true,
   airline_count: 2,
 };
@@ -30,6 +31,20 @@ test('renders a connected route search form using the existing search contract',
   assert.match(html, /30 €/);
   assert.match(html, /1h 34m/);
   assert.doesNotMatch(html, /<style\b/i);
+});
+
+test('renders a data-backed route snapshot brief without inventing fields', () => {
+  const html = renderPanel(route, 'en');
+
+  assert.match(html, /route-search-snapshot/);
+  assert.match(html, /Route snapshot/);
+  assert.match(html, /Alicante → Barcelona/);
+  assert.match(html, /30 €/);
+  assert.match(html, /1h 34m/);
+  assert.match(html, /406 km/);
+  assert.match(html, /Available/);
+  assert.match(html, /2/);
+  assert.doesNotMatch(html, /live price/i);
 });
 
 test('injects panel markup and styles safely into the full route document', () => {
