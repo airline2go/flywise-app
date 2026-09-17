@@ -24,8 +24,13 @@ test('renders a connected route search form using the existing search contract',
   const html = renderPanel(route, 'en');
 
   assert.match(html, /action="\/search\/ALC-BCN"/);
-  assert.match(html, /name="depart"/);
-  assert.match(html, /type="date"/);
+  assert.match(html, /<input type="hidden" name="depart"/);
+  assert.match(html, /<input type="hidden" name="ret"/);
+  // Dates open the homepage-style calendar, not the native date picker.
+  assert.match(html, /data-route-date="dep"/);
+  assert.match(html, /data-route-date="ret"/);
+  assert.match(html, /data-route-dval="dep"/);
+  assert.doesNotMatch(html, /type="date"/);
   assert.match(html, /Alicante/);
   assert.match(html, /Barcelona/);
   assert.match(html, /30 €/);
