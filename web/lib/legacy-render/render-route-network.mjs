@@ -7,8 +7,8 @@ const { urlFor } = languagesMod;
 
 const COPY = {
   de: {
-    title: 'Flugstrecken nach Ländern & internationale Netzwerke',
-    description: 'Öffentlicher Airpiv-Datenindex zur internationalen Struktur des gespeicherten Flugstreckenkatalogs, einschließlich Länderabdeckung und grenzüberschreitender Streckenkorridore.',
+    title: 'Flugstrecken nach Ländern & Netzwerke',
+    description: 'Airpiv-Datenindex zu Länderabdeckung und grenzüberschreitenden Flugstrecken im aktuellen Routenkatalog.',
     h1: 'Flugstrecken nach Ländern & internationale Netzwerke',
     intro: 'Dieser Datenindex aggregiert die tatsächlich veröffentlichten Airpiv-Streckendaten auf Länderebene. Er zeigt, wie viele gespeicherte Strecken zwischen Ländern verlaufen und welche internationalen Korridore im aktuellen Katalog besonders stark vertreten sind.',
     snapshot: 'Aktueller Katalog-Snapshot',
@@ -172,8 +172,8 @@ export async function renderRouteNetworkHtml(lang = 'de') {
     url: canonical,
     inLanguage: activeLang === 'de' ? 'de-DE' : 'en-GB',
     dateModified: generatedAt,
-    creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' },
-    publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' },
+    creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' },
+    publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' },
     variableMeasured: [
       'Published route records',
       'Cross-border route records',
