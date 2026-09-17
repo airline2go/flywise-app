@@ -8,6 +8,7 @@
 import { cache } from 'react';
 import { buildGeoIndex } from './geo.js';
 import { getRouteLocale } from './route-locale-context.js';
+import { invalidateStaleGeneratedSeo } from './legacy-render/route-snapshot.js';
 
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
 
@@ -231,7 +232,7 @@ async function getRoutePage(slug, lang = getRouteLocale()) {
     if (!data || !data.route) return null;
     const route = data.route;
     const seo = route.seo || {};
-    return {
+    const localizedRoute = {
       ...route,
       seo_lang: lang,
       seo_title: seo.title || null,
@@ -240,9 +241,13 @@ async function getRoutePage(slug, lang = getRouteLocale()) {
       seo_faq: Array.isArray(seo.faq) ? seo.faq : null,
       localized_hreflang: data.hreflang || [],
     };
+    invalidateStaleGeneratedSeo(localizedRoute);
+    return localizedRoute;
   }
   const data = await fetchDetailOrNull(`/route-pages/${encoded}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
-  return (data && data.route) || null;
+  const route = (data && data.route) || null;
+  if (route) invalidateStaleGeneratedSeo(route);
+  return route;
 }
 
 // [RENDERABILITY-GUARD] Does the route DETAIL endpoint actually return a
