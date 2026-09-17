@@ -2,6 +2,9 @@
 // lib/legacy-render/render.js.
 import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-render/render';
 import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-enhance';
+import { renderRouteSearchPanelHtml } from '@/lib/legacy-render/route-search-panel';
+import { getRoutePage } from '@/lib/content-api';
+import { removeLegacyRouteCta } from '@/lib/legacy-render/route-search-legacy';
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
 import { getAvailableRouteHreflang, stripUnavailableRouteHreflang } from '@/lib/route-hreflang';
@@ -36,7 +39,21 @@ export async function GET(_req, { params }) {
   if (redirect) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
 
   const html = await renderFlightRouteHtml(slug, 'de');
-  const rendered = await renderCanonicalRoutePriceHtml(html, slug, 'de');
+  const withPrice = await renderCanonicalRoutePriceHtml(html, slug, 'de');
+
+  // Keep the default German route surface aligned with every prefixed locale:
+  // the route-specific search panel owns the search action and the legacy hero
+  // price/CTA should not be duplicated below it. A temporary panel-data failure
+  // must never turn a healthy route page into a 5xx, so the existing legacy HTML
+  // remains the safe fallback.
+  let rendered = withPrice;
+  try {
+    const route = await getRoutePage(slug, 'de');
+    if (route) rendered = removeLegacyRouteCta(renderRouteSearchPanelHtml(withPrice, route, 'de'));
+  } catch {
+    // Keep the last-known-good route HTML when the panel's catalogue fetch is unavailable.
+  }
+
   try {
     // A noindex route must not advertise reciprocal language alternates.
     // Detect the final SSR robots verdict rather than re-implementing the
