@@ -7,7 +7,7 @@
 // and both the backend (sitemap / indexable flag / connectivity) and this
 // renderer must reach the same verdict for the same route.
 //
-// The active recovery phase additionally exposes only a versioned 60-route
+// The active recovery phase additionally exposes only a versioned 70-route
 // core. The backend is authoritative in production; this mirror keeps the
 // fallback fail-closed during partial deploys and offline/fixture renders.
 // ═══════════════════════════════════════════════════════════════════════
@@ -29,6 +29,9 @@ const SEO_CORE_ROUTES = new Set([
   'palma-de-mallorca-duesseldorf', 'valencia-fuerteventura', 'cologne-palma-de-mallorca',
   'frankfurt-ibiza', 'alicante-malaga', 'barcelona-palma-de-mallorca',
   'hamburg-duesseldorf', 'amsterdam-zuerich', 'berlin-copenhagen', 'palma-de-mallorca-berlin',
+  'alicante-barcelona', 'ibiza-duesseldorf', 'frankfurt-fuerteventura', 'cologne-hamburg',
+  'palma-de-mallorca-ibiza', 'dublin-zuerich', 'jfk-lax', 'ibiza-malaga', 'waw-lgw',
+  'palma-de-mallorca-stuttgart',
 ]);
 
 function seoCoreOnlyEnabled() {
