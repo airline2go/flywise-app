@@ -65,35 +65,9 @@ export const GSC_ROUTES = [
   { slug: 'duesseldorf-dresden', origin_city: 'Düsseldorf', destination_city: 'Dresden' },
   { slug: 'london-zuerich', origin_city: 'London', destination_city: 'Zürich' },
   { slug: 'alicante-ibiza', origin_city: 'Alicante', destination_city: 'Ibiza' },
-  { slug: 'frankfurt-ibiza', origin_city: 'Frankfurt', destination_city: 'Ibiza' },
   { slug: 'malaga-ibiza', origin_city: 'Málaga', destination_city: 'Ibiza' },
   { slug: 'palma-de-mallorca-stuttgart', origin_city: 'Palma de Mallorca', destination_city: 'Stuttgart' },
   { slug: 'alicante-fuerteventura', origin_city: 'Alicante', destination_city: 'Fuerteventura' },
-  { slug: 'hamburg-duesseldorf', origin_city: 'Hamburg', destination_city: 'Düsseldorf' },
-  { slug: 'alicante-malaga', origin_city: 'Alicante', destination_city: 'Málaga' },
-  { slug: 'palma-de-mallorca-hamburg', origin_city: 'Palma de Mallorca', destination_city: 'Hamburg' },
-  { slug: 'barcelona-zuerich', origin_city: 'Barcelona', destination_city: 'Zürich' },
-  { slug: 'palma-de-mallorca-ibiza', origin_city: 'Palma de Mallorca', destination_city: 'Ibiza' },
-  { slug: 'palma-de-mallorca-valencia', origin_city: 'Palma de Mallorca', destination_city: 'Valencia' },
-  { slug: 'barcelona-madrid', origin_city: 'Barcelona', destination_city: 'Madrid' },
-  { slug: 'munich-cologne', origin_city: 'Munich', destination_city: 'Cologne' },
-  { slug: 'palma-de-mallorca-berlin', origin_city: 'Palma de Mallorca', destination_city: 'Berlin' },
-  { slug: 'alicante-berlin', origin_city: 'Alicante', destination_city: 'Berlin' },
-  { slug: 'cologne-hamburg', origin_city: 'Cologne', destination_city: 'Hamburg' },
-  { slug: 'madrid-munich-2', origin_city: 'Madrid', destination_city: 'Munich' },
-  { slug: 'frankfurt-fuerteventura', origin_city: 'Frankfurt', destination_city: 'Fuerteventura' },
-  { slug: 'ibiza-duesseldorf', origin_city: 'Ibiza', destination_city: 'Düsseldorf' },
-  { slug: 'cologne-fuerteventura', origin_city: 'Cologne', destination_city: 'Fuerteventura' },
-  { slug: 'malaga-munich', origin_city: 'Málaga', destination_city: 'Munich' },
-  { slug: 'duesseldorf-weeze', origin_city: 'Düsseldorf', destination_city: 'Weeze' },
-  { slug: 'barcelona-paris', origin_city: 'Barcelona', destination_city: 'Paris' },
-  { slug: 'dortmund-stuttgart', origin_city: 'Dortmund', destination_city: 'Stuttgart' },
-  { slug: 'paris-zuerich', origin_city: 'Paris', destination_city: 'Zürich' },
-  { slug: 'stockholm-zuerich', origin_city: 'Stockholm', destination_city: 'Zürich' },
-  { slug: 'alicante-barcelona', origin_city: 'Alicante', destination_city: 'Barcelona' },
-  { slug: 'madrid-zuerich', origin_city: 'Madrid', destination_city: 'Zürich' },
-  { slug: 'ibiza-valencia', origin_city: 'Ibiza', destination_city: 'Valencia' },
-  { slug: 'dublin-zuerich', origin_city: 'Dublin', destination_city: 'Zürich' },
 ];
 
 export function filterValidRoutes(routes, validation) {
@@ -150,19 +124,10 @@ export function injectPopularLinks(html, linksHtml) {
   const divRe = /(<div id="popular-routes-links"[^>]*>)[\s\S]*?(<\/div>)/;
   if (!divRe.test(html)) throw new Error('#popular-routes-links container not found');
   let out = html.replace(divRe, `$1${linksHtml}$2`);
-
-  if (linksHtml) {
-    out = out.replace(
-      /<section id="popular-routes-links-section"[^>]*>/,
-      '<section id="popular-routes-links-section">'
-    );
-  } else {
-    out = out.replace(
-      /<section id="popular-routes-links-section"[^>]*>/,
-      '<section id="popular-routes-links-section" style="display:none">'
-    );
-  }
-
+  out = out.replace(
+    /<section id="popular-routes-links-section"[^>]*>/,
+    linksHtml ? '<section id="popular-routes-links-section">' : '<section id="popular-routes-links-section" style="display:none">'
+  );
   return out;
 }
 
@@ -191,7 +156,6 @@ async function fetchValidation() {
       }
       if (!data || !data.hasMore) break;
     }
-
     const redirectSources = new Set();
     try {
       const rr = await fetch(`${base}/route-redirects`);
@@ -201,9 +165,7 @@ async function fetchValidation() {
           if (r && r.source_slug) redirectSources.add(r.source_slug);
         }
       }
-    } catch {
-      // Redirect feed is optional; the indexability check remains mandatory.
-    }
+    } catch {}
     return { indexableSlugs, redirectSources };
   } catch (e) {
     console.warn(`[prerender-popular-routes] validation fetch failed: ${e.message}`);
@@ -214,30 +176,25 @@ async function fetchValidation() {
 async function main() {
   const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
   const indexPath = join(publicDir, 'index.html');
-
   if (!existsSync(indexPath)) {
     console.warn('[prerender-popular-routes] public/index.html not found — skipping');
     return;
   }
-
   if (!GSC_ROUTES.length) {
     console.warn('[prerender-popular-routes] no routes configured — leaving client-side fallback in place');
     return;
   }
-
   const validation = await fetchValidation();
   if (!validation) {
     console.warn('[prerender-popular-routes] no validation data — leaving client-side fallback in place (no unvalidated links injected)');
     return;
   }
-
   const validRoutes = filterValidRoutes(GSC_ROUTES, validation);
   const dropped = GSC_ROUTES.length - validRoutes.length;
   if (!validRoutes.length) {
     console.warn('[prerender-popular-routes] no valid routes after validation — leaving client-side fallback in place');
     return;
   }
-
   const html = readFileSync(indexPath, 'utf8');
   const next = injectIntoHtml(html, validRoutes);
   writeFileSync(indexPath, next);
