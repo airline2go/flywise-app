@@ -109,7 +109,7 @@ test('GSC_ROUTES is well-formed, in opportunity order, split top-30 / rest', () 
     seen.add(r.slug);
   }
   // Order is the deliverable: highest GSC opportunity first.
-  assert.equal(GSC_ROUTES[0].slug, 'hamburg-barcelona-2');
+  assert.equal(GSC_ROUTES[0].slug, 'lgw-pmi');
 });
 
 // ── [P1-8] homepage popular-route validation ──────────────────────────────
