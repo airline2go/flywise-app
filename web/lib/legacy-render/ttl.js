@@ -15,9 +15,10 @@ const ROUTE_DATA_TTL_MS = 30 * DAY;
 const ROUTE_PAGE_REVALIDATE_S = 15 * MINUTE / 1000;
 const ENTITY_PAGE_REVALIDATE_S = 24 * HOUR / 1000;
 
-// Actual production sitemap windows: the index is hourly, while the
-// route-type child sitemap and overflow shards are refreshed every 15 minutes.
-const SITEMAP_REVALIDATE_S = HOUR / 1000;
+// Next ISR windows: the sitemap index is intentionally force-dynamic (0s) so
+// backend throttling cannot poison a prerendered index; its HTTP response still
+// advertises a 1-hour cache window. Route children/shards revalidate every 15m.
+const SITEMAP_REVALIDATE_S = 0;
 const SITEMAP_ROUTE_REVALIDATE_S = 15 * MINUTE / 1000;
 const SITEMAP_SHARD_REVALIDATE_S = 15 * MINUTE / 1000;
 
