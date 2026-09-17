@@ -1,4 +1,5 @@
 // Temporary CI probe; no production code path.
+// Purpose: execute the same CI gates against the exact current main tree.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { injectPopularLinks } from '../scripts/prerender-popular-routes.mjs';
