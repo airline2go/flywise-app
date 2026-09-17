@@ -142,7 +142,8 @@ function buildFaqItems(route, lang, snapshot) {
       answer: translate('routeFaqCheapestAnswer', lang),
     };
 
-  const items = [bestTimeFaqItem, haulQuestion];
+  // No historical pricing/schedule evidence: suppress unsupported booking timing advice.
+  const items = [haulQuestion];
 
   // [CONTENT-VARIATION-2] Previously this FAQ item only ever existed
   // client-side (buildLiveScript(), appended to the DOM after page load,
@@ -199,7 +200,7 @@ function buildFaqItems(route, lang, snapshot) {
   // time is a persisted field AND is genuinely shorter than the average (i.e.
   // a nonstop option pulls it below the mixed average); otherwise it would just
   // restate the duration FAQ. Real Phase 1 data, never fabricated.
-  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {
+  if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {
     items.push({
       question: format(translate('routeFaqFastestQuestion', lang), { origin: route.origin_city, destination: route.destination_city }),
       answer: format(translate('routeFaqFastestAnswer', lang), { duration: formatHoursMinutes(route.min_duration_min, lang) }),
@@ -254,7 +255,8 @@ function buildFaqItems(route, lang, snapshot) {
 // sentence deterministically per-route so two routes sharing every other
 // signal still read differently.
 function buildBestTimeHtml(route, lang) {
-  if (route.distance_km == null) return '';
+  // No historical pricing/schedule evidence: suppress unsupported booking advice.
+  return '';
   const isLongHaul = route.haul_type === 'long-haul';
   const isDomestic = !!(route.origin_country && route.destination_country && route.origin_country === route.destination_country);
   // Body text names the haul category, so it is three-way (domestic + not).
