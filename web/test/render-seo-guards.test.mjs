@@ -107,7 +107,7 @@ test('route with distance only is noindex under enforced evidence policy', () =>
 });
 
 test('dataless route WITH an admin intro is indexed', () => {
-  const { html } = renderFlightRoutePage(routeRow({ intro_text: 'Handgeschriebene Einleitung für diese Strecke.' }), 'de', [], { fromOrigin: [], toDestination: [] });
+  const { html } = renderFlightRoutePage(routeRow({ slug: 'lgw-pmi', intro_text: 'Handgeschriebene Einleitung für diese Strecke.' }), 'de', [], { fromOrigin: [], toDestination: [] });
   assert.equal(robotsFrom(html), 'index, follow');
 });
 
@@ -117,7 +117,7 @@ test('airline count alone is insufficient evidence for indexing', () => {
 });
 
 test('route with observed airline count plus real duration is indexed', () => {
-  const { html } = renderFlightRoutePage(routeRow({ airline_count: 3, min_duration_min: 90, avg_duration_min: 120 }), 'de', [], { fromOrigin: [], toDestination: [] });
+  const { html } = renderFlightRoutePage(routeRow({ slug: 'lgw-pmi', airline_count: 3, min_duration_min: 90, avg_duration_min: 120 }), 'de', [], { fromOrigin: [], toDestination: [] });
   assert.equal(robotsFrom(html), 'index, follow');
 });
 
