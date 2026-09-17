@@ -9,7 +9,7 @@
 //     form, chips, footer …), so the raw HTML Googlebot sees on /en, /ar, …, /de
 //     is correct on first byte instead of German fixed up later by JavaScript.
 //   next.config.mjs rewrites /<lang> → /<lang>.html. The bare root / still serves
-//   index.html verbatim (canonical /); /de is a distinct self-canonical German page.
+//   index.html verbatim (canonical /).
 //
 // FAIL LOUDLY (per spec): if the dictionary can't be extracted, a required
 // language is missing/untranslated, or a generated file fails its self-check,
@@ -22,8 +22,6 @@ import {
   HOME_LANGS, HOME_META, SITE, localizeHomeHtml, extractTranslations, translate, escText,
 } from '../lib/home-i18n.mjs';
 
-// Keys that must be genuinely localized (non-German) for every non-de language —
-// the sentinels that catch a language silently falling back to German content.
 const SENTINEL_KEYS = ['hero_title1', 'hero_pill', 'search_btn'];
 const HOME_LOCALES = {
   de: 'de-DE', en: 'en-US', ar: 'ar-SA', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', nl: 'nl-NL', tr: 'tr-TR',
@@ -55,6 +53,7 @@ function transformJsonLdBlock(block, lang, state) {
 
   const canonical = lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`;
   const locale = HOME_LOCALES[lang] || 'de-DE';
+  const meta = HOME_META[lang] || HOME_META.de;
   const list = Array.isArray(data) ? data : [data];
   const kept = [];
 
@@ -74,6 +73,8 @@ function transformJsonLdBlock(block, lang, state) {
 
     if (types.includes('WebPage')) {
       item.url = canonical;
+      item.name = meta.t;
+      item.description = meta.d;
       item.inLanguage = locale;
       if (typeof item['@id'] === 'string' && item['@id'].endsWith('#webpage')) item['@id'] = `${canonical}#webpage`;
     }
@@ -81,9 +82,8 @@ function transformJsonLdBlock(block, lang, state) {
     if (types.includes('WebSite')) {
       if (state.seenWebsite) continue;
       state.seenWebsite = true;
-      // WebSite describes the localized homepage context; keep its URL rooted at
-      // the site, but make its language match the rendered document.
       item.inLanguage = locale;
+      item.description = meta.d;
     }
 
     kept.push(item);
@@ -112,32 +112,28 @@ function hardenHomeSeoHtml(html, lang) {
   return out;
 }
 
-// Self-check a generated file's raw HTML before we let the build continue.
-function assertGeneratedFile(html, lang, translations) {
-  const url = `${SITE}/${lang}`;
-  if (!new RegExp(`<html\\s+lang="${lang}"`).test(html)) throw new Error(`${lang}.html: <html lang> is not "${lang}"`);
-  if (!html.includes(`href="${url}" id="canonical-url"`)) throw new Error(`${lang}.html: canonical is not self (${url})`);
-  if (!html.includes(`<title>${escText(HOME_META[lang].t)}</title>`)) throw new Error(`${lang}.html: <title> not localized`);
-  // hreflang cluster consistency: the German alternate points at the bare root
-  // `/` (the single German URL — sitemap-listed, self-canonical), never a
-  // retired `/de`.
-  if (!html.includes('hreflang="de" href="https://airpiv.com/"')) throw new Error(`${lang}.html: hreflang de not root /`);
-  if (html.includes('hreflang="de" href="https://airpiv.com/de"')) throw new Error(`${lang}.html: hreflang de still points at retired /de`);
+function assertGeneratedFile(html, lang, translations, expectedCanonical = `${SITE}/${lang}`) {
+  const url = expectedCanonical;
+  if (!new RegExp(`<html\\s+lang="${lang}"`).test(html)) throw new Error(`${lang}: <html lang> is not "${lang}"`);
+  if (!html.includes(`href="${url}" id="canonical-url"`)) throw new Error(`${lang}: canonical is not self (${url})`);
+  if (!html.includes(`<title>${escText(HOME_META[lang].t)}</title>`)) throw new Error(`${lang}: <title> not localized`);
+  if (!html.includes('hreflang="de" href="https://airpiv.com/"')) throw new Error(`${lang}: hreflang de not root /`);
+  if (html.includes('hreflang="de" href="https://airpiv.com/de"')) throw new Error(`${lang}: hreflang de still points at retired /de`);
   if (lang !== 'de') {
-    // The German homepage title/description must NOT survive in another language.
-    if (html.includes(`<title>${escText(HOME_META.de.t)}</title>`)) throw new Error(`${lang}.html: German <title> leaked`);
-    // A localized body sentinel must be present (proves the body was localized).
+    if (html.includes(`<title>${escText(HOME_META.de.t)}</title>`)) throw new Error(`${lang}: German <title> leaked`);
     const heroTitle = escText(translate(translations, lang, 'hero_title1'));
-    if (!html.includes(heroTitle)) throw new Error(`${lang}.html: localized H1 sentinel "${heroTitle}" missing from body`);
+    if (!html.includes(heroTitle)) throw new Error(`${lang}: localized H1 sentinel "${heroTitle}" missing from body`);
   }
   const websiteCount = (html.match(/"@type":\s*"WebSite"/g) || []).length;
-  if (websiteCount !== 1) throw new Error(`${lang}.html: expected exactly one WebSite JSON-LD node, found ${websiteCount}`);
-  if (html.includes('"sameAs": []')) throw new Error(`${lang}.html: empty Organization sameAs must not be emitted`);
-  if (!html.includes('"availableLanguage": [') || !html.includes('"Turkish"')) throw new Error(`${lang}.html: Organization availableLanguage missing Turkish`);
-  if (!html.includes(`"inLanguage": "${HOME_LOCALES[lang]}"`)) throw new Error(`${lang}.html: WebPage language is not localized`);
+  if (websiteCount !== 1) throw new Error(`${lang}: expected exactly one WebSite JSON-LD node, found ${websiteCount}`);
+  if (html.includes('"sameAs": []')) throw new Error(`${lang}: empty Organization sameAs must not be emitted`);
+  if (!html.includes('"availableLanguage": [') || !html.includes('"Turkish"')) throw new Error(`${lang}: Organization availableLanguage missing Turkish`);
+  if (!html.includes(`"inLanguage": "${HOME_LOCALES[lang]}"`)) throw new Error(`${lang}: WebPage language is not localized`);
+  if (!html.includes(`"name": ${JSON.stringify(HOME_META[lang].t)}`)) throw new Error(`${lang}: WebPage JSON-LD name not localized`);
+  if (!html.includes(`"description": ${JSON.stringify(HOME_META[lang].d)}`)) throw new Error(`${lang}: WebPage JSON-LD description not localized`);
   const knownAnchors = Object.values({ about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' });
   for (const href of knownAnchors) {
-    if (html.includes(`data-fn-arg="${href.slice(1, -5)}" href="#"`)) throw new Error(`${lang}.html: known internal page still uses href="#" (${href})`);
+    if (html.includes(`data-fn-arg="${href.slice(1, -5)}" href="#"`)) throw new Error(`${lang}: known internal page still uses href="#" (${href})`);
   }
 }
 
@@ -154,14 +150,9 @@ function main() {
   const translations = extractTranslations(appJs);
   assertTranslationsComplete(translations);
 
-  // Normalize the German root too: / is the canonical German homepage and is
-  // what Google receives without any language-specific prerender step.
   const rootHtml = hardenHomeSeoHtml(localizeHomeHtml(src, 'de', translations), 'de');
+  assertGeneratedFile(rootHtml, 'de', translations, `${SITE}/`);
   writeFileSync(indexPath, rootHtml);
-  if (rootHtml && !rootHtml.includes('href="https://airpiv/')) {
-    // Keep the assertion block below authoritative; this branch intentionally
-    // avoids introducing a hard-coded content replacement.
-  }
 
   let wrote = 0;
   for (const lang of HOME_LANGS) {
@@ -180,7 +171,7 @@ if (isMain) {
     main();
   } catch (err) {
     console.error('[prerender-localized-homes] FATAL:', err && err.message);
-    process.exit(1); // fail the build — never deploy a silent German fallback
+    process.exit(1);
   }
 }
 
