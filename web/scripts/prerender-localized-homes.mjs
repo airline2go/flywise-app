@@ -122,7 +122,7 @@ function hardenHomeSeoHtml(html, lang) {
   // The confirmation state is hidden until a successful booking flow and must
   // not compete with the single semantic homepage H1. Keep the visual markup
   // unchanged while making the heading hierarchy unambiguous to crawlers.
-  out = out.replace(/<h1(\b[^>]*data-i18n=\"confirm_title\"[^>]*)>/gi, '<h2$1>');
+  out = out.replace(/<h1(\b[^>]*data-i18n=\"confirm_title\"[^>]*)>([\s\S]*?)<\/h1>/gi, '<h2$1>$2</h2>');
 
   const pageMap = { about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' };
   out = out.replace(/<a\b[^>]*>/gi, (tag) => {
