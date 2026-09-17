@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
-test('localized route sitemap uses the dedicated backend origin by default', async () => {
-  const previousBase = process.env.SITEMAP_API_BASE;
+test('localized route sitemap uses the fixed production backend origin and cache namespace', async () => {
   const previousFetch = globalThis.fetch;
-  delete process.env.SITEMAP_API_BASE;
 
   const calls = [];
   globalThis.fetch = async (url, options) => {
@@ -28,12 +27,10 @@ test('localized route sitemap uses the dedicated backend origin by default', asy
     assert.equal(calls.length, 1);
     assert.equal(
       calls[0].url,
-      'https://flywise-server-eu.onrender.com/sitemap-data/routes-localized?lang=en&page=0',
+      'https://flywise-server-eu.onrender.com/sitemap-data/routes-localized?lang=en&page=0&v=2',
     );
     assert.deepEqual(calls[0].options.next, { revalidate: 900 });
   } finally {
     globalThis.fetch = previousFetch;
-    if (previousBase == null) delete process.env.SITEMAP_API_BASE;
-    else process.env.SITEMAP_API_BASE = previousBase;
   }
 });
