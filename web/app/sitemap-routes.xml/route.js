@@ -16,12 +16,14 @@ const LANGS = LANGUAGE_CODES;
 const ROUTE_SITEMAP_URL_LIMIT = 50000;
 
 function resolveLastmod(...values) {
+  let latestMs = -Infinity;
   for (const value of values) {
     if (!value) continue;
     const date = new Date(value);
-    if (!Number.isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+    const ms = date.getTime();
+    if (!Number.isNaN(ms) && ms > latestMs) latestMs = ms;
   }
-  return null;
+  return latestMs === -Infinity ? null : new Date(latestMs).toISOString().slice(0, 10);
 }
 
 function normalizeRoute(route) {
@@ -40,7 +42,6 @@ export async function GET() {
     .map(normalizeRoute)
     .filter(Boolean);
 
-  // Canonical duplicate winners are the only URLs allowed into the sitemap.
   const loserSlugs = buildCanonicalSlugMap(selected);
   const canonicalRoutes = selected.filter((route) => !loserSlugs.has(route.id));
   const floor = SEO_TEMPLATE_VERSIONS.routes;
