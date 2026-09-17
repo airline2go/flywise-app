@@ -59,3 +59,12 @@ test('injects route search into the main route document and removes the legacy p
   assert.doesNotMatch(html, /Last checked/i);
   assert.ok(html.indexOf('<div class="route-search-panel"') < html.indexOf('</main>'));
 });
+
+test('panel heading states the exact city pair (Flights from X to Y), localized', () => {
+  const en = renderPanel(route, 'en');
+  assert.match(en, /<h2 class="route-search-title">Flights from Alicante to Barcelona<\/h2>/);
+  const de = renderPanel(route, 'de');
+  assert.match(de, /<h2 class="route-search-title">Flüge von Alicante nach Barcelona<\/h2>/);
+  const ar = renderPanel(route, 'ar');
+  assert.match(ar, /route-search-title">رحلات من /);
+});
