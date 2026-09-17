@@ -19,6 +19,27 @@ function evidencePolicyEnforced() {
     || process.env.SEO_EVIDENCE_POLICY_ENFORCED === 'true';
 }
 
+// [SEO-ROUTE-DEMAND-GATE] Mirror of the backend strong-prune switch
+// (flywise-server/src/services/indexability.js). Production honors the API's
+// `indexable` verdict verbatim, so this only affects the offline/fixture
+// fallback — but the two files must stay identical IN INTENT. Default OFF.
+function routeDemandGateEnabled() {
+  return process.env.SEO_ROUTE_DEMAND_GATE === '1'
+    || process.env.SEO_ROUTE_DEMAND_GATE === 'true';
+}
+
+function routeMinScore() {
+  const n = Number(process.env.SEO_ROUTE_MIN_SCORE);
+  return Number.isFinite(n) && n >= 0 ? n : 0.2;
+}
+
+function hasRouteDemandSignal(r) {
+  if (!r) return false;
+  if (validPositiveNumber(r.route_score) && Number(r.route_score) >= routeMinScore()) return true;
+  if (validPositiveInteger(r.weekly_flights)) return true;
+  return false;
+}
+
 function validPositiveInteger(value) {
   const n = Number(value);
   return Number.isInteger(n) && n > 0;
@@ -66,16 +87,25 @@ function hasLegacyRouteData(r) {
 
 function getRouteIndexabilityDecision(r, opts = {}) {
   const enforce = opts.enforce != null ? opts.enforce : evidencePolicyEnforced();
+  const demandGate = opts.demandGate != null ? opts.demandGate : routeDemandGateEnabled();
   const evidence = hasVerifiedFlightEvidence(r);
   const manual = hasManualEditorialContent(r);
-  const indexable = enforce ? (evidence || manual) : (hasLegacyRouteData(r) || manual);
+  const demand = hasRouteDemandSignal(r);
+  const demandOk = !demandGate || manual || demand;
+  const indexable = enforce ? ((evidence || manual) && demandOk) : (hasLegacyRouteData(r) || manual);
   const reason = enforce
-    ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : (manual ? 'MANUAL EDITORIAL CONTENT' : 'NO VERIFIED FLIGHT EVIDENCE'))
+    ? ((evidence || manual)
+      ? (demandOk
+        ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
+        : 'NO DEMAND SIGNAL (pruned)')
+      : 'NO VERIFIED FLIGHT EVIDENCE')
     : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)');
   return {
     indexable,
     verifiedEvidence: evidence,
     manualContent: manual,
+    demandSignal: demand,
+    demandGate,
     enforce,
     reason,
     signals: {
@@ -91,6 +121,9 @@ function getRouteIndexabilityDecision(r, opts = {}) {
 
 module.exports = {
   evidencePolicyEnforced,
+  routeDemandGateEnabled,
+  routeMinScore,
+  hasRouteDemandSignal,
   hasVerifiedFlightEvidence,
   hasManualEditorialContent,
   getRouteIndexabilityDecision,
