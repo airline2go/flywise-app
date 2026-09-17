@@ -58,8 +58,9 @@ export async function GET() {
   }
 
   const deRoutes = new Map(canonicalRoutes.map((route) => [route.id, route]));
+  const coreSlugs = canonicalRoutes.map((route) => route.id);
   const localized = await Promise.all(
-    LANGS.filter((lang) => lang !== 'de').map((lang) => listLocalizedRouteSitemap(lang)),
+    LANGS.filter((lang) => lang !== 'de').map((lang) => listLocalizedRouteSitemap(lang, coreSlugs)),
   );
 
   LANGS.filter((lang) => lang !== 'de').forEach((lang, index) => {
