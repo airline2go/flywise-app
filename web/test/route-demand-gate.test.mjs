@@ -10,6 +10,8 @@ const require = createRequire(import.meta.url);
 const {
   getRouteIndexabilityDecision,
   hasRouteDemandSignal,
+  hasFreshRouteData,
+  routeDataMaxAgeMs,
   routeDemandGateEnabled,
   routeMinScore,
 } = require('../lib/legacy-render/route-evidence.js');
@@ -19,6 +21,7 @@ const EVIDENCE = Object.freeze({
   stop_distribution: { 0: 3, 1: 1 },
   price_sample_count: 5,
   itinerary_count: 8,
+  insights_updated_at: new Date().toISOString(),
 });
 
 test('demand gate defaults OFF: evidence-only route stays indexable', () => {
@@ -46,6 +49,34 @@ test('gate ON keeps a route with a real popularity score or weekly flights', () 
 
 test('gate ON never prunes manual editorial content', () => {
   assert.equal(getRouteIndexabilityDecision({ intro_text: 'Guide.' }, { demandGate: true }).indexable, true);
+});
+
+test('gate ON prunes stale route evidence even with demand', () => {
+  const d = getRouteIndexabilityDecision({ ...EVIDENCE, route_score: 5, insights_updated_at: '2026-01-01T00:00:00.000Z' }, { demandGate: true });
+  assert.equal(d.indexable, false);
+  assert.equal(d.reason, 'STALE ROUTE DATA (pruned)');
+  assert.equal(d.routeDataFresh, false);
+});
+
+test('gate ON keeps fresh route evidence with demand', () => {
+  const d = getRouteIndexabilityDecision({ ...EVIDENCE, route_score: 1.5 }, { demandGate: true });
+  assert.equal(d.indexable, true);
+  assert.equal(d.routeDataFresh, true);
+});
+
+test('gate ON manual editorial content bypasses route-data freshness', () => {
+  const d = getRouteIndexabilityDecision({ intro_text: 'Guide.', insights_updated_at: '2026-01-01T00:00:00.000Z' }, { demandGate: true });
+  assert.equal(d.indexable, true);
+  assert.equal(d.reason, 'MANUAL EDITORIAL CONTENT');
+});
+
+test('freshness uses a 30-day default and rejects missing/future timestamps', () => {
+  const now = Date.parse('2026-09-17T00:00:00.000Z');
+  assert.equal(routeDataMaxAgeMs(), 30 * 24 * 60 * 60 * 1000);
+  assert.equal(hasFreshRouteData({ insights_updated_at: '2026-09-01T00:00:00.000Z' }, now), true);
+  assert.equal(hasFreshRouteData({ insights_updated_at: '2026-07-01T00:00:00.000Z' }, now), false);
+  assert.equal(hasFreshRouteData({ insights_updated_at: '2026-09-18T00:00:00.000Z' }, now), false);
+  assert.equal(hasFreshRouteData({}, now), false);
 });
 
 test('explicit backend noindex cannot be resurrected by local editorial content', () => {
