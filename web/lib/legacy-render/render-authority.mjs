@@ -187,8 +187,8 @@ export async function renderAuthorityHtml(lang = 'de') {
     url: canonical,
     inLanguage: activeLang === 'de' ? 'de-DE' : 'en-GB',
     dateModified: generatedAt,
-    creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' },
-    publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com' },
+    creator: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' },
+    publisher: { '@type': 'Organization', name: 'Airpiv', url: 'https://airpiv.com', logo: 'https://airpiv.com/apple-touch-icon.png' },
     variableMeasured: [
       'Published route records',
       'Unique directional airport pairs',
