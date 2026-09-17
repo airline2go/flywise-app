@@ -10,8 +10,8 @@ const {
   getRouteIndexabilityDecision,
 } = require('../lib/legacy-render/route-evidence.js');
 
-test('frontend recovery core contains exactly 60 routes', () => {
-  assert.equal(SEO_CORE_ROUTES.size, 60);
+test('frontend recovery core contains exactly 70 routes', () => {
+  assert.equal(SEO_CORE_ROUTES.size, 70);
 });
 
 test('recovery core is enabled by default and can be rolled back', () => {
@@ -28,7 +28,8 @@ test('known core route is allowed and unknown route is not', () => {
   assert.equal(isSeoCoreRoute('lgw-pmi'), true);
   assert.equal(isSeoCoreRoute('zrh-jfk'), true);
   assert.equal(isSeoCoreRoute('palma-de-mallorca-duesseldorf'), true);
-  assert.equal(isSeoCoreRoute('berlin-copenhagen'), true);
+  assert.equal(isSeoCoreRoute('alicante-barcelona'), true);
+  assert.equal(isSeoCoreRoute('ibiza-duesseldorf'), true);
   assert.equal(isSeoCoreRoute('outside-core'), false);
 });
 
