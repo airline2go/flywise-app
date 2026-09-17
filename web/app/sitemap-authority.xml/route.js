@@ -7,6 +7,8 @@ const URLS = [
   'https://airpiv.com/en/research/route-network',
   'https://airpiv.com/research/germany-airport-connectivity',
   'https://airpiv.com/en/research/germany-airport-connectivity',
+  'https://airpiv.com/research/germany-europe-flight-network',
+  'https://airpiv.com/en/research/germany-europe-flight-network',
 ];
 
 export const revalidate = 3600;
