@@ -1,0 +1,1 @@
+SEO build sentinel: localized homepage metadata is sourced from web/lib/home-i18n.mjs. Turkish description must remain non-empty and localized.
