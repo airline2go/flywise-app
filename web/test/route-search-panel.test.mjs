@@ -30,7 +30,7 @@ test('renders a connected route search form using the existing search contract',
   assert.match(html, /Barcelona/);
   assert.match(html, /30 €/);
   assert.match(html, /1h 34m/);
-  assert.doesNotMatch(html, /<style\b/i);
+  assert.match(html, /<style\b/i);
 });
 
 test('renders a data-backed route snapshot brief without inventing fields', () => {
@@ -42,17 +42,20 @@ test('renders a data-backed route snapshot brief without inventing fields', () =
   assert.match(html, /30 €/);
   assert.match(html, /1h 34m/);
   assert.match(html, /406 km/);
-  assert.match(html, /Available/);
+  assert.match(html, /Direct flights/);
   assert.match(html, /2/);
   assert.doesNotMatch(html, /live price/i);
 });
 
-test('injects panel markup and styles safely into the full route document', () => {
-  const source = '<html><head><title>Route</title></head><body><div class="route-price-box" id="route-price-box">price</div></body></html>';
+test('injects route search into the main route document and removes the legacy price block', () => {
+  const source = '<html><head><title>Route</title></head><body><main id="route-main"><div class="route-price-box" id="route-price-box">price</div></main></body></html>';
   const html = renderRouteSearchPanelHtml(source, route, 'en');
 
   assert.match(html, /<style id="route-search-panel-styles">/);
   assert.equal((html.match(/id="route-search-panel-styles"/g) || []).length, 1);
-  assert.ok(html.indexOf('<style id="route-search-panel-styles">') < html.indexOf('<div class="route-search-panel"'));
-  assert.ok(html.indexOf('<div class="route-search-panel"') < html.indexOf('<div class="route-price-box"'));
+  assert.match(html, /<div class="route-search-panel"/);
+  assert.doesNotMatch(html, /id="route-price-box"/);
+  assert.doesNotMatch(html, /Search flights now/i);
+  assert.doesNotMatch(html, /Last checked/i);
+  assert.ok(html.indexOf('<div class="route-search-panel"') < html.indexOf('</main>'));
 });
