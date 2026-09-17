@@ -1,10 +1,13 @@
-const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
+// [SITEMAP-ORIGIN] The localized sitemap feed is a build-time discovery
+// endpoint. Use the backend origin directly so an API/edge proxy issue cannot
+// silently turn every localized fetch into an empty fail-closed sitemap.
+const SITEMAP_API_BASE = process.env.SITEMAP_API_BASE || 'https://flywise-server-eu.onrender.com';
 const REVALIDATE = 900;
 
 // Uses the backend's generated locale rows as the authoritative discovery set.
 // Backend pagination is intentionally bounded to keep sitemap builds reliable.
 async function fetchPage(lang, page) {
-  const url = `${API_BASE}/sitemap-data/routes-localized?lang=${encodeURIComponent(lang)}&page=${page}`;
+  const url = `${SITEMAP_API_BASE}/sitemap-data/routes-localized?lang=${encodeURIComponent(lang)}&page=${page}`;
   const res = await fetch(url, { next: { revalidate: REVALIDATE } });
   if (!res.ok) throw new Error(`HTTP ${res.status} for localized route sitemap ${lang} page ${page}`);
   return res.json();
