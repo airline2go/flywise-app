@@ -13,17 +13,14 @@ import { getAvailableRouteHreflang, stripUnavailableRouteHreflang } from '@/lib/
 import { pathFor } from '@/lib/legacy-render/languages';
 import { withRouteLocale } from '@/lib/route-locale-context';
 
-// Route catalogue changes can happen outside a frontend deploy; keep the
-// on-demand safety-net short enough that a newly published route does not
-// remain a cached 404 for more than 15 minutes. Admin publishes still
-// revalidate immediately through /api/revalidate.
+// [ISR-DIAGNOSTIC] The route data itself remains cached through the individual
+// content-api/search-data fetches. The route handler must execute on a fresh
+// request so the connected search hub cannot be suppressed by a persisted
+// static HTML response from an earlier deployment. This is a diagnostic step;
+// CDN/ISR response caching will be restored only after the fresh-render path is
+// verified end-to-end.
 export const revalidate = 900;
-// Let Next/Vercel apply the ISR policy from the route's revalidate setting and
-// its cacheable fetches. Forcing `force-static` caused this dynamic slug handler
-// to remain a static route output across deployments, which could preserve an
-// older HTML shell even after code changes. `auto` keeps cached data while
-// allowing the handler to execute when an ISR entry is regenerated.
-export const dynamic = 'auto';
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];
