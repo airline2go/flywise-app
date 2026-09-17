@@ -9,13 +9,18 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const require = createRequire(import.meta.url);
 
 
-test('route discovery hub exposes only canonical indexable routes and paginates at 500', () => {
+test('route discovery hub exposes only canonical core routes and paginates at 50', () => {
   const helper = read('lib/legacy-render/route-sitemap.js');
   const renderer = require(path.join(root, 'lib/legacy-render/render-route-sitemap.js'));
-  assert.match(helper, /route\.indexable !== false/);
+  const evidence = require(path.join(root, 'lib/legacy-render/route-evidence.js'));
+  assert.match(helper, /isRouteSitemapEligible\(route\)/);
   assert.match(helper, /!loserMap\.has\(route\.slug\)/);
   assert.match(helper, /ROUTES_PER_PAGE/);
-  assert.equal(renderer.ROUTES_PER_PAGE, 500);
+  assert.equal(renderer.ROUTES_PER_PAGE, evidence.SEO_ROUTE_SITEMAP_PAGE_SIZE);
+  assert.equal(evidence.SEO_ROUTE_SITEMAP_PAGE_SIZE, 50);
+  assert.equal(evidence.isRouteSitemapEligible({ slug: 'lgw-pmi', indexable: true }), true);
+  assert.equal(evidence.isRouteSitemapEligible({ slug: 'lgw-ams', indexable: true }), false);
+  assert.equal(evidence.isRouteSitemapEligible({ slug: 'lgw-pmi', indexable: false }), false);
 
   const rendered = renderer.renderRouteSitemapPage({
     routes: [],
