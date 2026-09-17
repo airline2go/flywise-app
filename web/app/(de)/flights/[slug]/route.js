@@ -4,6 +4,7 @@ import { renderFlightRouteHtml, resolveFlightRedirect } from '@/lib/legacy-rende
 import { renderCanonicalRoutePriceHtml } from '@/lib/legacy-render/route-html-enhance';
 import { resolveRouteSlugAlias } from '@/lib/legacy-render/route-alias';
 import { htmlResponse, redirectResponse } from '@/lib/legacy-render/serve';
+import { getAvailableRouteHreflang, stripUnavailableRouteHreflang } from '@/lib/route-hreflang';
 import { pathFor } from '@/lib/legacy-render/languages';
 
 // Route catalogue changes can happen outside a frontend deploy; keep the
@@ -35,5 +36,18 @@ export async function GET(_req, { params }) {
   if (redirect) return redirectResponse(pathFor('de', `flights/${encodeURIComponent(redirect.target)}`), redirect.status);
 
   const html = await renderFlightRouteHtml(slug, 'de');
-  return htmlResponse(await renderCanonicalRoutePriceHtml(html, slug, 'de'));
+  const rendered = await renderCanonicalRoutePriceHtml(html, slug, 'de');
+  try {
+    // A noindex route must not advertise reciprocal language alternates.
+    // Detect the final SSR robots verdict rather than re-implementing the
+    // backend indexability policy in this handler.
+    const robotsTag = rendered.match(/<meta\b[^>]*\bname=["']robots["'][^>]*>/i)?.[0] || '';
+    const noindex = /\bnoindex\b/i.test(robotsTag);
+    const available = noindex ? new Set() : await getAvailableRouteHreflang(slug);
+    return htmlResponse(stripUnavailableRouteHreflang(rendered, available));
+  } catch {
+    // Hreflang filtering is a safety layer. A temporary availability-endpoint
+    // failure must never turn an otherwise healthy route page into a 5xx.
+    return htmlResponse(rendered);
+  }
 }

@@ -2,15 +2,16 @@ const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity } = require('./data');
 const { translate } = require('./translate');
 const { getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { SEO_ROUTE_SITEMAP_PAGE_SIZE } = require('./route-evidence');
 
-const ROUTES_PER_PAGE = 500;
+const ROUTES_PER_PAGE = SEO_ROUTE_SITEMAP_PAGE_SIZE;
 
 function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
   const locale = getLanguage(lang).locale;
   const title = lang === 'en' ? `Flight routes sitemap ${page} | Airpiv` : `Flugrouten-Sitemap ${page} | Airpiv`;
   const description = lang === 'en'
-    ? `Browse 500 real, indexable Airpiv flight routes. Page ${page} of ${totalPages}.`
-    : `500 echte, indexierbare Airpiv-Flugrouten durchsuchen. Seite ${page} von ${totalPages}.`;
+    ? `Browse ${routes.length} verified Airpiv flight routes. Page ${page} of ${totalPages}.`
+    : `${routes.length} verifizierte Airpiv-Flugrouten durchsuchen. Seite ${page} von ${totalPages}.`;
   const urls = urlsFor(`sitemap/routes/${page}`);
   const url = urls[lang];
 
