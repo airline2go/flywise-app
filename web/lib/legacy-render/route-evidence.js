@@ -174,6 +174,12 @@ function getRouteIndexabilityDecision(r, opts = {}) {
   };
 }
 
+function isRouteSitemapEligible(r) {
+  if (!r || !r.slug || !isSeoCoreRoute(r.slug)) return false;
+  if (r.indexable === false) return false;
+  return getRouteIndexabilityDecision(r).indexable;
+}
+
 module.exports = {
   evidencePolicyEnforced,
   routeDemandGateEnabled,
@@ -184,6 +190,7 @@ module.exports = {
   hasVerifiedFlightEvidence,
   hasManualEditorialContent,
   getRouteIndexabilityDecision,
+  isRouteSitemapEligible,
   hasLegacyRouteData,
   seoCoreOnlyEnabled,
   isSeoCoreRoute,
