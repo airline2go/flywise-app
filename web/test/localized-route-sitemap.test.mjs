@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
 test('localized route sitemap uses the dedicated backend origin by default', async () => {
   const previousBase = process.env.SITEMAP_API_BASE;
