@@ -96,7 +96,38 @@ function deriveSeoSignals(route, snapshot) {
   return { ...facts, independentFactCount, searchIntentReady: independentFactCount >= 3 };
 }
 
+// [SEO-GENERATED-FRESHNESS] Generated route copy (seo_intro_html/seo_faq)
+// contains persisted operational facts and can become stale independently of
+// the route row's generic updated_at. If either operational insights or price
+// aggregates were refreshed after seo_generated_at, discard only that generated
+// copy and let the renderer fall back to its current data-driven content. This
+// is intentionally code-level: no DB mutation and no invented replacement data.
+function invalidateStaleGeneratedSeo(route) {
+  const hasGeneratedCopy = Boolean(route.seo_intro_html)
+    || (Array.isArray(route.seo_faq) && route.seo_faq.length > 0);
+  if (!hasGeneratedCopy) return false;
+
+  const generatedAt = Date.parse(route.seo_generated_at || '');
+  if (!Number.isFinite(generatedAt)) {
+    route.seo_intro_html = null;
+    route.seo_faq = null;
+    return true;
+  }
+
+  const sourceUpdatedAt = [route.insights_updated_at, route.price_updated_at]
+    .map((value) => Date.parse(value || ''))
+    .filter(Number.isFinite);
+  const stale = sourceUpdatedAt.some((updatedAt) => updatedAt > generatedAt);
+  if (!stale) return false;
+
+  route.seo_intro_html = null;
+  route.seo_faq = null;
+  return true;
+}
+
 function buildRouteSnapshot(route, now = Date.now()) {
+  invalidateStaleGeneratedSeo(route);
+
   const routeAirlines = Array.isArray(route.airlines) ? route.airlines : [];
   const price = resolveCanonicalPrice(route);
   const routeUpdatedAt = route.insights_updated_at
@@ -170,4 +201,4 @@ function criticalSnapshotErrors(route, snapshot) {
   return validateSnapshot(route, snapshot).filter((e) => CRITICAL_PREFIXES.some((p) => e.startsWith(p)));
 }
 
-module.exports = { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice, deriveAirlineCount, deriveStops, deriveSeoSignals };
+module.exports = { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice, deriveAirlineCount, deriveStops, deriveSeoSignals, invalidateStaleGeneratedSeo };
