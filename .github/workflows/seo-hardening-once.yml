@@ -16,7 +16,7 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: Apply exact evidence gates
+      - name: Apply renderer evidence gates
         shell: bash
         run: |
           set -euo pipefail
@@ -31,26 +31,12 @@ jobs:
                   raise SystemExit(f'{label}: expected exactly 1 match, found {count} in {path}')
               p.write_text(s.replace(old, new, 1))
 
-          shell_path = 'web/lib/legacy-render/shell.js'
-          shell = Path(shell_path).read_text()
-          marker = 'const originalTranslate = translationModule.translate;'
-          fastest = """// [ROUTE-FAQ-FASTEST-TRUTH] Minimum observed duration is descriptive only; never infer nonstop/direct service.\nconst FASTEST_ROUTE_COPY = {\n  en: 'The shortest observed flight time for this route is {duration}. Actual journey time can vary by itinerary and schedule.',\n  de: 'Die kürzeste beobachtete Flugzeit auf dieser Strecke beträgt {duration}. Die tatsächliche Reisedauer kann je nach Verbindung und Flugplan variieren.',\n  ar: 'أقصر مدة طيران مرصودة على هذا المسار هي {duration}. قد تختلف مدة الرحلة الفعلية حسب مسار الرحلة والجدول الزمني.',\n  es: 'El tiempo de vuelo observado más corto para esta ruta es de {duration}. La duración real puede variar según el itinerario y el horario.',\n  fr: 'Le temps de vol observé le plus court sur cette route est de {duration}. La durée réelle peut varier selon l’itinéraire et les horaires.',\n  it: 'Il tempo di volo osservato più breve su questa rotta è di {duration}. La durata effettiva può variare in base all’itinerario e all’orario.',\n  nl: 'De kortst waargenomen vliegtijd voor deze route is {duration}. De werkelijke reisduur kan per reisroute en dienstregeling verschillen.',\n  tr: 'Bu rota için gözlemlenen en kısa uçuş süresi {duration}. Gerçek seyahat süresi güzergâha ve tarifeye göre değişebilir.',\n};\nfor (const [lang, value] of Object.entries(FASTEST_ROUTE_COPY)) {\n  ROUTE_COPY_OVERRIDES[lang].routeFaqFastestAnswer = value;\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeQuestion = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerShortHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerMediumHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqBestTimeAnswerLongHaul = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestQuestion = '';\n  ROUTE_COPY_OVERRIDES[lang].routeFaqCheapestAnswer = '';\n}\n\n"""
-          if shell.count(marker) != 1:
-              raise SystemExit('shell translate marker must occur exactly once')
-          shell = shell.replace(marker, fastest + marker, 1)
-          Path(shell_path).write_text(shell)
-
           route_path = 'web/lib/legacy-render/render-flight-route.js'
           fastest_block = '''// [ROUTE-FAQ-EXPANSION] Fastest flight time — only when the minimum flight\n  // time is a persisted field AND is genuinely shorter than the average (i.e.\n  // a nonstop option pulls it below the mixed average); otherwise it would just\n  // restate the duration FAQ. Real Phase 1 data, never fabricated.\n  if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {'''
-          replace_exact(
-              route_path,
-              fastest_block,
-              fastest_block.replace(
-                  'if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {',
-                  'if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {'
-              ),
-              'fastest duration gate',
-          )
+          replace_exact(route_path, fastest_block, fastest_block.replace(
+              'if (route.min_duration_min != null && route.avg_duration_min != null && route.min_duration_min < route.avg_duration_min) {',
+              'if (Number.isFinite(Number(route.min_duration_min)) && Number(route.min_duration_min) > 0) {'
+          ), 'fastest duration gate')
           replace_exact(
               route_path,
               'const items = [bestTimeFaqItem, haulQuestion];',
