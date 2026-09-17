@@ -27,10 +27,21 @@ const HOME_LOCALES = {
   de: 'de-DE', en: 'en-US', ar: 'ar-SA', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', nl: 'nl-NL', tr: 'tr-TR',
 };
 
+// Keep the German homepage description within a normal search-snippet length.
+// The message remains strictly limited to product capabilities already stated
+// elsewhere on the homepage; no new commercial or price claim is introduced.
+const GERMAN_HOME_DESCRIPTION = 'Günstige Flüge suchen, vergleichen und buchen auf Airpiv. Vergleichen Sie Flugtickets weltweit, finden Sie Last-Minute-Angebote und transparente Preise.';
+
+function homeMeta(lang) {
+  const base = HOME_META[lang];
+  if (!base) throw new Error(`unknown home language: ${lang}`);
+  return lang === 'de' ? { ...base, d: GERMAN_HOME_DESCRIPTION } : base;
+}
+
 function assertTranslationsComplete(translations) {
   for (const lang of HOME_LANGS) {
     if (!translations[lang] || typeof translations[lang] !== 'object') {
-      throw new Error(`TRANSLATIONS is missing language "${lang}"`);
+      throw new Error(`TRANSLATIONS is missing language \"${lang}\"`);
     }
   }
   for (const lang of HOME_LANGS) {
@@ -38,14 +49,14 @@ function assertTranslationsComplete(translations) {
     for (const key of SENTINEL_KEYS) {
       const val = translate(translations, lang, key);
       const de = translate(translations, 'de', key);
-      if (!val || val === key) throw new Error(`"${lang}" has no translation for sentinel key "${key}"`);
-      if (val === de) throw new Error(`"${lang}" sentinel "${key}" equals German ("${de}") — not localized`);
+      if (!val || val === key) throw new Error(`\"${lang}\" has no translation for sentinel key \"${key}\"`);
+      if (val === de) throw new Error(`\"${lang}\" sentinel \"${key}\" equals German (\"${de}\") — not localized`);
     }
   }
 }
 
 function transformJsonLdBlock(block, lang, state) {
-  const open = block.match(/^\s*<script\b[^>]*type="application\/ld\+json"[^>]*>/i)?.[0] || '<script type="application/ld+json">';
+  const open = block.match(/^\s*<script\b[^>]*type=\"application\/ld\+json\"[^>]*>/i)?.[0] || '<script type="application/ld+json">';
   const close = /<\/script>\s*$/i.test(block) ? '</script>' : '</script>';
   const body = block.slice(open.length, block.length - close.length).trim();
   let data;
@@ -53,7 +64,7 @@ function transformJsonLdBlock(block, lang, state) {
 
   const canonical = lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`;
   const locale = HOME_LOCALES[lang] || 'de-DE';
-  const meta = HOME_META[lang] || HOME_META.de;
+  const meta = homeMeta(lang);
   const list = Array.isArray(data) ? data : [data];
   const kept = [];
 
@@ -97,15 +108,27 @@ function transformJsonLdBlock(block, lang, state) {
 function hardenHomeSeoHtml(html, lang) {
   const state = { seenWebsite: false };
   let out = html.replace(
-    /<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi,
+    /<script\b[^>]*type=\"application\/ld\+json\"[^>]*>[\s\S]*?<\/script>/gi,
     (block) => transformJsonLdBlock(block, lang, state),
   );
 
+  const meta = homeMeta(lang);
+  if (lang === 'de') {
+    out = out.replace(/(<meta\s+name=\"description\"\s+content=\")[^\"]*(\")/i, (_x, a, b) => a + meta.d + b);
+    out = out.replace(/(<meta\s+property=\"og:description\"\s+content=\")[^\"]*(\")/i, (_x, a, b) => a + meta.d + b);
+    out = out.replace(/(<meta\s+name=\"twitter:description\"\s+content=\")[^\"]*(\")/i, (_x, a, b) => a + meta.d + b);
+  }
+
+  // The confirmation state is hidden until a successful booking flow and must
+  // not compete with the single semantic homepage H1. Keep the visual markup
+  // unchanged while making the heading hierarchy unambiguous to crawlers.
+  out = out.replace(/<h1(\b[^>]*data-i18n=\"confirm_title\"[^>]*)>/gi, '<h2$1>');
+
   const pageMap = { about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' };
   out = out.replace(/<a\b[^>]*>/gi, (tag) => {
-    const arg = tag.match(/\bdata-fn-arg="(about|contact|privacy|terms)"/i)?.[1];
-    if (arg && /\bhref="#"/i.test(tag)) return tag.replace(/\bhref="#"/i, `href="${pageMap[arg]}"`);
-    if (/\bclass="[^"]*\blogo\b[^"]*"/i.test(tag) && /\bhref="#"/i.test(tag)) return tag.replace(/\bhref="#"/i, `href="${lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`}"`);
+    const arg = tag.match(/\bdata-fn-arg=\"(about|contact|privacy|terms)\"/i)?.[1];
+    if (arg && /\bhref=\"#\"/i.test(tag)) return tag.replace(/\bhref=\"#\"/i, `href=\"${pageMap[arg]}\"`);
+    if (/\bclass=\"[^\"]*\blogo\b[^\"]*\"/i.test(tag) && /\bhref=\"#\"/i.test(tag)) return tag.replace(/\bhref=\"#\"/i, `href=\"${lang === 'de' ? `${SITE}/` : `${SITE}/${lang}`}\"`);
     return tag;
   });
 
@@ -114,26 +137,28 @@ function hardenHomeSeoHtml(html, lang) {
 
 function assertGeneratedFile(html, lang, translations, expectedCanonical = `${SITE}/${lang}`) {
   const url = expectedCanonical;
-  if (!new RegExp(`<html\\s+lang="${lang}"`).test(html)) throw new Error(`${lang}: <html lang> is not "${lang}"`);
-  if (!html.includes(`href="${url}" id="canonical-url"`)) throw new Error(`${lang}: canonical is not self (${url})`);
-  if (!html.includes(`<title>${escText(HOME_META[lang].t)}</title>`)) throw new Error(`${lang}: <title> not localized`);
-  if (!html.includes('hreflang="de" href="https://airpiv.com/"')) throw new Error(`${lang}: hreflang de not root /`);
-  if (html.includes('hreflang="de" href="https://airpiv.com/de"')) throw new Error(`${lang}: hreflang de still points at retired /de`);
+  const meta = homeMeta(lang);
+  if (!new RegExp(`<html\\s+lang=\"${lang}\"`).test(html)) throw new Error(`${lang}: <html lang> is not \"${lang}\"`);
+  if (!html.includes(`href=\"${url}\" id=\"canonical-url\"`)) throw new Error(`${lang}: canonical is not self (${url})`);
+  if (!html.includes(`<title>${escText(meta.t)}</title>`)) throw new Error(`${lang}: <title> not localized`);
+  if (!html.includes('hreflang=\"de\" href=\"https://airpiv.com/\"')) throw new Error(`${lang}: hreflang de not root /`);
+  if (html.includes('hreflang=\"de\" href=\"https://airpiv.com/de\"')) throw new Error(`${lang}: hreflang de still points at retired /de`);
   if (lang !== 'de') {
     if (html.includes(`<title>${escText(HOME_META.de.t)}</title>`)) throw new Error(`${lang}: German <title> leaked`);
     const heroTitle = escText(translate(translations, lang, 'hero_title1'));
-    if (!html.includes(heroTitle)) throw new Error(`${lang}: localized H1 sentinel "${heroTitle}" missing from body`);
+    if (!html.includes(heroTitle)) throw new Error(`${lang}: localized H1 sentinel \"${heroTitle}\" missing from body`);
   }
-  const websiteCount = (html.match(/"@type":\s*"WebSite"/g) || []).length;
+  const websiteCount = (html.match(/\"@type\":\s*\"WebSite\"/g) || []).length;
   if (websiteCount !== 1) throw new Error(`${lang}: expected exactly one WebSite JSON-LD node, found ${websiteCount}`);
-  if (html.includes('"sameAs": []')) throw new Error(`${lang}: empty Organization sameAs must not be emitted`);
-  if (!html.includes('"availableLanguage": [') || !html.includes('"Turkish"')) throw new Error(`${lang}: Organization availableLanguage missing Turkish`);
-  if (!html.includes(`"inLanguage": "${HOME_LOCALES[lang]}"`)) throw new Error(`${lang}: WebPage language is not localized`);
-  if (!html.includes(`"name": ${JSON.stringify(HOME_META[lang].t)}`)) throw new Error(`${lang}: WebPage JSON-LD name not localized`);
-  if (!html.includes(`"description": ${JSON.stringify(HOME_META[lang].d)}`)) throw new Error(`${lang}: WebPage JSON-LD description not localized`);
+  if (html.includes('\"sameAs\": []')) throw new Error(`${lang}: empty Organization sameAs must not be emitted`);
+  if (!html.includes('\"availableLanguage\": [') || !html.includes('\"Turkish\"')) throw new Error(`${lang}: Organization availableLanguage missing Turkish`);
+  if (!html.includes(`\"inLanguage\": \"${HOME_LOCALES[lang]}\"`)) throw new Error(`${lang}: WebPage language is not localized`);
+  if (!html.includes(`\"name\": ${JSON.stringify(meta.t)}`)) throw new Error(`${lang}: WebPage JSON-LD name not localized`);
+  if (!html.includes(`\"description\": ${JSON.stringify(meta.d)}`)) throw new Error(`${lang}: WebPage JSON-LD description not localized`);
+  if ((html.match(/<h1\b/gi) || []).length !== 1) throw new Error(`${lang}: expected exactly one <h1>`);
   const knownAnchors = Object.values({ about: '/about.html', contact: '/contact.html', privacy: '/privacy.html', terms: '/terms.html' });
   for (const href of knownAnchors) {
-    if (html.includes(`data-fn-arg="${href.slice(1, -5)}" href="#"`)) throw new Error(`${lang}: known internal page still uses href="#" (${href})`);
+    if (html.includes(`data-fn-arg=\"${href.slice(1, -5)}\" href=\"#\"`)) throw new Error(`${lang}: known internal page still uses href=\"#\" (${href})`);
   }
 }
 
