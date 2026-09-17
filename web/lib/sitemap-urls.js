@@ -45,43 +45,40 @@ import {
   applyTemplateFloor,
 } from './sitemap-serialize.mjs';
 
-// Every entity URL exists in all 8 languages (German unprefixed at root, the
-// other 7 under /xx/) — the same rule the pages use for their canonical tag.
 const LANGS = LANGUAGE_CODES;
 
-// Emit one { loc, lastmod } per language for a single relative path.
 function eachLang(relativePath, lastmod, out) {
   for (const lang of LANGS) out.push({ loc: urlFor(lang, relativePath), lastmod });
 }
 
-// All entity builders now consume the dedicated /sitemap-data feed, which pages
-// to completion (unbounded) and returns only indexable rows with a resolved
-// lastmod — so the sitemap lists every indexable page regardless of catalogue
-// size, and the frontend no longer filters indexability itself.
+function freshestLastmod(...values) {
+  let latestMs = -Infinity;
+  for (const value of values) {
+    if (!value) continue;
+    const date = new Date(value);
+    const ms = date.getTime();
+    if (!Number.isNaN(ms) && ms > latestMs) latestMs = ms;
+  }
+  return latestMs === -Infinity ? null : new Date(latestMs).toISOString().slice(0, 10);
+}
 
-// [TEMPLATE-LASTMOD] Each builder floors its entries' data <lastmod> to its
-// type's SEO template version (applyTemplateFloor), so a change to a page type's
-// rendered <title>/meta/copy templates surfaces as a real recrawl signal even
-// when the underlying rows didn't change. A type with a null version is a no-op.
+// All entity builders now consume the dedicated /sitemap-data feed, which
+// pages to completion and returns only indexable rows with a resolved lastmod.
 export async function buildRouteUrls() {
   const routes = await sitemapRoutes();
   const floor = SEO_TEMPLATE_VERSIONS.routes;
-  // [ROUTE-CANONICAL] Exact-duplicate routes (same airport pair, second slug)
-  // canonical to a winner (P0-28), so only the winner belongs in the sitemap —
-  // a non-self-canonical URL must never be listed. Same slug-only winner rule
-  // the renderer uses, so the two never disagree.
   const loserSlugs = buildCanonicalSlugMap(routes);
   const canonicalRoutes = routes.filter((r) => r && r.id && !loserSlugs.has(r.id));
   const urls = [];
 
-  // German is the primary route catalogue. Secondary languages must come from
-  // the backend's generated locale rows, otherwise we can publish /xx/flights/*
-  // URLs that correctly return 404 when localized SEO was never generated.
   const deRoutes = new Map(canonicalRoutes.map((r) => [r.id, r]));
   for (const r of canonicalRoutes) {
     urls.push({
       loc: urlFor('de', `flights/${r.id}`),
-      lastmod: applyTemplateFloor(r.lastmod, floor),
+      lastmod: applyTemplateFloor(
+        freshestLastmod(r.lastmod, r.updated_at, r.insights_updated_at, r.created_at),
+        floor,
+      ),
     });
   }
 
@@ -93,7 +90,10 @@ export async function buildRouteUrls() {
       if (!route) continue;
       urls.push({
         loc: urlFor(lang, `flights/${item.id}`),
-        lastmod: applyTemplateFloor(item.lastmod || route.lastmod, floor),
+        lastmod: applyTemplateFloor(
+          freshestLastmod(item.lastmod, route.lastmod, route.updated_at, route.insights_updated_at, route.created_at),
+          floor,
+        ),
       });
     }
   }
@@ -117,14 +117,6 @@ export async function buildCountryUrls() {
 }
 
 export async function buildAirportUrls() {
-  // [P0-10] Airport indexability comes from ONE backend decision
-  // (/sitemap-data/airports) that covers BOTH authoritative and fallback
-  // airports with the exact rule the renderer applies — so a fallback airport
-  // with <2 distinct destinations is noindex in the renderer AND absent here
-  // (previously it leaked into the sitemap because it had no authoritative row
-  // to be flagged false). Freshest per-airport date still comes from the routes
-  // feed. If the backend feed isn't deployed yet, fall back to the prior rule
-  // (routes set minus /airports-flagged-false) so nothing regresses mid-deploy.
   const [routes, feed] = await Promise.all([sitemapRoutes(), sitemapAirports()]);
   const routeLastmods = new Map(airportLastmods(routes));
   const floor = SEO_TEMPLATE_VERSIONS.airports;
@@ -139,7 +131,6 @@ export async function buildAirportUrls() {
     return urls;
   }
 
-  // Deploy-order fallback: prior behaviour.
   const airports = await listAirports();
   const nonIndexable = new Set(airports.filter((a) => a.indexable === false).map((a) => a.iata_code));
   for (const [code, lastmod] of routeLastmods) {
@@ -158,9 +149,6 @@ export async function buildAirlineUrls() {
 }
 
 export async function buildBlogUrls() {
-  // Each language has its OWN blog slugs (German from the base list, the others
-  // from blog_post_translations). Blog posts are hand-written published articles
-  // — never thin — so there is no indexable gate.
   const floor = SEO_TEMPLATE_VERSIONS.blog;
   const urls = [];
   for (const lang of LANGS) {
@@ -171,12 +159,6 @@ export async function buildBlogUrls() {
 }
 
 export async function buildPopularUrls() {
-  // The crawlable hub pages (/sitemap + /popular) in every language — no
-  // meaningful per-entry lastmod, so they carry none.
-  // The route-directory seed pages are included here deliberately: XML sitemap
-  // discovery gives Googlebot a guaranteed entry point into the paginated HTML
-  // route graph, which then exposes every canonical/indexable route through
-  // ordinary followable links. These are discovery hubs, not search-result pages.
   const urls = [];
   for (const lang of LANGS) {
     urls.push({ loc: urlFor(lang, 'sitemap'), lastmod: null });
@@ -186,12 +168,6 @@ export async function buildPopularUrls() {
   return urls;
 }
 
-// [REVIEWS] The central /reviews hub in every language — but ONLY when it is
-// actually indexable (§27). The page renders `noindex` while it has zero
-// published reviews (thin), so it must not be listed until real reviews exist;
-// we gate on the live global aggregate. getReviews never throws, so a backend
-// blip simply omits /reviews (conservative) rather than listing a page that
-// might be noindex. No per-entry lastmod (a hub page, like /popular).
 export async function buildReviewsUrls() {
   const { aggregate } = await getReviews({ limit: 1 });
   if (!aggregate || !aggregate.count) return [];
@@ -200,18 +176,10 @@ export async function buildReviewsUrls() {
   return urls;
 }
 
-// Static marketing/legal pages (home + about + legal). The list + serialization
-// live in sitemap-serialize.mjs (pageUrls) so they're unit-testable without
-// importing this module's content-api/react dependency chain.
 export async function buildPageUrls() {
   return pageUrls();
 }
 
-// ─── The sitemap registry — single source of truth for the index + shards ──
-// Ordered list of every per-type sitemap. The dynamic index route iterates it,
-// the per-type root routes bind one entry each, and the overflow shard route
-// resolves a `<type>-<n>.xml` request through SITEMAP_BUILDERS. Adding a type
-// here wires it into all three automatically.
 export const SITEMAP_TYPES = [
   { name: 'pages', build: buildPageUrls },
   { name: 'routes', build: buildRouteUrls },
@@ -225,9 +193,6 @@ export const SITEMAP_TYPES = [
 ];
 export const SITEMAP_BUILDERS = Object.fromEntries(SITEMAP_TYPES.map((t) => [t.name, t.build]));
 
-// Build the full <sitemapindex>: for every type, shard its URLs and reference
-// each shard (with the shard's own newest <lastmod>). Types with no indexable
-// URLs contribute nothing (no orphan references).
 export async function buildSitemapIndex() {
   const entries = [];
   for (const { name, build } of SITEMAP_TYPES) {
@@ -239,5 +204,4 @@ export async function buildSitemapIndex() {
   return sitemapIndexXml(entries);
 }
 
-// Re-exported so the route handlers import everything sitemap-related from here.
 export { urlsetXml, chunkUrls, shardLoc };
