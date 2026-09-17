@@ -2,8 +2,9 @@ const { escHtml, renderShell, jsonLdScript, homeHref } = require('./shell');
 const { localizeCity } = require('./data');
 const { translate } = require('./translate');
 const { getLanguage, pathFor, urlFor, urlsFor } = require('./languages');
+const { SEO_ROUTE_SITEMAP_PAGE_SIZE } = require('./route-evidence');
 
-const ROUTES_PER_PAGE = 50;
+const ROUTES_PER_PAGE = SEO_ROUTE_SITEMAP_PAGE_SIZE;
 
 function renderRouteSitemapPage({ routes, lang, page, totalPages }) {
   const locale = getLanguage(lang).locale;
