@@ -10,7 +10,7 @@ export async function getAvailableRouteHreflang(slug) {
 }
 
 export function stripUnavailableRouteHreflang(html, available) {
-  if (!(available instanceof Set) || available.size === 0) return html;
+  if (!(available instanceof Set)) return html;
   return String(html).replace(/<link\b[^>]*\brel=["']alternate["'][^>]*>/gi, (tag) => {
     const match = tag.match(/\bhreflang=["']([^"']+)["']/i);
     if (!match) return tag;
