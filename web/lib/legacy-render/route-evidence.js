@@ -7,11 +7,33 @@
 // and both the backend (sitemap / indexable flag / connectivity) and this
 // renderer must reach the same verdict for the same route.
 //
-// distance_km is NEVER flight evidence. airline_count = 0 is NEVER evidence.
-// Only genuine flight-data signals — observed carriers, a real duration, a
-// real stop distribution, verified price sampling, or observed itineraries —
-// or approved manual editorial content makes a route indexable.
+// The active recovery phase additionally exposes only a versioned 50-route
+// core. The backend is authoritative in production; this mirror keeps the
+// fallback fail-closed during partial deploys and offline/fixture renders.
 // ═══════════════════════════════════════════════════════════════════════
+
+const SEO_CORE_ROUTES = new Set([
+  'london-athens', 'madrid-zuerich', 'hamburg-barcelona-2', 'duesseldorf-palma-de-mallorca',
+  'ber-bud', 'lgw-pmi', 'ibiza-frankfurt', 'las-palmas-hamburg', 'paris-zuerich',
+  'lisbon-barcelona', 'stockholm-paris', 'stockholm-frankfurt', 'barcelona-dublin',
+  'ber-jfk', 'barcelona-frankfurt', 'berlin-athens', 'berlin-barcelona', 'berlin-amsterdam',
+  'berlin-rome', 'berlin-lisbon', 'zuerich-amsterdam', 'madrid-berlin', 'berlin-istanbul',
+  'barcelona-zuerich', 'palma-de-mallorca-hamburg', 'barcelona-amsterdam', 'malaga-paris',
+  'copenhagen-berlin', 'istanbul-london', 'frankfurt-zuerich', 'paris-copenhagen',
+  'zuerich-rome', 'zuerich-lisbon', 'auh-ath', 'auh-ber', 'zuerich-istanbul', 'ber-ord',
+  'palma-de-mallorca-malaga', 'london-zuerich', 'barcelona-madrid', 'alicante-berlin',
+  'muc-gva', 'malaga-munich', 'barcelona-paris', 'stockholm-zuerich', 'london-amsterdam',
+  'frankfurt-berlin', 'tenerife-berlin', 'auh-prg', 'zrh-jfk',
+]);
+
+function seoCoreOnlyEnabled() {
+  if (process.env.SEO_ROUTE_CORE_ONLY == null) return true;
+  return process.env.SEO_ROUTE_CORE_ONLY === '1' || process.env.SEO_ROUTE_CORE_ONLY === 'true';
+}
+
+function isSeoCoreRoute(slug) {
+  return typeof slug === 'string' && SEO_CORE_ROUTES.has(slug);
+}
 
 function evidencePolicyEnforced() {
   if (process.env.SEO_EVIDENCE_POLICY_ENFORCED == null) return true;
@@ -33,8 +55,6 @@ function routeMinScore() {
   return Number.isFinite(n) && n >= 0 ? n : 0.2;
 }
 
-// Keep route-data freshness separate from price freshness. A current price
-// does not make a stale duration/stops/itinerary snapshot current.
 function routeDataMaxAgeMs() {
   const days = Number(process.env.SEO_ROUTE_DATA_MAX_AGE_DAYS);
   const effectiveDays = Number.isFinite(days) && days > 0 ? days : 30;
@@ -77,13 +97,6 @@ function hasRealStopDistribution(sd) {
     && entries.some(([, value]) => Number(value) > 0);
 }
 
-// [SEO-GSC-COMPOUND-EVIDENCE] GSC shows a long tail of route URLs receiving
-// impressions without meaningful ranking. A carrier count by itself is a
-// weak freshness/route-quality signal and can survive after richer route
-// evidence has gone stale. Keep duration, stops, verified price sampling and
-// observed itineraries independently sufficient, but do not index a route
-// whose only flight signal is airline_count. This is a fail-closed quality gate
-// for thin route pages, not a ranking manipulation.
 function hasVerifiedFlightEvidence(r) {
   if (!r) return false;
   if (validPositiveNumber(r.avg_duration_min)) return true;
@@ -107,6 +120,7 @@ function hasLegacyRouteData(r) {
 function getRouteIndexabilityDecision(r, opts = {}) {
   const enforce = opts.enforce != null ? opts.enforce : evidencePolicyEnforced();
   const demandGate = opts.demandGate != null ? opts.demandGate : routeDemandGateEnabled();
+  const coreOnly = opts.coreOnly != null ? opts.coreOnly : seoCoreOnlyEnabled();
   const evidence = hasVerifiedFlightEvidence(r);
   const manual = hasManualEditorialContent(r);
   const demand = hasRouteDemandSignal(r);
@@ -115,26 +129,25 @@ function getRouteIndexabilityDecision(r, opts = {}) {
   const demandOk = !demandGate || manual || demand;
   const policyIndexable = enforce ? ((evidence || manual) && demandOk && freshnessOk) : (hasLegacyRouteData(r) || manual);
 
-  // [P0.7 FAIL-CLOSED] Once the backend has emitted an explicit `indexable`
-  // verdict, it owns the production decision. In particular, `indexable:false`
-  // must not be resurrected to `index` merely because stale/local fixture data
-  // still contains intro_text or custom_faq. Missing verdict keeps the local
-  // mirror as the compatibility fallback for older backends/offline fixtures.
   const explicitIndexable = typeof r?.indexable === 'boolean' ? r.indexable : null;
-  const indexable = explicitIndexable != null ? explicitIndexable : policyIndexable;
-  const effectiveManual = explicitIndexable === false ? false : manual;
-  const effectiveEvidence = explicitIndexable === false ? false : evidence;
-  const reason = explicitIndexable != null
-    ? (explicitIndexable ? 'EXPLICIT BACKEND INDEXABLE VERDICT' : 'EXPLICIT BACKEND NOINDEX VERDICT')
-    : (enforce
-      ? ((evidence || manual)
-        ? (demandOk
-          ? (freshnessOk
-            ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
-            : 'STALE ROUTE DATA (pruned)')
-          : 'NO DEMAND SIGNAL (pruned)')
-        : 'NO VERIFIED FLIGHT EVIDENCE')
-      : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)'));
+  const baseVerdict = explicitIndexable != null ? explicitIndexable : policyIndexable;
+  const coreOk = !coreOnly || !r?.slug || isSeoCoreRoute(r.slug);
+  const indexable = baseVerdict && coreOk;
+  const effectiveManual = explicitIndexable === false || !coreOk ? false : manual;
+  const effectiveEvidence = explicitIndexable === false || !coreOk ? false : evidence;
+  const reason = !coreOk
+    ? 'OUTSIDE SEO CORE (pruned)'
+    : explicitIndexable != null
+      ? (explicitIndexable ? 'EXPLICIT BACKEND INDEXABLE VERDICT' : 'EXPLICIT BACKEND NOINDEX VERDICT')
+      : (enforce
+        ? ((evidence || manual)
+          ? (demandOk
+            ? (freshnessOk
+              ? (evidence ? 'VERIFIED FLIGHT EVIDENCE' : 'MANUAL EDITORIAL CONTENT')
+              : 'STALE ROUTE DATA (pruned)')
+            : 'NO DEMAND SIGNAL (pruned)')
+          : 'NO VERIFIED FLIGHT EVIDENCE')
+        : (indexable ? 'LEGACY DATA/CONTENT' : 'NO DATA (legacy)'));
 
   return {
     indexable,
@@ -143,6 +156,8 @@ function getRouteIndexabilityDecision(r, opts = {}) {
     demandSignal: demand,
     routeDataFresh: fresh,
     demandGate,
+    coreOnly,
+    inSeoCore: !r?.slug || isSeoCoreRoute(r.slug),
     enforce,
     reason,
     signals: {
@@ -170,4 +185,7 @@ module.exports = {
   hasManualEditorialContent,
   getRouteIndexabilityDecision,
   hasLegacyRouteData,
+  seoCoreOnlyEnabled,
+  isSeoCoreRoute,
+  SEO_CORE_ROUTES,
 };
