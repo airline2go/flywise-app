@@ -1,4 +1,5 @@
 // Regression test for the empty validated popular-routes slice.
+// CI probe comment only; production behavior is unchanged by this branch.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { injectPopularLinks } from '../scripts/prerender-popular-routes.mjs';
