@@ -104,7 +104,7 @@ function statsHtml(route, snapshot, copy) {
 }
 
 function styles() {
-  return `<style>
+  return `
 .route-search-panel{margin:18px auto 6px;max-width:980px;text-align:left;background:rgba(255,255,255,.98);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.18);color:#132338}
 .route-search-title{font-size:13px;font-weight:800;letter-spacing:.02em;margin:0 0 11px;color:#132338}
 .route-search-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) auto;gap:10px;align-items:end}
@@ -124,7 +124,7 @@ function styles() {
 .route-search-stat-label{display:block;margin-top:2px;font-size:10.5px;color:#738092;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:760px){.route-search-form{grid-template-columns:1fr 1fr}.route-search-submit{grid-column:1/-1;width:100%}.route-search-stats{grid-template-columns:1fr 1fr}}
 @media (max-width:480px){.route-search-panel{margin-left:0;margin-right:0;padding:13px}.route-search-form{grid-template-columns:1fr}.route-search-submit{grid-column:auto}.route-search-input{height:46px}.route-search-stats{grid-template-columns:1fr 1fr}.route-search-hint{line-height:1.45}}
-</style>`;
+`;
 }
 
 function renderPanel(route, lang) {
@@ -137,8 +137,7 @@ function renderPanel(route, lang) {
   const today = new Date().toISOString().slice(0, 10);
 
   const enrichedRoute = Object.assign({}, route, { _lang: lang });
-  return `${styles()}
-<div class="route-search-panel" dir="${dir}">
+  return `<div class="route-search-panel" dir="${dir}">
   <div class="route-search-title">${escHtml(copy.title)}</div>
   <form class="route-search-form" method="get" action="/search/${encodeURIComponent(pair)}">
     <div class="route-search-field">
@@ -174,7 +173,9 @@ function renderRouteSearchPanelHtml(html, route, lang) {
   const marker = '<div class="route-price-box" id="route-price-box">';
   if (!html.includes(marker)) return html;
   const panel = renderPanel(route, lang);
-  return html.replace(marker, `${panel}\n  ${marker}`);
+  const withPanel = html.replace(marker, `${panel}\n  ${marker}`);
+  if (withPanel.includes('id="route-search-panel-styles"')) return withPanel;
+  return withPanel.replace('</head>', `<style id="route-search-panel-styles">${styles()}</style></head>`);
 }
 
-module.exports = { renderRouteSearchPanelHtml, renderPanel };
+module.exports = { renderRouteSearchPanelHtml, renderPanel, styles };
