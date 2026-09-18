@@ -251,7 +251,7 @@
     if (state.bag > 0) p.set('bags', String(state.bag));
     var cabin = f.querySelector('[data-route-cabin]'); if (cabin) p.set('cabin', cabin.value);
     f.querySelectorAll('input[type="checkbox"]:checked').forEach(function (x) { if (x.name) p.set(x.name, '1'); });
-    window.location.href = '/search/' + encodeURIComponent(fc) + '-' + encodeURIComponent(tc) + '?' + p.toString();
+    var _trackQs = new URLSearchParams(); try { var _curQs = new URLSearchParams(window.location.search); ['gclid','gbraid','wbraid','utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id'].forEach(function (k) { var v = _curQs.get(k); if (v) _trackQs.set(k, v); }); } catch (_) {} var _destQs = p.toString(); if (_trackQs.toString()) _destQs += (_destQs ? '&' : '') + _trackQs.toString(); window.location.href = '/search/' + encodeURIComponent(fc) + '-' + encodeURIComponent(tc) + (_destQs ? '?' + _destQs : '');
   }
   function init() {
     if (ready) return; ready = true; injectLegacyPriceGuard();
