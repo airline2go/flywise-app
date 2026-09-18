@@ -16,10 +16,10 @@ export function makeTypeSitemapRoute(buildUrls) {
     return new Response(urlsetXml(firstShard), {
       headers: {
         'content-type': 'application/xml; charset=utf-8',
-        // Match the daily-ish freshness of the old deploy-time sitemaps: a
-        // 1-hour ISR window with a long stale-while-revalidate so crawlers
-        // never wait on a cold rebuild.
-        'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',
+        // Keep the edge cache aligned with the 15-minute sitemap feed
+        // revalidation window; an evidence correction should not remain hidden
+        // behind a one-hour public cache.
+        'cache-control': 'public, max-age=900, stale-while-revalidate=86400',
       },
     });
   };
