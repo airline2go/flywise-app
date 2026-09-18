@@ -7,6 +7,9 @@ import { buildSitemapIndex } from '@/lib/sitemap-urls';
 const CHILD_SITEMAPS = [
   'https://airpiv.com/sitemap-pages.xml',
   'https://airpiv.com/sitemap-routes.xml',
+  'https://airpiv.com/sitemap-cities.xml',
+  'https://airpiv.com/sitemap-countries.xml',
+  'https://airpiv.com/sitemap-airports.xml',
   'https://airpiv.com/sitemap-airlines.xml',
   'https://airpiv.com/sitemap-blog.xml',
   'https://airpiv.com/sitemap-popular.xml',
