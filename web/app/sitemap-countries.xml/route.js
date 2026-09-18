@@ -3,7 +3,7 @@
 import { buildCountryUrls } from '@/lib/sitemap-urls';
 import { makeTypeSitemapRoute } from '@/lib/sitemap-route';
 
-// Keep entity sitemap freshness aligned with the route sitemap (15 minutes).
-export const revalidate = 900;
+// The entity feed is data-driven; do not let a stale route response survive a backend evidence fix.
+export const dynamic = 'force-dynamic';
 
 export const GET = makeTypeSitemapRoute(buildCountryUrls);
