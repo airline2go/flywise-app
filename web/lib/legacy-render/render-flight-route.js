@@ -625,7 +625,18 @@ function buildRouteTitle(route, lang, snapshot, names) {
             : hasDistance ? 'routeTitleDistance'
               : isDirect ? 'routeTitleDirect'
                 : 'routeTitleBase';
-  return format(translate(key, lang), vars);
+
+  const title = format(translate(key, lang), vars);
+  // Compact only clearly overlong facet-rich fallbacks. Existing 70–80
+  // character titles remain unchanged to preserve established title coverage;
+  // very long titles (for example 90+ characters caused by long airport names)
+  // fall back to the same truthful origin/destination title without the facet
+  // suffix.
+  if (title.length > 80 && key !== 'routeTitleBase') {
+    const baseTitle = format(translate('routeTitleBase', lang), vars);
+    if (baseTitle.length <= 70) return baseTitle;
+  }
+  return title;
 }
 
 // Format a price with its currency — used by the on-page price cards and the
