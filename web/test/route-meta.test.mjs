@@ -35,6 +35,18 @@ test('title localizes (English primary, with price)', () => {
   );
 });
 
+test('long facet-rich fallback title compacts to the truthful base title at 70 chars', () => {
+  const title = buildRouteTitle(R({
+    origin_city: 'London-Gatwick',
+    destination_city: 'Palma de Mallorca',
+    cached_price: 83,
+    avg_duration_min: 90,
+    airline_count: 3,
+  }), 'en');
+  assert.equal(title, 'Flights from London-Gatwick to Palma de Mallorca | Airpiv');
+  assert.ok(title.length <= 70, title);
+});
+
 test('[P2.1] without a price and without a real duration, a distance-only route uses the distance-only title (no flight-time claim)', () => {
   assert.equal(
     buildRouteTitle(R({ destination_city: 'Rome', cached_price: null, distance_km: 1297 }), 'en'),
