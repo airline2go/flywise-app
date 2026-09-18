@@ -627,11 +627,12 @@ function buildRouteTitle(route, lang, snapshot, names) {
                 : 'routeTitleBase';
 
   const title = format(translate(key, lang), vars);
-  // Keep generated-quality titles within the existing 70-character quality
-  // boundary when long airport/city names make a facet-rich fallback too long.
-  // The base route title keeps the exact same origin/destination wording and
-  // remains truthful, while avoiding SERP truncation from facet text.
-  if (title.length > 70 && key !== 'routeTitleBase') {
+  // Compact only clearly overlong facet-rich fallbacks. Existing 70–80
+  // character titles remain unchanged to preserve established title coverage;
+  // very long titles (for example 90+ characters caused by long airport names)
+  // fall back to the same truthful origin/destination title without the facet
+  // suffix.
+  if (title.length > 80 && key !== 'routeTitleBase') {
     const baseTitle = format(translate('routeTitleBase', lang), vars);
     if (baseTitle.length <= 70) return baseTitle;
   }
