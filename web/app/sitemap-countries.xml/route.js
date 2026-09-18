@@ -3,7 +3,8 @@
 import { buildCountryUrls } from '@/lib/sitemap-urls';
 import { makeTypeSitemapRoute } from '@/lib/sitemap-route';
 
-// Keep entity sitemap freshness aligned with the route sitemap (15 minutes).
-export const revalidate = 900;
+// Entity sitemaps are data-driven; force fresh route execution while
+// the underlying sitemap feed remains explicitly fetch-cached for 15 minutes.
+export const dynamic = 'force-dynamic';
 
 export const GET = makeTypeSitemapRoute(buildCountryUrls);
