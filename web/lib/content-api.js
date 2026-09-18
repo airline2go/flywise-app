@@ -11,6 +11,11 @@ import { getRouteLocale } from './route-locale-context.js';
 import { invalidateStaleGeneratedSeo } from './legacy-render/route-snapshot.js';
 
 const API_BASE = process.env.API_BASE || 'https://api.airpiv.com';
+// Sitemap discovery must not depend on the browser-facing API proxy. That proxy
+// has its own edge/rate-limit/security path, while sitemap generation is a
+// trusted server-to-server operation and the localized sitemap already uses the
+// live Render origin directly. Keep the normal page API untouched.
+const SITEMAP_API_BASE = process.env.SITEMAP_API_BASE || 'https://flywise-server-eu.onrender.com';
 
 // [ISR] Time-based revalidation default. Must stay aligned with the entity
 // route handlers' `export const revalidate` (currently 86400 = 24h): Next.js
@@ -30,20 +35,30 @@ const ROUTE_DETAIL_REVALIDATE = 900;
 
 // [RESILIENCE] Bounded retry with backoff for transient upstream failures
 // (network errors, 429 rate-limits, 5xx). This restores the retry behavior the
-// old build/generate-pages.js had (fetchWithRetry) that the Phase-1 migration
-// dropped — it matters both at build time (prerendering the top routes fires
-// many detail fetches that can brush the backend's shared rate limit) and for
-// first-request page generation (a single transient blip no longer turns into a
-// failed render). 4xx other than 429 (e.g. a genuine 404) fails fast — retrying
-// a "not found" only adds latency.
-async function fetchJSON(path, { revalidate = DEFAULT_REVALIDATE, retries = 2 } = {}) {
+// old build/generate-pages.jasync function fetchJSONFromBase(base, path, { revalidate = DEFAULT_REVALIDATE, retries = 2 } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(`${API_BASE}${path}`, { next: { revalidate } });
+      const res = await fetch(`${base}${path}`, { next: { revalidate } });
       if (res.ok) return res.json();
       const err = new Error(`HTTP ${res.status} for ${path}`);
       err.status = res.status;
+      if (res.status !== 429 && res.status < 500) throw err;
+      lastErr = err;
+    } catch (e) {
+      if (e.status && e.status !== 429 && e.status < 500) throw e;
+      lastErr = e;
+    }
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt));
+    }
+  }
+  throw lastErr;
+}
+
+async function fetchJSON(path, options = {}) {
+  return fetchJSONFromBase(API_BASE, path, options);
+}  err.status = res.status;
       if (res.status !== 429 && res.status < 500) throw err; // non-retryable
       lastErr = err;
     } catch (e) {
@@ -156,7 +171,7 @@ const fetchAllSitemapData = cache(async (type, query = '') => {
     const path = `/sitemap-data/${type}?page=${page}${query ? '&' + query : ''}`;
     let data;
     try {
-      data = await fetchJSON(path);
+      data = await fetchJSONFromBase(SITEMAP_API_BASE, path);
     } catch (e) {
       // [DEPLOY-ORDER] If the backend feed isn't live yet (frontend deployed
       // ahead of the /sitemap-data endpoints), a 404 degrades to an empty type
