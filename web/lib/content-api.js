@@ -27,6 +27,11 @@ const DEFAULT_REVALIDATE = 86400;
 // and never triggers a Duffel search: /route-pages/:slug is persisted catalogue
 // data only.
 const ROUTE_DETAIL_REVALIDATE = 900;
+// [SITEMAP-CACHE-NAMESPACE] Sitemap feeds are data-driven and can change
+// independently of a frontend deploy. Namespacing their fetch URL by the
+// current Vercel commit prevents a stale ISR fetch-cache entry from surviving
+// a backend evidence/indexability correction across deployments.
+const SITEMAP_CACHE_VERSION = process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
 
 // [RESILIENCE] Bounded retry with backoff for transient upstream failures
 // (network errors, 429 rate-limits, 5xx). This restores the retry behavior the
@@ -153,10 +158,11 @@ async function listBlogPosts(lang) {
 const fetchAllSitemapData = cache(async (type, query = '') => {
   const items = [];
   for (let page = 0; ; page++) {
-    const path = `/sitemap-data/${type}?page=${page}${query ? '&' + query : ''}`;
+    const baseQuery = `page=${page}${query ? '&' + query : ''}`;
+    const path = `/sitemap-data/${type}?${baseQuery}&v=${encodeURIComponent(SITEMAP_CACHE_VERSION)}`;
     let data;
     try {
-      data = await fetchJSON(path);
+      data = await fetchJSON(path, { revalidate: ROUTE_DETAIL_REVALIDATE });
     } catch (e) {
       // [DEPLOY-ORDER] If the backend feed isn't live yet (frontend deployed
       // ahead of the /sitemap-data endpoints), a 404 degrades to an empty type
