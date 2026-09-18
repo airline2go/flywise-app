@@ -17,9 +17,6 @@ const CHILD_SITEMAPS = [
   'https://airpiv.com/sitemap-authority.xml',
 ];
 
-const ROUTE_SITEMAP_URL = 'https://airpiv.com/sitemap-routes.xml';
-const AUTHORITY_SITEMAP_URL = 'https://airpiv.com/sitemap-authority.xml';
-
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -37,7 +34,10 @@ export async function GET() {
     xml = staticFallbackIndex();
   }
 
-  for (const sitemapUrl of [ROUTE_SITEMAP_URL, AUTHORITY_SITEMAP_URL]) {
+  // Never allow a partially built index to hide a valid child sitemap.
+  // The builder may omit a type when its feed is temporarily unavailable; the
+  // child sitemap itself remains independently crawlable and must stay linked.
+  for (const sitemapUrl of CHILD_SITEMAPS) {
     if (!xml.includes(`<loc>${sitemapUrl}</loc>`)) {
       xml = xml.replace(
         '</sitemapindex>',
