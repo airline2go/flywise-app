@@ -241,21 +241,59 @@ async function getAirline(code) {
 async function getRoutePage(slug, lang = getRouteLocale()) {
   const encoded = encodeURIComponent(slug);
   if (lang && lang !== 'de') {
-    const data = await fetchDetailOrNull(`/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
-    if (!data || !data.route) return null;
-    const route = data.route;
-    const seo = route.seo || {};
-    const localizedRoute = {
-      ...route,
-      seo_lang: lang,
-      seo_title: seo.title || null,
-      seo_meta_description: seo.metaDescription || null,
-      seo_intro_html: seo.introHtml || null,
-      seo_faq: Array.isArray(seo.faq) ? seo.faq : null,
-      localized_hreflang: data.hreflang || [],
-    };
-    invalidateStaleGeneratedSeo(localizedRoute);
-    return localizedRoute;
+    const localizedPath = `/route-pages/${encoded}/localized?lang=${encodeURIComponent(lang)}`;
+    let data;
+    try {
+      data = await fetchDetailOrNull(localizedPath, { revalidate: ROUTE_DETAIL_REVALIDATE });
+    } catch (error) {
+      // A localized translation lookup is an optional enrichment layer. A
+      // transient 429/5xx must never turn an otherwise valid route URL into a
+      // failed SSR request. Fall back to the canonical route record so the
+      // page can still render from the current real route facts; for an
+      // unpublished slug the canonical endpoint returns 404 and the caller
+      // correctly serves a clean 404.
+      if (!error || !((error.status === 429) || (error.status >= 500))) throw error;
+      console.warn(`[getRoutePage] localized fetch failed for ${lang}/${slug}: ${error.message}; falling back to canonical route`);
+      data = null;
+    }
+    if (data && data.route) {
+      const route = data.route;
+      const seo = route.seo || {};
+      const localizedRoute = {
+        ...route,
+        seo_lang: lang,
+        seo_title: seo.title || null,
+        seo_meta_description: seo.metaDescription || null,
+        seo_intro_html: seo.introHtml || null,
+        seo_faq: Array.isArray(seo.faq) ? seo.faq : null,
+        localized_hreflang: data.hreflang || [],
+      };
+      invalidateStaleGeneratedSeo(localizedRoute);
+      return localizedRoute;
+    }
+
+    // Translation data can be temporarily rate-limited or unavailable while
+    // the canonical route itself remains healthy. Re-fetch the canonical row
+    // instead of failing the entire localized page. The canonical route does
+    // not execute live flight search and remains the source of factual fields.
+    if (!data) {
+      const canonical = await fetchDetailOrNull(`/route-pages/${encoded}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
+      const route = (canonical && canonical.route) || null;
+      if (!route) return null;
+      const fallbackRoute = {
+        ...route,
+        seo_lang: lang,
+        seo_title: null,
+        seo_meta_description: null,
+        seo_intro_html: null,
+        seo_faq: null,
+        localized_hreflang: [],
+      };
+      invalidateStaleGeneratedSeo(fallbackRoute);
+      return fallbackRoute;
+    }
+
+    return null;
   }
   const data = await fetchDetailOrNull(`/route-pages/${encoded}`, { revalidate: ROUTE_DETAIL_REVALIDATE });
   const route = (data && data.route) || null;
