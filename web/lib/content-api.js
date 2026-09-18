@@ -30,6 +30,10 @@ const ROUTE_DETAIL_REVALIDATE = 900;
 // Sitemap feeds are mutable backend SEO data; keep their fetch cache aligned
 // with the sitemap routes so /sitemap.xml never serves a 24h-old feed snapshot.
 const SITEMAP_DATA_REVALIDATE = 900;
+// [SITEMAP-CACHE-NAMESPACE] Namespace sitemap feed fetches by the current
+// Vercel commit so backend indexability corrections cannot be masked by a
+// persistent fetch-cache entry from an older deployment.
+const SITEMAP_CACHE_VERSION = process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
 
 // [RESILIENCE] Bounded retry with backoff for transient upstream failures
 // (network errors, 429 rate-limits, 5xx). This restores the retry behavior the
@@ -156,7 +160,8 @@ async function listBlogPosts(lang) {
 const fetchAllSitemapData = cache(async (type, query = '') => {
   const items = [];
   for (let page = 0; ; page++) {
-    const path = `/sitemap-data/${type}?page=${page}${query ? '&' + query : ''}`;
+    const baseQuery = `page=${page}${query ? '&' + query : ''}`;
+    const path = `/sitemap-data/${type}?${baseQuery}&v=${encodeURIComponent(SITEMAP_CACHE_VERSION)}`;
     let data;
     try {
       data = await fetchJSON(path, { revalidate: SITEMAP_DATA_REVALIDATE });
