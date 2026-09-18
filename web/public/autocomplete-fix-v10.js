@@ -111,7 +111,7 @@
   function css(){
     if(document.getElementById('airpiv-autocomplete-v10-css'))return;
     var s=document.createElement('style');s.id='airpiv-autocomplete-v10-css';
-    s.textContent='.aci.fw-ac-item .acn,.aci .acn{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;line-height:1.35!important}.aci.fw-ac-item .acs,.aci .acs{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;line-height:1.3!important}.kclear{position:relative!important;z-index:1400!important;pointer-events:auto!important}.kfield .kclear{touch-action:manipulation!important}.acdrop,.ac-drop,.fw-ac-drop{z-index:1300!important}';
+    s.textContent='.aci.fw-ac-item .acn,.aci .acn{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;line-height:1.35!important}.aci.fw-ac-item .acs,.aci .acs{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;line-height:1.3!important}.kclear{position:relative!important;z-index:1400!important;pointer-events:auto!important}.kfield .kclear{touch-action:manipulation!important}.acdrop,.ac-drop,.fw-ac-drop{z-index:190!important}';
     document.head.appendChild(s);
   }
   function init(){
