@@ -35,7 +35,13 @@ const ROUTE_DETAIL_REVALIDATE = 900;
 
 // [RESILIENCE] Bounded retry with backoff for transient upstream failures
 // (network errors, 429 rate-limits, 5xx). This restores the retry behavior the
-// old build/generate-pages.jasync function fetchJSONFromBase(base, path, { revalidate = DEFAULT_REVALIDATE, retries = 2 } = {}) {
+// old build/generate-pages.js had (fetchWithRetry) that the Phase-1 migration
+// dropped — it matters both at build time (prerendering the top routes fires
+// many detail fetches that can brush the backend's shared rate limit) and for
+// first-request page generation (a single transient blip no longer turns into a
+// failed render). 4xx other than 429 (e.g. a genuine 404) fails fast — retrying
+// a "not found" only adds latency.
+async function fetchJSONFromBase(base, path, { revalidate = DEFAULT_REVALIDATE, retries = 2 } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -58,18 +64,6 @@ const ROUTE_DETAIL_REVALIDATE = 900;
 
 async function fetchJSON(path, options = {}) {
   return fetchJSONFromBase(API_BASE, path, options);
-}  err.status = res.status;
-      if (res.status !== 429 && res.status < 500) throw err; // non-retryable
-      lastErr = err;
-    } catch (e) {
-      if (e.status && e.status !== 429 && e.status < 500) throw e; // non-retryable
-      lastErr = e;
-    }
-    if (attempt < retries) {
-      await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt)); // 300ms, 600ms
-    }
-  }
-  throw lastErr;
 }
 
 // ─── Lists (used by generateStaticParams) ──────────────────────────────
