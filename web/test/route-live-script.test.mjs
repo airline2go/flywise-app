@@ -1,9 +1,3 @@
-// Regression test for the live-price <script> on route pages: every translated
-// label it embeds must produce syntactically valid JS in ALL languages. The
-// French value "prix vérifiés aujourd'hui" (apostrophe) used to be inlined into
-// a single-quoted string, which closed the string early and broke the entire
-// script — so French route pages silently never showed a price. Embedding via
-// JSON.stringify fixes it; this test guards against a regression in any language.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -26,30 +20,31 @@ const routeRow = {
   origin_city_slug: 'berlin', destination_city_slug: 'muenchen',
   origin_country: 'DE', destination_country: 'DE',
   distance_km: 480, avg_duration_min: 90, haul_type: 'short-haul',
+  price_min: 99, price_avg: 120, price_max: 150, price_sample_count: 8,
+  price_currency: 'EUR', price_updated_at: '2026-09-18T12:00:00Z',
 };
 
 const LANGS = ['en', 'de', 'ar', 'es', 'fr', 'it', 'nl', 'tr'];
 
-// The live <script> is the one that fetches the live price.
-function liveScriptBody(html) {
+function trackingScriptBody(html) {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-  return scripts.find((s) => s.includes('/route-price'));
+  return scripts.find((body) => body.includes('/track/route-page'));
 }
 
-test('live-price script is syntactically valid JS in every language', () => {
+test('route page tracking script is valid and never requests route prices', () => {
   for (const lang of LANGS) {
     const { html } = renderFlightRoutePage(routeRow, lang, [], { fromOrigin: [], toDestination: [] }, []);
-    const body = liveScriptBody(html);
-    assert.ok(body, `no live-price script found for ${lang}`);
-    // new Function() PARSES the body (without executing it) — it throws a
-    // SyntaxError if an unescaped quote/apostrophe broke a string literal.
-    assert.doesNotThrow(() => new Function(body), `live-price script has a syntax error in "${lang}"`);
+    const body = trackingScriptBody(html);
+    assert.ok(body, `no route tracking script found for ${lang}`);
+    assert.doesNotThrow(() => new Function(body));
+    assert.doesNotMatch(body, /\/route-price/);
+    assert.doesNotMatch(html, /id="route-price-box"/);
   }
 });
 
-test('French specifically (the apostrophe case) is valid and carries the price fetch', () => {
-  const { html } = renderFlightRoutePage(routeRow, 'fr', [], { fromOrigin: [], toDestination: [] }, []);
-  const body = liveScriptBody(html);
-  assert.doesNotThrow(() => new Function(body));
-  assert.match(body, /route-price/);
+test('historical price fields no longer render visible route-page pricing', () => {
+  const { html, seo } = renderFlightRoutePage(routeRow, 'en', [], { fromOrigin: [], toDestination: [] }, []);
+  assert.doesNotMatch(html, />120 €</);
+  assert.doesNotMatch(html, /\/route-price/);
+  assert.doesNotMatch(seo.title, /Price/i);
 });
