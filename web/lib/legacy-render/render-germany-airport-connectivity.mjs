@@ -73,6 +73,7 @@ const CSS = `<style>
 </style>`;
 
 const nf = (n, lang) => Number(n || 0).toLocaleString(lang === 'de' ? 'de-DE' : 'en-GB');
+const countryName = (code, lang) => { try { return new Intl.DisplayNames([lang === 'de' ? 'de-DE' : 'en-GB'], { type: 'region' }).of(String(code || '').toUpperCase()) || String(code || ''); } catch { return String(code || ''); } };
 const clean = (value, fallback = '') => String(value || fallback).replace(/\s+/g, ' ').trim();
 
 function computeData(routes) {
@@ -141,7 +142,7 @@ export async function renderGermanyAirportConnectivityHtml(lang = 'de') {
   const highlights = [
     `<div class="de-air-highlight"><div class="de-air-highlight-value">${internationalShare}%</div><div class="de-air-highlight-label">${copy.internationalShare}</div><div class="de-air-highlight-detail">${nf(data.internationalRoutes, activeLang)} / ${nf(data.routeRecords, activeLang)} ${copy.records}</div></div>`,
     widestAirport ? `<div class="de-air-highlight"><div class="de-air-highlight-value">${nf(widestAirport.internationalDestinations.size, activeLang)}</div><div class="de-air-highlight-label">${copy.widestAirport}</div><div class="de-air-highlight-detail">${esc(widestAirport.city)} (${esc(widestAirport.iata)})</div></div>` : '',
-    leadingCorridor ? `<div class="de-air-highlight"><div class="de-air-highlight-value">${nf(leadingCorridor.records, activeLang)}</div><div class="de-air-highlight-label">${copy.leadingCorridor}</div><div class="de-air-highlight-detail">${esc(leadingCorridor.originCity)} → ${esc(leadingCorridor.country)}</div></div>` : '',
+    leadingCorridor ? `<div class="de-air-highlight"><div class="de-air-highlight-value">${nf(leadingCorridor.records, activeLang)}</div><div class="de-air-highlight-label">${copy.leadingCorridor}</div><div class="de-air-highlight-detail">${esc(leadingCorridor.originCity)} → ${esc(countryName(leadingCorridor.country, activeLang))}</div></div>` : '',
   ].join('');
   const leadingCountry = data.topCountries[0] || null;
   const readySummary = activeLang === 'de'
@@ -149,22 +150,22 @@ export async function renderGermanyAirportConnectivityHtml(lang = 'de') {
     : `In the ${snapshotDate} snapshot, Airpiv analysed ${nf(data.routeRecords, activeLang)} published Germany-origin route records from ${nf(data.originAirports, activeLang)} German origin airports. ${nf(data.internationalRoutes, activeLang)} records cover international destinations across ${nf(data.internationalCountries, activeLang)} countries and ${nf(data.destinationAirports, activeLang)} recorded destination airports.`;
   const findings = [
     activeLang === 'de'
-      ? `<li><strong>${internationalShare}%</strong> der Deutschland-originierter Route-Records im Snapshot sind international (${nf(data.internationalRoutes, activeLang)} von ${nf(data.routeRecords, activeLang)}).</li>`
+      ? `<li><strong>${internationalShare}%</strong> der Deutschland-originierenden Route-Records im Snapshot sind international (${nf(data.internationalRoutes, activeLang)} von ${nf(data.routeRecords, activeLang)}).</li>`
       : `<li><strong>${internationalShare}%</strong> of Germany-origin route records in the snapshot are international (${nf(data.internationalRoutes, activeLang)} of ${nf(data.routeRecords, activeLang)}).</li>`,
     widestAirport ? (activeLang === 'de'
       ? `<li><strong>${esc(widestAirport.city)} (${esc(widestAirport.iata)})</strong> weist mit ${nf(widestAirport.internationalDestinations.size, activeLang)} erfassten internationalen Zielen die größte Zielabdeckung im Datensatz auf.</li>`
       : `<li><strong>${esc(widestAirport.city)} (${esc(widestAirport.iata)})</strong> has the broadest recorded international destination coverage with ${nf(widestAirport.internationalDestinations.size, activeLang)} destinations.</li>`) : '',
     leadingCountry ? (activeLang === 'de'
-      ? `<li><strong>${esc(leadingCountry.country)}</strong> ist mit ${nf(leadingCountry.records, activeLang)} Route-Records das am häufigsten erfasste internationale Zielland.</li>`
-      : `<li><strong>${esc(leadingCountry.country)}</strong> is the most frequently recorded international destination country with ${nf(leadingCountry.records, activeLang)} route records.</li>`) : '',
+      ? `<li><strong>${esc(countryName(leadingCountry.country, activeLang))}</strong> ist mit ${nf(leadingCountry.records, activeLang)} Route-Records das am häufigsten erfasste internationale Zielland.</li>`
+      : `<li><strong>${esc(countryName(leadingCountry.country, activeLang))}</strong> is the most frequently recorded international destination country with ${nf(leadingCountry.records, activeLang)} route records.</li>`) : '',
     leadingCorridor ? (activeLang === 'de'
-      ? `<li>Der am häufigsten erfasste Airport→Country-Korridor ist <strong>${esc(leadingCorridor.originCity)} → ${esc(leadingCorridor.country)}</strong> mit ${nf(leadingCorridor.records, activeLang)} Records.</li>`
-      : `<li>The most frequently recorded airport-to-country corridor is <strong>${esc(leadingCorridor.originCity)} → ${esc(leadingCorridor.country)}</strong> with ${nf(leadingCorridor.records, activeLang)} records.</li>`) : '',
+      ? `<li>Der am häufigsten erfasste Airport→Country-Korridor ist <strong>${esc(leadingCorridor.originCity)} → ${esc(countryName(leadingCorridor.country, activeLang))}</strong> mit ${nf(leadingCorridor.records, activeLang)} Records.</li>`
+      : `<li>The most frequently recorded airport-to-country corridor is <strong>${esc(leadingCorridor.originCity)} → ${esc(countryName(leadingCorridor.country, activeLang))}</strong> with ${nf(leadingCorridor.records, activeLang)} records.</li>`) : '',
   ].filter(Boolean).join('');
   const airportBarMax = Math.max(1, ...data.topAirports.slice(0, 8).map((x) => x.internationalDestinations.size));
   const countryBarMax = Math.max(1, ...data.topCountries.slice(0, 8).map((x) => x.records));
   const airportBars = data.topAirports.slice(0, 8).map((item) => `<div class="de-air-bar-row"><div class="de-air-bar-label">${esc(item.city)} (${esc(item.iata)})</div><div class="de-air-bar-track"><div class="de-air-bar-fill" style="width:${Math.max(4, Math.round((item.internationalDestinations.size / airportBarMax) * 100))}%"></div></div><div class="de-air-bar-value">${nf(item.internationalDestinations.size, activeLang)}</div></div>`).join('');
-  const countryBars = data.topCountries.slice(0, 8).map((item) => `<div class="de-air-bar-row"><div class="de-air-bar-label">${esc(item.country)}</div><div class="de-air-bar-track"><div class="de-air-bar-fill" style="width:${Math.max(4, Math.round((item.records / countryBarMax) * 100))}%"></div></div><div class="de-air-bar-value">${nf(item.records, activeLang)}</div></div>`).join('');
+  const countryBars = data.topCountries.slice(0, 8).map((item) => `<div class="de-air-bar-row"><div class="de-air-bar-label">${esc(countryName(item.country, activeLang))}</div><div class="de-air-bar-track"><div class="de-air-bar-fill" style="width:${Math.max(4, Math.round((item.records / countryBarMax) * 100))}%"></div></div><div class="de-air-bar-value">${nf(item.records, activeLang)}</div></div>`).join('');
   const dataFields = [
     ['origin_iata', activeLang === 'de' ? 'IATA-Code des deutschen Abflughafens' : 'IATA code of the German origin airport'],
     ['origin_city', activeLang === 'de' ? 'Abflugstadt' : 'Origin city'],
@@ -180,7 +181,7 @@ export async function renderGermanyAirportConnectivityHtml(lang = 'de') {
   ];
   const dictionaryRows = dataFields.map(([field, meaning]) => `<tr><td><code>${esc(field)}</code></td><td>${esc(meaning)}</td></tr>`).join('');
   const airportRows = data.topAirports.map((item, i) => `<li><span><span class="de-air-rank">${i + 1}.</span><span class="de-air-name">${esc(item.city)} (${esc(item.iata)})</span><span class="de-air-sub">${nf(item.internationalDestinations.size, activeLang)} ${copy.destinations}</span></span><span class="de-air-stat"><strong>${nf(item.records, activeLang)}</strong> ${copy.records}</span></li>`).join('');
-  const countryRows = data.topCountries.map((item, i) => `<li><span><span class="de-air-rank">${i + 1}.</span><span class="de-air-name">${esc(item.country)}</span></span><span class="de-air-stat"><strong>${nf(item.records, activeLang)}</strong> ${copy.destinationRecords}</span></li>`).join('');
+  const countryRows = data.topCountries.map((item, i) => `<li><span><span class="de-air-rank">${i + 1}.</span><span class="de-air-name">${esc(countryName(item.country, activeLang))}</span></span><span class="de-air-stat"><strong>${nf(item.records, activeLang)}</strong> ${copy.destinationRecords}</span></li>`).join('');
   const corridorRows = data.topCorridors.map((item, i) => `<li><span><span class="de-air-rank">${i + 1}.</span><span class="de-air-name">${esc(item.originCity)} → ${esc(item.country)}</span><span class="de-air-sub">${esc(item.origin)}</span></span><span class="de-air-stat"><strong>${nf(item.records, activeLang)}</strong> ${copy.records}</span></li>`).join('');
   const stats = [
     [data.routeRecords, copy.routeRecords], [data.internationalRoutes, copy.internationalRoutes], [data.originAirports, copy.originAirports], [data.destinationAirports, copy.destinationAirports], [data.internationalCountries, copy.internationalCountries],
