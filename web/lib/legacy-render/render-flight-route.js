@@ -7,7 +7,6 @@ const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, pathFor, urlFor, urlsFor } = r
 const { pickVariant } = require('./content-variants');
 // [ROUTE-SNAPSHOT] Phases 9–14: one canonical object drives the whole page.
 const { buildRouteSnapshot, validateSnapshot, criticalSnapshotErrors, resolveCanonicalPrice } = require('./route-snapshot');
-const { LIVE_PRICE_TTL_MS } = require('./ttl');
 
 // [SECONDARY-AIRPORT-NAMES] A secondary/low-cost airport shares a city entity
 // with the main airport (e.g. Frankfurt owns FRA and HHN), so the data layer
@@ -430,59 +429,12 @@ const ROUTE_HEAD_EXTRA_STATIC = `<style>${FLIGHT_ROUTE_CSS}${INTERNAL_LINK_CSS}<
 // the only genuinely runtime-only pieces (a live price, a "minutes ago"
 // count, a computed duration) use a `{placeholder}`.replace(...) at the
 // JS level against an already-translated template string.
-function buildLiveScript(route, lang, snapshot) {
+function buildLiveScript(route, lang) {
+  // Route-page price fetching has been retired. Keep only first-party route
+  // impression/click attribution; no call to /route-price is made here.
   return `<script>
 (function(){
 var PROXY = 'https://api.airpiv.com';
-// [I18N-SCRIPT-SAFE] Every translated label used below is embedded via
-// JSON.stringify, never inline in a single-quoted string — otherwise any value
-// containing an apostrophe (e.g. French "aujourd'hui") or quote would close the
-// JS string early and break this whole <script>, silently killing the live
-// price for that entire language.
-var L = {
-  priceLabel: ${JSON.stringify(translate('priceLabel', lang))},
-  priceLabelLive: ${JSON.stringify(translate('priceLabelLive', lang))},
-  priceFromTpl: ${JSON.stringify(translate('priceFromTemplate', lang))},
-  priceLastCheckedTpl: ${JSON.stringify(translate('priceLastCheckedTemplate', lang))},
-  priceUnavailable: ${JSON.stringify(translate('priceUnavailable', lang))},
-  pricesCheckedTodaySuffix: ${JSON.stringify(translate('pricesCheckedTodaySuffix', lang))},
-  offersForRouteSuffix: ${JSON.stringify(translate('offersComparedForRouteSuffix', lang))},
-  lastUpdatedLabel: ${JSON.stringify(translate('lastUpdatedLabel', lang))},
-  hoursAbbrev: ${JSON.stringify(translate('hoursAbbrev', lang))},
-  minutesAbbrev: ${JSON.stringify(translate('minutesAbbrev', lang))},
-  flightData: ${JSON.stringify(translate('flightDataForThisRoute', lang))},
-  avgTravel: ${JSON.stringify(translate('averageTotalTravelTime', lang))},
-  shortestFlight: ${JSON.stringify(translate('shortestFlightTimeFound', lang))}
-};
-// [CANONICAL-PRICE] The single server-side price of record for this route,
-// baked from the persisted price_min aggregate (the same value the visible
-// "average prices" section and the JSON-LD Offer use). The hero shows the LIVE
-// price only when the live check is genuinely fresh (see FRESH_MS); otherwise
-// it falls back to this canonical value with an honest "last checked on"
-// stamp — so the hero, the price section and the schema never disagree, and the
-// page never calls a days-old number "live".
-var CANON_PRICE = ${snapshot.price ? snapshot.price.amount.toFixed(0) : 'null'};
-var CANON_CCY = ${JSON.stringify((snapshot.price && snapshot.price.currency) || 'EUR')};
-var CANON_DATE = ${JSON.stringify(snapshot.price && snapshot.price.checkedAt ? String(snapshot.price.checkedAt).slice(0, 10) : null)};
-var FRESH_MS = ${LIVE_PRICE_TTL_MS}; // "live" freshness window, from the central TTL policy (ttl.js)
-function fmtCcy(n){ return CANON_CCY === 'EUR' ? (n + ' €') : CANON_CCY === 'USD' ? ('$' + n) : CANON_CCY === 'GBP' ? ('£' + n) : (n + ' ' + CANON_CCY); }
-function renderCanonicalPrice(box, trustEl){
-  if (CANON_PRICE == null) {
-    box.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px">' + L.priceUnavailable + '</div>';
-    return;
-  }
-  box.innerHTML = '<div class="route-price-val">' + L.priceFromTpl.replace('{price}', fmtCcy(CANON_PRICE)) + '</div><div class="route-price-lbl">' + L.priceLabel + '</div>';
-  if (trustEl && CANON_DATE) {
-    trustEl.innerHTML = '<span>' + L.priceLastCheckedTpl.replace('{date}', CANON_DATE) + '</span>';
-    trustEl.style.display = '';
-  }
-}
-function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-// [ROUTE-SCORE-4A] First-party impression/click tracking — fire-and-forget,
-// never affects page behavior if it fails. sendBeacon (with a text/plain
-// Blob, not JSON) is preferred so a click that immediately navigates away
-// doesn't abort a plain fetch mid-flight; text/plain also avoids a CORS
-// preflight that sendBeacon can't reliably complete before unload.
 function sendRouteTrack(eventType) {
   try {
     var payload = JSON.stringify({ event_type: eventType, route_slug: ${JSON.stringify(route.slug)}, origin_iata: ${JSON.stringify(route.origin_iata)}, destination_iata: ${JSON.stringify(route.destination_iata)}, language: ${JSON.stringify(lang)} });
@@ -496,80 +448,9 @@ function sendRouteTrack(eventType) {
 sendRouteTrack('impression');
 var routeCtaEl = document.querySelector('.route-cta');
 if (routeCtaEl) routeCtaEl.addEventListener('click', function () {
-  // Hands the originating route page off to app.js's prefillSearchFromUrl(),
-  // which reads this (once) to attribute the resulting booking_start signal
-  // back to this specific route page/language — no URL or search-flow
-  // change involved, purely an in-memory relay for tracking.
   try { sessionStorage.setItem('fw_route_ref', JSON.stringify({ slug: ${JSON.stringify(route.slug)}, origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, lang: ${JSON.stringify(lang)} })); } catch (e) {}
   sendRouteTrack('click');
 });
-
-var priceAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-// [PRICE-TIMEOUT] Never leave the box stuck on "loading…": if the live price
-// request stalls (slow network, or an ad/tracker blocker blocking
-// api.airpiv.com), abort after 8s so the .catch below shows the "unavailable"
-// fallback instead of a permanent "Chargement du prix…".
-var priceTimer = setTimeout(function(){ if (priceAbort) priceAbort.abort(); }, 8000);
-fetch(PROXY + '/route-price?from=' + encodeURIComponent(${JSON.stringify(route.origin_iata)}) + '&to=' + encodeURIComponent(${JSON.stringify(route.destination_iata)}), priceAbort ? { signal: priceAbort.signal } : undefined)
-  .then(function(r){ return r.json(); })
-  .then(function(j){
-    clearTimeout(priceTimer);
-    var box = document.getElementById('route-price-box');
-    var trustEl = document.getElementById('route-trust-signal');
-    // [LIVE-VS-CANONICAL] A live price is shown as "live" only when the check
-    // is genuinely fresh. The freshness decision is now made ONCE, server-side:
-    // when the backend returns a canonical price snapshot (j.snapshot, see
-    // flywise-server config/price.js) we trust snapshot.isLive so the TTL lives
-    // in exactly one place. Only when no snapshot is present (older backend /
-    // rollout) do we fall back to computing freshness locally against FRESH_MS.
-    var snap = j && j.snapshot;
-    var liveAgeMs = (j.ok && j.checkedAt) ? (Date.now() - new Date(j.checkedAt).getTime()) : Infinity;
-    var liveFresh = snap
-      ? (snap.isLive === true && j.price != null)
-      : (j.ok && j.price != null && j.checkedAt && liveAgeMs >= 0 && liveAgeMs <= FRESH_MS);
-    if (liveFresh) {
-      box.innerHTML = '<div class="route-price-val">' + L.priceFromTpl.replace('{price}', j.price.toFixed(0)) + '</div><div class="route-price-lbl">' + L.priceLabelLive + '</div>';
-      if (j.departure_date) {
-        var ctaLink = document.querySelector('.route-cta');
-        if (ctaLink) ctaLink.href = ctaLink.getAttribute('href') + '?depart=' + encodeURIComponent(j.departure_date);
-      }
-      if (trustEl) {
-        var minutesAgo = Math.max(0, Math.round(liveAgeMs / 60000));
-        var agoText = minutesAgo < 1 ? ${JSON.stringify(translate('justNow', lang))} : (minutesAgo === 1 ? ${JSON.stringify(translate('updatedOneMinuteAgo', lang))} : ${JSON.stringify(translate('updatedMinutesAgoTemplate', lang))}.replace('{min}', minutesAgo));
-        // [ROUTE-SPECIFIC-TRUST] Prefer the per-route offers-compared count
-        // (snapshot.offersCount) over the legacy site-wide daily counter, so the
-        // number honestly describes THIS route. Fall back to checksToday only
-        // when the snapshot doesn't carry a count.
-        var countHtml = '';
-        if (snap && snap.offersCount != null) countHtml = '<span>✓ ' + snap.offersCount + ' ' + L.offersForRouteSuffix + '</span>';
-        else if (j.checksToday != null) countHtml = '<span>✓ ' + j.checksToday + ' ' + L.pricesCheckedTodaySuffix + '</span>';
-        trustEl.innerHTML = countHtml + '<span>· ' + L.lastUpdatedLabel + ' ' + agoText + '</span>';
-        trustEl.style.display = '';
-      }
-    } else {
-      renderCanonicalPrice(box, trustEl);
-    }
-    if (j.ok && j.insights) {
-      var ins = j.insights;
-      function fmtHrsMin(min) { var h = Math.floor(min / 60), m = min % 60; return h + L.hoursAbbrev + (m > 0 ? ' ' + m + L.minutesAbbrev : ''); }
-      var directLine = ins.allDirect
-        ? ${JSON.stringify(translate('allFlightsDirect', lang))}
-        : (ins.directAvailable ? ${JSON.stringify(translate('directFlightsAvailable', lang))} : ${JSON.stringify(translate('noDirectFlights', lang))});
-      var airlinesLine = ins.airlines.length ? (${JSON.stringify(translate('airlinesFlyingThisRoute', lang))} + ' ' + ins.airlines.join(', ') + '.') : '';
-      var insightsHtml = '<section class="route-insights-section"><h2>' + L.flightData + '</h2><div class="route-insights-grid">' +
-        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.avgDurationMin) + '</div><div class="route-insight-lbl">' + L.avgTravel + '</div></div>' +
-        '<div class="route-insight-card"><div class="route-insight-val">' + fmtHrsMin(ins.minDurationMin) + '</div><div class="route-insight-lbl">' + L.shortestFlight + '</div></div>' +
-      '</div><p style="margin-top:10px">' + directLine + (airlinesLine ? ' ' + airlinesLine : '') + '</p></section>';
-      var insightsTarget = document.getElementById('route-insights-section');
-      if (insightsTarget) insightsTarget.outerHTML = insightsHtml;
-    }
-  })
-  .catch(function(){
-    clearTimeout(priceTimer);
-    // Live check failed/blocked/timed out — fall back to the canonical price
-    // (with its "last checked on" stamp) rather than a bare "unavailable".
-    renderCanonicalPrice(document.getElementById('route-price-box'), document.getElementById('route-trust-signal'));
-  });
 try { if (typeof gtag === 'function') gtag('event', 'route_page_view', { origin: ${JSON.stringify(route.origin_iata)}, destination: ${JSON.stringify(route.destination_iata)}, slug: ${JSON.stringify(route.slug)} }); } catch (e) {}
 })();
 </script>`;
@@ -719,6 +600,10 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
   // section below is handed this snapshot instead of re-deriving values, so no
   // two components can disagree.
   const snapshot = buildRouteSnapshot(routeRaw);
+  // Route-page pricing is retired: historical price fields may remain in the
+  // database for audit/history, but they must not drive visible content or SEO.
+  snapshot.price = null;
+  snapshot.priceIsFresh = false;
   // [ROUTE-CONSISTENCY-GUARD] Surface any invariant violation (airline count vs
   // unique list, stop total, invalid price, origin=destination) in the render
   // log before the page is served. Non-fatal — logs once per render, never
@@ -896,7 +781,7 @@ function renderFlightRoutePage(routeRaw, lang, relatedRoutes, cityLinks, related
 
   const bestTimeHtml = buildBestTimeHtml(route, lang);
   const routeFactsHtml = buildRouteFactsHtml(route, lang, snapshot);
-  const priceHtml = buildPriceHtml(route, lang);
+  const priceHtml = '';
   const trustHtml = buildTrustHtml(route, lang);
   // Manual FAQ wins, then generated (matching language), then the template default.
   const faqItems = (manual && route.custom_faq && route.custom_faq.length) ? route.custom_faq
@@ -924,12 +809,8 @@ ${breadcrumbHtml}
     <span class="route-hero-arrow">✈</span>
     ${destCityNode}
   </div>
-  <div class="route-hero-badges"><span>✓ ${translate('heroBadgeLivePrices', lang)}</span><span>✓ ${translate('heroBadgeNoHiddenFees', lang)}</span><span>✓ ${translate('heroBadgeAirlines', lang)}</span></div>
+  <div class="route-hero-badges"><span>✓ ${translate('heroBadgeNoHiddenFees', lang)}</span><span>✓ ${translate('heroBadgeAirlines', lang)}</span></div>
   ${distanceHtml}
-  <div class="route-price-box" id="route-price-box">
-    <div style="color:rgba(255,255,255,.5);font-size:13px">${translate('loadingPrice', lang)}</div>
-  </div>
-  <div class="route-trust-signal" id="route-trust-signal" style="display:none"></div>
   <a href="${bookingUrl}" class="route-cta">${translate('searchFlightsNow', lang)}</a>
 </div>
 ${generatedBodyHtml ? `<section class="route-generated-body">${generatedBodyHtml}</section>` : `<section><p>${escHtml(introText)}</p></section>`}
@@ -1095,7 +976,7 @@ ${relatedArticlesHtml}
     robotsContent,
     headExtra,
     mainContent,
-    scripts: buildLiveScript(route, lang, snapshot),
+    scripts: buildLiveScript(route, lang),
   });
 
   return { html, seo: { title, description, canonicalUrl: url, schema } };
