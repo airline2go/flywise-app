@@ -483,7 +483,7 @@ function buildRouteTitle(route, lang, snapshot, names) {
   // title could advertise a facet (airlines/price/duration) computed differently
   // from what the page actually shows (e.g. the stale scalar airline_count=19
   // vs. the list-authoritative snapshot.airlineCount=8 the facts card displays).
-  const hasPrice = snapshot.price != null;
+  const hasPrice = false; // route-page pricing retired
   const hasDistance = snapshot.distanceKm != null;
   // [P2.1 DATA-TRUTH] The "Flight Time & Distance" facet title claims a flight
   // time, so it may be used ONLY when a real observed duration exists — distance
@@ -558,7 +558,7 @@ function buildRouteMetaDescription(route, lang, snapshot, names) {
   // backs (the same SSOT the title and visible sections use), so a SERP snippet
   // can never advertise a price/duration/airline facet the page itself doesn't
   // show — and the "from" price clause below reuses snapshot.price verbatim.
-  const cp = snapshot.price;
+  const cp = null; // route-page pricing retired
   const facets = [];
   if (cp) facets.push(translate('routeMetaFacetPrices', lang));
   // flight-time is claimed only from a REAL observed duration — distance alone
